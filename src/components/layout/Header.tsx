@@ -10,7 +10,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   return (
     <header className="w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
       <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className="w-10 h-10 cursor-pointer rounded-xl hover:bg-purple-50 text-purple-600 flex items-center justify-center transition">
+        <button onClick={toggleSidebar} className="w-10 h-10 cursor-pointer rounded-xl hover:bg-purple-50 text-[#6d0371] flex items-center justify-center transition">
           <Menu className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2.5">

@@ -27,22 +27,22 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // Secciones modulares del software
   const gestionAcademica = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
-    { name: 'Alumnos y Progreso', href: '/alumnos', icon: HeartPulse, badge: 142 },
-    { name: 'Grupos y Cupos', href: '/grupos', icon: Users, badge: 4 },
-    { name: 'Control de Asistencias', href: '/asistencias', icon: CheckSquare },
-    { name: 'Ensayos y Clases', href: '/ensayos', icon: CalendarDays, badge: 2 },
+    { name: 'Alumnos y Progreso', href: '/admin/alumnos', icon: HeartPulse, badge: 142 },
+    { name: 'Grupos y Cupos', href: '/admin/grupos', icon: Users, badge: 4 },
+    { name: 'Control de Asistencias', href: '/admin/asistencias', icon: CheckSquare },
+    { name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
   ];
 
   const gestionOperativa = [
-    { name: 'Caja y Pagos', href: '/pagos', icon: Wallet, badge: 5 },
-    { name: 'Profesores y Nómina', href: '/profesores', icon: Contact },
-    { name: 'Vestuarios', href: '/vestuarios', icon: Shirt, badge: 12 },
-    { name: 'Tienda e Inventario', href: '/tienda', icon: ShoppingBag },
+    { name: 'Caja y Pagos', href: '/admin/pagos', icon: Wallet, badge: 5 },
+    { name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
+    { name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
+    { name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
   ];
 
   const marketingEventos = [
-    { name: 'Eventos Especiales', href: '/eventos', icon: Star },
-    { name: 'Preinscripciones', href: '/preinscripciones', icon: UserPlus, badge: 8 },
+    { name: 'Eventos Especiales', href: '/admin/eventos', icon: Star },
+    { name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
@@ -53,10 +53,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
       <Link
         key={item.href}
         href={item.href}
-        className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${
+        className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${
           isActive 
-            ? 'bg-purple-100 text-purple-700' 
-            : 'text-gray-400 hover:bg-purple-50 hover:text-purple-600'
+            ? 'bg-purple-100 text-[#6d0371]' 
+            : 'text-gray-400 hover:bg-purple-50 hover:text-[#6d0371]'
         } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
       >
         <div className="flex items-center gap-3">

@@ -1,8 +1,13 @@
 // src/app/(dashboard)/page.tsx
 "use client";
+import dynamic from "next/dynamic";
 import HeroSection from '@/components/layout/HeroSection';
 import { BalanceChart } from "@/components/BalanceChart";
-import { AcademicCalendar } from "@/components/AcademicCalendar";
+//  Importación dinámica con SSR desactivado:
+const AcademicCalendar = dynamic(
+  () => import("@/components/AcademicCalendar").then((mod) => mod.AcademicCalendar),
+  { ssr: false }
+);
 import { 
   Plus, 
   Calendar, 
@@ -14,10 +19,19 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const handleNewEvent = async () => {
+    console.log('handleNewEvent')
+  }
   return (
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
-      <HeroSection />
+      <HeroSection 
+        htmlTitle={`Panel <em class="text-[#6d0371]">Principal</em>`}
+        htmlSubTitle={`Bienvenido de vuelta, gestiona los flujos de hoy.`}
+        actionLabel={"Registrar Nuevo Evento / Pago →"}
+        isActionDisabled={false}
+        onAction={handleNewEvent}
+      />
 
       <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto">
 
@@ -166,20 +180,6 @@ export default function DashboardPage() {
           {/* Agenda de Ensayos + Calendario */}
           <div className="glass-card p-6 shadow-sm">
             <AcademicCalendar />
-            {/* <h3 className="text-lg font-anton mb-4">Cronograma de Ensayos</h3>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs mb-4 font-medium text-gray-400">
-              <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
-              <span className="p-1 text-gray-300">28</span><span className="p-1 text-gray-300">29</span><span className="p-1 text-gray-300">30</span>
-              <span className="p-1 text-gray-800">1</span><span className="p-1 text-gray-800">2</span><span className="p-1 text-gray-800">3</span><span className="p-1 text-gray-800">4</span>
-              <span className="p-1 text-gray-800">5</span><span className="p-1 text-gray-800">6</span><span className="p-1 text-gray-800">7</span><span className="p-1 text-gray-800">8</span><span className="p-1 text-gray-800">9</span><span className="p-1 text-gray-800">10</span>
-              <span className="p-1 bg-purple-600 text-white font-bold rounded-xl shadow-sm">11</span>
-            </div>
-            <div className="space-y-2">
-              <div className="p-3 bg-pink-50 border-l-4 border-pink-400 rounded-xl text-xs">
-                <p className="font-bold text-pink-700">Ensayo Extra: Gala Anual (04:30 PM)</p>
-                <p className="text-pink-600">Juvenil Avanzado</p>
-              </div>
-            </div> */}
           </div>
 
           {/* Alertas de WhatsApp */}

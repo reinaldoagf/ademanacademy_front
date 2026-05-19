@@ -35,10 +35,10 @@ export function BalanceChart() {
       {
         label: 'Recaudado',
         data: [2500, 3100, 2900, 3450],
-        borderColor: '#a855f7', // Tu color Morado (#a855f7)
+        borderColor: '#6d0371', // Tu color Morado (#6d0371)
         borderWidth: 2.5,
         tension: 0.35, // Curvatura elegante de la línea
-        pointBackgroundColor: '#a855f7',
+        pointBackgroundColor: '#6d0371',
         pointHoverRadius: 6,
         fill: true,
         // Gradiente dinámico para el fondo de la curva morada
