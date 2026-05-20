@@ -57,11 +57,9 @@ export default function AlumnosPage() {
   }
   return (
     <>
-
-    
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection 
-        htmlTitle={`Control de  <em class="text-[#6d0371]">Alumnos y Progreso</em>`}
+        htmlTitle={`Control de  <em class="text-[#5e0472]">Alumnos y Progreso</em>`}
         htmlSubTitle={`Monitorea el nivel técnico, categorías y estado de salud de los bailarines.`}
         actionLabel={"Registrar Nuevo Alumno →"}
         isActionDisabled={false}

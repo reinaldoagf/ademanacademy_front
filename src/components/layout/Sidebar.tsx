@@ -55,8 +55,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
         href={item.href}
         className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${
           isActive 
-            ? 'bg-purple-100 text-[#6d0371]' 
-            : 'text-gray-400 hover:bg-purple-50 hover:text-[#6d0371]'
+            ? 'bg-purple-100 text-[#5e0472]' 
+            : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
         } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
       >
         <div className="flex items-center gap-3">

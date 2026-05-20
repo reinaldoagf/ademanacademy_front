@@ -35,10 +35,10 @@ export function BalanceChart() {
       {
         label: 'Recaudado',
         data: [2500, 3100, 2900, 3450],
-        borderColor: '#6d0371', // Tu color Morado (#6d0371)
+        borderColor: '#5e0472', // Tu color Morado (#5e0472)
         borderWidth: 2.5,
         tension: 0.35, // Curvatura elegante de la línea
-        pointBackgroundColor: '#6d0371',
+        pointBackgroundColor: '#5e0472',
         pointHoverRadius: 6,
         fill: true,
         // Gradiente dinámico para el fondo de la curva morada
@@ -53,10 +53,10 @@ export function BalanceChart() {
       {
         label: 'Cuentas por Cobrar',
         data: [1200, 950, 1500, 800],
-        borderColor: '#ec4899', // Tu color Rosa (#ec4899)
+        borderColor: '#f472b6', // Tu color Rosa (#f472b6)
         borderWidth: 2,
         tension: 0.35,
-        pointBackgroundColor: '#ec4899',
+        pointBackgroundColor: '#f472b6',
         pointHoverRadius: 6,
         fill: true,
         // Gradiente dinámico para el fondo de la curva rosa

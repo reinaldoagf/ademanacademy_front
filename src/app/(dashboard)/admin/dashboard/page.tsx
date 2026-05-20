@@ -26,7 +26,7 @@ export default function DashboardPage() {
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection 
-        htmlTitle={`Panel <em class="text-[#6d0371]">Principal</em>`}
+        htmlTitle={`Panel <em class="text-[#5e0472]">Principal</em>`}
         htmlSubTitle={`Bienvenido de vuelta, gestiona los flujos de hoy.`}
         actionLabel={"Registrar Nuevo Evento / Pago →"}
         isActionDisabled={false}
@@ -77,9 +77,9 @@ export default function DashboardPage() {
                 </div>
                 <UserCheck className="w-16 h-16 absolute -right-2 text-white opacity-20 transform rotate-12" />
               </div>
-              <div className="gradient-pink p-5 text-white shadow-lg shadow-pink-200 flex justify-between items-center relative overflow-hidden">
+              <div className="gradient-purple p-5 text-white shadow-lg shadow-pink-200 flex justify-between items-center relative overflow-hidden">
                 <div className="z-10">
-                  <p className="text-pink-100 text-xs font-medium uppercase tracking-wider font-anton">Vestuarios Prestados</p>
+                  <p className="text-purple-100 text-xs font-medium uppercase tracking-wider font-anton">Vestuarios Prestados</p>
                   <h3 className="text-3xl font-questrial font-bold mt-1">32 Piezas</h3>
                 </div>
                 <Shirt className="w-16 h-16 absolute -right-2 text-white opacity-20 transform rotate-12" />
@@ -94,10 +94,10 @@ export default function DashboardPage() {
             <h3 className="text-lg font-anton mb-4">Balance de Ingresos vs Deudas</h3>
             <div className="flex flex-wrap gap-4 text-xs mt-1">
               <span className="flex items-center gap-1.5 text-sm font-questrial font-medium text-gray-700">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> Recaudado
+                <span className="w-2.5 h-2.5 rounded-full bg-[#5e0472] inline-block"></span> Recaudado
               </span>
               <span className="flex items-center gap-1.5 text-sm font-questrial font-medium text-gray-700">
-                <span className="w-2.5 h-2.5 rounded-full bg-pink-400 inline-block"></span> Cuentas por Cobrar
+                <span className="w-2.5 h-2.5 rounded-full bg-[#f472b6] inline-block"></span> Cuentas por Cobrar
               </span>
             </div>
           </div>
