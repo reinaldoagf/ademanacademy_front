@@ -86,13 +86,13 @@ export default function GruposPage() {
               <path className="text-purple-50" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               <path className="text-purple-600 transition-all duration-500" strokeDasharray={`${porcentajeOcupacionGlobal}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             </svg>
-            <div className="absolute text-xs font-bold text-gray-700">{porcentajeOcupacionGlobal}%</div>
+            <div className="absolute text-xs font-questrial font-bold text-gray-700">{porcentajeOcupacionGlobal}%</div>
           </div>
         </div>
 
         {/* Grupos al límite */}
         <div className="glass-card p-4 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
+          <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
@@ -104,7 +104,7 @@ export default function GruposPage() {
 
         {/* Total de Horas/Salones activos */}
         <div className="glass-card p-4 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+          <div className="w-10 h-10 bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
             <Layers className="w-6 h-6" />
           </div>
           <div>
@@ -116,7 +116,7 @@ export default function GruposPage() {
       </div>
 
       {/* FILTROS */}
-      <div className="glass-card p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
@@ -124,7 +124,7 @@ export default function GruposPage() {
             placeholder="Buscar por grupo, estilo o profesor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+            className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
           />
         </div>
 
@@ -133,7 +133,7 @@ export default function GruposPage() {
             <button
               key={cat}
               onClick={() => setSelectedCategoria(cat)}
-              className={`px-3 py-1.5 text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${
                 selectedCategoria === cat 
                   ? "bg-purple-600 text-white shadow-sm shadow-purple-100" 
                   : "bg-white border border-purple-50 text-gray-400 hover:text-purple-600"
@@ -159,7 +159,7 @@ export default function GruposPage() {
                   {/* Encabezado de Tarjeta */}
                   <div className="flex justify-between items-start gap-2 mb-3">
                     <div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      <span className={`font-questrial text-[10px] font-bold px-2 py-0.5 ${
                         grupo.categoria === "Baby" ? "bg-purple-100 text-purple-700" :
                         grupo.categoria === "Infantil" ? "bg-pink-100 text-pink-700" :
                         grupo.categoria === "Juvenil" ? "bg-indigo-100 text-indigo-700" :
@@ -167,21 +167,21 @@ export default function GruposPage() {
                       }`}>
                         {grupo.categoria}
                       </span>
-                      <h3 className="font-bold text-gray-800 text-base mt-1.5 line-clamp-1">{grupo.nombre}</h3>
-                      <p className="text-xs text-purple-600 font-medium">{grupo.estilo}</p>
+                      <h3 className="font-anton text-gray-800 text-base mt-1.5 line-clamp-1">{grupo.nombre}</h3>
+                      <p className="text-xs text-purple-600 font-questrial font-medium">{grupo.estilo}</p>
                     </div>
                     
                     {/* Badge Estado Cupos */}
                     {isFull ? (
-                      <span className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full font-bold">
+                      <span className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 font-questrial font-bold">
                         <AlertTriangle className="w-3 h-3" /> Full
                       </span>
                     ) : isWarning ? (
-                      <span className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full font-bold">
+                      <span className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 font-questrial font-bold">
                         <UserCheck className="w-3 h-3" /> Últimos cupos
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold">
+                      <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 font-questrial font-bold">
                         <CheckCircle className="w-3 h-3" /> Disponible
                       </span>
                     )}
@@ -191,15 +191,15 @@ export default function GruposPage() {
                   <div className="space-y-2 my-4 border-t border-purple-50/50 pt-3 text-xs text-gray-500">
                     <div className="flex items-center gap-2">
                       <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span>{grupo.horario}</span>
+                      <span className="font-questrial">{grupo.horario}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span>{grupo.salon}</span>
+                      <span className="font-questrial">{grupo.salon}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <span>Prof: <strong className="text-gray-700 font-semibold">{grupo.instructor}</strong></span>
+                      <span className="font-questrial">Prof: <strong className="text-gray-700 font-semibold">{grupo.instructor}</strong></span>
                     </div>
                   </div>
                 </div>
@@ -207,14 +207,14 @@ export default function GruposPage() {
                 {/* Sección Baja: Barras de Aforo */}
                 <div className="mt-2 pt-3 border-t border-purple-50/50">
                   <div className="flex justify-between items-center text-xs mb-1.5">
-                    <span className="text-gray-400 font-medium">Capacidad Ocupada</span>
-                    <span className={`font-bold ${isFull ? "text-red-500" : isWarning ? "text-amber-500" : "text-purple-700"}`}>
+                    <span className="text-gray-400 font-questrial font-medium">Capacidad Ocupada</span>
+                    <span className={`font-questrial font-bold ${isFull ? "text-red-500" : isWarning ? "text-amber-500" : "text-purple-700"}`}>
                       {grupo.cuposUsados} / {grupo.cuposTotales} Alumnos ({porcentaje}%)
                     </span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-2 overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
+                      className={`h-full transition-all duration-500 ${
                         isFull ? "bg-red-500" : 
                         isWarning ? "bg-amber-400" : 
                         "gradient-purple"

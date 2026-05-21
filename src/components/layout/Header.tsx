@@ -1,17 +1,23 @@
 "use client";
 import Image from "next/image";
-import { Menu, Bell, Search } from 'lucide-react';
+import { Menu, X, Bell, Search } from 'lucide-react';
 
 interface HeaderProps {
+  isSidebarOpen: boolean; // 2. Añadimos el estado actual del menú
   toggleSidebar: () => void;
 }
 
-export function Header({ toggleSidebar }: HeaderProps) {
+export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   return (
     <header className="w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
       <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className="w-10 h-10 cursor-pointer rounded-xl hover:bg-purple-50 text-[#5e0472] flex items-center justify-center transition">
-          <Menu className="w-5 h-5" />
+        <button onClick={toggleSidebar} className="w-10 h-10 cursor-pointer hover:bg-purple-50 text-[#5e0472] flex items-center justify-center transition">
+          {/* 3. Si está abierto muestra X, si está cerrado muestra Menu */}
+          {isSidebarOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
         </button>
         <div className="flex items-center gap-2.5">
           <Image

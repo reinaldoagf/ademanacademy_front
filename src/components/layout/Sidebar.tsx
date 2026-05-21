@@ -55,7 +55,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         href={item.href}
         className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${
           isActive 
-            ? 'bg-purple-100 text-[#5e0472]' 
+            ? 'border-l border-l-4 border-l-[#5e0472] bg-purple-100 text-[#5e0472]' 
             : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
         } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
       >
@@ -68,9 +68,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         {item.badge !== undefined && (
           <span className={`
-            text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0
-            ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-pink-100 text-pink-600'}
-            ${!isOpen ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[16px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]' : ''}
+            text-[10px] font-bold px-2 py-0.5 shrink-0
+            ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'}
+            ${!isOpen ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[15px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]' : ''}
           `}>
             {item.badge}
           </span>
@@ -87,26 +87,28 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   return (
     <aside className={`
-      bg-white/80 backdrop-blur-md p-4 flex flex-col justify-between border-r border-purple-100 
+      bg-white/80 backdrop-blur-md flex flex-col justify-between border-r border-purple-100 
       fixed md:static inset-y-0 left-0 z-40 transition-all duration-300 h-vh overflow-y-auto
       ${isOpen 
         ? 'w-64 translate-x-0' 
-        : '-translate-x-full md:translate-x-0 md:w-20 md:px-3'
+        : '-translate-x-full md:translate-x-0 md:w-15'
       }
     `}>
       <div className="space-y-6">
         
         {/* BLOQUE 1: ACADÉMICO */}
         <div className="space-y-1">
-          <p className={`text-[9px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
-            Academia
-          </p>
+          <div className="px-4 pt-4">
+            <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+              Academia
+            </p>
+          </div>
           {gestionAcademica.map(renderLink)}
         </div>
 
         {/* BLOQUE 2: OPERACIONES */}
         <div className="space-y-1">
-          <p className={`text-[9px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+          <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
             Finanzas y Logística
           </p>
           {gestionOperativa.map(renderLink)}
@@ -114,7 +116,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         {/* BLOQUE 3: CRECIMIENTO */}
         <div className="space-y-1">
-          <p className={`text-[9px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+          <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
             Eventos y Leads
           </p>
           {marketingEventos.map(renderLink)}

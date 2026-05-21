@@ -71,7 +71,7 @@ export default function AlumnosPage() {
 
       {/* METRICAS RÁPIDAS DE ALUMNOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-4 flex items-center gap-4">
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
           <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-purple-600">
             <Users className="w-5 h-5" />
           </div>
@@ -81,7 +81,7 @@ export default function AlumnosPage() {
           </div>
         </div>
 
-        <div className="glass-card p-4 flex items-center gap-4">
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
           <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600">
             <Award className="w-5 h-5" />
           </div>
@@ -91,7 +91,7 @@ export default function AlumnosPage() {
           </div>
         </div>
 
-        <div className="glass-card p-4 flex items-center gap-4">
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
           <div className="w-10 h-10 bg-amber-100 flex items-center justify-center text-amber-600">
             <AlertCircle className="w-5 h-5" />
           </div>
@@ -101,7 +101,7 @@ export default function AlumnosPage() {
           </div>
         </div>
 
-        <div className="glass-card p-4 flex items-center gap-4">
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
           <div className="w-10 h-10 bg-emerald-100 flex items-center justify-center text-emerald-600">
             <UserCheck2 className="w-5 h-5" />
           </div>
@@ -113,7 +113,7 @@ export default function AlumnosPage() {
       </div>
 
       {/* BARRA DE FILTROS Y BÚSQUEDA */}
-      <div className="glass-card p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="glass-card p-4 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         {/* Buscador */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -229,9 +229,9 @@ export default function AlumnosPage() {
                         <div className="flex justify-between text-[11px] text-gray-500 mb-1 font-semibold">
                           <span>{alumno.asistenciaMes}%</span>
                         </div>
-                        <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                        <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
                           <div 
-                            className={`h-full rounded-full ${alumno.asistenciaMes < 75 ? 'bg-amber-400' : 'bg-purple-500'}`}
+                            className={`h-full ${alumno.asistenciaMes < 75 ? 'bg-amber-400' : 'bg-purple-500'}`}
                             style={{ width: `${alumno.asistenciaMes}%` }}
                           ></div>
                         </div>
