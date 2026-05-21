@@ -61,9 +61,11 @@ export default function AlumnosPage() {
       <HeroSection 
         htmlTitle={`Control de  <em class="text-[#5e0472]">Alumnos y Progreso</em>`}
         htmlSubTitle={`Monitorea el nivel técnico, categorías y estado de salud de los bailarines.`}
-        actionLabel={"Registrar Nuevo Alumno →"}
-        isActionDisabled={false}
-        onAction={handleNewElement}
+        actions={[{
+            label: "Registrar Nuevo Alumno →",
+            onClick: handleNewElement,
+            icon: <Plus className="w-4 h-4" />,
+        }]}
       />
 
 

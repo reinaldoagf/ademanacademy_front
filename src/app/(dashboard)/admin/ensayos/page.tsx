@@ -71,9 +71,11 @@ export default function EnsayosPage() {
         <HeroSection 
           htmlTitle={`Cronograma de <em class="text-[#5e0472]">Ensayos y Clases</em>`}
           htmlSubTitle={`Monitorea el uso de los salones, bloques de danza del día y montajes extraordinarios.`}
-          actionLabel={"Agendar Bloque / Ensayo →"}
-          isActionDisabled={false}
-          onAction={handleNewElement}
+          actions={[{
+            label: "Agendar Bloque / Ensayo →",
+            onClick: handleNewElement,
+            icon: <Plus className="w-4 h-4" />,
+          }]}
         />
 
     <div className="p-4 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto space-y-6">

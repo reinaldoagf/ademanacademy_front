@@ -57,16 +57,16 @@ export default function PagosPage() {
 
   return (
     <>
-                
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection 
         htmlTitle={`Caja y Flujo de <em class="text-[#5e0472]">Pagos</em>`}
         htmlSubTitle={`Administra las recaudaciones diarias, mensualidades de alumnos e ingresos por tienda.`}
-        actionLabel={"Registrar Ingreso a Caja →"}
-        isActionDisabled={false}
-        onAction={handleNewElement}
+        actions={[{
+            label: "Registrar Ingreso a Caja →",
+            onClick: handleNewElement,
+            icon: <Plus className="w-4 h-4" />,
+        }]}
       />
-
         <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
         {/* REPORTE FINANCIERO EXPRESS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -83,9 +83,6 @@ export default function PagosPage() {
                     </span>
                 </div>
             </div>
-
-
-
             {/* Cuentas por Cobrar */}
             <div className="glass-card shadow-sm p-4 flex items-center gap-4">
                 <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600 ">

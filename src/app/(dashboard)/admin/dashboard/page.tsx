@@ -28,9 +28,11 @@ export default function DashboardPage() {
       <HeroSection 
         htmlTitle={`Panel <em class="text-[#5e0472]">Principal</em>`}
         htmlSubTitle={`Bienvenido de vuelta, gestiona los flujos de hoy.`}
-        actionLabel={"Registrar Nuevo Evento / Pago →"}
-        isActionDisabled={false}
-        onAction={handleNewEvent}
+        actions={[{
+          label: "Registrar Nuevo Evento / Pago →",
+          onClick: handleNewEvent,
+          icon: <Plus className="w-4 h-4" />,
+        }]}
       />
 
       <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto">

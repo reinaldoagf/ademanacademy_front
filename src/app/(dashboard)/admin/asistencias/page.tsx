@@ -83,9 +83,11 @@ export default function AsistenciasPage() {
         <HeroSection 
           htmlTitle={`Control de <em class="text-[#5e0472]">Asistencias</em>`}
           htmlSubTitle={`Registra el ingreso diario de los bailarines a sus respectivos salones.`}
-          actionLabel={"Guardar Lista de Hoy →"}
-          isActionDisabled={false}
-          onAction={saveAttendance}
+          actions={[{
+              label: "Guardar Lista de Hoy →",
+              onClick: saveAttendance,
+              icon: <Save className="w-4 h-4" />,
+          }]}
         />
 
     <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">

@@ -64,9 +64,11 @@ export default function GruposPage() {
       <HeroSection 
         htmlTitle={`Grupos y Control de <em class="text-[#5e0472]">Cupos</em>`}
         htmlSubTitle={`Administra las secciones de baile, horarios asignados e indicadores de aforo.`}
-        actionLabel={"Crear Nuevo Grupo →"}
-        isActionDisabled={false}
-        onAction={handleNewElement}
+        actions={[{
+          label: "Crear Nuevo Grupo →",
+          onClick: handleNewElement,
+          icon: <Plus className="w-4 h-4" />,
+        }]}
       />
 
 
