@@ -1,7 +1,6 @@
 // src/app/(dashboard)/alumnos/page.tsx
 "use client";
 
-import HeroSection from '@/components/layout/HeroSection';
 import { useState } from "react";
 import { 
   Users, 
@@ -14,6 +13,7 @@ import {
   UserCheck2,
   AlertCircle
 } from "lucide-react";
+import HeroSection from '@/components/layout/HeroSection';
 
 // Estructura de datos para los alumnos
 interface Alumno {
@@ -72,7 +72,7 @@ export default function AlumnosPage() {
       {/* METRICAS RÁPIDAS DE ALUMNOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-          <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-purple-600">
+          <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -215,7 +215,7 @@ export default function AlumnosPage() {
                     {/* Nivel Técnico */}
                     <td className="py-3.5">
                       <span className={`text-xs font-bold px-2 py-1 ${
-                        alumno.nivel === "Avanzado" ? "text-purple-600 bg-purple-50 " :
+                        alumno.nivel === "Avanzado" ? "text-[#5e0472] bg-purple-50 " :
                         alumno.nivel === "Intermedio" ? "text-pink-600 bg-pink-50" :
                         "text-gray-500"
                       }`}>
@@ -240,7 +240,7 @@ export default function AlumnosPage() {
 
                     {/* Acciones */}
                     <td className="py-3.5 text-right">
-                      <button className="text-xs bg-white border border-purple-100 text-purple-600 px-3 py-1 font-semibold hover:bg-purple-600 hover:text-white transition shadow-sm cursor-pointer">
+                      <button className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
                         Progreso
                       </button>
                     </td>

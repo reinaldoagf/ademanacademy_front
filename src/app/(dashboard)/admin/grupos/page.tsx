@@ -84,7 +84,7 @@ export default function GruposPage() {
           <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
               <path className="text-purple-50" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              <path className="text-purple-600 transition-all duration-500" strokeDasharray={`${porcentajeOcupacionGlobal}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path className="text-[#5e0472] transition-all duration-500" strokeDasharray={`${porcentajeOcupacionGlobal}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             </svg>
             <div className="absolute text-xs font-questrial font-bold text-gray-700">{porcentajeOcupacionGlobal}%</div>
           </div>
@@ -135,8 +135,8 @@ export default function GruposPage() {
               onClick={() => setSelectedCategoria(cat)}
               className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${
                 selectedCategoria === cat 
-                  ? "bg-purple-600 text-white shadow-sm shadow-purple-100" 
-                  : "bg-white border border-purple-50 text-gray-400 hover:text-purple-600"
+                  ? "bg-[#5e0472] text-white shadow-sm shadow-purple-100" 
+                  : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"
               }`}
             >
               {cat === "Todos" ? "Todas las Categorías" : cat}
@@ -168,7 +168,7 @@ export default function GruposPage() {
                         {grupo.categoria}
                       </span>
                       <h3 className="font-anton text-gray-800 text-base mt-1.5 line-clamp-1">{grupo.nombre}</h3>
-                      <p className="text-xs text-purple-600 font-questrial font-medium">{grupo.estilo}</p>
+                      <p className="text-xs text-[#5e0472] font-questrial font-medium">{grupo.estilo}</p>
                     </div>
                     
                     {/* Badge Estado Cupos */}
