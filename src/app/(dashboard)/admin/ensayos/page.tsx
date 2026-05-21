@@ -76,7 +76,7 @@ export default function EnsayosPage() {
           onAction={handleNewElement}
         />
 
-    <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
       {/* METRICAS OPERATIVAS DEL DÍA */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-card shadow-sm p-4 flex items-center gap-4">
