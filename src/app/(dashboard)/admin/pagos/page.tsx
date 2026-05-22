@@ -5,13 +5,10 @@ import { useState } from "react";
 import { 
   Wallet, 
   ArrowUpRight, 
-  ArrowDownRight, 
   Plus, 
   Search, 
   TrendingUp,
-  FileText,
   CreditCard,
-  CircleDollarSign,
   AlertCircle
 } from "lucide-react";
 import HeroSection from '@/components/layout/HeroSection';
