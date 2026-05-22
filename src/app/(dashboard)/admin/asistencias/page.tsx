@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { 
-  CheckSquare, 
   UserCheck, 
   UserX, 
   Clock, 
@@ -12,7 +11,6 @@ import {
   Save, 
   Search,
   CheckCircle2,
-  AlertCircle
 } from "lucide-react";
 import HeroSection from '@/components/layout/HeroSection';
 
