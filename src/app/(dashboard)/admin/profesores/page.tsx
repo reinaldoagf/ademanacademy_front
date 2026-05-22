@@ -208,7 +208,7 @@ export default function ProfesoresPage() {
         </div>
 
         {/* BARRA DE BÚSQUEDA */}
-        <div className="glass-card p-4 shadow-sm">
+        <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -308,7 +308,9 @@ export default function ProfesoresPage() {
                               +${prof.bonoMontaje}
                             </span>
                           ) : (
-                            <span className="text-gray-300 font-questrial">—</span>
+                            <span className="text-gray-300 font-questrial">
+                              —
+                            </span>
                           )}
                         </td>
 

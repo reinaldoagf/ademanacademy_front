@@ -99,6 +99,54 @@ export default function AsistenciasPage() {
         </div>
       )}
 
+      {/* WIDGET DE RESUMEN DE ASISTENCIA DEL DÍA */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
+                <Users className="w-5 h-5" />
+            </div>
+            <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Inscritos</p>
+                <h4 className="text-xl font-anton text-gray-800">{totalAlumnos}</h4>
+            </div>
+        </div>
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
+                <Users className="w-5 h-5" />
+            </div>
+            <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Presentes</p>
+                <h4 className="text-xl font-anton text-gray-800">{presentes}</h4>
+            </div>
+        </div>
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
+                <Users className="w-5 h-5" />
+            </div>
+            <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Tardanzas</p>
+                <h4 className="text-xl font-anton text-gray-800">{tardanzas}</h4>
+            </div>
+        </div>
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
+                <Users className="w-5 h-5" />
+            </div>
+            <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Ausentes</p>
+                <h4 className="text-xl font-anton text-gray-800">{ausentes}</h4>
+            </div>
+        </div>
+        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
+                <Users className="w-5 h-5" />
+            </div>
+            <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Pendientes</p>
+                <h4 className="text-xl font-anton text-gray-800">{pendientes}</h4>
+            </div>
+        </div>
+      </div>
       {/* SELECTORES PRINCIPALES (CONFIGURACIÓN DE LA CLASE) */}
       <div className="glass-card shadow-sm p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
         {/* Selector de Grupo */}
@@ -149,54 +197,6 @@ export default function AsistenciasPage() {
         </div>
       </div>
 
-      {/* WIDGET DE RESUMEN DE ASISTENCIA DEL DÍA */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-                <Users className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Inscritos</p>
-                <h4 className="text-xl font-anton text-gray-800">{totalAlumnos}</h4>
-            </div>
-        </div>
-        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-                <Users className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Presentes</p>
-                <h4 className="text-xl font-anton text-gray-800">{presentes}</h4>
-            </div>
-        </div>
-        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-                <Users className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Tardanzas</p>
-                <h4 className="text-xl font-anton text-gray-800">{tardanzas}</h4>
-            </div>
-        </div>
-        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-                <Users className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Ausentes</p>
-                <h4 className="text-xl font-anton text-gray-800">{ausentes}</h4>
-            </div>
-        </div>
-        <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-                <Users className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Pendientes</p>
-                <h4 className="text-xl font-anton text-gray-800">{pendientes}</h4>
-            </div>
-        </div>
-      </div>
 
       {/* DETALLE Y ACCIONES POR BAILARÍN */}
       <div className="glass-card p-6 shadow-sm">
