@@ -110,7 +110,7 @@ export default function EventosPage() {
     <>
       {/* HERO SECTION DE EVENTOS */}
       <HeroSection 
-        htmlTitle={`Producción de  <em class="text-[#5e0472]">Eventos y Taquilla</em>`}
+        htmlTitle={`Producción de <em class="text-[#5e0472]">Eventos y Taquilla</em>`}
         htmlSubTitle="Planifica los espectáculos de la academia, controla el aforo de los teatros y monitorea los ingresos por venta de entradas."
         actions={accionesEventos}
       />
