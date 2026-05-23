@@ -8,6 +8,7 @@ import {
   CalendarDays, 
   Wallet, 
   Shirt, 
+  Armchair,
   Star, 
   UserPlus, 
   LogOut,
@@ -41,6 +42,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   ];
 
   const marketingEventos = [
+    { name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair },
     { name: 'Eventos Especiales', href: '/admin/eventos', icon: Star },
     { name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
