@@ -149,7 +149,7 @@ export default function ProfesoresPage() {
         ]}
       />
 
-      <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
+      <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
         {/* MÉTRICAS DE HONORARIOS DEL MES */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Horas totales ejecutadas */}

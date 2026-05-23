@@ -35,7 +35,7 @@ export default function DashboardPage() {
         }]}
       />
 
-      <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto">
+      <div className="p-4 md:p-8 w-full overflow-y-auto">
 
       {/* GRILLA DEL DASHBOARD */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

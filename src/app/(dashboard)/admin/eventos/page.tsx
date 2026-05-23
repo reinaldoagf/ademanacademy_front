@@ -126,7 +126,7 @@ export default function EventosPage() {
         actions={accionesEventos}
       />
 
-        <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
+        <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
             {/* REPORTE DE PRODUCCIÓN EXPRESS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {/* Recaudación de Taquilla */}

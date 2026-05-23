@@ -88,7 +88,7 @@ export default function AsistenciasPage() {
           }]}
         />
 
-    <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
+    <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
       {/* MENSAJE DE NOTIFICACIÓN DE GUARDADO */}
       {guardadoExitoso && (
         <div className="font-questrial bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 flex items-center gap-2 text-xs font-medium animate-fade-in">

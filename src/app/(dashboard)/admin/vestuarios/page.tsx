@@ -146,7 +146,7 @@ export default function VestuariosPage() {
         actions={accionesHero}
       />
 
-      <div className="p-4 md:p-8  max-w-7xl mx-auto w-full overflow-y-auto space-y-6">
+      <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
         {/* TARJETAS DE INDICADORES RÁPIDOS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="glass-card shadow-sm p-4 flex items-center gap-4">
@@ -225,7 +225,7 @@ export default function VestuariosPage() {
         </div>
 
         {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {filteredVestuarios.length > 0 ? (
             filteredVestuarios.map((ves) => {
               const stockReal = ves.totalUnidades - ves.asignados;

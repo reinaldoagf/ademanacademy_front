@@ -132,45 +132,45 @@ export default function ListaPlanosAsientosPage() {
       <div className="p-4 md:p-8 mx-auto w-full space-y-6">
         {/* --- CONTENEDOR DE INDICADORES / KPIs --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-purple-100 p-4 shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-purple-50 text-[#5e0472]">
+          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-[11px] uppercase tracking-wider font-bold text-gray-400 font-questrial">
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
                 Planos Registrados
-              </h4>
-              <p className="text-xl font-questrial font-bold text-gray-800">
-                {totalPlanos} Mapas Activos
               </p>
+              <h4 className="text-xl font-anton text-gray-800">
+                {totalPlanos} Mapas Activos
+              </h4>
             </div>
           </div>
 
-          <div className="bg-white border border-purple-100 p-4 shadow-sm flex items-center gap-3 md:border-x border-gray-100">
-            <div className="p-2 bg-indigo-50 text-indigo-600">
+          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10  bg-indigo-50  flex items-center justify-center text-indigo-600">
               <Armchair className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-[11px] uppercase tracking-wider font-bold text-gray-400 font-questrial">
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
                 Aforos Totales
-              </h4>
-              <p className="text-xl font-questrial font-bold text-gray-800">
-                {asientosTotalesRegistrados} Asientos Diseñados
               </p>
+              <h4 className="text-xl font-anton text-gray-800">
+                {asientosTotalesRegistrados} Asientos Diseñados
+              </h4>
             </div>
           </div>
 
-          <div className="bg-white border border-purple-100 p-4 shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-pink-50 text-pink-600">
+          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10  bg-pink-50  flex items-center justify-center text-pink-600">
               <Maximize2 className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-[11px] uppercase tracking-wider font-bold text-gray-400 font-questrial">
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
                 Área Total Techada
-              </h4>
-              <p className="text-xl font-questrial font-bold text-gray-800">
-                {m2TotalesGestionados.toFixed(1)} m² Diseñables
               </p>
+              <h4 className="text-xl font-anton text-gray-800">
+                {m2TotalesGestionados.toFixed(1)} m² Diseñables
+              </h4>
             </div>
           </div>
         </div>
@@ -185,11 +185,10 @@ export default function ListaPlanosAsientosPage() {
                 placeholder="Buscar por nombre de plano o evento..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                 className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
-            />
+                className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+              />
             </div>
           </div>
-
         </div>
 
         {/* --- REJILLA DE PLANOS REGISTRADOS --- */}
