@@ -29,6 +29,26 @@ interface EventoAcademia {
   estadoProduccion: "Planificación" | "Ensayos Generales" | "Sold Out" | "Concluido";
 }
 
+export interface ElementoMapa {
+  itemID: string;
+  tipo: "tarima_pista" | "silla_vip" | string; // expandible a otros tipos
+  nombre: string;
+  numeroSilla?: string;
+  grupoId?: string;
+  rotacion: number;
+  precio: number;
+  xMetros: number;
+  yMetros: number;
+  anchoMetros: number;
+  altoMetros: number;
+}
+
+export interface PayloadMapa {
+  anchoTotalSalón: number;
+  altoTotalSalón: number;
+  elementos: ElementoMapa[];
+}
+
 const DEMO_EVENTOS: EventoAcademia[] = [
   { 
     id: "EVE-2026-01", 
@@ -82,7 +102,471 @@ export default function EventosPage() {
   // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState<EventoAcademia | null>(null);
-  const [sillasElegidas, setSillasElegidas] = useState<string[]>([]);
+  // 1. Cambia tu estado inicial en el componente padre para aceptar objetos ElementoMapa
+  const [sillasElegidas, setSillasElegidas] = useState<ElementoMapa[]>([]);
+
+  // 2. Simulación de los datos del plano que vienen de tu backend
+  const planoConfigurado =  {
+
+        "anchoTotalSalón": 30,
+
+        "altoTotalSalón": 20,
+
+        "elementos": [
+
+            {
+
+                "itemID": "stage-1",
+
+                "tipo": "tarima_pista",
+
+                "nombre": "Pista Principal",
+
+                "rotacion": 0,
+
+                "precio": 0,
+
+                "xMetros": 5.944763054633262,
+
+                "yMetros": 1.2677331723513432,
+
+                "anchoMetros": 18.110473890733473,
+
+                "altoMetros": 5.070932689405373
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-0-0",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-1",
+
+                "numeroSilla": "A-1",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 12.375,
+
+                "yMetros": 7.393371566555994,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-0-1",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-2",
+
+                "numeroSilla": "A-2",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 13.475,
+
+                "yMetros": 7.393371566555994,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-0-2",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-3",
+
+                "numeroSilla": "A-3",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 14.575,
+
+                "yMetros": 7.393371566555994,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-0-3",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-4",
+
+                "numeroSilla": "A-4",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 15.674999999999999,
+
+                "yMetros": 7.393371566555994,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-0-4",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-5",
+
+                "numeroSilla": "A-5",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 16.775,
+
+                "yMetros": 7.393371566555994,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-1-0",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-6",
+
+                "numeroSilla": "A-6",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 12.375,
+
+                "yMetros": 8.493371566555991,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-1-1",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-7",
+
+                "numeroSilla": "A-7",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 13.475,
+
+                "yMetros": 8.493371566555991,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-1-2",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-8",
+
+                "numeroSilla": "A-8",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 14.575,
+
+                "yMetros": 8.493371566555991,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-1-3",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-9",
+
+                "numeroSilla": "A-9",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 15.674999999999999,
+
+                "yMetros": 8.493371566555991,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-1-4",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-10",
+
+                "numeroSilla": "A-10",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 16.775,
+
+                "yMetros": 8.493371566555991,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-2-0",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-11",
+
+                "numeroSilla": "A-11",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 12.375,
+
+                "yMetros": 9.59337156655599,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-2-1",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-12",
+
+                "numeroSilla": "A-12",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 13.475,
+
+                "yMetros": 9.59337156655599,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-2-2",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-13",
+
+                "numeroSilla": "A-13",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 14.575,
+
+                "yMetros": 9.59337156655599,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-2-3",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-14",
+
+                "numeroSilla": "A-14",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 15.674999999999999,
+
+                "yMetros": 9.59337156655599,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            },
+
+            {
+
+                "itemID": "silla-1779563256195-2-4",
+
+                "tipo": "silla_vip",
+
+                "nombre": "Asiento A-15",
+
+                "numeroSilla": "A-15",
+
+                "grupoId": "grupo-1779563256195",
+
+                "rotacion": 0,
+
+                "rotacionGrupo": 0,
+
+                "precio": 10,
+
+                "xMetros": 16.775,
+
+                "yMetros": 9.59337156655599,
+
+                "anchoMetros": 0.85,
+
+                "altoMetros": 0.85
+
+            }
+
+        ]
+
+    
+
+}; // Aquí pasas el objeto JSON del editor
+
+  // 3. Simulación de los IDs ya vendidos que vienen de la base de datos
+  const asientosOcupadosBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"]; 
+
+  // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
+  const montoTotalCaja = sillasElegidas.reduce((total, silla) => total + silla.precio, 0);
     const abrirTaquillaMapa = (event: EventoAcademia) => {
         console.log({ event })
         setEventoSeleccionado(event);
@@ -117,6 +601,7 @@ export default function EventosPage() {
   const totalBailarinesEnEscena = 145; // Dato operativo de la academia
   const eventosProximos = DEMO_EVENTOS.filter(e => e.estadoProduccion !== "Concluido").length;
 
+  
   return (
     <>
       {/* HERO SECTION DE EVENTOS */}
@@ -308,64 +793,65 @@ export default function EventosPage() {
         </div>
         {/* MODAL DETALLE DE SILLAS CON CANVAS */}
       {isModalOpen && eventoSeleccionado && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
-            
-            {/* Encabezado Modal */}
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[10px] font-questrial font-bold text-purple-600 uppercase tracking-wider">Taquilla en Vivo con Mapa Numerado</span>
-                <h3 className="text-lg font-anton text-gray-800 ">{eventoSeleccionado.nombre}</h3>
-                <p className="font-questrial text-xs text-gray-400">Selecciona los asientos solicitados por el cliente en taquilla física.</p>
-              </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
+        
+        {/* Encabezado */}
+        <div className="flex justify-between items-start">
+          <div>
+            <span className="text-[10px] font-questrial text-purple-600 uppercase tracking-wider">Taquilla en Vivo con Mapa Dinámico</span>
+            <h3 className="text-xl font-anton text-gray-800">{eventoSeleccionado.nombre}</h3>
+            <p className="font-questrial text-xs text-gray-400">Selecciona los asientos construidos desde el mapa del diseñador.</p>
+          </div>
+          <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1 rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-            {/* Inyección de nuestro mapa interactivo en Canvas */}
-            <MapaAsientosCanvas 
-              filas={8} 
-              columnas={16} 
-              onSeleccionChange={(sillas) => setSillasElegidas(sillas)}
-            />
+        {/* Inyección del mapa interactivo con la data del Payload JSON */}
+        {planoConfigurado && (
+          <MapaAsientosCanvas 
+            mapaConfig={planoConfigurado}
+            asientosOcupados={asientosOcupadosBD}
+            onSeleccionChange={(sillas) => setSillasElegidas(sillas)}
+          />
+        )}
 
-            {/* Cierre de Compra y Caja del Modal */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-50">
-              <div className="text-center sm:text-left font-questrial">
-                <p className="text-xs text-gray-400 font-medium">Monto Total Liquidado en Caja</p>
-                <h4 className="text-2xl font-black text-gray-800">
-                  ${(sillasElegidas.length * eventoSeleccionado.precioEntrada).toLocaleString()}{" "}
-                  <span className="text-xs text-gray-400 font-normal">USD</span>
-                </h4>
-              </div>
-
-              <div className="flex gap-2 w-full sm:w-auto">
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-purple-100 text-gray-500 text-xs font-questrial font-semibold hover:bg-gray-50 transition flex-1 sm:flex-none cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  disabled={sillasElegidas.length === 0}
-                  onClick={() => {
-                    alert(`Venta registrada con éxito. Asientos reservados: ${sillasElegidas.join(", ")}`);
-                    setIsModalOpen(false);
-                  }}
-                  className="px-5 py-2 gradient-purple text-white font-questrial font-semibold text-xs hover:opacity-90 shadow-md shadow-purple-100 transition flex-1 sm:flex-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  Confirmar Asignación ({sillasElegidas.length})
-                </button>
-              </div>
-            </div>
-
+        {/* Cierre de Compra */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-50">
+          <div className="text-center sm:text-left font-questrial">
+  <p className="text-xs text-gray-400 font-medium">Monto Total Liquidado en Caja</p>
+  
+  <h4 className="text-2xl font-black text-gray-800">
+    {/* 2. CLAVAMOS UN LOCALE FIJO (US) PARA QUE SERVIDOR Y CLIENTE COINCIDAN EN LA COMA ',' */}
+    ${montoTotalCaja.toLocaleString("en-US", { minimumFractionDigits: 0 })}{" "}
+    <span className="text-xs text-gray-400 font-normal">USD</span>
+  </h4>
+</div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 border border-purple-100 text-gray-500 text-xs font-questrial hover:bg-gray-50 transition flex-1 sm:flex-none cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button 
+              disabled={sillasElegidas.length === 0}
+              onClick={() => {
+                const nombresAsientos = sillasElegidas.map(s => s.numeroSilla).join(", ");
+                alert(`Venta registrada. IDs reservados: ${sillasElegidas.map(s => s.itemID).join(", ")}`);
+                setIsModalOpen(false);
+              }}
+              className="w-full bg-purple-600 hover:bg-[#5e0472] text-white p-2 text-xs font-questrial font-bold flex items-center justify-center gap-1 transition shadow-sm cursor-pointer"
+            >
+              Confirmar Asignación ({sillasElegidas.length})
+            </button>
           </div>
         </div>
-      )}
+
+      </div>
+    </div>
+  )}
     </>
   );
 }
