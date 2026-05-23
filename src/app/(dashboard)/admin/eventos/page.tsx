@@ -11,9 +11,11 @@ import {
   Plus, 
   Music, 
   TrendingUp,
-  Users
+  Users,
+  X
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
+import { MapaAsientosCanvas } from "@/components/MapaAsientosCanvas";
 
 interface EventoAcademia {
   id: string;
@@ -77,7 +79,16 @@ const DEMO_EVENTOS: EventoAcademia[] = [
 export default function EventosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoFilter, setTipoFilter] = useState("Todos");
-
+  // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [eventoSeleccionado, setEventoSeleccionado] = useState<EventoAcademia | null>(null);
+  const [sillasElegidas, setSillasElegidas] = useState<string[]>([]);
+    const abrirTaquillaMapa = (event: EventoAcademia) => {
+        console.log({ event })
+        setEventoSeleccionado(event);
+        setSillasElegidas([]);
+        setIsModalOpen(true);
+    };
   // Configuración de acciones del HeroSection
   const accionesEventos = [
     {
@@ -275,9 +286,14 @@ export default function EventosPage() {
                             {evento.estadoProduccion}
                         </span>
 
-                        <button className="text-xs bg-white border border-purple-100 text-purple-600 px-3 py-1.5 font-questrial font-semibold hover:bg-purple-600 hover:text-white transition shadow-sm cursor-pointer">
-                            Planificar Bloques
-                        </button>
+                        {/* Botón de Activación de Mapa */}
+              <button 
+                onClick={() => abrirTaquillaMapa(evento)}
+                disabled={evento.estadoProduccion === "Sold Out"}
+                className="text-xs gradient-purple text-white px-4 py-2 font-questrial font-semibold hover:opacity-90 transition shadow-sm disabled:bg-gray-200 disabled:text-gray-400 cursor-pointer"
+              >
+                {evento.estadoProduccion === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+              </button>
                         </div>
 
                     </div>
@@ -290,6 +306,66 @@ export default function EventosPage() {
                 )}
             </div>
         </div>
+        {/* MODAL DETALLE DE SILLAS CON CANVAS */}
+      {isModalOpen && eventoSeleccionado && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
+            
+            {/* Encabezado Modal */}
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[10px] font-questrial font-bold text-purple-600 uppercase tracking-wider">Taquilla en Vivo con Mapa Numerado</span>
+                <h3 className="text-lg font-anton text-gray-800 ">{eventoSeleccionado.nombre}</h3>
+                <p className="font-questrial text-xs text-gray-400">Selecciona los asientos solicitados por el cliente en taquilla física.</p>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Inyección de nuestro mapa interactivo en Canvas */}
+            <MapaAsientosCanvas 
+              filas={8} 
+              columnas={16} 
+              onSeleccionChange={(sillas) => setSillasElegidas(sillas)}
+            />
+
+            {/* Cierre de Compra y Caja del Modal */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-50">
+              <div className="text-center sm:text-left font-questrial">
+                <p className="text-xs text-gray-400 font-medium">Monto Total Liquidado en Caja</p>
+                <h4 className="text-2xl font-black text-gray-800">
+                  ${(sillasElegidas.length * eventoSeleccionado.precioEntrada).toLocaleString()}{" "}
+                  <span className="text-xs text-gray-400 font-normal">USD</span>
+                </h4>
+              </div>
+
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 border border-purple-100 text-gray-500 text-xs font-questrial font-semibold hover:bg-gray-50 transition flex-1 sm:flex-none cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  disabled={sillasElegidas.length === 0}
+                  onClick={() => {
+                    alert(`Venta registrada con éxito. Asientos reservados: ${sillasElegidas.join(", ")}`);
+                    setIsModalOpen(false);
+                  }}
+                  className="px-5 py-2 gradient-purple text-white font-questrial font-semibold text-xs hover:opacity-90 shadow-md shadow-purple-100 transition flex-1 sm:flex-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  Confirmar Asignación ({sillasElegidas.length})
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </>
   );
 }
