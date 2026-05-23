@@ -34,7 +34,6 @@ export default function ListaPlanosAsientosPage() {
   const router = useRouter();
 
   const [busqueda, setBusqueda] = useState<string>("");
-  const [filtroMobiliario, setFiltroMobiliario] = useState<string>("todos");
 
   // Datos de ejemplo basados en los esquemas vectoriales de tu editor
   const [planos, setPlanos] = useState<PlanoRegistrado[]>([
@@ -90,10 +89,7 @@ export default function ListaPlanosAsientosPage() {
     const coincideBusqueda =
       plano.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       plano.eventoAsociado.toLowerCase().includes(busqueda.toLowerCase());
-    const coincideMobiliario =
-      filtroMobiliario === "todos" ||
-      plano.tipoMobiliarioPredominante.includes(filtroMobiliario);
-    return coincideBusqueda && coincideMobiliario;
+    return coincideBusqueda;
   });
 
   const eliminarPlano = (id: string) => {
@@ -189,27 +185,11 @@ export default function ListaPlanosAsientosPage() {
                 placeholder="Buscar por nombre de plano o evento..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs border border-purple-100 font-questrial text-gray-700 bg-slate-50 focus:bg-white focus:outline-purple-300 transition"
-              />
+                 className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+            />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            <div className="flex items-center gap-2 text-xs text-gray-500 font-questrial">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-purple-600" />
-              <span>Categoría:</span>
-              <select
-                value={filtroMobiliario}
-                onChange={(e) => setFiltroMobiliario(e.target.value)}
-                className="p-1.5 border border-purple-100 font-questrial font-bold text-gray-700 bg-white focus:outline-none"
-              >
-                <option value="todos">Todos los Mobiliarios</option>
-                <option value="Morada">VIP (Morada)</option>
-                <option value="Roja">Preferencia (Roja)</option>
-                <option value="Gris">General (Gris)</option>
-              </select>
-            </div>
-          </div>
         </div>
 
         {/* --- REJILLA DE PLANOS REGISTRADOS --- */}
