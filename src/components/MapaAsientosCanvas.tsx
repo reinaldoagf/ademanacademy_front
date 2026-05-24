@@ -38,6 +38,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [seleccionados, setSeleccionados] = useState<ElementoMapa[]>([]);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // Factor de escala (píxeles por metro)
   const ESCALA = 25; 
@@ -247,7 +248,9 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       onSeleccionChange(nuevaSeleccion);
     }
   };
-
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   return (
     <div className="space-y-4">
       {/* Leyenda Dinámica Adaptada */}
@@ -296,7 +299,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
           <span className="font-questrial">
             Asientos elegidos:{" "}
             <strong className="font-bold">
-              {seleccionados.length > 0
+              {isMounted && seleccionados.length > 0
                 ? seleccionados.map((s) => s.numeroSilla).join(", ")
                 : "Ninguno"}
             </strong>

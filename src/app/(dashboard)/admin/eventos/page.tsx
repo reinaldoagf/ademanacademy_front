@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { 
   Sparkles, 
   Calendar, 
@@ -15,7 +16,11 @@ import {
   X
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
-import { MapaAsientosCanvas } from "@/components/MapaAsientosCanvas";
+// Importar el mapa asegurando que solo se cargue en el cliente
+const MapaAsientosCanvas = dynamic(
+  () => import("@/components/MapaAsientosCanvas").then((mod) => mod.MapaAsientosCanvas),
+  { ssr: false } // 👈 Adiós problemas de hidratación
+);
 
 interface EventoAcademia {
   id: string;
@@ -624,7 +629,7 @@ export default function EventosPage() {
                           Taquilla Proyectada
                         </p>
                         <h4 className="text-xl font-anton text-gray-800">
-                          ${totalRecaudadoTickets.toLocaleString()}
+                          ${totalRecaudadoTickets.toLocaleString("en-US")}
                         </h4>
                         <p className="font-questrial text-xs text-gray-500">
                           Ingresos brutos por boletas vendidas.
@@ -757,7 +762,7 @@ export default function EventosPage() {
                         </div>
                         
                         <p className="font-questrial text-[10px] text-gray-400">
-                            Recaudado: <strong className="text-gray-700">${recaudacionIndividual.toLocaleString()}</strong> (${evento.precioEntrada} c/u)
+                            Recaudado: <strong className="text-gray-700">${recaudacionIndividual.toLocaleString("en-US")}</strong> (${evento.precioEntrada} c/u)
                         </p>
                         </div>
 
