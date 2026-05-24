@@ -40,7 +40,7 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md space-y-8 font-questrial">
       {/* Glass Card */}
-      <div className="border border-white/10 p-8 md:p-10 relative overflow-hidden bg-white/5 backdrop-blur-xl">
+      <div className="border border-white/10 relative overflow-hidden bg-white/5 backdrop-blur-xl">
         <header className="relative z-10 text-center mb-10">
           <div className="flex justify-center mb-6">
             <Image
@@ -52,7 +52,7 @@ export default function LoginPage() {
             />
           </div>
           <h3 className="text-3xl font-anton tracking-tight">
-            Bienvenido Alumno
+            Bienvenido
           </h3>
           <p className="text-gray-400 text-sm mt-2">
             Tu camino a la excelencia comienza aquí
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => validarEmail(e.target.value)}
-                placeholder="alumno@academia.com"
+                placeholder="valentina@ademan.com"
                 className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:bg-white/10 transition-all placeholder:text-gray-600 ${
                   errorEmail ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-[#5e0472]"
                 }`}
@@ -128,7 +128,7 @@ export default function LoginPage() {
             disabled={!!errorEmail || !email || !password}
             className="w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
           >
-            <span>Entrar al Aula</span>
+            <span>Iniciar Sesión</span>
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </form>
