@@ -803,7 +803,7 @@ export default function EventosPage() {
             <h3 className="text-xl font-anton text-gray-800">{eventoSeleccionado.nombre}</h3>
             <p className="font-questrial text-xs text-gray-400">Selecciona los asientos construidos desde el mapa del diseñador.</p>
           </div>
-          <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1 rounded">
+          <button onClick={() => setIsModalOpen(false)} className="cursor-pointer text-gray-400 hover:bg-gray-100 p-1 rounded">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -842,7 +842,7 @@ export default function EventosPage() {
                 alert(`Venta registrada. IDs reservados: ${sillasElegidas.map(s => s.itemID).join(", ")}`);
                 setIsModalOpen(false);
               }}
-              className="w-full bg-purple-600 hover:bg-[#5e0472] text-white p-2 text-xs font-questrial font-bold flex items-center justify-center gap-1 transition shadow-sm cursor-pointer"
+              className="w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
             >
               Confirmar Asignación ({sillasElegidas.length})
             </button>

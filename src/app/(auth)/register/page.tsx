@@ -270,7 +270,7 @@ export default function RegisterPage() {
                 <button 
                   type="button"
                   onClick={prevStep}
-                  className="flex-1 cursor-pointer border border-white/10 bg-white/5 py-4 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors text-xs font-bold uppercase tracking-wider"
+                  className="flex-1 px-4 py-2 border border-purple-100 text-gray-500 flex items-center justify-center gap-2 font-questrial hover:bg-gray-50 transition flex-1 sm:flex-none cursor-pointer text-xs uppercase tracking-wider"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Atrás</span>

@@ -631,7 +631,7 @@ export default function SeatingMapBuilderPage() {
                   </div>
                 </div>
               </div>
-              <button type="button" onClick={agregarLoteSillasMapeadas} className="w-full mt-1 bg-purple-600 hover:bg-[#5e0472] text-white p-2 text-xs font-questrial font-bold flex items-center justify-center gap-1 transition shadow-sm"><Plus className="w-3.5 h-3.5" /> Desplegar Lote</button>
+              <button type="button" onClick={agregarLoteSillasMapeadas} className="w-full mt-1 bg-[#5e0472] cursor-pointer text-white p-2 text-xs font-questrial font-bold flex items-center justify-center gap-1 transition shadow-sm"><Plus className="w-3.5 h-3.5" /> Desplegar Lote</button>
             </div>
 
             {/* CONTROL VECTORIAL */}
@@ -667,10 +667,10 @@ export default function SeatingMapBuilderPage() {
                 <div>
                   <h3 className="text-xs font-anton uppercase tracking-wider text-gray-700 mb-2">Alineación en Salón</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={alinearHorizontal} className="flex items-center justify-center gap-1.5 p-2 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-[11px] font-questrial font-bold transition border border-gray-200">
+                    <button onClick={alinearHorizontal} className="cursor-pointer flex items-center justify-center gap-1.5 p-2 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-[11px] font-questrial font-bold transition border border-gray-200">
                       <AlignCenterHorizontal className="w-3.5 h-3.5" /> Horizontal
                     </button>
-                    <button onClick={alinearVertical} className="flex items-center justify-center gap-1.5 p-2 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-[11px] font-questrial font-bold transition border border-gray-200">
+                    <button onClick={alinearVertical} className="cursor-pointer flex items-center justify-center gap-1.5 p-2 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-[11px] font-questrial font-bold transition border border-gray-200">
                       <AlignCenterVertical className="w-3.5 h-3.5" /> Vertical
                     </button>
                   </div>
@@ -678,8 +678,8 @@ export default function SeatingMapBuilderPage() {
                 <div>
                   <h3 className="text-xs font-anton uppercase tracking-wider text-gray-700 mb-2">Edición Directa</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={ejecutarDuplicacionElemento} className="flex items-center justify-center gap-1.5 p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-questrial font-bold transition border border-indigo-200"><Copy className="w-3.5 h-3.5" /> Duplicar</button>
-                    <button onClick={ejecutarEliminacionElemento} className="flex items-center justify-center gap-1.5 p-2 bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-questrial font-bold transition border border-red-200"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
+                    <button onClick={ejecutarDuplicacionElemento} className="flex items-center justify-center gap-1.5 p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-questrial font-bold transition border border-indigo-200 cursor-pointer"><Copy className="w-3.5 h-3.5" /> Duplicar</button>
+                    <button onClick={ejecutarEliminacionElemento} className="flex items-center justify-center gap-1.5 p-2 bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-questrial font-bold transition border border-red-200 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
                   </div>
                 </div>
               </div>

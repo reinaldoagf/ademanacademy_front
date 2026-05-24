@@ -62,14 +62,14 @@ export function AcademicCalendar() {
       {/* HEADER DEL CALENDARIO */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-anton mb-4">Cronograma de Actividades</h3>
-        <div className="flex items-center gap-1 bg-purple-50 p-1">
-          <button onClick={prevMonth} className="p-1 hover:bg-white transition text-purple-600 cursor-pointer">
+        <div className="flex items-center gap-1 bg-[#5e0472] p-1">
+          <button onClick={prevMonth} className="p-1 hover:bg-[#6e0372] transition text-white cursor-pointer">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs font-bold text-purple-700 min-w-[80px] text-center">
+          <span className="text-xs font-bold text-white min-w-[80px] text-center">
             {MONTHS[month]} {year}
           </span>
-          <button onClick={nextMonth} className="p-1 hover:bg-white transition text-purple-600 cursor-pointer">
+          <button onClick={nextMonth} className="p-1 hover:bg-[#6e0372] transition text-white cursor-pointer">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -102,7 +102,7 @@ export function AcademicCalendar() {
                 className={`
                   p-1.5 font-medium font-anton transition relative cursor-pointer flex flex-col items-center justify-center h-8 w-8 mx-auto
                   ${isSelected 
-                    ? "bg-purple-600 text-white font-bold shadow-sm shadow-purple-200" 
+                    ? "bg-[#5e0472] text-white font-bold shadow-sm shadow-[#5e0472]" 
                     : "text-gray-700 hover:bg-purple-50"
                   }
                 `}
@@ -110,7 +110,7 @@ export function AcademicCalendar() {
                 {day}
                 {/* Puntito indicador si ese día tiene eventos asignados */}
                 {hasEvents && !isSelected && (
-                  <span className="absolute bottom-1 w-1 h-1 bg-pink-500 rounded-full"></span>
+                  <span className="absolute bottom-1 w-1 h-1 bg-[#f472b6] rounded-full"></span>
                 )}
               </button>
             );

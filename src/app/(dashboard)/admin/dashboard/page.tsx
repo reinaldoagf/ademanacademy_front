@@ -162,19 +162,19 @@ export default function DashboardPage() {
             <h3 className="text-lg font-anton mb-4 text-left">Cupos de la Academia</h3>
             <div className="relative w-32 h-32 mx-auto my-4 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border-[10px] border-purple-100"></div>
-              <div className="absolute inset-0 rounded-full border-[10px] border-purple-500 border-t-pink-400 rotate-45"></div>
+              <div className="absolute inset-0 rounded-full border-[10px] border-[#5e0472] border-t-pink-400 rotate-45"></div>
               <div>
-                <span className="text-2xl font-questrial font-black text-purple-700">89%</span>
+                <span className="text-2xl font-questrial font-black text-[#5e0472]">89%</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-left text-xs">
               <div className="p-2 bg-white/50 rounded-xl">
                 <p className="text-gray-400 font-questrial font-medium">Baby Ballet</p>
-                <p className="font-questrial font-bold text-purple-700">18/20 Cupos</p>
+                <p className="font-questrial font-bold text-[#5e0472]">18/20 Cupos</p>
               </div>
               <div className="p-2 bg-white/50 rounded-xl">
                 <p className="text-gray-400 font-questrial font-medium">Salsa Casino</p>
-                <p className="font-questrial font-bold text-purple-700">25/25 <span className="text-red-400 text-[10px]">(Full)</span></p>
+                <p className="font-questrial font-bold text-[#5e0472]">25/25 <span className="text-red-400 text-[10px]">(Full)</span></p>
               </div>
             </div>
           </div>
