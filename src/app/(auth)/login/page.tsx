@@ -4,10 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, ChevronRight, ShieldCheck, Globe, Star, Eye, EyeOff } from "lucide-react";
+import { handleLogin } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [errorEmail, setErrorEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
 
@@ -26,11 +28,12 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (errorEmail || !email || !password) return;
-    
-    console.log("Iniciando sesión tradicional con:", { email, password });
+  const onSubmit = async (formData: FormData) => {
+    setError(null);
+    const result = await handleLogin(formData);
+    if (result?.error) {
+      setError(result.error);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -58,9 +61,9 @@ export default function LoginPage() {
             Tu camino a la excelencia comienza aquí
           </p>
         </header>
-
+        {error && <p className="text-red-500 bg-red-50 p-2 rounded text-sm mb-4">{error}</p>}
         {/* Formulario Tradicional */}
-        <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+        <form action={onSubmit} className="space-y-5 relative z-10">
           {/* Input: Email */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">

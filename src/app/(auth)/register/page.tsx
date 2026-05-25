@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation"; // 💡 Importación agregada
 import Image from "next/image";
 import Link from "next/link";
 import { 
   Mail, Lock, ChevronRight, ChevronLeft, 
   ShieldCheck, Globe, Star, IdCard, Camera, Eye, EyeOff 
 } from "lucide-react";
+import { handleRegister } from "@/app/actions/auth";
 
 export default function RegisterPage() {
+  const router = useRouter(); // 💡 Inicializamos el router del cliente
   // Manejo de Pasos: 1 o 2
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -17,13 +20,18 @@ export default function RegisterPage() {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Estados de Validaciones y Visibilidad
+  const [error, setError] = useState<string | null>(null);
   const [errorEmail, setErrorEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // 💡 NUEVO: Estado de carga para el Spinner
+  const [isLoading, setIsLoading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,18 +67,37 @@ export default function RegisterPage() {
     if (step === 2) setStep(1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) return;
-    if (errorEmail || !email || !password) return;
+ const onSubmit = async () => {
+    setError(null);
+    setIsLoading(true);
 
-    // AQUÍ: Integración con tu Backend para registrar los datos
-    console.log("Registrando alumno con datos:", {
-      dni,
-      avatar,
-      email,
-      password
-    });
+    const payload = new FormData();
+    payload.append("dni", dni);
+    payload.append("name", name);
+    payload.append("email", email);
+    payload.append("password", password);
+    if (avatar) payload.append("avatar", avatar);
+
+    // Ejecutamos la Server Action y esperamos la respuesta de la API
+    const result = await handleRegister(payload);
+    
+    // 1. Manejo de respuesta errónea
+    if (result?.error || !result?.success) {
+      setError(result?.error || "Ocurrió un error inesperado");
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Manejo de respuesta satisfactoria en formato API
+    if (result.success) {
+      console.log("Datos del usuario capturados con éxito en el Frontend:", result.user);
+      
+      // En este punto las cookies ya se guardaron en el navegador automáticamente.
+      // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
+      
+      // 3. Redirigimos de manera controlada desde el frontend una vez guardado el estado
+      router.push(`${result.user.role ?? 'cliente'}/dashboard`); // Cambia por tu ruta protegida (ej: /dashboard, /profile, etc.)
+    }
   };
 
   const handleGoogleRegister = () => {
@@ -80,7 +107,7 @@ export default function RegisterPage() {
 
   // Validación rápida para los botones de acción
   const isStep1Valid = dni.trim().length > 4;
-  const isStep2Valid = !errorEmail && email && password && confirmPassword && (password === confirmPassword);
+  const isStep2Valid = !errorEmail && email && name && password && confirmPassword && (password === confirmPassword);
 
   return (
     <div className="w-full max-w-md space-y-8 font-questrial">
@@ -113,8 +140,9 @@ export default function RegisterPage() {
           />
         </div>
 
+        {error && <p className="text-red-500 bg-red-50 p-2 rounded text-sm mb-4">{error}</p>}
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5 relative z-10">
           
           {/* ================= PASO 1 ================= */}
           {step === 1 && (
@@ -129,27 +157,27 @@ export default function RegisterPage() {
                   className="w-24 h-24 rounded-full border-2 border-dashed border-white/20 hover:border-[#5e0472] bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group"
                 >
                   {avatarPreview ? (
-                    <Image
-                      src={avatarPreview}
-                      alt="Preview"
-                      fill
-                      sizes="(max-width: 768px) 96px, 96px" // Optimiza la carga según el tamaño del contenedor (24rem = 96px)
-                      className="object-cover"
-                      unoptimized // Evita que Next.js intente procesar localmente el Blob temporal en el servidor
-                    />
-                  ) : (
-                    <Camera className="w-6 h-6 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                  )}
+                                    <Image
+                                      src={avatarPreview}
+                                      alt="Preview"
+                                      fill
+                                      sizes="(max-width: 768px) 96px, 96px"
+                                      className="object-cover"
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    <Camera className="w-6 h-6 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                                  )}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-[10px] text-white font-bold uppercase tracking-wider">Cambiar</span>
                   </div>
                 </div>
                 <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleAvatarChange} 
-                  accept="image/*" 
-                  className="hidden" 
+                type="file" ref={fileInputRef}
+                name="avatar" // 💡 Agregado
+                onChange={handleAvatarChange}
+                accept="image/*" 
+                className="hidden" 
                 />
               </div>
 
@@ -162,10 +190,29 @@ export default function RegisterPage() {
                   <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
                   <input
                     type="text"
+                    name="dni" // 💡 Agregado
                     required
                     value={dni}
                     onChange={(e) => setDni(e.target.value)}
                     placeholder="Ej: 12345678"
+                    className="w-full bg-white/5 border border-white/10 py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600"
+                  />
+                </div>
+              </div>
+              {/* Input: NAME */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Nombre Completo
+                </label>
+                <div className="relative group">
+                  <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                  <input
+                    type="text"
+                    name="name" // 💡 Agregado
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Valentina Birrot"
                     className="w-full bg-white/5 border border-white/10 py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600"
                   />
                 </div>
@@ -196,10 +243,11 @@ export default function RegisterPage() {
                   <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errorEmail ? "text-red-400" : "text-gray-500 group-focus-within:text-purple-400"}`} />
                   <input
                     type="email"
+                    name="email" // 💡 Agregado
                     required
                     value={email}
                     onChange={(e) => validarEmail(e.target.value)}
-                    placeholder="valentina@ademan.com"
+                    placeholder="ejemplo@ademan.com"
                     className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:bg-white/10 transition-all placeholder:text-gray-600 ${
                       errorEmail ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-[#5e0472]"
                     }`}
@@ -219,6 +267,7 @@ export default function RegisterPage() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
                   <input
                     type={showPassword ? "text" : "password"}
+                    name="password" // 💡 Agregado
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -269,6 +318,7 @@ export default function RegisterPage() {
               <div className="flex gap-4 pt-2">
                 <button 
                   type="button"
+                  disabled={isLoading}
                   onClick={prevStep}
                   className="flex-1 px-4 py-2 border border-purple-100 text-gray-500 flex items-center justify-center gap-2 font-questrial hover:bg-gray-50 transition flex-1 sm:flex-none cursor-pointer text-xs uppercase tracking-wider"
                 >
@@ -278,11 +328,18 @@ export default function RegisterPage() {
 
                 <button 
                   type="submit"
-                  disabled={!isStep2Valid}
+                  disabled={!isStep2Valid || isLoading}
                   className="flex-2 cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
                 >
-                  <span>Registrarse</span>
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {/* 💡 Agregamos el Spinner SVG de carga condicional */}
+                {isLoading ? (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                <span>{isLoading ? "Procesando..." : "Registrarse"}</span>
+                {!isLoading && <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                 </button>
               </div>
             </div>
