@@ -50,11 +50,10 @@ export default function AuthLayout({
           {ACADEMY_SLIDES.map((slide, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === currentSlide
-                  ? "opacity-100 scale-100"
-                  : "opacity-0 scale-110"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-110"
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-10" />
               <Image
@@ -97,7 +96,7 @@ export default function AuthLayout({
             </div>
           ))}
         </div>
-        <div className="relative z-30 w-full md:w-[40%] h-full ml-auto flex items-center justify-center p-6 md:p-12">
+        <div className="relative w-full md:w-[40%] max-h-screen ml-auto flex items-center justify-center p-6 md:p-12 overflow-auto">
           {children}
         </div>
       </div>

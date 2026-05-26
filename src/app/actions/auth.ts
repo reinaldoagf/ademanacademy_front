@@ -10,50 +10,58 @@ export async function handleLogin(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
 
-  const response = await fetch(`${BACKEND_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    return { error: errorData.message || "Error al iniciar sesión" };
-  }
+    const data = await response.json();
 
-  // Capturar la cookie Set-Cookie enviada por NestJS y replicarla en Next.js
-  const setCookieHeader = response.headers.get("set-cookie");
-  if (setCookieHeader) {
-    const token = setCookieHeader.split(";")[0].split("=")[1];
-    const cookieStore = await cookies();
-    cookieStore.set("auth_token", token, {
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { error: errorData.message || "Error al iniciar sesión" };
+    }
+
+    // Capturar la cookie Set-Cookie enviada por NestJS y replicarla en Next.js
+    const setCookieHeader = response.headers.get("set-cookie");
+    if (setCookieHeader) {
+      const token = setCookieHeader.split(";")[0].split("=")[1];
+      const cookieStore = await cookies();
+      cookieStore.set("auth_token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24,
         path: "/",
-    });
-  }
+      });
+    }
 
-  // Redirigir al usuario tras el éxito
-  redirect("/admin"); 
+    // Retorna la respuesta satisfactoria en formato API que el frontend espera recibir
+    return {
+      success: true,
+      user: data.user || data
+    };
+  } catch (err) {
+    return { success: false, error: "Fallo de comunicación con el backend" };
+  }
 }
 
 export async function handleRegister(formData: FormData) {
   const name = formData.get("name");
   const email = formData.get("email");
   const password = formData.get("password");
-  const role = formData.get("role") || "cliente";
 
   if (!name || !email || !password) {
     return { success: false, error: "Todos los campos obligatorios son requeridos" };
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/auth/register`, {
+    const response = await fetch(`${BACKEND_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, password }),
     });
 
     const data = await response.json();
@@ -75,9 +83,9 @@ export async function handleRegister(formData: FormData) {
     }
 
     // Retorna la respuesta satisfactoria en formato API que el frontend espera recibir
-    return { 
-      success: true, 
-      user: data.user || data 
+    return {
+      success: true,
+      user: data.user || data
     };
 
   } catch (err) {
