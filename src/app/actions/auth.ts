@@ -17,6 +17,8 @@ export async function handleLogin(formData: FormData) {
       body: JSON.stringify({ email, password }),
     });
 
+    console.log({ response })
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -91,4 +93,17 @@ export async function handleRegister(formData: FormData) {
   } catch (err) {
     return { success: false, error: "Fallo de comunicación con el backend" };
   }
+}
+
+export async function handleLogout() {
+  const cookieStore = await cookies();
+
+  // Eliminamos la cookie del navegador asignándole una fecha de expiración pasada
+  cookieStore.delete("auth_token");
+
+  // Opcional: Si tu backend requiere invalidar el token o la sesión en Redis/DB, 
+  // puedes hacer un fetch a ${BACKEND_URL}/auth/logout aquí antes de borrar la cookie.
+
+  // Redirigimos al usuario al login
+  redirect("/login");
 }
