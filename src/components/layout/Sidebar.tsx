@@ -50,7 +50,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // Items para usuario Cliente (isAdmin == false o en vista de cliente)
   const gestionPersonal = [
     { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { name: 'Mis Clases', href: '/client/clases', icon: CalendarDays },
+    { name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { name: 'Mis Pagos', href: '/client/pagos', icon: Wallet },
     { name: 'Mis Vestuarios', href: '/client/vestuarios', icon: Shirt },
     { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 },
