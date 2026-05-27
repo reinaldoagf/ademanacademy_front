@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Bell, Search, ShieldCheck, User } from "lucide-react";
 import { useAuthStore } from "@/store/authStore"; // 💡 Importamos la tienda
-
+import { useLoadingStore } from "@/store/useLoadingStore";
 
 interface HeaderProps {
   isSidebarOpen: boolean; // 2. Añadimos el estado actual del menú
@@ -21,6 +21,28 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
 
   // Control de hidratación para evitar errores SSR con localStorage
   const [isClient, setIsClient] = useState(false);
+
+  // Extraemos las funciones para controlar el Spinner desde el Header
+  const startLoading = useLoadingStore((state) => state.startLoading);
+  const stopLoading = useLoadingStore((state) => state.stopLoading);
+
+  // Función reutilizable para simular la transición de rol
+  const handleRoleTransition = (targetPath: string) => {
+    // 1. Encendemos el Spinner de Ademan
+    startLoading();
+
+    // 2. Esperamos un tiempo prudente para la animación (ej: 1800ms) antes de redirigir
+    setTimeout(() => {
+      router.push(targetPath);
+
+      // 3. Apagamos el Spinner un breve momento después de empujar la ruta 
+      // para asegurar que el cliente ya vea el nuevo dashboard cargado.
+      setTimeout(() => {
+        stopLoading();
+      }, 300);
+    }, 1800);
+  };
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -64,7 +86,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
           <>
             {pathname.startsWith("/admin") ? (
               <button
-                onClick={() => router.push("/client/dashboard")}
+                onClick={() => handleRoleTransition("/client/dashboard")}
                 title="Cambiar a Vista Cliente"
                 className="w-9 h-9 bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
               >
@@ -72,7 +94,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
               </button>
             ) : (
               <button
-                onClick={() => router.push("/admin/dashboard")}
+                onClick={() => handleRoleTransition("/admin/dashboard")}
                 title="Cambiar a Vista Admin"
                 className="w-9 h-9 bg-purple-50 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors cursor-pointer"
               >

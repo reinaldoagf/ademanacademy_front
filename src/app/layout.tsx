@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Questrial } from "next/font/google";
 import localFont from "next/font/local";
+import GlobalSpinnerWrapper from "@/components/layout/GlobalSpinnerWrapper";
 import "./globals.css";
 
 // 1. Configurar fuentes de Google
@@ -37,7 +38,10 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${questrial.variable} ${breathing.variable}`}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <GlobalSpinnerWrapper />
+        {children}
+      </body>
     </html>
   );
 }
