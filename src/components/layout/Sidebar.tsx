@@ -53,6 +53,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { name: 'Mis Clases', href: '/client/clases', icon: CalendarDays },
     { name: 'Mis Pagos', href: '/client/pagos', icon: Wallet },
     { name: 'Mis Vestuarios', href: '/client/vestuarios', icon: Shirt },
+    { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 },
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos

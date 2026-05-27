@@ -55,7 +55,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
           <Search className="absolute left-3 top-1.5 text-purple-400 w-4 h-4" />
           <input type="text" placeholder="Buscar alumno..." className="font-questrial pl-9 pr-4 py-1.5 w-48 lg:w-64 bg-purple-50/50 border border-purple-100 text-xs focus:outline-none" />
         </div>
-        <button className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 relative">
+        <button className="w-9 h-9 bg-purple-50 flex items-center justify-center text-purple-600 relative">
           <Bell className="w-4 h-4" />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-pink-500 rounded-full"></span>
         </button>
@@ -66,7 +66,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
               <button
                 onClick={() => router.push("/client/dashboard")}
                 title="Cambiar a Vista Cliente"
-                className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                className="w-9 h-9 bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <User className="w-4 h-4" />
               </button>
@@ -74,7 +74,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {// 💡 E
               <button
                 onClick={() => router.push("/admin/dashboard")}
                 title="Cambiar a Vista Admin"
-                className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors cursor-pointer"
+                className="w-9 h-9 bg-purple-50 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4" />
               </button>
