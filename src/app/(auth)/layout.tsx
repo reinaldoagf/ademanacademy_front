@@ -1,7 +1,8 @@
+// src/app/(auth)/layout.tsx
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Sparkles } from "lucide-react";
+
 // --- DATOS DE LOS SLIDES ---
 const ACADEMY_SLIDES = [
   {
@@ -29,19 +30,22 @@ const ACADEMY_SLIDES = [
     tag: "Carrera",
   },
 ];
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  // Lógica del slider automático
+
+  // Lógica del slider automático intacta
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % ACADEMY_SLIDES.length);
     }, 6000);
     return () => clearInterval(timer);
   }, []);
+
   return (
     <>
       <div className="min-h-screen w-full bg-[#fdf2f8] flex items-center justify-center overflow-hidden font-questrial">
@@ -51,19 +55,20 @@ export default function AuthLayout({
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-110"
+                  ? "opacity-100 scale-100 z-10"
+                  : "opacity-0 scale-110 z-0 pointer-events-none"
                 }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-10" />
-              <Image
+
+              {/* 💡 Reemplazado por <img> para evitar el fallo 500 de SSL en desarrollo local */}
+              <img
                 src={slide.image}
                 alt={slide.title}
-                height={200}
-                width={0}
-                sizes="100vw"
-                className="h-full w-full object-cover object-center"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                loading={index === 0 ? "eager" : "lazy"}
               />
+
               {/* Contenido del Slide */}
               <div className="absolute bottom-20 left-12 md:left-24 z-20 max-w-lg space-y-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 backdrop-blur-md">
@@ -87,7 +92,8 @@ export default function AuthLayout({
                       className="h-1 w-12 bg-white/20 rounded-full overflow-hidden"
                     >
                       <div
-                        className={`h-full bg-purple-500 transition-all duration-[6000ms] ease-linear ${i === currentSlide ? "w-full" : "w-0"}`}
+                        className={`h-full bg-purple-500 transition-all duration-[6000ms] ease-linear ${i === currentSlide ? "w-full" : "w-0"
+                          }`}
                       />
                     </div>
                   ))}
@@ -96,7 +102,9 @@ export default function AuthLayout({
             </div>
           ))}
         </div>
-        <div className="relative w-full md:w-[40%] max-h-screen ml-auto flex items-center justify-center p-6 md:p-12 overflow-auto">
+
+        {/* --- CONTENEDOR DEL FORMULARIO (LADO DERECHO) --- */}
+        <div className="relative w-full md:w-[40%] max-h-screen ml-auto flex items-center justify-center p-6 md:p-12 overflow-auto z-20">
           {children}
         </div>
       </div>
