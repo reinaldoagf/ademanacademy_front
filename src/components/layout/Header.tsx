@@ -21,14 +21,6 @@ import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
 import { useLoadingStore } from "@/store/useLoadingStore";
 
-// Mock de usuario
-const user = {
-  name: "Carlos Mendoza",
-  email: "carlos.mendoza@ademan.com",
-  avatar: null,
-  isAdmin: true
-};
-
 // Mock de notificaciones iniciales de la academia
 const INITIAL_NOTIFICATIONS = [
   { id: 1, text: "Vestuario 'Lago de los Cisnes' listo para retirar.", time: "Hace 10 min", read: false },
@@ -42,6 +34,7 @@ interface HeaderProps {
 }
 
 export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
+  const user = useAuthStore((state) => state.user);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -247,16 +240,17 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
         <div className="w-[1px] h-6 bg-purple-100 mx-1 hidden xs:block"></div>
 
         {/* DROPDOWN MENU DE USUARIO */}
-        <div className="relative" ref={menuRef}>
-          {/* Disparador del Menú */}
-          <button
-            onClick={() => {
-              setIsUserMenuOpen(!isUserMenuOpen);
-              setIsNotificationsOpen(false); // Cierra notificaciones por UX
-            }}
-            className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
-          >
-            {user.avatar ? (
+        {user && (
+          <div className="relative" ref={menuRef}>
+            {/* Disparador del Menú */}
+            <button
+              onClick={() => {
+                setIsUserMenuOpen(!isUserMenuOpen);
+                setIsNotificationsOpen(false); // Cierra notificaciones por UX
+              }}
+              className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
+            >
+              {/* {user.avatar ? (
               <Image
                 src={user.avatar}
                 alt={user.name}
@@ -268,57 +262,62 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
               <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider">
                 {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
               </div>
+            )} */}
+              <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider">
+                {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+              </div>
+
+              <div className="hidden md:flex flex-col text-left font-questrial">
+                <span className="text-xs font-bold text-gray-700 leading-tight">{user.name}</span>
+                <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{user.email}</span>
+              </div>
+
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Menú Desplegable Flotante */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-purple-100 shadow-xl rounded-none py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+
+                <div className="p-3 border-b border-purple-50 md:hidden bg-purple-50/30">
+                  <p className="text-xs font-anton text-gray-800">{user.name}</p>
+                  <p className="text-[10px] font-questrial text-gray-400 truncate">{user.email}</p>
+                </div>
+
+                <div className="px-3 py-1.5 text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-wider">
+                  Mi Cuenta
+                </div>
+
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); router.push(user.isAdmin && pathname.startsWith("/admin") ? "/admin/profile" : "/client/profile"); }}
+                  className="cursor-pointer w-full px-3 py-2 text-left text-xs text-gray-600 font-questrial flex items-center gap-2.5 hover:bg-purple-50 transition-colors"
+                >
+                  <User className="w-4 h-4 text-purple-500" />
+                  Mi Perfil
+                </button>
+
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); router.push("/settings"); }}
+                  className="cursor-pointer w-full px-3 py-2 text-left text-xs text-gray-600 font-questrial flex items-center gap-2.5 hover:bg-purple-50 transition-colors"
+                >
+                  <Settings className="w-4 h-4 text-purple-500" />
+                  Configuración
+                </button>
+
+                <div className="border-t border-purple-50 my-1"></div>
+
+                <button
+                  onClick={onLogout}
+                  className="cursor-pointer w-full px-3 py-2 text-left text-xs text-pink-600 font-questrial font-semibold flex items-center gap-2.5 hover:bg-pink-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 text-pink-500" />
+                  Cerrar Sesión
+                </button>
+              </div>
             )}
+          </div>
+        )}
 
-            <div className="hidden md:flex flex-col text-left font-questrial">
-              <span className="text-xs font-bold text-gray-700 leading-tight">{user.name}</span>
-              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{user.email}</span>
-            </div>
-
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Menú Desplegable Flotante */}
-          {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-purple-100 shadow-xl rounded-none py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-
-              <div className="p-3 border-b border-purple-50 md:hidden bg-purple-50/30">
-                <p className="text-xs font-anton text-gray-800">{user.name}</p>
-                <p className="text-[10px] font-questrial text-gray-400 truncate">{user.email}</p>
-              </div>
-
-              <div className="px-3 py-1.5 text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-wider">
-                Mi Cuenta
-              </div>
-
-              <button
-                onClick={() => { setIsUserMenuOpen(false); router.push(user.isAdmin && pathname.startsWith("/admin") ? "/admin/profile" : "/client/profile"); }}
-                className="cursor-pointer w-full px-3 py-2 text-left text-xs text-gray-600 font-questrial flex items-center gap-2.5 hover:bg-purple-50 transition-colors"
-              >
-                <User className="w-4 h-4 text-purple-500" />
-                Mi Perfil
-              </button>
-
-              <button
-                onClick={() => { setIsUserMenuOpen(false); router.push("/settings"); }}
-                className="cursor-pointer w-full px-3 py-2 text-left text-xs text-gray-600 font-questrial flex items-center gap-2.5 hover:bg-purple-50 transition-colors"
-              >
-                <Settings className="w-4 h-4 text-purple-500" />
-                Configuración
-              </button>
-
-              <div className="border-t border-purple-50 my-1"></div>
-
-              <button
-                onClick={onLogout}
-                className="cursor-pointer w-full px-3 py-2 text-left text-xs text-pink-600 font-questrial font-semibold flex items-center gap-2.5 hover:bg-pink-50 transition-colors"
-              >
-                <LogOut className="w-4 h-4 text-pink-500" />
-                Cerrar Sesión
-              </button>
-            </div>
-          )}
-        </div>
       </div>
     </header>
   );
