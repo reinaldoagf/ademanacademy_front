@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
 import {
   ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
-  Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut
+  Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
 } from "lucide-react";
 
 interface SidebarProps {
@@ -50,6 +50,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // Items para usuario Cliente (isAdmin == false o en vista de cliente)
   const gestionPersonal = [
     { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
+    { name: 'Representados', href: '/client/represented', icon: Users2, badge: 4 },
     { name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
     { name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
