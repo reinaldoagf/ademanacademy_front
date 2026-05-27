@@ -17,9 +17,9 @@ export async function handleLogin(formData: FormData) {
       body: JSON.stringify({ email, password }),
     });
 
-    console.log({ response })
 
     const data = await response.json();
+    console.log({ data })
 
     if (!response.ok) {
       const errorData = await response.json();

@@ -6,8 +6,10 @@ import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Mail, Lock, ChevronRight, ShieldCheck, Globe, Star, Eye, EyeOff } from "lucide-react";
 import { handleLogin } from "@/app/actions/auth";
+import { useAuthStore } from "@/store/authStore";
 
 export default function OtpAuthPage() {
+    const setUser = useAuthStore((state) => state.setUser); // 💡 Obtenemos la acción
     const router = useRouter(); // 💡 Inicializamos el router del cliente
     const [formData, setFormData] = useState({
         email: '',
@@ -24,7 +26,6 @@ export default function OtpAuthPage() {
     };
 
     const handleAccess = async () => {
-        console.log('handleAccess')
 
         setErrorMsg('');
         setLoading(true);
@@ -43,8 +44,15 @@ export default function OtpAuthPage() {
 
         // 2. Manejo de respuesta satisfactoria en formato API
         if (result.success) {
+            toast.success("Inicio de sesión exitoso");
             console.log("Datos del usuario capturados con éxito en el Frontend:", result.user);
-
+            // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
+            setUser({
+                id: result.user.id,
+                name: result.user.name,
+                email: result.user.email,
+                isAdmin: result.user.isAdmin,
+            });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
 

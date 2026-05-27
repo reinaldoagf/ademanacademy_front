@@ -4,19 +4,19 @@ import type { NextRequest } from 'next/server';
 interface JwtPayload {
   sub: string;
   email: string;
-  role: string;
+  isAdmin: string;
   exp: number;
 }
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  
+
   // 1. Intentar recuperar la cookie con el JWT generado por el backend
   const token = req.cookies.get('auth_token')?.value;
 
   // 2. Control para usuarios NO autenticados
   if (!token) {
-    if (pathname.startsWith('/admin') || pathname.startsWith('/organizador')) {
+    if (pathname.startsWith('/admin')) {
       const loginUrl = new URL('/login', req.url);
       // Adjuntamos la página de destino original para redirigir tras loguearse
       loginUrl.searchParams.set('callbackUrl', pathname);
@@ -42,15 +42,11 @@ export async function middleware(req: NextRequest) {
       throw new Error('Token expirado');
     }
 
-    const userRole = payload.role;
+    const isAdmin = payload.isAdmin;
+    console.log({ payload });
 
     // Protección de rutas de Administrador
-    if (pathname.startsWith('/admin') && userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/403', req.url));
-    }
-
-    // Protección de rutas de Organizador
-    if (pathname.startsWith('/organizador') && userRole !== 'organizador') {
+    if (pathname.startsWith('/admin') && !isAdmin) {
       return NextResponse.redirect(new URL('/403', req.url));
     }
 

@@ -1,23 +1,14 @@
-// src/components/layout/sidebar.tsx
+// src/components/layout/Sidebar.tsx
 "use client";
-import Link from "next/link";
+
 import { usePathname } from "next/navigation";
-import {
-  ChartPie,
-  Users,
-  CalendarDays,
-  Wallet,
-  Shirt,
-  Armchair,
-  Star,
-  UserPlus,
-  LogOut,
-  CheckSquare, // Para Asistencias
-  Contact,     // Para Profesores
-  ShoppingBag, // Para Tienda/Merchandising
-  HeartPulse   // Para Progreso/Salud del alumno
-} from 'lucide-react';
+import Link from "next/link";
+import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
+import {
+  ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
+  Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut
+} from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,8 +16,16 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const logoutStore = useAuthStore((state) => state.logout);
 
-  // Secciones modulares del software
+  // Cierre de sesión unificado (Limpia estado global + Cookies)
+  const onLogout = async () => {
+    logoutStore();
+    await handleLogout();
+  };
+
+  // Secciones modulares del software (Administrador)
   const gestionAcademica = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
     { name: 'Alumnos y Progreso', href: '/admin/alumnos', icon: HeartPulse, badge: 142 },
@@ -48,6 +47,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 
+  // Items para usuario Cliente (isAdmin == false o en vista de cliente)
+  const gestionPersonal = [
+    { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
+    { name: 'Mis Clases', href: '/client/clases', icon: CalendarDays },
+    { name: 'Mis Pagos', href: '/client/pagos', icon: Wallet },
+    { name: 'Mis Vestuarios', href: '/client/vestuarios', icon: Shirt },
+  ];
+
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
   const renderLink = (item: any) => {
     const Icon = item.icon;
@@ -57,7 +64,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         key={item.href}
         href={item.href}
         className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${isActive
-          ? 'border-l border-l-4 border-l-[#5e0472] bg-purple-100 text-[#5e0472]'
+          ? 'border-l-4 border-l-[#5e0472] bg-purple-100 text-[#5e0472]'
           : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
           } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
       >
@@ -70,7 +77,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         {item.badge !== undefined && (
           <span className={`
-            text-[10px] font-bold px-2 py-0.5 shrink-0
+            text-[10px] font-bold px-2 py-0.5 shrink-0 rounded
             ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'}
             ${!isOpen ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[15px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]' : ''}
           `}>
@@ -79,7 +86,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         )}
 
         {!isOpen && (
-          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap">
+          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap rounded">
             {item.name}
           </div>
         )}
@@ -87,42 +94,63 @@ export function Sidebar({ isOpen }: SidebarProps) {
     );
   };
 
+  // Determinamos qué paneles mostrar basándonos en la ruta actual
+  const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
+  const isClientView = pathname.startsWith('/client');
+
   return (
     <aside className={`
       bg-white/80 backdrop-blur-md flex flex-col justify-between border-r border-purple-100 
       fixed md:static inset-y-0 left-0 z-40 transition-all duration-300 h-vh overflow-y-auto
       ${isOpen
         ? 'w-64 translate-x-0'
-        : '-translate-x-full md:translate-x-0 md:w-15'
+        : '-translate-x-full md:translate-x-0 md:w-16'
       }
     `}>
       <div className="space-y-6">
 
-        {/* BLOQUE 1: ACADÉMICO */}
-        <div className="space-y-1">
-          <div className="px-4 pt-4">
-            <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
-              Academia
-            </p>
+        {/* 1️⃣ VISTA DE ADMINISTRADOR */}
+        {isAdminView && (
+          <>
+            {/* BLOQUE 1: ACADÉMICO */}
+            <div className="space-y-1">
+              <div className="px-4 pt-4">
+                <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                  Academia
+                </p>
+              </div>
+              {gestionAcademica.map(renderLink)}
+            </div>
+
+            {/* BLOQUE 2: OPERACIONES */}
+            <div className="space-y-1">
+              <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                Finanzas y Logística
+              </p>
+              {gestionOperativa.map(renderLink)}
+            </div>
+
+            {/* BLOQUE 3: CRECIMIENTO */}
+            <div className="space-y-1">
+              <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                Eventos y Leads
+              </p>
+              {marketingEventos.map(renderLink)}
+            </div>
+          </>
+        )}
+
+        {/* 2️⃣ VISTA DE CLIENTE / ALUMNO */}
+        {isClientView && (
+          <div className="space-y-1">
+            <div className="px-4 pt-4">
+              <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                Mi Cuenta
+              </p>
+            </div>
+            {gestionPersonal.map(renderLink)}
           </div>
-          {gestionAcademica.map(renderLink)}
-        </div>
-
-        {/* BLOQUE 2: OPERACIONES */}
-        <div className="space-y-1">
-          <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
-            Finanzas y Logística
-          </p>
-          {gestionOperativa.map(renderLink)}
-        </div>
-
-        {/* BLOQUE 3: CRECIMIENTO */}
-        <div className="space-y-1">
-          <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
-            Eventos y Leads
-          </p>
-          {marketingEventos.map(renderLink)}
-        </div>
+        )}
 
       </div>
 
@@ -130,7 +158,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       <div className="mt-6 pt-4 border-t border-purple-50">
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={onLogout}
           className={`w-full flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:bg-red-50 hover:text-red-500 text-sm transition cursor-pointer ${!isOpen && 'md:justify-center md:px-0'}`}>
           <LogOut className="w-5 h-5 shrink-0" />
           <span className={!isOpen ? 'md:hidden' : ''}>Cerrar Sesión</span>
