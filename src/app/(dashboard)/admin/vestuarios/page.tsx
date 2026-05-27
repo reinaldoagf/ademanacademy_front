@@ -1,4 +1,4 @@
-// src/app/(dashboard)/vestuarios/page.tsx
+// src/app/(dashboard)/admin/vestuarios/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -247,13 +247,12 @@ export default function VestuariosPage() {
                             {ves.id}
                           </span>
                           <span
-                            className={`text-[9px] font-questrial font-bold px-1.5 py-0.5 ${
-                              ves.categoria === "Baby"
+                            className={`text-[9px] font-questrial font-bold px-1.5 py-0.5 ${ves.categoria === "Baby"
                                 ? "bg-purple-100 text-purple-700"
                                 : ves.categoria === "Infantil"
                                   ? "bg-pink-100 text-pink-700"
                                   : "bg-indigo-100 text-indigo-700"
-                            }`}
+                              }`}
                           >
                             {ves.categoria}
                           </span>
@@ -268,13 +267,12 @@ export default function VestuariosPage() {
 
                       {/* Estado de la indumentaria */}
                       <span
-                        className={`text-[10px] font-questrial font-bold px-2.5 py-1 ${
-                          ves.estado === "Listo"
+                        className={`text-[10px] font-questrial font-bold px-2.5 py-1 ${ves.estado === "Listo"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                             : ves.estado === "En Costura"
                               ? "bg-amber-50 text-amber-700 border border-amber-100"
                               : "bg-pink-50 text-pink-700 border border-pink-100"
-                        }`}
+                          }`}
                       >
                         {ves.estado}
                       </span>
@@ -323,11 +321,10 @@ export default function VestuariosPage() {
 
                     <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-300 ${
-                          porcentajeUso === 100
+                        className={`h-full transition-all duration-300 ${porcentajeUso === 100
                             ? "bg-purple-600"
                             : "gradient-purple"
-                        }`}
+                          }`}
                         style={{ width: `${porcentajeUso}%` }}
                       ></div>
                     </div>
