@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Mail, Lock, ChevronRight, ShieldCheck, Globe, Star, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ChevronRight, Loader2, ShieldCheck, Globe, Star, Eye, EyeOff } from "lucide-react";
 import { handleLogin } from "@/app/actions/auth";
 import { useAuthStore } from "@/store/authStore";
 
@@ -142,8 +142,18 @@ export default function OtpAuthPage() {
                         disabled={!!errorMsg || !formData.email || !formData.password || loading}
                         className="w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
                     >
-                        {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-                        {!loading && <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                        {loading ? (
+                            <>
+                                {/* Spinner animado de Lucide */}
+                                <span>Iniciando sesión</span>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            </>
+                        ) : (
+                            <>
+                                <span>Iniciar Sesión</span>
+                                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </>
+                        )}
                     </button>
 
                 </form>
