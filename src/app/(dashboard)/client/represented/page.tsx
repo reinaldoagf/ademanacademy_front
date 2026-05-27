@@ -219,7 +219,11 @@ export default function RepresentedPage() {
                                 <button type="button" onClick={() => setIsOpen(false)} className="px-4 py-2 border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 cursor-pointer">
                                     Cancelar
                                 </button>
-                                <button type="submit" className="px-5 py-2 font-anton uppercase tracking-wider gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 cursor-pointer">
+                                <button type="submit" className="
+                    font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
+                    gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90
+                    
+                  ">
                                     Guardar Alumno
                                 </button>
                             </div>
