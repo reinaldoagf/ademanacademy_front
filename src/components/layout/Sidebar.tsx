@@ -52,7 +52,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
     { name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
-    { name: 'Mis Vestuarios', href: '/client/vestuarios', icon: Shirt },
+    { name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
     { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 },
   ];
 
