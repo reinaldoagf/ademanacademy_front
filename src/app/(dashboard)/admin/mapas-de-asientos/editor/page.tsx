@@ -17,15 +17,18 @@ import {
   Maximize2,
   Copy,
   Trash2,
-  Save
+  Save,
+  Layers,
+  Users,
+  ShieldAlert
 } from "lucide-react";
 
 // --- ICONOS ADICIONALES REQUERIDOS ---
 const AlignCenterHorizontal = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12H2M12 2v20M8 5h8M8 19h8"/></svg>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12H2M12 2v20M8 5h8M8 19h8" /></svg>
 );
 const AlignCenterVertical = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V2M2 12h22M5 8v8M19 8v8"/></svg>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V2M2 12h22M5 8v8M19 8v8" /></svg>
 );
 
 // --- INTERFACES ---
@@ -42,6 +45,8 @@ interface ObjetoEscenario {
   grupoId?: string;
   rotacionGrupo?: number;
   precio?: number;
+  macroGrupoId?: string;
+  limitePorRepresentante?: number;
 }
 
 const obtenerLetraPrefijo = (index: number): string => {
@@ -74,7 +79,7 @@ export default function SeatingMapBuilderPage() {
 
   const [loteFilas, setLoteFilas] = useState<number>(3);
   const [loteColumnas, setLoteColumnas] = useState<number>(5);
-  
+
   const [tipoSillaLote, setTipoSillaLote] = useState<"silla_vip" | "silla_general" | "silla_patrocinante" | "silla_preferencial">("silla_vip");
   const [precioUnitarioLote, setPrecioUnitarioLote] = useState<number>(0);
 
@@ -175,6 +180,8 @@ export default function SeatingMapBuilderPage() {
       itemID: obj.itemID,
       tipo: obj.tipo,
       nombre: obj.nombre,
+      limitePorRepresentante: obj.limitePorRepresentante,
+      macroGrupoId: obj.macroGrupoId,
       numeroSilla: obj.numeroSilla,
       grupoId: obj.grupoId,
       rotacion: obj.rotacion,
@@ -317,7 +324,7 @@ export default function SeatingMapBuilderPage() {
 
         if (obj.numeroSilla) {
           ctx.save(); ctx.rotate(-(rotacionLocalRad + rotacionDelGrupoRad));
-          ctx.fillStyle = "#ffffff"; 
+          ctx.fillStyle = "#ffffff";
           const largoTexto = obj.numeroSilla.toString().length;
           const factorEscala = largoTexto > 3 ? 0.35 : 0.45;
           ctx.font = `bold ${Math.max(10, obj.ancho * factorEscala)}px Questrial, sans-serif`;
@@ -527,17 +534,58 @@ export default function SeatingMapBuilderPage() {
   const totalSillasCount = sillasActuales.length;
   const ingresoTotalProyectado = sillasActuales.reduce((acc, s) => acc + (s.precio || 0), 0);
 
+  // --- 💡 NUEVA LÓGICA: ESTADOS PARA AGRUPACIÓN POSTERIOR ---
+  const [lotesSeleccionadosParaMacro, setLotesSeleccionadosParaMacro] = useState<string[]>([]);
+  const [limiteVentaMacroGrupo, setLimiteVentaMacroGrupo] = useState<number>(5);
+  const [macroGruposConfig, setMacroGruposConfig] = useState<Record<string, { limitePorRepresentante: number; lotes: string[] }>>({});
+
   const desglosePorTipo = sillasActuales.reduce((acc, s) => {
     acc[s.tipo] = (acc[s.tipo] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
+  // --- 💡 NUEVA LÓGICA: FUNCIONES DE PROCESAMIENTO ---
+  const ejecutarAgrupacionDeLotesPosterior = () => {
+    if (lotesSeleccionadosParaMacro.length < 2) return;
+
+    const nuevoMacroGrupoId = `macro_lote_${Date.now()}`;
+    const limiteAsignado = limiteVentaMacroGrupo;
+
+    // Registrar macro grupo en la configuración local
+    setMacroGruposConfig(prev => ({
+      ...prev,
+      [nuevoMacroGrupoId]: {
+        limitePorRepresentante: limiteAsignado,
+        lotes: [...lotesSeleccionadosParaMacro]
+      }
+    }));
+
+    // Inyectar transversalmente la metadata de venta a los lotes elegidos
+    setObjetos(prevObjetos =>
+      prevObjetos.map(silla => {
+        if (silla.grupoId && lotesSeleccionadosParaMacro.includes(silla.grupoId)) {
+          return {
+            ...silla,
+            macroGrupoId: nuevoMacroGrupoId,
+            limitePorRepresentante: limiteAsignado
+          };
+        }
+        return silla;
+      })
+    );
+
+    // Resetear formulario lateral de macro-grupos
+    setLotesSeleccionadosParaMacro([]);
+    alert(`¡Éxito! Lotes agrupados correctamente con un límite de ${limiteAsignado} sillas por representante.`);
+  };
+  // Extrae todos los loteIds únicos presentes en el lienzo actual
+  const listaDeLotesDisponibles = Array.from(new Set(objetos.map(o => o.grupoId).filter(Boolean))) as string[];
   return (
     <>
       <HeroSection
         htmlTitle={`Plano de <em class="text-[#5e0472]">Asientos</em>`}
         htmlSubTitle="Manejo dinámico vectorial con herramientas de alineación y leyes métricas."
-        actions={[{ label: guardando ? "Guardando..." : "Guardar Plano", onClick: handleGuardarPlano, icon: <Save className="w-4 h-4" />, variant: "primary", disabled: guardando }]}
+        actions={[{ label: guardando ? "Guardando..." : "Guardar Plano", onClick: handleGuardarPlano, icon: <Save className="w-4 h-4" />, variant: "primary", isDisabled: guardando }]}
       />
 
       <div className="p-4 md:p-8 mx-auto w-full overflow-y-auto space-y-6">
@@ -560,7 +608,7 @@ export default function SeatingMapBuilderPage() {
         {/* --- REJILLA CENTRAL EDITOR --- */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="space-y-4 lg:col-span-1">
-            
+
             {/* ENTORNO SALÓN */}
             <div className="glass-card p-4 bg-white space-y-3 border border-purple-100 shadow-sm">
               <h3 className="text-xs font-anton uppercase tracking-wider flex items-center gap-1"><Settings className="w-3.5 h-3.5" /> Entorno del Salón</h3>
@@ -588,7 +636,7 @@ export default function SeatingMapBuilderPage() {
                   <input type="number" min="1" value={loteColumnas} onChange={(e) => setLoteColumnas(Math.max(1, parseInt(e.target.value) || 1))} className="w-full p-2 border border-purple-100 text-center font-questrial font-bold text-gray-700" />
                 </div>
               </div>
-              
+
               <div className="space-y-2 text-xs">
                 <div>
                   <label className="block text-gray-400 font-questrial mb-1">Clasificación de Asiento</label>
@@ -609,18 +657,17 @@ export default function SeatingMapBuilderPage() {
                     )}
                   </label>
                   <div className="relative">
-                    <input 
-                      type="number" 
-                      min="0" 
-                      step="0.01" 
-                      value={precioUnitarioLote} 
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={precioUnitarioLote}
                       disabled={tipoYaEstablecidoEnMapa}
-                      onChange={(e) => setPrecioUnitarioLote(Math.max(0, parseFloat(e.target.value) || 0))} 
-                      className={`w-full p-2 pr-7 border font-questrial font-bold text-right text-gray-700 ${
-                        tipoYaEstablecidoEnMapa 
-                          ? "bg-amber-50/60 border-amber-200 text-amber-800 cursor-not-allowed select-none" 
-                          : "bg-slate-50 border-purple-100 focus:bg-white focus:outline-purple-300"
-                      }`}
+                      onChange={(e) => setPrecioUnitarioLote(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className={`w-full p-2 pr-7 border font-questrial font-bold text-right text-gray-700 ${tipoYaEstablecidoEnMapa
+                        ? "bg-amber-50/60 border-amber-200 text-amber-800 cursor-not-allowed select-none"
+                        : "bg-slate-50 border-purple-100 focus:bg-white focus:outline-purple-300"
+                        }`}
                       placeholder="0.00"
                     />
                     {tipoYaEstablecidoEnMapa && (
@@ -661,6 +708,87 @@ export default function SeatingMapBuilderPage() {
               ) : <p className="text-xs font-questrial text-gray-400 italic text-center py-2">Selecciona un elemento.</p>}
             </div>
 
+            {/* --- 💡 NUEVO MÓDULO: AGRUPACIÓN POSTERIOR MULTILOTE (CASO 1) --- */}
+            {!objetoSeleccionado && (
+              <div className="glass-card p-4 bg-white space-y-3 border border-purple-100 shadow-sm animate-fade-in">
+                <h3 className="text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 text-purple-950">
+                  <Layers className="w-3.5 h-3.5 text-purple-700" /> Agrupación de Lotes Posterior
+                </h3>
+                <p className="text-[11px] text-gray-400 font-questrial leading-tight">
+                  Selecciona lotes independientes ya posicionados para fusionar sus reglas de negocio de venta máxima.
+                </p>
+
+                {listaDeLotesDisponibles.length > 0 ? (
+                  <div className="space-y-3 text-xs pt-1">
+                    <div className="space-y-1 max-h-36 overflow-y-auto border border-purple-50 p-2 bg-slate-50/50">
+                      {listaDeLotesDisponibles.map((grupoId) => {
+                        const count = objetos.filter(o => o.grupoId === grupoId).length;
+                        const tSilla = objetos.find(o => o.grupoId === grupoId)?.tipo || "silla_general";
+                        const estaChequeado = lotesSeleccionadosParaMacro.includes(grupoId);
+
+                        return (
+                          <label key={grupoId} className="flex items-center gap-2 p-1.5 hover:bg-purple-50/60 cursor-pointer transition text-gray-700 font-questrial border-b border-gray-100/70 last:border-0">
+                            <input
+                              type="checkbox"
+                              checked={estaChequeado}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setLotesSeleccionadosParaMacro(prev => [...prev, grupoId]);
+                                } else {
+                                  setLotesSeleccionadosParaMacro(prev => prev.filter(id => id !== grupoId));
+                                }
+                              }}
+                              className="accent-[#5e0472]"
+                            />
+                            <div className="flex justify-between w-full text-[11px]">
+                              <span className="font-mono font-bold truncate max-w-[110px]">{grupoId}</span>
+                              <span className="text-[10px] bg-slate-200/70 px-1 text-gray-600 font-sans font-medium uppercase">{tSilla.split("_")[1]} ({count})</span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {/* Controles Dinámicos de Fusión */}
+                    <div className="space-y-2.5 pt-2 border-t border-dashed border-purple-100">
+                      <div className="space-y-1">
+                        <label className="block text-gray-600 font-questrial font-bold text-[10px] uppercase">
+                          Límite de Venta por Representante:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={limiteVentaMacroGrupo}
+                            onChange={(e) => setLimiteVentaMacroGrupo(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-16 p-1.5 border border-purple-200 text-center font-questrial font-bold text-[#5e0472] bg-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-400"
+                          />
+                          <span className="text-[11px] text-gray-500 font-questrial">asientos como máximo</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={lotesSeleccionadosParaMacro.length < 2}
+                        onClick={ejecutarAgrupacionDeLotesPosterior}
+                        className={`w-full text-xs font-questrial font-bold p-2 flex items-center justify-center gap-1.5 transition ${lotesSeleccionadosParaMacro.length >= 2
+                          ? "bg-[#5e0472] text-white cursor-pointer shadow-sm"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                      >
+                        <Users className="w-3.5 h-3.5" /> Unificar Lotes Seleccionados
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] font-questrial text-gray-400 italic text-center py-2 bg-slate-50 border border-dashed border-gray-200">
+                    Inserta al menos 2 bloques de sillas para habilitar la macro-agrupación posterior.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* ALINEACIÓN Y ACCIONES */}
             {objetoSeleccionado && (
               <div className="glass-card p-4 bg-white space-y-4 border border-purple-100 shadow-sm animate-fade-in">
@@ -690,11 +818,66 @@ export default function SeatingMapBuilderPage() {
           <div className="lg:col-span-3 space-y-4">
             <div ref={contenedorCanvasRef} className="w-full bg-slate-50 border border-purple-100 relative shadow-inner overflow-hidden" style={{ height: `${canvasAltoPx}px` }}>
               <canvas ref={canvasRef} width={canvasAnchoPx} height={canvasAltoPx} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseLeave={() => { setObjetoBajoHover(null); setIsPanning(false); setIsDragging(false); }} className={`block transition-colors ${obtenerEstiloCursor()}`} />
+              {/* 💡 TOOLTIP FLOTANTE EN HOVER: INFORMACIÓN DE AGRUPACIÓN Y CONDICIONES DE VENTA */}
+              {objetoBajoHover && (
+                <div
+                  className="absolute z-50 bg-slate-900/95 text-white p-3 rounded shadow-xl border border-purple-500/30 text-[11px] font-questrial pointer-events-none w-52 space-y-1.5 animate-fade-in backdrop-blur-sm"
+                  style={{
+                    left: `${posicionMouseCanvas.x + 15}px`,
+                    top: `${posicionMouseCanvas.y + 15}px`
+                  }}
+                >
+                  {/* Encabezado e ID */}
+                  <div className="flex justify-between items-center border-b border-slate-700 pb-1">
+                    <span className="font-anton uppercase tracking-wider text-purple-400">
+                      {objetoBajoHover.tipo.replace("silla_", "").toUpperCase()}
+                    </span>
+                    <span className="font-mono text-[9px] text-gray-400">
+                      {objetoBajoHover.itemID.split("_")[1] || "ID"}
+                    </span>
+                  </div>
+
+                  {/* Identificadores de Lote */}
+                  <div className="space-y-0.5">
+                    {objetoBajoHover.grupoId && (
+                      <div className="text-gray-300">
+                        Lote Origen: <span className="font-mono font-bold text-gray-100">{objetoBajoHover.grupoId}</span>
+                      </div>
+                    )}
+
+                    {objetoBajoHover.macroGrupoId ? (
+                      <div className="text-purple-300 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block"></span>
+                        Agrupación: <span className="font-mono font-bold text-white">{objetoBajoHover.macroGrupoId.substring(0, 15)}...</span>
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 italic">Sin macro-agrupación</div>
+                    )}
+                  </div>
+
+                  {/* Condiciones de Venta */}
+                  <div className="pt-1 border-t border-slate-800 space-y-1">
+                    {objetoBajoHover.tipo === "silla_patrocinante" ? (
+                      <div className="text-amber-400 font-bold flex items-center gap-1 bg-amber-950/40 p-1 rounded border border-amber-900/50 text-[10px]">
+                        <ShieldAlert className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                        RESTRICCIÓN: Solo Organizador
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center bg-slate-800/60 p-1 rounded">
+                        <span className="text-gray-400">Máx por persona:</span>
+                        <span className="font-bold text-emerald-400">
+                          {objetoBajoHover.limitePorRepresentante || 5} uds.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* --- SECCIÓN INTEGRADA: LEYENDA ANTERIOR + SECCIÓN DE VENTAS --- */}
             <div className="bg-white border border-purple-100 p-5 shadow-sm grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
-              
+
               {/* LEYENDA ANTERIOR CONTEO DE INVENTARIO */}
               <div className="lg:col-span-3">
                 <h4 className="text-xs font-anton uppercase tracking-wider text-gray-700 mb-3 flex items-center gap-1.5">
@@ -728,7 +911,7 @@ export default function SeatingMapBuilderPage() {
                 </span>
                 <span className="block text-[10px] font-questrial text-gray-400 italic mt-0.5">Basado en {totalSillasCount} asientos diseñados</span>
               </div>
-              
+
             </div>
 
           </div>
