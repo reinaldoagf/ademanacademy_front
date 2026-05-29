@@ -90,7 +90,7 @@ export default function OtpAuthPage() {
                         e.preventDefault();
                         handleAccess();
                     }}>
-                    {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm mb-4">{errorMsg}</p>}
+                    {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
                     <div className="mb-5 flex flex-col gap-1.5">
                         <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="email-address">Correo Electrónico</label>
 

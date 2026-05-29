@@ -168,7 +168,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "Ballet Clásico", img: "https://images.unsplash.com/photo-1519340241574-20ec888bc541?q=80&w=1921&auto=format&fit=crop" },
+              { title: "Ballet Clásico", img: "https://i.pinimg.com/474x/99/6f/b7/996fb72c1cfa898de667f8262ff85abf.jpg" },
               { title: "Danza Contemporánea", img: "https://images.unsplash.com/photo-1508807526345-15e9b5f4eaff?q=80&w=1910&auto=format&fit=crop" },
               { title: "Flamenco", img: "https://images.unsplash.com/photo-1621976498727-9e5d56476276?q=80&w=2070&auto=format&fit=crop" },
               { title: "Danza Urbana", img: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?q=80&w=2070&auto=format&fit=crop" }

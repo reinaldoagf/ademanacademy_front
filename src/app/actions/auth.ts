@@ -17,13 +17,16 @@ export async function handleLogin(formData: FormData) {
       body: JSON.stringify({ email, password }),
     });
 
-
+    // 💡 1. Consumimos el json una única vez aquí
     const data = await response.json();
-    console.log({ data })
+    console.log({ data });
 
+    // 💡 2. Si hay un error, usamos los datos que ya guardamos en la variable 'data'
     if (!response.ok) {
-      const errorData = await response.json();
-      return { error: errorData.message || "Error al iniciar sesión" };
+      return {
+        success: false,
+        error: data.message || "Error al iniciar sesión"
+      };
     }
 
     // Capturar la cookie Set-Cookie enviada por NestJS y replicarla en Next.js
@@ -40,13 +43,15 @@ export async function handleLogin(formData: FormData) {
       });
     }
 
-    // Retorna la respuesta satisfactoria en formato API que el frontend espera recibir
     return {
       success: true,
       user: data.user || data
     };
-  } catch (err) {
-    return { success: false, error: "Fallo de comunicación con el backend" };
+  } catch (err: any) {
+    // Evitamos mapear propiedades anidadas inexistentes como 'err.data' que provocan más undefineds
+    const message = err?.message || "Fallo de comunicación con el backend";
+    console.error({ message });
+    return { success: false, error: message };
   }
 }
 
@@ -72,38 +77,31 @@ export async function handleRegister(formData: FormData) {
       return { success: false, error: data.message || "Error en el servidor de registro" };
     }
 
-    // 🍪 Si tu backend retorna un token, lo guardamos de forma segura en las cookies
     if (data.token) {
       const cookieStore = await cookies();
       cookieStore.set("auth_token", data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 1 semana
+        maxAge: 60 * 60 * 24 * 7,
         path: "/",
       });
     }
 
-    // Retorna la respuesta satisfactoria en formato API que el frontend espera recibir
     return {
       success: true,
       user: data.user || data
     };
 
-  } catch (err) {
-    return { success: false, error: "Fallo de comunicación con el backend" };
+  } catch (err: any) {
+    const message = err?.message || "Fallo de comunicación con el backend";
+    console.error({ message });
+    return { success: false, error: message };
   }
 }
 
 export async function handleLogout() {
   const cookieStore = await cookies();
-
-  // Eliminamos la cookie del navegador asignándole una fecha de expiración pasada
   cookieStore.delete("auth_token");
-
-  // Opcional: Si tu backend requiere invalidar el token o la sesión en Redis/DB, 
-  // puedes hacer un fetch a ${BACKEND_URL}/auth/logout aquí antes de borrar la cookie.
-
-  // Redirigimos al usuario al login
   redirect("/login");
 }

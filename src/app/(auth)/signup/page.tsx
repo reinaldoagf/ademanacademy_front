@@ -18,8 +18,10 @@ import {
     EyeOff,
 } from "lucide-react";
 import { handleRegister } from "@/app/actions/auth";
+import { useAuthStore } from "@/store/authStore";
 
 export default function RegisterPage() {
+    const setUser = useAuthStore((state) => state.setUser); // 💡 Obtenemos la acción
     const router = useRouter(); // 💡 Inicializamos el router del cliente
     // Manejo de Pasos: 1 o 2
     const [step, setStep] = useState<1 | 2>(1);
@@ -103,7 +105,13 @@ export default function RegisterPage() {
                 "Datos del usuario capturados con éxito en el Frontend:",
                 result.user
             );
-
+            // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
+            setUser({
+                id: result.user.id,
+                name: result.user.name,
+                email: result.user.email,
+                isAdmin: result.user.isAdmin,
+            });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
 
@@ -161,7 +169,7 @@ export default function RegisterPage() {
                 </div>
 
                 {error && (
-                    <p className="text-red-500 bg-red-50 p-2 rounded text-sm mb-4">
+                    <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
                         {error}
                     </p>
                 )}
