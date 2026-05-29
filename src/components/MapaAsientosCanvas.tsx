@@ -41,9 +41,13 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // Factor de escala (píxeles por metro)
-  const ESCALA = 25; 
-  
-  const canvasWidth = mapaConfig.anchoTotalSalón * ESCALA;
+  const ESCALA = 25;
+
+  // 💡 CONSTANTES GLOBALES DE AJUSTE VISUAL (Solo aplican a sillas)
+  const FACTOR_AUMENTO_SILLA = 1.25;      // 25% más grandes
+  const FACTOR_ESPACIO_COLUMNAS = 1.15;   // 15% más de separación horizontal entre sillas
+
+  const canvasWidth = mapaConfig.anchoTotalSalón * ESCALA * FACTOR_ESPACIO_COLUMNAS;
   const canvasHeight = mapaConfig.altoTotalSalón * ESCALA;
 
   // Función auxiliar idéntica al editor para calcular centros de rotación grupal
@@ -71,10 +75,14 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
 
     // Renderizar elementos con diseño idéntico al editor
     mapaConfig.elementos.forEach((el) => {
-      const x = el.xMetros * ESCALA;
+      // 💡 Aplicamos los factores condicionales según el tipo de elemento
+      const fAumento = el.tipo !== "tarima_pista" ? FACTOR_AUMENTO_SILLA : 1.0;
+      const fEspacio = el.tipo !== "tarima_pista" ? FACTOR_ESPACIO_COLUMNAS : 1.0;
+
+      const x = el.xMetros * ESCALA * fEspacio;
       const y = el.yMetros * ESCALA;
-      const w = el.anchoMetros * ESCALA;
-      const h = el.altoMetros * ESCALA;
+      const w = el.anchoMetros * ESCALA * fAumento;
+      const h = el.altoMetros * ESCALA * fAumento;
 
       ctx.save();
       const centroX = x + w / 2;
@@ -84,7 +92,14 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       let rotacionDelGrupoRad = 0;
       if (el.grupoId && el.rotacionGrupo) {
         const grupoSillas = mapaConfig.elementos.filter((o) => o.grupoId === el.grupoId);
-        const gCentro = obtenerCentroDelLote(grupoSillas);
+        const gCentroOriginal = obtenerCentroDelLote(grupoSillas);
+
+        // El centro del lote se desplaza proporcionalmente al factor de espacio en X
+        const gCentro = {
+          x: gCentroOriginal.x * fEspacio,
+          y: gCentroOriginal.y,
+        };
+
         rotacionDelGrupoRad = (el.rotacionGrupo * Math.PI) / 180;
         ctx.translate(gCentro.x, gCentro.y);
         ctx.rotate(rotacionDelGrupoRad);
@@ -95,37 +110,37 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       const rotacionLocalRad = (el.rotacion * Math.PI) / 180;
       ctx.translate(centroX, centroY);
       ctx.rotate(rotacionLocalRad);
-      
+
       const localX = -w / 2;
       const localY = -h / 2;
 
       if (el.tipo === "tarima_pista") {
         // --- DISEÑO DE TARIMA ORIGINAL ---
-        ctx.fillStyle = "#334155"; 
-        ctx.strokeStyle = "#1e293b"; 
+        ctx.fillStyle = "#334155";
+        ctx.strokeStyle = "#1e293b";
         ctx.lineWidth = 3;
-        ctx.beginPath(); 
-        ctx.roundRect(localX, localY, w, h, 8); 
-        ctx.fill(); 
+        ctx.beginPath();
+        ctx.roundRect(localX, localY, w, h, 8);
+        ctx.fill();
         ctx.stroke();
-        
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)"; 
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
         ctx.lineWidth = 1;
-        for (let step = localY + 15; step < localY + h; step += 15) { 
-          ctx.beginPath(); ctx.moveTo(localX, step); ctx.lineTo(localX + w, step); ctx.stroke(); 
+        for (let step = localY + 15; step < localY + h; step += 15) {
+          ctx.beginPath(); ctx.moveTo(localX, step); ctx.lineTo(localX + w, step); ctx.stroke();
         }
 
-        ctx.fillStyle = "#ffffff"; 
+        ctx.fillStyle = "#ffffff";
         ctx.font = "bold 13px Questrial, sans-serif";
-        ctx.textAlign = "center"; 
-        ctx.textBaseline = "middle"; 
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         ctx.fillText(el.nombre, 0, 0);
       } else {
         // --- DISEÑO DE SILLAS CON ESTADOS DE SELECCIÓN ---
         const esOcupado = asientosOcupados.includes(el.itemID);
         const esSeleccionado = seleccionados.some((s) => s.itemID === el.itemID);
 
-        let colorCojin = "#6e0372"; 
+        let colorCojin = "#6e0372";
         let colorEstructura = "#4a024d";
 
         // Asignación de colores por tipo (si está disponible)
@@ -143,25 +158,25 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
         }
 
         const rEsq = Math.min(w, h) * 0.25;
-        
+
         // Cojín Principal
-        ctx.fillStyle = colorCojin; 
-        ctx.strokeStyle = colorEstructura; 
+        ctx.fillStyle = colorCojin;
+        ctx.strokeStyle = colorEstructura;
         ctx.lineWidth = 2;
-        ctx.beginPath(); 
-        ctx.roundRect(localX + 3, localY + 3, w - 6, h - 8, rEsq); 
-        ctx.fill(); 
-        ctx.stroke();
-        
-        // Espaldar
-        ctx.fillStyle = colorEstructura; 
-        ctx.beginPath(); 
-        ctx.roundRect(localX + 2, localY + h - h * 0.22 - 2, w - 4, h * 0.22, rEsq / 2); 
+        ctx.beginPath();
+        ctx.roundRect(localX + 3, localY + 3, w - 6, h - 8, rEsq);
         ctx.fill();
-        
+        ctx.stroke();
+
+        // Espaldar
+        ctx.fillStyle = colorEstructura;
+        ctx.beginPath();
+        ctx.roundRect(localX + 2, localY + h - h * 0.22 - 2, w - 4, h * 0.22, rEsq / 2);
+        ctx.fill();
+
         // Brazos Laterales (Izquierdo y Derecho)
-        ctx.strokeStyle = colorEstructura; 
-        ctx.lineWidth = 3.5; 
+        ctx.strokeStyle = colorEstructura;
+        ctx.lineWidth = 3.5;
         ctx.lineCap = "round";
         ctx.beginPath(); ctx.moveTo(localX + 1.5, localY + 4); ctx.lineTo(localX + 1.5, localY + h - 4); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(localX + w - 1.5, localY + 4); ctx.lineTo(localX + w - 1.5, localY + h - 4); ctx.stroke();
@@ -169,20 +184,20 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
         // Número de Silla Responsivo
         const textoSilla = el.numeroSilla || el.nombre.replace("Asiento ", "");
         if (textoSilla) {
-          ctx.save(); 
+          ctx.save();
           ctx.rotate(-(rotacionLocalRad + rotacionDelGrupoRad));
-          ctx.fillStyle = "#ffffff"; 
-          
+          ctx.fillStyle = "#ffffff";
+
           const largoTexto = textoSilla.toString().length;
           const factorEscala = largoTexto > 3 ? 0.35 : 0.45;
-          
+
           ctx.font = `bold ${Math.max(9, w * factorEscala)}px Questrial, sans-serif`;
-          ctx.textAlign = "center"; 
-          ctx.textBaseline = "middle"; 
-          ctx.shadowColor = "rgba(0, 0, 0, 0.4)"; 
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
           ctx.shadowBlur = 2;
-          
-          ctx.fillText(textoSilla.toString(), 0, -2); 
+
+          ctx.fillText(textoSilla.toString(), 0, -2);
           ctx.restore();
         }
       }
@@ -192,27 +207,39 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
 
   // Función matemática idéntica al editor para descifrar clics con rotación matricial
   const comprobarInterseccion = (mX: number, mY: number, obj: ElementoMapa) => {
-    let tX = mX; 
+    let tX = mX;
     let tY = mY;
-    const x = obj.xMetros * ESCALA;
+
+    // 💡 Sincronizamos las dimensiones y espaciados con los del renderizado
+    const fAumento = obj.tipo !== "tarima_pista" ? FACTOR_AUMENTO_SILLA : 1.0;
+    const fEspacio = obj.tipo !== "tarima_pista" ? FACTOR_ESPACIO_COLUMNAS : 1.0;
+
+    const x = obj.xMetros * ESCALA * fEspacio;
     const y = obj.yMetros * ESCALA;
-    const w = obj.anchoMetros * ESCALA;
-    const h = obj.altoMetros * ESCALA;
+    const w = obj.anchoMetros * ESCALA * fAumento;
+    const h = obj.altoMetros * ESCALA * fAumento;
 
     if (obj.grupoId && obj.rotacionGrupo) {
-      const g = mapaConfig.elementos.filter((o) => o.grupoId === obj.grupoId); 
-      const c = obtenerCentroDelLote(g);
+      const g = mapaConfig.elementos.filter((o) => o.grupoId === obj.grupoId);
+      const cOriginal = obtenerCentroDelLote(g);
+
+      // Aplicamos el factor de espacio también al centro matricial de evaluación del clic
+      const c = {
+        x: cOriginal.x * fEspacio,
+        y: cOriginal.y
+      };
+
       const radG = (-obj.rotacionGrupo * Math.PI) / 180;
       tX = c.x + (mX - c.x) * Math.cos(radG) - (mY - c.y) * Math.sin(radG);
       tY = c.y + (mX - c.x) * Math.sin(radG) + (mY - c.y) * Math.cos(radG);
     }
-    
-    const cX = x + w / 2; 
-    const cY = y + h / 2; 
+
+    const cX = x + w / 2;
+    const cY = y + h / 2;
     const radL = (-obj.rotacion * Math.PI) / 180;
     const fX = cX + (tX - cX) * Math.cos(radL) - (tY - cY) * Math.sin(radL);
     const fY = cY + (tX - cX) * Math.sin(radL) + (tY - cY) * Math.cos(radL);
-    
+
     return (fX >= x && fX <= x + w && fY >= y && fY <= y + h);
   };
 
@@ -248,9 +275,11 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       onSeleccionChange(nuevaSeleccion);
     }
   };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
   return (
     <div className="space-y-4">
       {/* Leyenda Dinámica Adaptada */}
@@ -282,7 +311,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       </div>
 
       {/* Contenedor del Canvas */}
-      <div className="overflow-auto p-4 bg-gray-50/50 border border-purple-50 max-h-[550px] flex justify-start lg:justify-center">
+      <div className="overflow-auto bg-gray-50/50 border border-purple-50 max-h-[550px] flex justify-start lg:justify-center">
         <canvas
           ref={canvasRef}
           width={canvasWidth}

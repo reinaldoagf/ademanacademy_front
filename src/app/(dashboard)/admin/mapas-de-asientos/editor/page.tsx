@@ -314,7 +314,7 @@ export default function SeatingMapBuilderPage() {
         else if (obj.tipo === "silla_preferencial") { colorCojin = "#bf72f6"; colorEstructura = "#9810fa"; }
         else if (obj.tipo === "silla_patrocinante") { colorCojin = "#eab308"; colorEstructura = "#ca8a04"; }
 
-        const rEsq = Math.min(obj.ancho, obj.alto) * 0.25;
+        const rEsq = Math.min(obj.ancho, obj.alto) * 0.45;
         ctx.fillStyle = colorCojin; ctx.strokeStyle = colorEstructura; ctx.lineWidth = 2 / scale;
         ctx.beginPath(); ctx.roundRect(localX + 3, localY + 3, obj.ancho - 6, obj.alto - 8, rEsq); ctx.fill(); ctx.stroke();
         ctx.fillStyle = colorEstructura; ctx.beginPath(); ctx.roundRect(localX + 2, localY + obj.alto - obj.alto * 0.22 - 2, obj.ancho - 4, obj.alto * 0.22, rEsq / 2); ctx.fill();
