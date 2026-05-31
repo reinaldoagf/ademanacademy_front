@@ -104,7 +104,11 @@ export default function OtpAuthPage() {
                                 required
                                 placeholder="doctor@ejemplo.com"
                                 value={formData.email}
-                                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                onChange={(e) => {
+                                    setErrorMsg('')
+                                    setFormData(prev => ({ ...prev, email: e.target.value }))
+                                }
+                                }
                             />
                         </div>
 
@@ -120,7 +124,11 @@ export default function OtpAuthPage() {
                                 required
                                 placeholder="••••••••"
                                 value={formData.password}
-                                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                                onChange={(e) => {
+                                    setErrorMsg('')
+                                    setFormData(prev => ({ ...prev, password: e.target.value }))
+                                }
+                                }
                             />
 
                             <button

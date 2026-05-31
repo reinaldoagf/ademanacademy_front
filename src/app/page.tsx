@@ -71,7 +71,7 @@ export default function LandingPage() {
           onClick={() => router.push("/login")}
           className="cursor-pointer font-anton uppercase text-xs px-6 py-2.5 bg-white text-[#5e0472] hover:bg-purple-100 transition-all shadow-xl"
         >
-          Portal Alumnos
+          Acceder
         </button>
       </nav>
 
