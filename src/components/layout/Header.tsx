@@ -99,7 +99,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     if (filterNivel) params.append("nivel", filterNivel);
     if (filterEstatus) params.append("estatus", filterEstatus);
 
-    router.push(`/admin/alumnos?${params.toString()}`);
+    router.push(`/admin/students?${params.toString()}`);
   };
 
   useEffect(() => {

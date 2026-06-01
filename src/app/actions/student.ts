@@ -1,8 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
-import axios, { AxiosError } from "axios";
-import { Student } from "@/types/student";
+import axios from "axios";
+import { Student, FetchStudentsParams } from "@/types/student";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 /**
@@ -57,7 +57,25 @@ export async function getMyRepresentedAction(searchTerm?: string): Promise<{ suc
     }
 }
 
-// 3. Guardar o Actualizar Estudiante (Mutación)
+// 4. Guardar o Actualizar Estudiante (Mutación)
+export async function getAllStudentsAction(params: FetchStudentsParams) {
+    try {
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/students`, {
+            params,
+            headers: { "Content-Type": "application/json" }
+        });
+
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
+
+// 4. Guardar o Actualizar Estudiante (Mutación)
 export async function saveStudentAction(formData: Omit<Student, 'id'>, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/students/${id}` : `${BACKEND_URL}/students`;
@@ -85,7 +103,7 @@ export async function saveStudentAction(formData: Omit<Student, 'id'>, id?: stri
     }
 }
 
-// 4. Eliminar Estudiante (Mutación)
+// 5. Eliminar Estudiante (Mutación)
 export async function deleteStudentAction(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario

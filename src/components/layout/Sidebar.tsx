@@ -30,7 +30,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // Secciones modulares del software (Administrador)
   const gestionAcademica = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
-    { name: 'Alumnos y Progreso', href: '/admin/alumnos', icon: HeartPulse, badge: 142 },
+    { name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 142 },
     { name: 'Grupos y Cupos', href: '/admin/grupos', icon: Users, badge: 4 },
     { name: 'Control de Asistencias', href: '/admin/asistencias', icon: CheckSquare },
     { name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
