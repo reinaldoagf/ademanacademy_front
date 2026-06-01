@@ -101,7 +101,7 @@ export default function ConfirmationModal({
 
                 {/* Inputs Condicionales según el 'type' */}
                 {(type === "word" || type === "email") && (
-                    <div className="mt-4 bg-gray-50 p-3 border border-gray-200">
+                    <div className="mt-4 bg-gray-50 p-3">
                         <label className="block text-xs font-questrial text-gray-700 uppercase tracking-wider mb-2">
                             {type === "word" ? (
                                 <>Escribe la palabra <span className="text-gray-900 font-extrabold font-mono">"{requiredWord}"</span> para continuar:</>
@@ -128,7 +128,7 @@ export default function ConfirmationModal({
                 )}
 
                 {/* Botones de Acción */}
-                <div className="mt-6 flex justify-end gap-3">
+                <div className="mt-6 flex justify-between">
                     <button
                         type="button"
                         onClick={onClose}
