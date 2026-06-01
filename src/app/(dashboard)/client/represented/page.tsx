@@ -52,7 +52,11 @@ export default function RepresentedPage() {
             startTransition(async () => {
                 if (modalConfig?.id) {
                     const res = await deleteStudentAction(modalConfig.id);
-                    if (res.success) setList(list.filter((item) => item.id !== modalConfig.id));
+                    if (res.success) {
+                        setList(list.filter((item) => item.id !== modalConfig.id));
+                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+                        window.dispatchEvent(new Event('refresh-represented-count'));
+                    }
                 }
             });
         }
@@ -98,20 +102,13 @@ export default function RepresentedPage() {
                     setList(list.map((item) => (item.id === editingId ? res.data! : item)));
                 } else {
                     setList([res.data!, ...list]);
+                    // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+                    window.dispatchEvent(new Event('refresh-represented-count'));
                 }
                 setIsOpen(false);
             });
         }
     };
-
-    /* const handleDelete = async (id: string) => {
-        if (!confirm("¿Eliminar alumno?")) return;
-
-        startTransition(async () => {
-            const res = await deleteStudentAction(id);
-            if (res.success) setList(list.filter((item) => item.id !== id));
-        });
-    }; */
 
     const handleEditModal = (student: Student) => {
         setFormData({

@@ -1,10 +1,12 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
+import { getMyRepresentedAction } from "@/app/actions/student"; // 🎯 Importa tu Server Action
 import {
   ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
   Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
@@ -47,15 +49,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 
-  // Items para usuario Cliente (isAdmin == false o en vista de cliente)
-  const gestionPersonal = [
+  const [personalManagement, setPersonalManagement] = useState([
     { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { name: 'Representados', href: '/client/represented', icon: Users2, badge: 4 },
+    { name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
     { name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
     { name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
-    { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 },
-  ];
+    { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
+  ]);
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
   const renderLink = (item: any) => {
@@ -100,6 +101,37 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
   const isClientView = pathname.startsWith('/client');
 
+  // 1️⃣ Aislamos la función de carga para poder reutilizarla
+  const fetchBadgeCount = async () => {
+    try {
+      const res = await getMyRepresentedAction();
+      if (res.success && res.data) {
+        const totalRepresentados = res.data.length;
+        setPersonalManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.name === "Representados" ? { ...item, badge: totalRepresentados } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
+  // useEffect para cargar la data real al montar el Sidebar por primera vez
+  useEffect(() => {
+    if (isClientView) {
+      // Cargamos al inicio
+      fetchBadgeCount();
+
+      // 2️⃣ Escuchamos el evento global de actualización
+      window.addEventListener('refresh-represented-count', fetchBadgeCount);
+    }
+
+    // Limpieza al desmontar el componente para evitar fugas de memoria
+    return () => {
+      window.removeEventListener('refresh-represented-count', fetchBadgeCount);
+    };
+  }, [isClientView]);
   return (
     <aside className={`
       bg-white/80 backdrop-blur-md flex flex-col justify-between border-r border-purple-100 
@@ -150,7 +182,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 Mi Cuenta
               </p>
             </div>
-            {gestionPersonal.map(renderLink)}
+            {personalManagement.map(renderLink)}
           </div>
         )}
 
