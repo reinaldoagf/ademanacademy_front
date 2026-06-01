@@ -3,12 +3,13 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import {
+
+  Sparkles,
+  X,
   Users,
-  Heart,
   Search,
   Filter,
   Plus,
-  SlidersHorizontal,
   Award,
   UserCheck2,
   AlertCircle,
@@ -18,7 +19,10 @@ import {
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/common/DatePipe";
 import { Student } from "@/types/student";
-import { getAllStudentsAction } from "@/app/actions/student";
+import {
+  saveStudentAction,
+  getAllStudentsAction
+} from "@/app/actions/student";
 
 
 export default function StudentsPage() {
@@ -31,6 +35,17 @@ export default function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [isPending, startTransition] = useTransition();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    dni: "",
+    firstName: "",
+    lastName: "",
+    birthDate: "",
+    kinship: "Hijo" as Student["kinship"],
+    medicalObservations: "",
+  });
 
   // 🔄 Efecto reactivo con debounce para consultas al servidor
   useEffect(() => {
@@ -63,6 +78,22 @@ export default function StudentsPage() {
     setCurrentPage(1);
   };
 
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    startTransition(async () => {
+      const res = await saveStudentAction(formData, null);
+      if (!res.success) {
+        setErrorMsg(res.error || "Ocurrió un error.");
+        return;
+      }
+
+      setStudents([res.data!, ...students]);
+      // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+      window.dispatchEvent(new Event('refresh-represented-count'));
+      setIsOpen(false);
+    });
+  };
   const handleNewElement = () => console.log('Registrar nuevo elemento modal');
   return (
     <>
@@ -72,8 +103,20 @@ export default function StudentsPage() {
         htmlSubTitle={`Monitorea el nivel técnico, categorías y estado de salud de los bailarines.`}
         actions={[{
           label: "Registrar Nuevo Alumno →",
-          onClick: handleNewElement,
+          onClick: () => {
+            setFormData({
+              dni: "",
+              firstName: "",
+              lastName: "",
+              birthDate: "",
+              kinship: "Hijo",
+              medicalObservations: "",
+            });
+            setErrorMsg(null);
+            setIsOpen(true);
+          },
           icon: <Plus className="w-4 h-4" />,
+          variant: "primary",
         }]}
       />
 
@@ -274,5 +317,176 @@ export default function StudentsPage() {
           )}
         </div>
       </div>
+
+
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
+            {/* Cabecera del Modal */}
+
+            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
+              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600" /> Nuevo Alumno /
+                Representado
+              </h3>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Formulario */}
+
+            <form
+              onSubmit={handleSave}
+              className="p-5 space-y-4 font-questrial text-xs"
+            >
+              {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
+
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-gray-500 font-bold mb-1">
+                    DNI
+                  </label>
+
+                  <input
+                    type="text"
+                    value={formData.dni}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dni: e.target.value })
+                    }
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-500 font-bold mb-1">
+                    Nombre
+                  </label>
+
+                  <input
+                    required
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, firstName: e.target.value })
+                    }
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-500 font-bold mb-1">
+                    Apellido
+                  </label>
+
+                  <input
+                    required
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastName: e.target.value })
+                    }
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-500 font-bold mb-1">
+                    F. de Nacimiento
+                  </label>
+
+                  <input
+                    required
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, birthDate: e.target.value })
+                    }
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-500 font-bold mb-1">
+                    Parentesco
+                  </label>
+
+                  <select
+                    value={formData.kinship}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        kinship: e.target.value as any,
+                      })
+                    }
+                    className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                  >
+                    <option value="Hijo">Hijo</option>
+
+                    <option value="Hija">Hija</option>
+
+                    <option value="Sobrino">Sobrino</option>
+
+                    <option value="Sobrina">Sobrina</option>
+
+                    <option value="Tutorado">Tutorado</option>
+
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-500 font-bold mb-1">
+                  Observaciones Médicas o Alergias
+                </label>
+
+                <textarea
+                  rows={2}
+                  value={formData.medicalObservations}
+                  onChange={(e) =>
+                    setFormData({ ...formData, medicalObservations: e.target.value })
+                  }
+                  placeholder="Ej: Alérgico a la penicilina, asma, etc."
+                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
+                ></textarea>
+              </div>
+
+              {/* Botonera */}
+
+              <div className="pt-2 flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  className="
+
+                                        font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
+
+                                        gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90
+
+                                    "
+                >
+                  Guardar Alumno
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>);
 }
