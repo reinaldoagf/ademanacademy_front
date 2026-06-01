@@ -19,7 +19,6 @@ export async function handleLogin(formData: FormData) {
 
     // 💡 1. Consumimos el json una única vez aquí
     const data = await response.json();
-    console.log({ data });
 
     // 💡 2. Si hay un error, usamos los datos que ya guardamos en la variable 'data'
     if (!response.ok) {
@@ -77,13 +76,16 @@ export async function handleRegister(formData: FormData) {
       return { success: false, error: data.message || "Error en el servidor de registro" };
     }
 
-    if (data.token) {
+    // Capturar la cookie Set-Cookie enviada por NestJS y replicarla en Next.js
+    const setCookieHeader = response.headers.get("set-cookie");
+    if (setCookieHeader) {
+      const token = setCookieHeader.split(";")[0].split("=")[1];
       const cookieStore = await cookies();
-      cookieStore.set("auth_token", data.token, {
+      cookieStore.set("auth_token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
+        maxAge: 60 * 60 * 24,
         path: "/",
       });
     }

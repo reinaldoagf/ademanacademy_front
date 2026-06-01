@@ -1,39 +1,43 @@
 "use server";
 
 import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
+import axios, { AxiosError } from "axios";
 import { Student } from "@/types/student";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 /**
  * Helper centralizado para empaquetar los Headers de forma segura
  */
-async function getAuthHeaders(): Promise<HeadersInit> {
+async function getAuthHeaders(): Promise<Record<string, string>> {
     const cookieStore = await cookies();
-    // 🔐 Extraemos el Token JWT que guardaste al hacer Login
     const token = cookieStore.get("auth_token")?.value;
-    console.log({ token })
-    console.log(cookieStore.get("auth_token"))
+
     return {
         "Content-Type": "application/json",
-        // 🎯 Inyectamos el token en el formato estándar Bearer
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     };
 }
 // 1. Obtener Estudiantes (Query)
 export async function getStudentsAction(searchTerm?: string): Promise<{ success: boolean; data?: Student[]; error?: string }> {
     try {
-        const queryParam = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : "";
-        const response = await fetch(`${BACKEND_URL}/students${queryParam}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            next: { revalidate: 0 } // Desactiva caché para datos en tiempo real
+        // En Axios, es mejor pasar los parámetros en el objeto 'params' en lugar de concatenar strings manualmente
+        const response = await axios.get(`${BACKEND_URL}/students`, {
+            params: searchTerm ? { search: searchTerm } : {},
+            headers: { "Content-Type": "application/json" }
         });
 
-        if (!response.ok) throw new Error();
-        const result = await response.json();
-
+        // Axios guarda la respuesta del servidor en '.data'. 
+        // Si tu NestJS envuelve el resultado en un objeto { data: [...] }, usamos response.data.data
+        const result = response.data;
         return { success: true, data: result.data || result };
-    } catch {
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "Error al obtener los estudiantes."
+            };
+        }
         return { success: false, error: "No se pudo conectar con el servidor." };
     }
 }
@@ -44,32 +48,9 @@ export async function getMyRepresentedAction(searchTerm?: string): Promise<{ suc
         // OBTENEMOS LOS HEADERS AUTOMÁTICAMENTE
         const headers = await getAuthHeaders();
         const queryParam = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : "";
-        console.log({ headers })
-        console.log(`${BACKEND_URL}/students/my-represented${queryParam}`)
-        const response = await fetch(`${BACKEND_URL}/students/my-represented${queryParam}`, {
-            method: "GET",
-            headers: headers,
-            next: { revalidate: 0 } // Desactiva caché para datos en tiempo real
-        });
+        const { data } = await axios.get(`${BACKEND_URL}/students/my-represented${queryParam}`, { headers });
 
-        if (!response.ok) {
-            // Intentamos leer el mensaje de error estructurado de NestJS
-            const errorBody = await response.json().catch(() => ({}));
-
-            console.error("❌ ERROR EN NESTJS:", {
-                status: response.status,          // Ej: 401, 404, 500
-                statusText: response.statusText,
-                message: errorBody.message || "Error desconocido sin cuerpo"
-            });
-
-            return {
-                success: false,
-                error: errorBody.message || `Error del servidor (Código ${response.status})`
-            };
-        }
-        const result = await response.json();
-
-        return { success: true, data: result.data || result };
+        return { success: true, data: data.data || data };
     } catch (error) {
         console.log({ error })
         return { success: false, error: "No se pudo conectar con el servidor." };
@@ -80,33 +61,46 @@ export async function getMyRepresentedAction(searchTerm?: string): Promise<{ suc
 export async function saveStudentAction(formData: Omit<Student, 'id'>, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/students/${id}` : `${BACKEND_URL}/students`;
-        const method = id ? "PATCH" : "POST";
+        const headers = await getAuthHeaders();
 
-        const response = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        });
+        // 🎯 Ejecutamos la petición de Axios dinámicamente según la existencia del ID
+        const response = id
+            ? await axios.patch(url, formData, { headers })
+            : await axios.post(url, formData, { headers });
 
-        const data = await response.json();
+        // 💡 Axios parsea automáticamente a JSON y lo guarda en la propiedad '.data'
+        return { success: true, data: response.data };
 
-        if (!response.ok) {
-            return { success: false, error: data.message || "Error al procesar el estudiante." };
+    } catch (error: any) {
+        // 🔍 Capturamos los errores devueltos estructuradamente por NestJS (400, 401, 409, 500, etc.)
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "Error al procesar el estudiante."
+            };
         }
 
-        return { success: true, data };
-    } catch {
+        // Error en caso de que el servidor de NestJS esté apagado o no haya internet
         return { success: false, error: "Error crítico de red en el servidor." };
     }
 }
 
 // 4. Eliminar Estudiante (Mutación)
-export async function deleteStudentAction(id: string) {
+export async function deleteStudentAction(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const response = await fetch(`${BACKEND_URL}/students/${id}`, { method: "DELETE" });
-        if (!response.ok) return { success: false, error: "No se pudo eliminar." };
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        await axios.delete(`${BACKEND_URL}/students/${id}`, { headers });
+
         return { success: true };
-    } catch {
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el estudiante."
+            };
+        }
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }

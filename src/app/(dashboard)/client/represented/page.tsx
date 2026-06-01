@@ -15,20 +15,48 @@ import {
     Loader2,
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { Student } from "@/types/student";
 import {
     getMyRepresentedAction,
     saveStudentAction,
     deleteStudentAction,
 } from "@/app/actions/student";
+import { useAuthStore } from "@/store/authStore";
 
 export default function RepresentedPage() {
+    const user = useAuthStore((state) => state.user);
     const [list, setList] = useState<Student[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
-
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: "simple" | "word" | "email";
+        title: string;
+        description: string;
+        requiredWord?: string;
+        userEmail?: string;
+        id?: string;
+    }>({
+        isOpen: false,
+        type: "word",
+        title: "",
+        description: "",
+    });
+    const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    // Acción definitiva que se ejecuta al pasar el filtro del Modal
+    const handleConfirmAction = async () => {
+        if (modalConfig?.id) {
+            startTransition(async () => {
+                if (modalConfig?.id) {
+                    const res = await deleteStudentAction(modalConfig.id);
+                    if (res.success) setList(list.filter((item) => item.id !== modalConfig.id));
+                }
+            });
+        }
+    };
     // useTransition maneja de manera nativa el estado de carga (loading) de los Server Actions
     const [isPending, startTransition] = useTransition();
 
@@ -56,33 +84,34 @@ export default function RepresentedPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setErrorMsg(null);
+        if (user) {
+            startTransition(async () => {
+                const res = await saveStudentAction({ ...formData, userId: user.id }, editingId);
+                if (!res.success) {
+                    setErrorMsg(res.error || "Ocurrió un error.");
+                    return;
+                }
 
-        startTransition(async () => {
-            const res = await saveStudentAction(formData, editingId);
-            if (!res.success) {
-                setError(res.error || "Ocurrió un error.");
-                return;
-            }
-
-            // Sincronizar estado local
-            if (editingId) {
-                setList(list.map((item) => (item.id === editingId ? res.data! : item)));
-            } else {
-                setList([res.data!, ...list]);
-            }
-            setIsOpen(false);
-        });
+                // Sincronizar estado local
+                if (editingId) {
+                    setList(list.map((item) => (item.id === editingId ? res.data! : item)));
+                } else {
+                    setList([res.data!, ...list]);
+                }
+                setIsOpen(false);
+            });
+        }
     };
 
-    const handleDelete = async (id: string) => {
+    /* const handleDelete = async (id: string) => {
         if (!confirm("¿Eliminar alumno?")) return;
 
         startTransition(async () => {
             const res = await deleteStudentAction(id);
             if (res.success) setList(list.filter((item) => item.id !== id));
         });
-    };
+    }; */
 
     const handleEditModal = (student: Student) => {
         setFormData({
@@ -94,7 +123,7 @@ export default function RepresentedPage() {
             medicalObservations: student.medicalObservations || "",
         });
         setEditingId(student.id);
-        setError(null);
+        setErrorMsg(null);
         setIsOpen(true);
     };
 
@@ -116,7 +145,7 @@ export default function RepresentedPage() {
                                 medicalObservations: "",
                             });
                             setEditingId(null);
-                            setError(null);
+                            setErrorMsg(null);
                             setIsOpen(true);
                         },
                         icon: <UserPlus className="w-4 h-4" />,
@@ -181,13 +210,21 @@ export default function RepresentedPage() {
                                 <div className="mt-5 pt-3 border-t border-purple-50/60 flex justify-end gap-2">
                                     <button
                                         onClick={() => handleEditModal(rep)}
-                                        className="p-1.5 text-gray-400 hover:text-purple-600"
+                                        className="p-1.5 text-gray-400 hover:text-purple-600 cursor-pointer"
                                     >
                                         <Edit2 className="w-3.5 h-3.5" />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(rep.id)}
-                                        className="p-1.5 text-gray-400 hover:text-pink-600"
+                                        onClick={() => {
+                                            setModalConfig({
+                                                isOpen: true,
+                                                type: "word",
+                                                title: "Confirmar operación",
+                                                description: "¿Quieres eliminar el registro de tu alumno representado?",
+                                                id: rep.id,
+                                            })
+                                        }}
+                                        className="p-1.5 text-gray-400 hover:text-pink-600 cursor-pointer"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -233,6 +270,8 @@ export default function RepresentedPage() {
                             onSubmit={handleSave}
                             className="p-5 space-y-4 font-questrial text-xs"
                         >
+                            {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
+
                             <div className="grid grid-cols-1 gap-3">
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">
@@ -375,6 +414,20 @@ export default function RepresentedPage() {
                     </div>
                 </div>
             )}
+
+            {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                onConfirm={handleConfirmAction}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                description={modalConfig.description}
+                requiredWord={modalConfig.requiredWord}
+                userEmail={modalConfig.userEmail}
+                variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+                confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+            />
         </>
     );
 }

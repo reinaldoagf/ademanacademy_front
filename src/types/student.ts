@@ -6,4 +6,5 @@ export interface Student {
     birthDate: string;
     kinship: "Hijo" | "Hija" | "Sobrino" | "Sobrina" | "Tutorado" | "Otro" | undefined;
     medicalObservations?: string;
+    userId?: string;
 }

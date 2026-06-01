@@ -43,7 +43,6 @@ export async function middleware(req: NextRequest) {
     }
 
     const isAdmin = payload.isAdmin;
-    console.log({ payload });
 
     // Protección de rutas de Administrador
     if (pathname.startsWith('/admin') && !isAdmin) {
