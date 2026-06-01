@@ -385,11 +385,11 @@ export default function RepresentedPage() {
 
                             {/* Botonera */}
 
-                            <div className="pt-2 flex justify-end gap-2">
+                            <div className="pt-2 flex justify-between">
                                 <button
                                     type="button"
                                     onClick={() => setIsOpen(false)}
-                                    className="px-4 py-2 border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 cursor-pointer"
+                                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
                                 >
                                     Cancelar
                                 </button>
