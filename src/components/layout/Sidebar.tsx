@@ -6,7 +6,10 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
-import { getMyRepresentedAction } from "@/app/actions/student"; // 🎯 Importa tu Server Action
+import {
+  getMyRepresentedAction,
+  getAllStudentsAction
+} from "@/app/actions/student";
 import {
   ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
   Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
@@ -28,34 +31,34 @@ export function Sidebar({ isOpen }: SidebarProps) {
   };
 
   // Secciones modulares del software (Administrador)
-  const gestionAcademica = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
-    { name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 142 },
-    { name: 'Grupos y Cupos', href: '/admin/grupos', icon: Users, badge: 4 },
-    { name: 'Control de Asistencias', href: '/admin/asistencias', icon: CheckSquare },
-    { name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
-  ];
+  const [academicManagement, setAcademicManagement] = useState([
+    { key: '', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
+    { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
+    { key: '', name: 'Grupos y Cupos', href: '/admin/grupos', icon: Users, badge: 4 },
+    { key: '', name: 'Control de Asistencias', href: '/admin/asistencias', icon: CheckSquare },
+    { key: '', name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
+  ]);
 
   const gestionOperativa = [
-    { name: 'Caja y Pagos', href: '/admin/pagos', icon: Wallet, badge: 5 },
-    { name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
-    { name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
-    { name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
+    { key: '', name: 'Caja y Pagos', href: '/admin/pagos', icon: Wallet, badge: 5 },
+    { key: '', name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
+    { key: '', name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
+    { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
   ];
 
   const marketingEventos = [
-    { name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair, badge: 3 },
-    { name: 'Eventos Especiales', href: '/admin/eventos', icon: Star, badge: 4 },
-    { name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
+    { key: '', name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair, badge: 3 },
+    { key: '', name: 'Eventos Especiales', href: '/admin/eventos', icon: Star, badge: 4 },
+    { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 
   const [personalManagement, setPersonalManagement] = useState([
-    { name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
-    { name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
-    { name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
-    { name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
-    { name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
+    { key: '', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
+    { key: 'represented', name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
+    { key: '', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
+    { key: '', name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
+    { key: '', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
+    { key: '', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
   ]);
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
@@ -102,14 +105,34 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const isClientView = pathname.startsWith('/client');
 
   // 1️⃣ Aislamos la función de carga para poder reutilizarla
-  const fetchBadgeCount = async () => {
+  const fetchStudentsBadgeCount = async () => {
+    try {
+      const res = await getAllStudentsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+        kinship: undefined,
+      });
+      if (res.meta) {
+        const totalStudents = res.meta.totalItems;
+        setAcademicManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "students" ? { ...item, badge: totalStudents } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
+  const fetchRepresentedBadgeCount = async () => {
     try {
       const res = await getMyRepresentedAction();
       if (res.success && res.data) {
         const totalRepresentados = res.data.length;
         setPersonalManagement((currentItems) =>
           currentItems.map((item) =>
-            item.name === "Representados" ? { ...item, badge: totalRepresentados } : item
+            item.key === "represented" ? { ...item, badge: totalRepresentados } : item
           )
         );
       }
@@ -119,17 +142,32 @@ export function Sidebar({ isOpen }: SidebarProps) {
   };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
-    if (isClientView) {
+    if (isAdminView) {
       // Cargamos al inicio
-      fetchBadgeCount();
+      fetchStudentsBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
-      window.addEventListener('refresh-represented-count', fetchBadgeCount);
+      window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
     return () => {
-      window.removeEventListener('refresh-represented-count', fetchBadgeCount);
+      window.removeEventListener('refresh-students-count', fetchStudentsBadgeCount);
+    };
+  }, [isAdminView]);
+  // useEffect para cargar la data real al montar el Sidebar por primera vez
+  useEffect(() => {
+    if (isClientView) {
+      // Cargamos al inicio
+      fetchRepresentedBadgeCount();
+
+      // 2️⃣ Escuchamos el evento global de actualización
+      window.addEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
+    }
+
+    // Limpieza al desmontar el componente para evitar fugas de memoria
+    return () => {
+      window.removeEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
     };
   }, [isClientView]);
   return (
@@ -153,7 +191,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                   Academia
                 </p>
               </div>
-              {gestionAcademica.map(renderLink)}
+              {academicManagement.map(renderLink)}
             </div>
 
             {/* BLOQUE 2: OPERACIONES */}

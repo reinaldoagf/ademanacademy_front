@@ -99,7 +99,7 @@ export default function StudentsPage() {
 
       setStudents([res.data!, ...students]);
       // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-      window.dispatchEvent(new Event('refresh-represented-count'));
+      window.dispatchEvent(new Event('refresh-students-count'));
       setIsOpen(false);
     });
   };
