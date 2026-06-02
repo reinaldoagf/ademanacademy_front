@@ -28,7 +28,13 @@ import {
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [meta, setMeta] = useState({ currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 });
+  const [meta, setMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    itemCount: 10,
+  });
 
   // Estados de Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,7 +88,6 @@ export default function StudentsPage() {
 
   // Si cambia un filtro de categoría o nivel, reseteamos a la página 1
   const handleFilterChange = (type: "kinship", value: string) => {
-    console.log('handleFilterChange')
     if (type === "kinship") setKinshipFilter(value);
     setCurrentPage(1);
   };
@@ -209,7 +214,7 @@ export default function StudentsPage() {
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection
-        htmlTitle={`Control de  <em class="text-[#5e0472]">Alumnos y Progreso</em>`}
+        htmlTitle={`Control de <em class="text-[#5e0472]">Alumnos y Progreso</em>`}
         htmlSubTitle={`Monitorea el nivel técnico, categorías y estado de salud de los bailarines.`}
         actions={[{
           label: "Registrar Nuevo Alumno →",
@@ -238,8 +243,8 @@ export default function StudentsPage() {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Matrícula Activa</p>
-              <h4 className="text-xl font-anton text-gray-800">142 Alumnos</h4>
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Resultado total</p>
+              <h4 className="text-xl font-anton text-gray-800">{meta.totalItems || 0} Alumnos</h4>
             </div>
           </div>
 
@@ -248,8 +253,8 @@ export default function StudentsPage() {
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Nivel Avanzado</p>
-              <h4 className="text-xl font-anton text-gray-800">28 Bailarines</h4>
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Recuento de artículos</p>
+              <h4 className="text-xl font-anton text-gray-800">{meta.itemCount || 0} Alumnos</h4>
             </div>
           </div>
 
@@ -258,8 +263,8 @@ export default function StudentsPage() {
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Alertas Médicas</p>
-              <h4 className="text-xl font-anton text-gray-800">3 Reportes</h4>
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Elementos por página</p>
+              <h4 className="text-xl font-anton text-gray-800">{meta.itemsPerPage || 0} Alumnos</h4>
             </div>
           </div>
 
@@ -268,8 +273,8 @@ export default function StudentsPage() {
               <UserCheck2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Asistencia Promedio</p>
-              <h4 className="text-xl font-anton  text-gray-800">91.4 %</h4>
+              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">Páginas totales</p>
+              <h4 className="text-xl font-anton  text-gray-800">{meta.totalPages || 0} Páginas</h4>
             </div>
           </div>
         </div>
