@@ -1,4 +1,4 @@
-// src/app/(dashboard)/students/page.tsx
+// src/app/(dashboard)/admin/students/page.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
@@ -17,7 +17,8 @@ import {
   ChevronRight
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
-import DatePipe from "@/components/common/DatePipe";
+import DataTable, { Column } from "@/components/common/DataTable";
+import DatePipe from "@/components/pipes/DatePipe";
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -27,12 +28,13 @@ import {
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [meta, setMeta] = useState({ totalItems: 0, totalPages: 1, currentPage: 1 });
+  const [meta, setMeta] = useState({ currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 });
 
   // Estados de Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [kinshipFilter, setKinshipFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [isPending, startTransition] = useTransition();
 
@@ -46,30 +48,37 @@ export default function StudentsPage() {
     kinship: "Hijo" as Student["kinship"],
     medicalObservations: "",
   });
-
-  // 🔄 Efecto reactivo con debounce para consultas al servidor
-  useEffect(() => {
-    const loadStudents = () => {
-      startTransition(async () => {
-        const res = await getAllStudentsAction({
-          page: currentPage,
-          limit: 10,
-          search: searchTerm || undefined,
-          kinship: kinshipFilter !== "Todos" ? kinshipFilter : undefined,
-        });
-
-        console.log({ res })
-
-        if (res.success && res.data) {
-          setStudents(res.data);
-          setMeta(res.meta);
-        }
+  const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
+    startTransition(async () => {
+      const res = await getAllStudentsAction({
+        page: pageToFetch,
+        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+        search: searchTerm || undefined,
+        kinship: kinshipFilter === "Todos" ? undefined : kinshipFilter,
       });
-    };
 
-    const handler = setTimeout(loadStudents, 300); // 300ms de Debounce
+      if (res.success && res.data) {
+        setStudents(res.data);
+        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      }
+    });
+  };
+  // 🔄 Efecto reactivo con debounce para consultas al servidor
+  // Reacciona a cambios en buscador, página o cantidad de filas
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchTableData(currentPage, itemsPerPage);
+    }, 300);
+
     return () => clearTimeout(handler);
-  }, [searchTerm, kinshipFilter, currentPage]);
+  }, [searchTerm, kinshipFilter, currentPage, itemsPerPage]);
+
+  // 🎯 MANEJADORES DE LA TABLA
+
+  const handleLimitChange = (newLimit: number) => {
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // 💡 Regla de oro: Si cambias el límite, regresa siempre a la página 1
+  };
 
   // Si cambia un filtro de categoría o nivel, reseteamos a la página 1
   const handleFilterChange = (type: "kinship", value: string) => {
@@ -94,7 +103,108 @@ export default function StudentsPage() {
       setIsOpen(false);
     });
   };
-  const handleNewElement = () => console.log('Registrar nuevo elemento modal');
+  // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
+  const handlePageChange = (newPage: number) => {
+    // Actualizamos el estado local. Al cambiar, disparará el useEffect superior de forma reactiva
+    setCurrentPage(newPage);
+
+    // 💡 Opcional y Recomendado: Scroll suave hacia arriba de la tabla para mejorar la UX al cambiar de página
+    //window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 4️⃣ 🎯 MANEJADOR DE REDIRECCIÓN A PROGRESO
+  const handleShowProgress = (studentId: string) => {
+    // Redirige al administrador a la sub-ruta dinámica del alumno
+    // Asegúrate de tener creada la estructura de carpetas: /admin/students/[id]/progress/page.tsx
+    console.log(`/admin/students/${studentId}/progress`);
+  };
+  // 🎯 Configuración declarativa de las columnas
+  const columns: Column<Student>[] = [
+    {
+      header: "Bailarín / DNI",
+      render: (student) => {
+        const initials = `${student.firstName[0] || ""}${student.lastName[0] || ""}`.toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {initials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">
+                {student.firstName} {student.lastName}
+              </span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.dni}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Representante",
+      render: (student) => {
+        if (!student.user) {
+          return <p className="text-[11px] text-gray-400 mt-0.5">Sin representante</p>;
+        }
+        const userInitials = student.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {userInitials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">{student.user.name}</span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.user.email}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Fecha de Nacimiento",
+      render: (student) => (
+        <p className="text-[11px] text-gray-400 mt-0.5">
+          <DatePipe value={student.birthDate} format="short" />
+        </p>
+      ),
+    },
+    {
+      header: "Parentesco",
+      render: (student) => (
+        <span className="px-2.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">
+          {student.kinship}
+        </span>
+      ),
+    },
+    {
+      header: "Asistencia Mensual",
+      render: (student) => {
+        const attendance = 0;
+        return (
+          <div className="w-32">
+            <span className="text-[11px] text-gray-500 font-semibold">{attendance}%</span>
+            <div className="w-full bg-gray-100 h-1.5 overflow-hidden mt-1 rounded-full">
+              <div
+                className="h-full bg-purple-500 transition-all duration-300"
+                style={{ width: `${attendance}%` }}
+              ></div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Acciones",
+      className: "text-right", // Alinea el encabezado a la derecha
+      render: (student) => (
+        <button
+          onClick={() => handleShowProgress(student.id)}
+          className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+        >
+          Progreso
+        </button>
+      ),
+    },
+  ];
   return (
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
@@ -119,8 +229,6 @@ export default function StudentsPage() {
           variant: "primary",
         }]}
       />
-
-
       <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
 
         {/* METRICAS RÁPIDAS DE ALUMNOS */}
@@ -165,7 +273,6 @@ export default function StudentsPage() {
             </div>
           </div>
         </div>
-
         {/* BARRA DE FILTROS Y BÚSQUEDA */}
         <div className="glass-card p-4 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
           {/* Buscador */}
@@ -201,124 +308,18 @@ export default function StudentsPage() {
             </select>
           </div>
         </div>
-
         {/* TABLA DE ALUMNOS */}
-        <div className="glass-card p-6 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-gray-400 border-b border-purple-50 font-questrial">
-                  <th className="pb-3 font-semibold">Bailarín / DNI</th>
-                  <th className="pb-3 font-semibold">Representante</th>
-                  <th className="pb-3 font-semibold">Fecha de Nacimiento</th>
-                  <th className="pb-3 font-semibold">Parentesco</th>
-                  <th className="pb-3 font-semibold">Asistencia Mensual</th>
-                  <th className="pb-3 font-semibold text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-purple-50/50">
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <tr key={student.id} className="text-gray-700 hover:bg-purple-50/20 transition font-questrial">
-                      <td className="py-3.5">
-                        <div
-                          className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider">
-                            {student.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
-                            {student.lastName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
-                          </div>
-
-                          <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{student.firstName} {student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.dni}</span>
-                          </div>
-
-                        </div>
-                      </td>
-                      <td className="py-3.5">
-                        {
-                          student.user ?
-                            <div
-                              className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
-                            >
-                              <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider">
-                                {student.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
-                              </div>
-
-                              <div className="hidden md:flex flex-col text-left font-questrial">
-                                <span className="text-xs font-bold text-gray-700 leading-tight">{student.user.name}</span>
-                                <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.user.email}</span>
-                              </div>
-
-                            </div>
-                            : <p className="text-[11px] text-gray-400 mt-0.5">
-                              Sin representante
-                            </p>
-                        }
-
-                      </td>
-                      <td className="py-3.5">
-                        <p className="text-[11px] text-gray-400 mt-0.5">
-                          <DatePipe value={student.birthDate} format="short" />
-                        </p>
-                      </td>
-                      <td className="py-3.5">
-                        <span className="px-2.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">
-                          {student.kinship}
-                        </span>
-                      </td>
-                      <td className="py-3.5">
-                        <div className="w-32">
-                          <span className="text-[11px] text-gray-500 font-semibold">{0}%</span>
-                          <div className="w-full bg-gray-100 h-1.5 overflow-hidden mt-1">
-                            <div className="h-full bg-purple-500" style={{ width: `${0}%` }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 text-right">
-                        <button className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm">
-                          Progreso
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-gray-400">
-                      No se encontraron alumnos en el servidor.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* CONTROLES DE PAGINACIÓN */}
-          {meta.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-purple-50 pt-4 mt-4 font-questrial text-xs text-gray-500">
-              <p>Mostrando página <b>{meta.currentPage}</b> de <b>{meta.totalPages}</b></p>
-              <div className="flex gap-2">
-                <button
-                  disabled={currentPage === 1 || isPending}
-                  onClick={() => setCurrentPage(prev => prev - 1)}
-                  className="cursor-pointer p-1.5 border border-purple-100 bg-white hover:bg-purple-50 disabled:opacity-40 transition"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  disabled={currentPage === meta.totalPages || isPending}
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  className="cursor-pointer p-1.5 border border-purple-100 bg-white hover:bg-purple-50 disabled:opacity-40 transition"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <DataTable
+          data={students}
+          columns={columns}
+          meta={meta}
+          isLoading={isPending}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange} // 👈 Pasamos el manejador del límite
+          rowKey={(student) => student.id}
+          emptyMessage="No se encontraron alumnos registrados en la academia."
+        />
       </div>
-
-
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">

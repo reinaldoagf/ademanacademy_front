@@ -17,7 +17,7 @@ export default function OtpAuthPage() {
     });
     const [loading, setLoading] = useState(false);
 
-    /* Doctor Form */
+    /* User Form */
     const [showPassword, setShowPassword] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
@@ -102,7 +102,7 @@ export default function OtpAuthPage() {
                                 className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 ${errorMsg ? "text-red-400" : "text-[#5e0472]"}`}
                                 autoComplete="email"
                                 required
-                                placeholder="doctor@ejemplo.com"
+                                placeholder="nombre@ejemplo.com"
                                 value={formData.email}
                                 onChange={(e) => {
                                     setErrorMsg('')
