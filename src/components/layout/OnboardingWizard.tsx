@@ -82,17 +82,19 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-tr from-purple-900 via-[#400252] to-black text-white relative overflow-hidden">
 
+
             {/* Círculos decorativos de fondo tipo Blur */}
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl"></div>
 
-            <div className="w-full max-w-2xl glass-card border border-white/10 bg-black/40 backdrop-blur-xl p-8 md:p-12 shadow-2xl relative text-center z-10">
+            {/* <div className="w-full max-w-2xl glass-card border border-white/10 bg-black/40 backdrop-blur-xl p-8 md:p-12 shadow-2xl relative text-center z-10"> */}
+            <div className="w-full max-w-2xl border border-white/10 bg-[#400252] p-8 md:p-12 shadow-2xl relative text-center z-10">
 
                 {/* Paso 1: Bienvenida y Selección de Rol */}
                 {step === 1 && (
                     <div className="space-y-8 animate-fadeIn">
                         <div className="space-y-3">
-                            <span className="text-[10px] uppercase font-bold tracking-widest text-pink-400 font-questrial px-3 py-1 bg-white/5 rounded-full">
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-pink-400 font-questrial px-3 py-1 bg-white/5">
                                 Configuración Inicial obligatoria
                             </span>
                             <h2 className="text-3xl md:text-4xl font-anton tracking-wide text-white">
@@ -108,7 +110,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <button
                                 type="button"
                                 onClick={() => { setProfileType("student"); setError(null); }}
-                                className={`p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "student"
+                                className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "student"
                                     ? "border-purple-500 bg-purple-950/40 shadow-[0_0_15px_rgba(147,51,234,0.3)] text-white"
                                     : "border-white/10 bg-white/5 text-gray-400 hover:border-purple-400 hover:text-white"
                                     }`}
@@ -123,7 +125,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <button
                                 type="button"
                                 onClick={() => { setProfileType("representative"); setError(null); }}
-                                className={`p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "representative"
+                                className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "representative"
                                     ? "border-pink-500 bg-pink-950/40 shadow-[0_0_15px_rgba(219,39,119,0.3)] text-white"
                                     : "border-white/10 bg-white/5 text-gray-400 hover:border-pink-400 hover:text-white"
                                     }`}
@@ -141,7 +143,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                         <button
                             onClick={handleNextStep}
                             disabled={isPending}
-                            className="w-full max-w-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white font-questrial font-bold py-3 text-xs tracking-wider uppercase hover:opacity-90 transition disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 mx-auto"
+                            className="cursor-pointer w-full max-w-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white font-questrial font-bold py-3 text-xs tracking-wider uppercase hover:opacity-90 transition disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 mx-auto"
                         >
                             {profileType === "student" ? "Completar registro ✓" : "Continuar paso siguiente →"}
                         </button>
