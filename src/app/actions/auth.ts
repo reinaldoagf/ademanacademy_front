@@ -77,9 +77,9 @@ export async function handleRegister(formData: FormData) {
     }
 
     // Capturar la cookie Set-Cookie enviada por NestJS y replicarla en Next.js
-    const setCookieHeader = response.headers.get("set-cookie");
+    const setCookieHeader = data.access_token;
     if (setCookieHeader) {
-      const token = setCookieHeader.split(";")[0].split("=")[1];
+      const token = setCookieHeader;
       const cookieStore = await cookies();
       cookieStore.set("auth_token", token, {
         httpOnly: true,

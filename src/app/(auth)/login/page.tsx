@@ -52,6 +52,7 @@ export default function OtpAuthPage() {
                 name: result.user.name,
                 email: result.user.email,
                 isAdmin: result.user.isAdmin,
+                profileOnboarding: result.user.profileOnboarding,
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
