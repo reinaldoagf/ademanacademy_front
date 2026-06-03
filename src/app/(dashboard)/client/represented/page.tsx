@@ -14,6 +14,7 @@ import {
     X,
     Loader2,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { Student } from "@/types/student";
@@ -53,6 +54,7 @@ export default function RepresentedPage() {
                 if (modalConfig?.id) {
                     const res = await deleteStudentAction(modalConfig.id);
                     if (res.success) {
+                        toast.success("Operación exitosa");
                         setList(list.filter((item) => item.id !== modalConfig.id));
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
                         window.dispatchEvent(new Event('refresh-represented-count'));
@@ -96,7 +98,7 @@ export default function RepresentedPage() {
                     setErrorMsg(res.error || "Ocurrió un error.");
                     return;
                 }
-
+                toast.success("Operación exitosa");
                 // Sincronizar estado local
                 if (editingId) {
                     setList(list.map((item) => (item.id === editingId ? res.data! : item)));

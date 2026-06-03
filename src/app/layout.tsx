@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Questrial } from "next/font/google";
 import localFont from "next/font/local";
 import GlobalSpinnerWrapper from "@/components/layout/GlobalSpinnerWrapper";
+import ToastProvider from "@/components/providers/ToastProvider";
 import "./globals.css";
 
 // 1. Configurar fuentes de Google
@@ -39,6 +40,10 @@ export default function RootLayout({
       className={`${anton.variable} ${questrial.variable} ${breathing.variable}`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {/* 💡 RENDERIZAMOS EL TOASTER AQUÍ 
+          No necesita envolver a los hijos como un ContextProvider tradicional, 
+          basta con que esté montado en el árbol HTML global. */}
+        <ToastProvider />
         <GlobalSpinnerWrapper />
         {children}
       </body>

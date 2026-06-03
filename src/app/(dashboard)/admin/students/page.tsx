@@ -13,9 +13,8 @@ import {
   Award,
   UserCheck2,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import DatePipe from "@/components/pipes/DatePipe";
@@ -101,6 +100,7 @@ export default function StudentsPage() {
         setErrorMsg(res.error || "Ocurrió un error.");
         return;
       }
+      toast.success("Operación exitosa");
 
       setStudents([res.data!, ...students]);
       // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
