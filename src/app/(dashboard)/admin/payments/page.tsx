@@ -50,7 +50,6 @@ export default function PaymentsPage() {
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined,
             });
-            console.log({ res });
             if (res.success && res.data) {
                 setTransactions(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta

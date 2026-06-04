@@ -245,7 +245,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <button
                                 type="button"
                                 onClick={() => { setStep(1); setError(null); }}
-                                className="w-full py-3 border border-white/10 bg-white/5 hover:bg-white/10 transition text-xs font-semibold text-center uppercase tracking-wider"
+                                className="cursor-pointer w-full py-3 border border-white/10 bg-white/5 hover:bg-white/10 transition text-xs font-semibold text-center uppercase tracking-wider"
                             >
                                 ← Volver atrás
                             </button>
@@ -253,7 +253,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                                 type="button"
                                 disabled={students.length === 0 || isPending}
                                 onClick={() => handleSubmit("representative", students)}
-                                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                                className="cursor-pointer w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                             >
                                 {isPending ? "Guardando datos..." : "Finalizar y Entrar al Sistema ✓"}
                             </button>

@@ -3,7 +3,7 @@
 
 import axios from "axios";
 import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
-import { revalidatePath } from "next/cache";
+// import { revalidatePath } from "next/cache";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 

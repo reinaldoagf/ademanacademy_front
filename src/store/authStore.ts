@@ -7,6 +7,7 @@ interface User {
     email: string;
     isAdmin: boolean;
     profileOnboarding: boolean;
+    phone: string;
 }
 
 interface AuthState {

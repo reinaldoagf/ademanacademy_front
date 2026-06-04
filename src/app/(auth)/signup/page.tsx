@@ -9,13 +9,11 @@ import {
     Lock,
     ChevronRight,
     ChevronLeft,
-    ShieldCheck,
-    Globe,
-    Star,
     IdCard,
     Camera,
     Eye,
     EyeOff,
+    Phone
 } from "lucide-react";
 import { handleRegister } from "@/app/actions/auth";
 import { useAuthStore } from "@/store/authStore";
@@ -35,6 +33,21 @@ export default function RegisterPage() {
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    // 🎯 NUEVOS ESTADOS PARA WHATSAPP
+    const [countryCode, setCountryCode] = useState("+58"); // Código por defecto (ej: Venezuela)
+    const [phone, setPhone] = useState("");
+
+    // Lista de códigos de ejemplo comunes (puedes ampliarla o moverla a un helper)
+    const countries = [
+        { code: "+58", label: "VE" },
+        { code: "+57", label: "CO" },
+        { code: "+51", label: "PE" },
+        { code: "+56", label: "CL" },
+        { code: "+54", label: "AR" },
+        { code: "+34", label: "ES" },
+        { code: "+1", label: "US" },
+    ];
 
     // Estados de Validaciones y Visibilidad
     const [error, setError] = useState<string | null>(null);
@@ -81,12 +94,15 @@ export default function RegisterPage() {
     const onSubmit = async () => {
         setError(null);
         setIsLoading(true);
+        // Unificamos el código de país con el número (Eliminando espacios si los hay)
+        const fullPhone = `${countryCode}${phone.replace(/\s+/g, "")}`;
 
         const payload = new FormData();
         payload.append("dni", dni);
         payload.append("name", name);
         payload.append("email", email);
         payload.append("password", password);
+        payload.append("phone", fullPhone); // 🎯 NUEVO CAMPO EN PAYLOAD
         if (avatar) payload.append("avatar", avatar);
 
         // Ejecutamos la Server Action y esperamos la respuesta de la API
@@ -112,6 +128,7 @@ export default function RegisterPage() {
                 email: result.user.email,
                 isAdmin: result.user.isAdmin,
                 profileOnboarding: result.user.profileOnboarding,
+                phone: result.user.phone,
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
@@ -270,6 +287,45 @@ export default function RegisterPage() {
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Valentina Birrot"
                                         className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 🎯 NUEVO INPUT: WHATSAPP CON CÓDIGO DE PAÍS */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                                    Número de WhatsApp
+                                </label>
+
+                                <div className="flex relative group">
+                                    {/* Contenedor del Icono */}
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                                        <Phone className="w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                                    </div>
+
+                                    {/* Selector de Código de País */}
+                                    <select
+                                        value={countryCode}
+                                        onChange={(e) => setCountryCode(e.target.value)}
+                                        className="bg-white/10 text-[#5e0472] pl-11 pr-2 py-4 border-y border-l border-[#5e0472] focus:outline-none focus:border-[#5e0472] transition-all text-xs font-sans appearance-none rounded-l-none cursor-pointer"
+                                        style={{ borderRight: 'none' }}
+                                    >
+                                        {countries.map((c) => (
+                                            <option key={c.code} value={c.code} className="bg-neutral-900 text-white">
+                                                {c.label} ({c.code})
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Input de Número Telefónico */}
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        required
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} // Previene letras
+                                        placeholder="4121234567"
+                                        className={`w-full bg-white/5 border-y border-r border-[#5e0472]  p-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
                                     />
                                 </div>
                             </div>
