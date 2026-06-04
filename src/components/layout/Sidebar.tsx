@@ -40,7 +40,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   ]);
 
   const gestionOperativa = [
-    { key: '', name: 'Caja y Pagos', href: '/admin/pagos', icon: Wallet, badge: 5 },
+    { key: '', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 5 },
     { key: '', name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
     { key: '', name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
     { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },

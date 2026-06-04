@@ -1,22 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
 import axios from "axios";
 import { Student, FetchStudentsParams } from "@/types/student";
+import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
-/**
- * Helper centralizado para empaquetar los Headers de forma segura
- */
-async function getAuthHeaders(): Promise<Record<string, string>> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
 
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    };
-}
 // 1. Obtener Estudiantes (Query)
 export async function getStudentsAction(searchTerm?: string): Promise<{ success: boolean; data?: Student[]; error?: string }> {
     try {
@@ -60,10 +49,11 @@ export async function getMyRepresentedAction(searchTerm?: string): Promise<{ suc
 // 4. Guardar o Actualizar Estudiante (Mutación)
 export async function getAllStudentsAction(params: FetchStudentsParams) {
     try {
+        const headers = await getAuthHeaders();
         // Axios limpiará automáticamente las propiedades undefined
         const response = await axios.get(`${BACKEND_URL}/students`, {
             params,
-            headers: { "Content-Type": "application/json" }
+            headers: headers
         });
 
         return { success: true, data: response.data.data, meta: response.data.meta };

@@ -173,8 +173,8 @@ export default function ClientPagosPage() {
                                             {/* Concepto */}
                                             <td className="py-3.5 text-xs font-semibold">
                                                 <span className={`px-2 py-0.5 ${tx.concepto === "Mensualidad" ? "bg-purple-50 text-purple-700" :
-                                                        tx.concepto === "Uniforme" ? "bg-pink-50 text-pink-700" :
-                                                            "bg-indigo-50 text-indigo-700"
+                                                    tx.concepto === "Uniforme" ? "bg-pink-50 text-pink-700" :
+                                                        "bg-indigo-50 text-indigo-700"
                                                     }`}>
                                                     {tx.concepto}
                                                 </span>
@@ -196,8 +196,8 @@ export default function ClientPagosPage() {
                                             {/* Estado */}
                                             <td className="py-3.5 text-right">
                                                 <span className={`text-[10px] font-bold px-2.5 py-0.5 ${tx.estado === "Aprobado"
-                                                        ? "bg-emerald-100 text-emerald-800"
-                                                        : "bg-amber-100 text-amber-800 animate-pulse"
+                                                    ? "bg-emerald-100 text-emerald-800"
+                                                    : "bg-amber-100 text-amber-800 animate-pulse"
                                                     }`}>
                                                     {tx.estado}
                                                 </span>
