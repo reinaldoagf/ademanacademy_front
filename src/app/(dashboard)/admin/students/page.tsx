@@ -50,7 +50,7 @@ export default function StudentsPage() {
     firstName: "",
     lastName: "",
     birthDate: "",
-    kinship: "Hijo" as Student["kinship"],
+    kinship: "son" as Student["kinship"],
     medicalObservations: "",
   });
   const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
@@ -224,7 +224,7 @@ export default function StudentsPage() {
               firstName: "",
               lastName: "",
               birthDate: "",
-              kinship: "Hijo",
+              kinship: "son",
               medicalObservations: "",
             });
             setErrorMsg(null);
@@ -304,12 +304,12 @@ export default function StudentsPage() {
               className="p-2 border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
               <option value="Todos">Todos</option>
-              <option value="Hijo">Hijo</option>
-              <option value="Hija">Hija</option>
-              <option value="Sobrino">Sobrino</option>
-              <option value="Sobrina">Sobrina</option>
-              <option value="Tutorado">Tutorado</option>
-              <option value="Otro">Otro</option>
+              <option value="son">Hijo</option>
+              <option value="daughter">Hija</option>
+              <option value="nephew">Sobrino</option>
+              <option value="niece">Sobrina</option>
+              <option value="tutored">Tutorado</option>
+              <option value="other">Otro</option>
             </select>
           </div>
         </div>

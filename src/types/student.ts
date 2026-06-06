@@ -5,7 +5,7 @@ export interface Student {
     firstName: string;
     lastName: string;
     birthDate: string;
-    kinship: "Hijo" | "Hija" | "Sobrino" | "Sobrina" | "Tutorado" | "Otro" | undefined;
+    kinship: "son" | "daughter" | "nephew" | "niece" | "tutored" | "other" | undefined;
     medicalObservations?: string;
     userId?: string;
     user?: User;

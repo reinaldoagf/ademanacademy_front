@@ -12,7 +12,7 @@ import {
 } from "@/app/actions/student";
 import {
   ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
-  Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
+  ReceiptText, Package, Banknote, Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
 } from "lucide-react";
 
 interface SidebarProps {
@@ -39,12 +39,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: '', name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
   ]);
 
-  const gestionOperativa = [
-    { key: '', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 5 },
+  const [operationalManagement, setOperationalManagement] = useState([
+    { key: 'orders', name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
+    { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
+    { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
+    { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
     { key: '', name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
     { key: '', name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
     { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
-  ];
+  ]);
 
   const marketingEventos = [
     { key: '', name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair, badge: 3 },
@@ -199,7 +202,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Finanzas y Logística
               </p>
-              {gestionOperativa.map(renderLink)}
+              {operationalManagement.map(renderLink)}
             </div>
 
             {/* BLOQUE 3: CRECIMIENTO */}

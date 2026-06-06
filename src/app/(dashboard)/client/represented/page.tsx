@@ -71,7 +71,7 @@ export default function RepresentedPage() {
         firstName: "",
         lastName: "",
         birthDate: "",
-        kinship: "Hijo" as Student["kinship"],
+        kinship: "son" as Student["kinship"],
         medicalObservations: "",
     });
 
@@ -118,7 +118,7 @@ export default function RepresentedPage() {
             firstName: student.firstName,
             lastName: student.lastName,
             birthDate: student.birthDate ? student.birthDate.split("T")[0] : "",
-            kinship: student.kinship || "Hijo",
+            kinship: student.kinship || "son",
             medicalObservations: student.medicalObservations || "",
         });
         setEditingId(student.id);
@@ -140,7 +140,7 @@ export default function RepresentedPage() {
                                 firstName: "",
                                 lastName: "",
                                 birthDate: "",
-                                kinship: "Hijo",
+                                kinship: "son",
                                 medicalObservations: "",
                             });
                             setEditingId(null);
@@ -354,17 +354,12 @@ export default function RepresentedPage() {
                                         }
                                         className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                                     >
-                                        <option value="Hijo">Hijo</option>
-
-                                        <option value="Hija">Hija</option>
-
-                                        <option value="Sobrino">Sobrino</option>
-
-                                        <option value="Sobrina">Sobrina</option>
-
-                                        <option value="Tutorado">Tutorado</option>
-
-                                        <option value="Otro">Otro</option>
+                                        <option value="son">Hijo</option>
+                                        <option value="daughter">Hija</option>
+                                        <option value="nephew">Sobrino</option>
+                                        <option value="niece">Sobrina</option>
+                                        <option value="tutored">Tutorado</option>
+                                        <option value="other">Otro</option>
                                     </select>
                                 </div>
                             </div>

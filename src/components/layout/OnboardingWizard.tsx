@@ -24,7 +24,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
         lastName: "",
         dni: "",
         birthDate: "",
-        kinship: "Hijo",
+        kinship: "son",
     });
 
     const handleAddStudent = (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
             return;
         }
         setStudents([...students, { ...newStudent, id: crypto.randomUUID() }]);
-        setNewStudent({ firstName: "", lastName: "", dni: "", birthDate: "", kinship: "Hijo" });
+        setNewStudent({ firstName: "", lastName: "", dni: "", birthDate: "", kinship: "son" });
         setError(null);
     };
 
@@ -221,12 +221,12 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                                     onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                 >
-                                    <option value="Hijo">Hijo</option>
-                                    <option value="Hija">Hija</option>
-                                    <option value="Sobrino">Sobrino</option>
-                                    <option value="Sobrina">Sobrina</option>
-                                    <option value="Tutorado">Tutorado</option>
-                                    <option value="Otro">Otro</option>
+                                    <option value="son">Hijo</option>
+                                    <option value="daughter">Hija</option>
+                                    <option value="nephew">Sobrino</option>
+                                    <option value="niece">Sobrina</option>
+                                    <option value="tutored">Tutorado</option>
+                                    <option value="other">Otro</option>
                                 </select>
                             </div>
 
