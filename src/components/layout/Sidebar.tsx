@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
-import { handleLogout } from "@/app/actions/auth";
 import {
   getAllUsersAction,
 } from "@/app/actions/user";
@@ -29,7 +28,6 @@ import {
   Armchair,
   Star,
   UserPlus,
-  LogOut,
   Users2,
   UsersIcon
 } from "lucide-react";
@@ -41,13 +39,6 @@ interface SidebarProps {
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
-  const logoutStore = useAuthStore((state) => state.logout);
-
-  // Cierre de sesión unificado (Limpia estado global + Cookies)
-  const onLogout = async () => {
-    logoutStore();
-    await handleLogout();
-  };
 
   // Secciones modulares del software (Administrador)
   const [systemAdministration, setSystemAdministration] = useState([
@@ -279,16 +270,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
       </div>
 
-      {/* BOTÓN SALIR */}
-      <div className="mt-6 pt-4 border-t border-purple-50">
-        <button
-          type="button"
-          onClick={onLogout}
-          className={`w-full flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:bg-red-50 hover:text-red-500 text-sm transition cursor-pointer ${!isOpen && 'md:justify-center md:px-0'}`}>
-          <LogOut className="w-5 h-5 shrink-0" />
-          <span className={!isOpen ? 'md:hidden' : ''}>Cerrar Sesión</span>
-        </button>
-      </div>
     </aside>
   );
 }
