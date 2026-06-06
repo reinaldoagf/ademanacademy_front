@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import {
-
   Sparkles,
   X,
   Users,

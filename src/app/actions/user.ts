@@ -2,6 +2,7 @@
 "use server";
 
 import axios from "axios";
+import { FetchUsersParams } from "@/types/user";
 import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
 // import { revalidatePath } from "next/cache";
 
@@ -42,6 +43,24 @@ export async function completeOnboardingAction(payload: OnboardingPayload) {
         return {
             success: false,
             error: error.response?.data?.message || "Ocurrió un error al guardar tu perfil."
+        };
+    }
+}
+
+export async function getAllUsersAction(params: FetchUsersParams) {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/users`, {
+            params,
+            headers: headers
+        });
+
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
         };
     }
 }

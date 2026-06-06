@@ -7,12 +7,31 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
 import {
+  getAllUsersAction,
+} from "@/app/actions/user";
+import {
   getMyRepresentedAction,
   getAllStudentsAction
 } from "@/app/actions/student";
 import {
-  ChartPie, HeartPulse, Users, CheckSquare, CalendarDays,
-  ReceiptText, Package, Banknote, Wallet, Contact, Shirt, ShoppingBag, Armchair, Star, UserPlus, LogOut, Users2
+  ChartPie,
+  HeartPulse,
+  Users,
+  CheckSquare,
+  CalendarDays,
+  ReceiptText,
+  Package,
+  Banknote,
+  Wallet,
+  Contact,
+  Shirt,
+  ShoppingBag,
+  Armchair,
+  Star,
+  UserPlus,
+  LogOut,
+  Users2,
+  UsersIcon
 } from "lucide-react";
 
 interface SidebarProps {
@@ -31,6 +50,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
   };
 
   // Secciones modulares del software (Administrador)
+  const [systemAdministration, setSystemAdministration] = useState([
+    { key: 'users', name: 'Usuarios', href: '/admin/users', icon: UsersIcon, badge: 0 },
+  ]);
+
   const [academicManagement, setAcademicManagement] = useState([
     { key: '', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
@@ -108,6 +131,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const isClientView = pathname.startsWith('/client');
 
   // 1️⃣ Aislamos la función de carga para poder reutilizarla
+  const fetchUsersBadgeCount = async () => {
+    try {
+      const res = await getAllUsersAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.meta) {
+        const totalUsers = res.meta.totalItems;
+        setSystemAdministration((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "users" ? { ...item, badge: totalUsers } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   const fetchStudentsBadgeCount = async () => {
     try {
       const res = await getAllStudentsAction({
@@ -147,6 +189,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   useEffect(() => {
     if (isAdminView) {
       // Cargamos al inicio
+      fetchUsersBadgeCount();
       fetchStudentsBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
@@ -196,8 +239,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
               </div>
               {academicManagement.map(renderLink)}
             </div>
+            {/* BLOQUE 2: SISTEMA */}
+            <div className="space-y-1">
+              <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                Sistema
+              </p>
+              {systemAdministration.map(renderLink)}
+            </div>
 
-            {/* BLOQUE 2: OPERACIONES */}
+            {/* BLOQUE 3: OPERACIONES */}
             <div className="space-y-1">
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Finanzas y Logística
@@ -205,7 +255,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               {operationalManagement.map(renderLink)}
             </div>
 
-            {/* BLOQUE 3: CRECIMIENTO */}
+            {/* BLOQUE 4: CRECIMIENTO */}
             <div className="space-y-1">
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Eventos y Leads
