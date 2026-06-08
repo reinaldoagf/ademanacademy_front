@@ -13,6 +13,9 @@ import {
     Edit2,
     X,
     Loader2,
+    MapPin,
+    Phone,
+    Shirt
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
@@ -72,6 +75,11 @@ export default function RepresentedPage() {
         lastName: "",
         birthDate: "",
         kinship: "son" as Student["kinship"],
+        phone: "",              // 🎯 Nuevo
+        address: "",            // 🎯 Nuevo
+        shirtSize: "",          // 🎯 Nuevo
+        group: "",              // 🎯 Nuevo
+        hasExperience: false,   // 🎯 Nuevo
         medicalObservations: "",
     });
 
@@ -112,14 +120,21 @@ export default function RepresentedPage() {
         }
     };
 
-    const handleEditModal = (student: Student) => {
+    const handleEditModal = (student: any) => { // Puedes usar la interfaz de tu Student de Prisma
         setFormData({
-            dni: student.dni,
+            dni: student.dni || "",
             firstName: student.firstName,
             lastName: student.lastName,
             birthDate: student.birthDate ? student.birthDate.split("T")[0] : "",
             kinship: student.kinship || "son",
             medicalObservations: student.medicalObservations || "",
+
+            // 🎯 NUEVOS CAMPOS DEL ESTUDIANTE CARGADOS AL EDITAR
+            address: student.address || "",
+            phone: student.phone || "",
+            shirtSize: student.shirtSize || "",
+            group: student.group || "",
+            hasExperience: student.hasExperience ?? false, // Operador de coalescencia nula para booleanos
         });
         setEditingId(student.id);
         setErrorMsg(null);
@@ -142,6 +157,11 @@ export default function RepresentedPage() {
                                 birthDate: "",
                                 kinship: "son",
                                 medicalObservations: "",
+                                address: "",
+                                phone: "",
+                                shirtSize: "",
+                                group: "",
+                                hasExperience: false, // Operador de coalescencia nula para booleanos
                             });
                             setEditingId(null);
                             setErrorMsg(null);
@@ -177,39 +197,87 @@ export default function RepresentedPage() {
                         {list.map((rep) => (
                             <div
                                 key={rep.id}
-                                className="glass-card p-5 border border-purple-50 flex flex-col justify-between"
+                                className="glass-card p-5 border border-purple-50 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow duration-300"
                             >
                                 <div>
-                                    <div className="flex justify-between items-start">
+                                    {/* Cabecera: Nombre, DNI y Parentesco */}
+                                    <div className="flex justify-between items-start gap-2">
                                         <div>
-                                            <span className="font-questrial text-[9px] text-gray-400 block">
-                                                DNI: {rep.dni}
+                                            <span className="font-questrial text-[9px] text-gray-400 block uppercase tracking-wider">
+                                                DNI: {rep.dni || "No registrado"}
                                             </span>
-                                            <h3 className="font-anton text-gray-800 text-base">
+                                            <h3 className="font-anton text-gray-800 text-base tracking-wide mt-0.5">
                                                 {rep.firstName} {rep.lastName}
                                             </h3>
                                         </div>
-                                        <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold">
+                                        <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold rounded-full capitalize shrink-0">
                                             {rep.kinship}
                                         </span>
                                     </div>
-                                    <p className="mt-3 font-questrial text-xs text-gray-600 flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                                        <span>{rep.birthDate?.split("T")[0]}</span>
-                                    </p>
-                                    {rep.medicalObservations && (
-                                        <p className="mt-2 font-questrial text-xs bg-pink-50/50 p-2 text-pink-700 flex items-center gap-1.5">
-                                            <Heart className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+
+                                    {/* Bloque de Información del Alumno */}
+                                    <div className="mt-4 space-y-2 font-questrial text-xs text-gray-600">
+                                        {/* Grupo asignado */}
+                                        <div className="flex items-center gap-1.5 bg-purple-50/50 px-2 py-1 border border-purple-100/50 text-[#5e0472] font-semibold rounded">
+                                            <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                                            <span className="capitalize">Grupo: {rep.group?.replace("_", " ")}</span>
+                                        </div>
+
+                                        {/* Fecha de Nacimiento */}
+                                        <p className="flex items-center gap-1.5 px-1">
+                                            <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                            <span><strong>Nacimiento:</strong> {rep.birthDate?.split("T")[0]}</span>
+                                        </p>
+
+                                        {/* Teléfono de contacto (si existe) */}
+                                        {rep.phone && (
+                                            <p className="flex items-center gap-1.5 px-1">
+                                                <Phone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                                <span><strong>Teléfono:</strong> {rep.phone}</span>
+                                            </p>
+                                        )}
+
+                                        {/* Talla de Franela */}
+                                        <p className="flex items-center gap-1.5 px-1">
+                                            <Shirt className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                            <span><strong>Talla uniforme:</strong> {rep.shirtSize}</span>
+                                        </p>
+
+                                        {/* Experiencia en baile */}
+                                        <p className="flex items-center gap-1.5 px-1">
+                                            <Users className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                                             <span>
+                                                <strong>Experiencia:</strong>{" "}
+                                                {rep.hasExperience ? "Sí, posee experiencia previa" : "No, nivel principiante"}
+                                            </span>
+                                        </p>
+
+                                        {/* Dirección de habitación */}
+                                        <div className="flex items-start gap-1.5 px-1 pt-1 border-t border-gray-100 mt-1">
+                                            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                                            <span className="text-[11px] text-gray-500 leading-normal">
+                                                <strong>Dirección:</strong> {rep.address}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Alertas médicas / Patologías */}
+                                    {rep.medicalObservations && (
+                                        <p className="mt-3 font-questrial text-xs bg-pink-50/50 p-2 text-pink-700 flex items-start gap-1.5 rounded border border-pink-100/30">
+                                            <Heart className="w-3.5 h-3.5 text-pink-500 shrink-0 mt-0.5" />
+                                            <span className="leading-normal">
                                                 <strong>Salud:</strong> {rep.medicalObservations}
                                             </span>
                                         </p>
                                     )}
                                 </div>
+
+                                {/* Botones de acción */}
                                 <div className="mt-5 pt-3 border-t border-purple-50/60 flex justify-end gap-2">
                                     <button
                                         onClick={() => handleEditModal(rep)}
-                                        className="p-1.5 text-gray-400 hover:text-purple-600 cursor-pointer"
+                                        className="p-1.5 text-gray-400 hover:text-purple-600 cursor-pointer transition-colors"
+                                        title="Editar datos del alumno"
                                     >
                                         <Edit2 className="w-3.5 h-3.5" />
                                     </button>
@@ -221,9 +289,10 @@ export default function RepresentedPage() {
                                                 title: "Confirmar operación",
                                                 description: "¿Quieres eliminar el registro de tu alumno representado?",
                                                 id: rep.id,
-                                            })
+                                            });
                                         }}
-                                        className="p-1.5 text-gray-400 hover:text-pink-600 cursor-pointer"
+                                        className="p-1.5 text-gray-400 hover:text-pink-600 cursor-pointer transition-colors"
+                                        title="Eliminar alumno"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -271,12 +340,12 @@ export default function RepresentedPage() {
                         >
                             {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
-                            <div className="grid grid-cols-1 gap-3">
+                            {/* Fila 1: DNI y Teléfono */}
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">
-                                        DNI
+                                        DNI <span className="text-gray-400 font-normal">(Opcional)</span>
                                     </label>
-
                                     <input
                                         type="text"
                                         value={formData.dni}
@@ -286,14 +355,29 @@ export default function RepresentedPage() {
                                         className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-gray-500 font-bold mb-1">
+                                        Teléfono del Alumno <span className="text-gray-400 font-normal">(Opcional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: +58 412..."
+                                        value={formData.phone}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, phone: e.target.value })
+                                        }
+                                        className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                                    />
+                                </div>
                             </div>
 
+                            {/* Fila 2: Nombre y Apellido */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">
                                         Nombre
                                     </label>
-
                                     <input
                                         required
                                         type="text"
@@ -309,7 +393,6 @@ export default function RepresentedPage() {
                                     <label className="block text-gray-500 font-bold mb-1">
                                         Apellido
                                     </label>
-
                                     <input
                                         required
                                         type="text"
@@ -322,12 +405,12 @@ export default function RepresentedPage() {
                                 </div>
                             </div>
 
+                            {/* Fila 3: Fecha de Nacimiento y Parentesco */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">
                                         F. de Nacimiento
                                     </label>
-
                                     <input
                                         required
                                         type="date"
@@ -343,7 +426,6 @@ export default function RepresentedPage() {
                                     <label className="block text-gray-500 font-bold mb-1">
                                         Parentesco
                                     </label>
-
                                     <select
                                         value={formData.kinship}
                                         onChange={(e) =>
@@ -364,24 +446,119 @@ export default function RepresentedPage() {
                                 </div>
                             </div>
 
+                            {/* Fila 4: Talla de Uniforme e Inscripción de Grupo */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-500 font-bold mb-1">
+                                        Talla de Franela
+                                    </label>
+                                    <select
+                                        required
+                                        value={formData.shirtSize}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, shirtSize: e.target.value })
+                                        }
+                                        className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                                    >
+                                        <option value="" disabled>Selecciona una talla</option>
+                                        <option value="2">Talla 2</option>
+                                        <option value="4">Talla 4</option>
+                                        <option value="6">Talla 6</option>
+                                        <option value="8">Talla 8</option>
+                                        <option value="10">Talla 10</option>
+                                        <option value="12">Talla 12</option>
+                                        <option value="14">Talla 14</option>
+                                        <option value="16">Talla 16</option>
+                                        <option value="S">S (Adulto)</option>
+                                        <option value="M">M (Adulto)</option>
+                                        <option value="L">L (Adulto)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-500 font-bold mb-1">
+                                        Grupo a Inscribir
+                                    </label>
+                                    <select
+                                        required
+                                        value={formData.group}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, group: e.target.value })
+                                        }
+                                        className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                                    >
+                                        <option value="" disabled>Selecciona el grupo</option>
+                                        <option value="baby_dance">Baby Dance</option>
+                                        <option value="infantil">Infantil</option>
+                                        <option value="juvenil">Juvenil</option>
+                                        <option value="adulto">Adulto</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Fila 5: Experiencia Previa (Radio Buttons Inline) */}
+                            <div>
+                                <label className="block text-gray-500 font-bold mb-1">
+                                    ¿Tiene experiencia previa en baile?
+                                </label>
+                                <div className="flex gap-4 items-center mt-1.5 p-1">
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="hasExperience"
+                                            checked={formData.hasExperience === true}
+                                            onChange={() => setFormData({ ...formData, hasExperience: true })}
+                                            className="accent-purple-600 w-3.5 h-3.5"
+                                        />
+                                        <span>Sí, posee experiencia</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="hasExperience"
+                                            checked={formData.hasExperience === false}
+                                            onChange={() => setFormData({ ...formData, hasExperience: false })}
+                                            className="accent-purple-600 w-3.5 h-3.5"
+                                        />
+                                        <span>No, es principiante</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Fila 6: Dirección Completa */}
+                            <div>
+                                <label className="block text-gray-500 font-bold mb-1">
+                                    Dirección de Habitación
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="Calle, Avenida, Edificio / Casa..."
+                                    value={formData.address}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, address: e.target.value })
+                                    }
+                                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                                />
+                            </div>
+
+                            {/* Fila 7: Observaciones Médicas */}
                             <div>
                                 <label className="block text-gray-500 font-bold mb-1">
                                     Observaciones Médicas o Alergias
                                 </label>
-
                                 <textarea
                                     rows={2}
                                     value={formData.medicalObservations}
                                     onChange={(e) =>
                                         setFormData({ ...formData, medicalObservations: e.target.value })
                                     }
-                                    placeholder="Ej: Alérgico a la penicilina, asma, etc."
+                                    placeholder="Ej: Alérgico a la penicilina, asma, ninguna, etc."
                                     className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
                                 ></textarea>
                             </div>
 
                             {/* Botonera */}
-
                             <div className="pt-2 flex justify-between">
                                 <button
                                     type="button"
@@ -393,13 +570,7 @@ export default function RepresentedPage() {
 
                                 <button
                                     type="submit"
-                                    className="
-
-                                        font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
-
-                                        gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90
-
-                                    "
+                                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
                                 >
                                     Guardar Alumno
                                 </button>

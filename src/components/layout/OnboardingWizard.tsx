@@ -15,26 +15,31 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
     const [isPending, startTransition] = useTransition();
     const [step, setStep] = useState(1); // 1: Bienvenida/Rol, 2: Datos Representados (si aplica)
     const [profileType, setProfileType] = useState<"student" | "representative" | null>(null);
+
+    // Nuevo estado para la ocupación del representante
+    const [representativeOccupation, setRepresentativeOccupation] = useState("");
     const [error, setError] = useState<string | null>(null);
 
     // Formulario para añadir un estudiante representado
     const [students, setStudents] = useState<any[]>([]);
     const [newStudent, setNewStudent] = useState({
-        firstName: "",
-        lastName: "",
-        dni: "",
-        birthDate: "",
-        kinship: "son",
+        firstName: "", lastName: "", dni: "", birthDate: "",
+        kinship: "son", address: "", phone: "", shirtSize: "M",
+        hasExperience: false, medicalObservations: "", group: ""
     });
 
     const handleAddStudent = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newStudent.firstName || !newStudent.lastName || !newStudent.dni || !newStudent.birthDate) {
+        if (!newStudent.firstName || !newStudent.lastName || !newStudent.birthDate) {
             setError("Por favor completa todos los campos del estudiante.");
             return;
         }
         setStudents([...students, { ...newStudent, id: crypto.randomUUID() }]);
-        setNewStudent({ firstName: "", lastName: "", dni: "", birthDate: "", kinship: "son" });
+        setNewStudent({
+            firstName: "", lastName: "", dni: "", birthDate: "",
+            kinship: "son", address: "", phone: "", shirtSize: "M",
+            hasExperience: false, medicalObservations: "", group: ""
+        });
         setError(null);
     };
 
@@ -55,22 +60,35 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
         }
     };
 
-    const handleSubmit = (finalRole: "student" | "representative", finalStudents: any[]) => {
-        if (finalRole === "representative" && finalStudents.length === 0) {
-            setError("Como representante, debes registrar al menos a un estudiante.");
-            return;
+    const handleSubmit = (
+        finalRole: "student" | "representative",
+        finalStudents: any[],
+        occupation?: string
+    ) => {
+        // Validaciones del lado del cliente para el rol de Representante
+        if (finalRole === "representative") {
+            if (finalStudents.length === 0) {
+                setError("Como representante, debes registrar al menos a un estudiante.");
+                return;
+            }
+            if (!occupation || occupation.trim() === "") {
+                setError("Por favor, ingresa tu ocupación o profesión.");
+                return;
+            }
         }
 
         startTransition(async () => {
             setError(null);
+
+            // Enviamos la ocupación del representante dentro de los parámetros de la acción
             const res = await completeOnboardingAction({
                 profileType: finalRole,
+                representativeOccupation: finalRole === "representative" ? occupation?.trim() : undefined,
                 representedStudents: finalRole === "representative" ? finalStudents : undefined,
             });
 
-
             if (res.success) {
-                setUser({ ...user, ...res.data.user })
+                setUser({ ...user, ...res.data.user });
                 // Recargamos la ventana para reactivar el layout con el nuevo estado del perfil
                 window.location.reload();
             } else {
@@ -87,7 +105,6 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl"></div>
 
-            {/* <div className="w-full max-w-2xl glass-card border border-white/10 bg-black/40 backdrop-blur-xl p-8 md:p-12 shadow-2xl relative text-center z-10"> */}
             <div className="w-full max-w-2xl border border-white/10 bg-[#400252] p-8 md:p-12 shadow-2xl relative text-center z-10">
 
                 {/* Paso 1: Bienvenida y Selección de Rol */}
@@ -164,7 +181,9 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                                 <div key={student.id} className="flex items-center justify-between bg-white/5 border border-white/10 p-3 text-xs">
                                     <div>
                                         <p className="font-bold text-purple-300">{student.firstName} {student.lastName}</p>
-                                        <p className="text-[10px] text-gray-400 font-mono">DNI: {student.dni} | {student.kinship}</p>
+                                        <p className="text-[10px] text-gray-400 font-mono">
+                                            DNI: {student.dni || "N/A"} | {student.kinship} | Grupo: {student.group}
+                                        </p>
                                     </div>
                                     <button onClick={() => handleRemoveStudent(student.id)} className="text-gray-400 hover:text-red-400 p-1">
                                         <Trash2 className="w-4 h-4" />
@@ -178,8 +197,7 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-gray-400">Nombre del Alumno</label>
                                 <input
-                                    type="text"
-                                    placeholder="Ej: Sofía"
+                                    type="text" required placeholder="Ej: Sofía"
                                     value={newStudent.firstName}
                                     onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })}
                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
@@ -188,18 +206,16 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-gray-400">Apellido</label>
                                 <input
-                                    type="text"
-                                    placeholder="Ej: Pérez"
+                                    type="text" required placeholder="Ej: Pérez"
                                     value={newStudent.lastName}
                                     onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] text-gray-400">DNI o Pasaporte</label>
+                                <label className="text-[10px] text-gray-400">DNI o Pasaporte (Opcional)</label>
                                 <input
-                                    type="text"
-                                    placeholder="Documento único"
+                                    type="text" placeholder="Documento único (Si aplica)"
                                     value={newStudent.dni}
                                     onChange={(e) => setNewStudent({ ...newStudent, dni: e.target.value })}
                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
@@ -208,13 +224,40 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-gray-400">Fecha de Nacimiento</label>
                                 <input
-                                    type="date"
+                                    type="date" required
                                     value={newStudent.birthDate}
                                     onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })}
                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-gray-300"
                                 />
                             </div>
-                            <div className="flex flex-col gap-1 sm:col-span-2">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
+                                <input
+                                    type="tel" placeholder="Ej: 0414-1234567"
+                                    value={newStudent.phone || ""}
+                                    onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-gray-400">Talla de Franela</label>
+                                <select
+                                    value={newStudent.shirtSize || "M"}
+                                    onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
+                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                >
+                                    <option value="2">Talla 2</option>
+                                    <option value="4">Talla 4</option>
+                                    <option value="6">Talla 6</option>
+                                    <option value="8">Talla 8</option>
+                                    <option value="10">Talla 10</option>
+                                    <option value="12">Talla 12</option>
+                                    <option value="S">S (Adulto)</option>
+                                    <option value="M">M (Adulto)</option>
+                                    <option value="L">L (Adulto)</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
                                 <select
                                     value={newStudent.kinship}
@@ -229,6 +272,68 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                                     <option value="other">Otro</option>
                                 </select>
                             </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] text-gray-400">Grupo a Inscribirse</label>
+                                <select
+                                    required
+                                    value={newStudent.group || ""}
+                                    onChange={(e) => setNewStudent({ ...newStudent, group: e.target.value })}
+                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                >
+                                    <option value="" disabled>Seleccione un grupo...</option>
+                                    <option value="baby_dance">Baby Dance (2-4 años)</option>
+                                    <option value="infantil">Infantil (5-11 años)</option>
+                                    <option value="juvenil">Juvenil (12-17 años)</option>
+                                    <option value="adulto">Adulto (18+ años)</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1 sm:col-span-2">
+                                <label className="text-[10px] text-gray-400">Dirección Completa de Habitación</label>
+                                <input
+                                    type="text" required placeholder="Avenida, Urbanización, Nro de Casa/Apto"
+                                    value={newStudent.address || ""}
+                                    onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1 sm:col-span-2">
+                                <label className="text-[10px] text-gray-400">Patología o Condición Especial</label>
+                                <input
+                                    type="text" placeholder="Ej: Asma leve, alergia al polvo (o indicar 'Ninguna')"
+                                    value={newStudent.medicalObservations || ""}
+                                    onChange={(e) => setNewStudent({ ...newStudent, medicalObservations: e.target.value })}
+                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                />
+                            </div>
+
+                            {/* Radio Buttons: Experiencia previa */}
+                            <div className="flex flex-col gap-2 sm:col-span-2 bg-black/20 p-2.5 border border-white/5 mt-1">
+                                <span className="text-[10px] text-gray-400 block">¿Ha tenido experiencia previa en el baile?</span>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="danceExperience"
+                                            value="true"
+                                            checked={newStudent.hasExperience === true}
+                                            onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
+                                            className="accent-pink-500 w-4 h-4"
+                                        />
+                                        Sí, posee experiencia
+                                    </label>
+                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="danceExperience"
+                                            value="false"
+                                            checked={newStudent.hasExperience === false}
+                                            onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
+                                            className="accent-pink-500 w-4 h-4"
+                                        />
+                                        No, nivel principiante
+                                    </label>
+                                </div>
+                            </div>
 
                             <button
                                 type="submit"
@@ -237,6 +342,22 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                                 <Plus className="w-4 h-4" /> Añadir Alumno a la Lista
                             </button>
                         </form>
+
+                        {/* 🎯 SECCIÓN: DATOS DEL REPRESENTANTE */}
+                        <div className="bg-black/30 border border-pink-500/20 p-4 space-y-3">
+                            <h4 className="text-xs font-bold text-pink-400 uppercase tracking-wide">Datos del Representante Legal</h4>
+                            <div className="flex flex-col gap-1.5 font-questrial text-xs">
+                                <label className="text-[10px] text-gray-400">Ocupación / Profesión *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Ingeniero de Sistemas, Comerciante, Docente..."
+                                    value={representativeOccupation || ""}
+                                    onChange={(e) => setRepresentativeOccupation(e.target.value)}
+                                    className="p-2.5 bg-black/40 border border-white/10 focus:border-pink-400 outline-none text-white w-full"
+                                />
+                            </div>
+                        </div>
 
                         {error && <p className="text-xs text-center text-red-400 font-questrial font-semibold bg-red-500/10 py-2 border border-red-500/20">{error}</p>}
 
@@ -251,8 +372,8 @@ export function OnboardingWizard({ userEmail }: OnboardingWizardProps) {
                             </button>
                             <button
                                 type="button"
-                                disabled={students.length === 0 || isPending}
-                                onClick={() => handleSubmit("representative", students)}
+                                disabled={students.length === 0 || !representativeOccupation || isPending}
+                                onClick={() => handleSubmit("representative", students, representativeOccupation)}
                                 className="cursor-pointer w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                             >
                                 {isPending ? "Guardando datos..." : "Finalizar y Entrar al Sistema ✓"}

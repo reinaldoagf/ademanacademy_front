@@ -10,13 +10,20 @@ const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
 interface OnboardingPayload {
     profileType: "student" | "representative";
+    representativeOccupation: undefined | string;
     // Si es representante, enviamos el arreglo de alumnos iniciales
     representedStudents?: {
         firstName: string;
         lastName: string;
-        dni: string;
+        dni: string | null;
         birthDate: string;
         kinship: string;
+        address: string;
+        phone: string | null;
+        shirtSize: string;
+        hasExperience: boolean;
+        medicalObservations: string;
+        group: string;
     }[];
 }
 
