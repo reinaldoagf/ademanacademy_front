@@ -29,7 +29,9 @@ import {
   Star,
   UserPlus,
   Users2,
-  UsersIcon
+  UsersIcon,
+  Calendar,
+  House
 } from "lucide-react";
 
 interface SidebarProps {
@@ -46,10 +48,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
   ]);
 
   const [academicManagement, setAcademicManagement] = useState([
-    { key: '', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
+    { key: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
+    { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
-    { key: '', name: 'Grupos y Cupos', href: '/admin/grupos', icon: Users, badge: 4 },
-    { key: '', name: 'Control de Asistencias', href: '/admin/asistencias', icon: CheckSquare },
+    { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     { key: '', name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
   ]);
 
