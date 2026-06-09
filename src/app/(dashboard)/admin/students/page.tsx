@@ -42,7 +42,7 @@ export default function StudentsPage() {
 
   const [isPending, startTransition] = useTransition();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     dni: "",
@@ -51,6 +51,11 @@ export default function StudentsPage() {
     birthDate: "",
     kinship: "son" as Student["kinship"],
     medicalObservations: "",
+    address: "",
+    shirtSize: "M",
+    group: "",
+    phone: "",
+    hasExperience: true
   });
   const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
@@ -104,7 +109,7 @@ export default function StudentsPage() {
       setStudents([res.data!, ...students]);
       // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
       window.dispatchEvent(new Event('refresh-students-count'));
-      setIsOpen(false);
+      setIsModalOpen(false);
     });
   };
   // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
@@ -225,9 +230,14 @@ export default function StudentsPage() {
               birthDate: "",
               kinship: "son",
               medicalObservations: "",
+              address: "",
+              shirtSize: "M",
+              group: "",
+              phone: "",
+              hasExperience: true
             });
             setErrorMsg(null);
-            setIsOpen(true);
+            setIsModalOpen(true);
           },
           icon: <Plus className="w-4 h-4" />,
           variant: "primary",
@@ -324,7 +334,7 @@ export default function StudentsPage() {
           emptyMessage="No se encontraron alumnos registrados en la academia."
         />
       </div>
-      {isOpen && (
+      {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
             {/* Cabecera del Modal */}
@@ -336,7 +346,7 @@ export default function StudentsPage() {
               </h3>
 
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -470,7 +480,7 @@ export default function StudentsPage() {
               <div className="pt-2 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsModalOpen(false)}
                   className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
                 >
                   Cancelar

@@ -9,6 +9,9 @@ import {
   getAllUsersAction,
 } from "@/app/actions/user";
 import {
+  getAllClassroomsAction,
+} from "@/app/actions/classrooms";
+import {
   getMyRepresentedAction,
   getAllStudentsAction
 } from "@/app/actions/student";
@@ -163,6 +166,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchClassroomsBadgeCount = async () => {
+    try {
+      const res = await getAllClassroomsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.meta) {
+        const totalClassrooms = res.meta.totalItems;
+        setAcademicManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "classrooms" ? { ...item, badge: totalClassrooms } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   const fetchRepresentedBadgeCount = async () => {
     try {
       const res = await getMyRepresentedAction();
@@ -184,14 +206,17 @@ export function Sidebar({ isOpen }: SidebarProps) {
       // Cargamos al inicio
       fetchUsersBadgeCount();
       fetchStudentsBadgeCount();
+      fetchClassroomsBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
+      window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
     return () => {
       window.removeEventListener('refresh-students-count', fetchStudentsBadgeCount);
+      window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
     };
   }, [isAdminView]);
   // useEffect para cargar la data real al montar el Sidebar por primera vez
