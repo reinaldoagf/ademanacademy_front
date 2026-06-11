@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
-import { saveClassroomAction, getAllClassroomsAction } from "@/app/actions/classrooms";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classrooms";
 import { Classroom } from "@/types/classroom";
 
 export const ClassroomTypeLabel: Record<string, string> = {
@@ -32,6 +33,20 @@ export default function ClassroomPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: "simple" | "word" | "email";
+        title: string;
+        description: string;
+        requiredWord?: string;
+        userEmail?: string;
+        id?: string;
+    }>({
+        isOpen: false,
+        type: "word",
+        title: "",
+        description: "",
+    });
     const [meta, setMeta] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -56,6 +71,23 @@ export default function ClassroomPage() {
         description: ""
     });
 
+    const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    // Acción definitiva que se ejecuta al pasar el filtro del Modal
+    const handleConfirmAction = async () => {
+        if (modalConfig?.id) {
+            startTransition(async () => {
+                if (modalConfig?.id) {
+                    const res = await deleteClassroomAction(modalConfig.id);
+                    if (res.success) {
+                        toast.success("Operación exitosa");
+                        setClassrooms(classrooms.filter((item) => item.id !== modalConfig.id));
+                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+                        window.dispatchEvent(new Event('refresh-deleteClassroomAction-count'));
+                    }
+                }
+            });
+        }
+    };
     // Manejo de inserción de nuevo salón
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,9 +115,6 @@ export default function ClassroomPage() {
         });
     };
 
-    const handleDeleteClassroom = (id: string) => {
-        console.log('handleDeleteClassroom')
-    };
 
     const handleEditModal = (classroom: any) => { // Puedes usar la interfaz de tu Student de Prisma
         setFormData({
@@ -280,7 +309,15 @@ export default function ClassroomPage() {
                                                 <Edit3 className="w-3.5 h-3.5" />
                                             </button>
                                             <button
-                                                onClick={() => handleDeleteClassroom(classroom.id)}
+                                                onClick={() => {
+                                                    setModalConfig({
+                                                        isOpen: true,
+                                                        type: "word",
+                                                        title: "Confirmar operación",
+                                                        description: "¿Quieres eliminar el registro de tu salón de clases?",
+                                                        id: classroom.id,
+                                                    });
+                                                }}
                                                 className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 transition rounded cursor-pointer"
                                                 title="Remover Locación"
                                             >
@@ -491,6 +528,19 @@ export default function ClassroomPage() {
                     </div>
                 </div>
             )}
+            {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                onConfirm={handleConfirmAction}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                description={modalConfig.description}
+                requiredWord={modalConfig.requiredWord}
+                userEmail={modalConfig.userEmail}
+                variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+                confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+            />
         </>
     );
 }

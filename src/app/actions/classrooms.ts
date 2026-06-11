@@ -51,3 +51,22 @@ export async function getAllClassroomsAction(params: FetchClassroomsParams) {
         };
     }
 }
+
+export async function deleteClassroomAction(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        await axios.delete(`${BACKEND_URL}/classrooms/${id}`, { headers });
+
+        return { success: true };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el salón."
+            };
+        }
+        return { success: false, error: "Error al comunicar la baja al servidor." };
+    }
+}
