@@ -12,4 +12,6 @@ export interface FetchClassroomsParams {
     page?: number;
     limit?: number;
     search?: string;
+    status?: string;
+    type?: string;
 }
