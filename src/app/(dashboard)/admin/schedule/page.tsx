@@ -1,9 +1,9 @@
+// src/app/(dashboard)/admin/schedule/page.tsx
 "use client";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
     Clock,
     MapPin,
-    Layers,
     User,
     X,
     ChevronRight,
@@ -15,60 +15,10 @@ import {
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import { Group } from "@/types/group";
-import { WeekDay, ScheduleBlock } from "@/types/schedule";
+import { Classroom } from "@/types/classroom";
+import { WeekDay, BlockData } from "@/types/schedule";
+import { getAllClassroomsAction } from "@/app/actions/classrooms";
 
-// 🎯 Datos iniciales de la academia
-const INITIAL_GRUPOS: Group[] = [
-    {
-        id: "grp-1",
-        name: "Salsa Infantil - Nivel 1",
-        style: "Salsa Casino",
-        instructor: "Carlos Espinoza",
-        classroom: "Salón de Espejos A",
-        usedSlots: 15,
-        totalNumberOfSlots: 15,
-        category: "Infantil",
-        schedules: {
-            lunes: [{ id: "b1", startTime: "14:00", endTime: "15:30", label: "Técnica básica" }],
-            martes: [],
-            miércoles: [{ id: "b2", startTime: "14:00", endTime: "15:30", label: "Coreografía" }],
-            jueves: [], viernes: [], sábado: [], domingo: []
-        }
-    },
-    {
-        id: "grp-2",
-        name: "Bachata Parejas - Intensivo",
-        style: "Bachata Sensual",
-        instructor: "Carlos Espinoza",
-        classroom: "Salón de Espejos A",
-        usedSlots: 8,
-        totalNumberOfSlots: 20,
-        category: "Adulto",
-        schedules: {
-            lunes: [{ id: "b5", startTime: "16:00", endTime: "17:30", label: "Social e improvisación" }],
-            martes: [], miércoles: [],
-            jueves: [{ id: "b6", startTime: "16:00", endTime: "17:30", label: "Carga de figuras" }],
-            viernes: [], sábado: [], domingo: []
-        }
-    },
-    {
-        id: "grp-3",
-        name: "Ritmos Urbanos Crew",
-        style: "Hip Hop",
-        instructor: "Daniela Martínez",
-        classroom: "Salón de Espejos A",
-        usedSlots: 18,
-        totalNumberOfSlots: 20,
-        category: "Juvenil",
-        schedules: {
-            lunes: [], martes: [], miércoles: [],
-            jueves: [{ id: "b3", startTime: "11:00", endTime: "12:30" }],
-            viernes: [],
-            sábado: [{ id: "b4", startTime: "10:00", endTime: "12:00", label: "Ensayo intensivo" }],
-            domingo: []
-        }
-    }
-];
 
 const HORA_INICIO_GRID = 8;
 const HORA_FIN_GRID = 21;
@@ -86,17 +36,17 @@ const COLOR_PALETTE = [
     { bg: "bg-rose-50 hover:bg-rose-100/90", text: "text-rose-700", border: "border-rose-500", rawBorder: "border-rose-700", labelBg: "bg-rose-200/60" },
 ];
 
-interface RenderableBlock {
-    block: ScheduleBlock;
-    day: WeekDay;
-    group: Group;
-}
+
 
 export default function SchedulePage() {
-    const [grupos, setGrupos] = useState<Group[]>(INITIAL_GRUPOS);
-    const [activeClassroom, setActiveClassroom] = useState<string>("Salón de Espejos A");
-    const [selectedElement, setSelectedElement] = useState<RenderableBlock | null>(null);
+    const [activeClassroom, setActiveClassroom] = useState<Classroom | null>(null);
+    const [selectedElement, setSelectedElement] = useState<{ block: BlockData, day: string, group: Group } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const [isPending, startTransition] = useTransition();
+
+    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
 
     // 🎯 NUEVO ESTADO: Filtro por Grupos (Pestañas de Grupo)
     // "all" significa ver la agenda completa con todos los grupos superpuestos por colores.
@@ -135,20 +85,14 @@ export default function SchedulePage() {
         return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
     };
 
-    const salonesDisponibles = useMemo(() => {
-        const salas = new Set<string>(["Salón de Espejos A", "Salón Urbano (Planta Alta)"]);
-        grupos.forEach(g => g.classroom && salas.add(g.classroom));
-        return Array.from(salas);
-    }, [grupos]);
-
     // Grupos que pertenecen al salón seleccionado actualmente
-    const gruposDelSalonActivo = useMemo(() => {
-        return grupos.filter(g => g.classroom === activeClassroom);
-    }, [grupos, activeClassroom]);
+    /*    const gruposDelSalonActivo = useMemo(() => {
+           return grupos.filter(g => g.classroom === activeClassroom);
+       }, [grupos, activeClassroom]); */
 
     // Malla horaria filtrada por Salón Y por Pestaña de Grupo seleccionada
-    const bloquesFiltrados = useMemo(() => {
-        const lista: RenderableBlock[] = [];
+    /* const bloquesFiltrados = useMemo(() => {
+        const lista: BlockData[] = [];
         gruposDelSalonActivo.forEach(grupo => {
             // Si la pestaña no es "todos" y no coincide con el grupo iterado, lo ignoramos
             if (activeGroupFilter !== "all" && activeGroupFilter !== grupo.id) return;
@@ -160,7 +104,7 @@ export default function SchedulePage() {
             });
         });
         return lista;
-    }, [gruposDelSalonActivo, activeGroupFilter]);
+    }, [gruposDelSalonActivo, activeGroupFilter]); */
 
     const getPositionStyles = (startTime: string, endTime: string) => {
         const minutosDesdeEje = timeToMinutes(startTime) - (HORA_INICIO_GRID * 60);
@@ -172,8 +116,9 @@ export default function SchedulePage() {
     };
 
     // ================= DRAG AND DROP CON FILTRADO DE COLOR =================
-    const handleDragStart = (e: React.DragEvent, blockId: string, groupId: string, originDay: WeekDay) => {
-        e.dataTransfer.setData("text/plain", JSON.stringify({ blockId, groupId, originDay }));
+    const handleDragStart = (e: React.DragEvent, blockId: string, realGroupId: string, originDay: WeekDay) => {
+        // Nos aseguramos de guardar el ID real del grupo, nunca "all"
+        e.dataTransfer.setData("text/plain", JSON.stringify({ blockId, groupId: realGroupId, originDay }));
         setErrorMsg(null);
     };
 
@@ -193,32 +138,43 @@ export default function SchedulePage() {
             const rect = e.currentTarget.getBoundingClientRect();
             const relativeY = e.clientY - rect.top;
 
+            // Cálculo de tiempos basado en la posición del contenedor (redondeado a bloques de 15 min)
             const minutosTotalesDrop = Math.round((relativeY / PIXELS_PER_HOUR) * 4) * 15;
             const nuevosMinutosInicio = (HORA_INICIO_GRID * 60) + minutosTotalesDrop;
 
-            const targetGroup = grupos.find(g => g.id === groupId);
-            const targetBlock = targetGroup?.schedules[originDay].find(b => b.id === blockId);
+            // 1. Buscar el grupo y su agenda correspondiente al salón activo
+            const targetGroup = activeClassroom?.groups.find(g => g.id === groupId);
+            const targetScheduleRelation = targetGroup?.schedules?.find((s: any) => s.classroomId === activeClassroom?.id);
 
-            if (!targetGroup || !targetBlock) return;
+            // 2. Buscar el bloque original dentro del día de origen
+            const targetBlock = targetScheduleRelation?.schedule?.[originDay]?.find((b: any) => b.id === blockId);
+
+            if (!targetGroup || !targetScheduleRelation || !targetBlock) {
+                console.warn("No se encontró el bloque o grupo de origen.");
+                return;
+            }
 
             const duracionOriginal = timeToMinutes(targetBlock.endTime) - timeToMinutes(targetBlock.startTime);
             const nuevosMinutosFin = nuevosMinutosInicio + duracionOriginal;
 
+            // Validación: Límites de apertura/cierre de la grilla
             if (nuevosMinutosFin > (HORA_FIN_GRID * 60)) {
                 setErrorMsg("El bloque excede el horario de cierre de la academia.");
                 return;
             }
 
-            // Validación de colisiones contra todos los bloques del mismo salón activo
-            const tieneColision = gruposDelSalonActivo.some(g => {
-                return Object.entries(g.schedules).some(([day, blocks]) => {
-                    if (day !== targetDay) return false;
-                    return blocks.some(b => {
-                        if (b.id === blockId && day === originDay) return false;
-                        const exStart = timeToMinutes(b.startTime);
-                        const exEnd = timeToMinutes(b.endTime);
-                        return (nuevosMinutosInicio < exEnd && nuevosMinutosFin > exStart);
-                    });
+            // 3. Validación de colisiones contra TODOS los bloques del salón activo en el día destino
+            const tieneColision = activeClassroom?.groups.some((g: any) => {
+                const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
+                const blocksForDay = grupoSchedule?.schedule?.[targetDay] || [];
+
+                return blocksForDay.some((b: any) => {
+                    // Excluir de la colisión a sí mismo si se está moviendo dentro del mismo día y grupo
+                    if (b.id === blockId && g.id === groupId && targetDay === originDay) return false;
+
+                    const exStart = timeToMinutes(b.startTime);
+                    const exEnd = timeToMinutes(b.endTime);
+                    return (nuevosMinutosInicio < exEnd && nuevosMinutosFin > exStart);
                 });
             });
 
@@ -227,21 +183,56 @@ export default function SchedulePage() {
                 return;
             }
 
-            setGrupos(grupos.map(g => {
-                if (g.id !== groupId) return g;
-                const updatedSchedules = { ...g.schedules };
-                updatedSchedules[originDay] = updatedSchedules[originDay].filter(b => b.id !== blockId);
-                const updatedBlock: ScheduleBlock = {
-                    ...targetBlock,
-                    startTime: minutesToTime(nuevosMinutosInicio),
-                    endTime: minutesToTime(nuevosMinutosFin)
-                };
-                updatedSchedules[targetDay] = [...updatedSchedules[targetDay], updatedBlock].sort((a, b) => a.startTime.localeCompare(b.startTime));
-                return { ...g, schedules: updatedSchedules };
-            }));
+            // 4. Actualización correcta e inmutable de activeClassroom
+            setActiveClassroom(prev => {
+                if (!prev) return prev;
+
+                // Mapeamos los grupos del salón para alterar solo el afectado
+                const updatedGroups = prev.groups.map((g: any) => {
+                    if (g.id !== groupId) return g;
+
+                    // Mapeamos las relaciones de horarios del grupo afectado
+                    const updatedSchedules = g.schedules.map((s: any) => {
+                        if (s.classroomId !== prev.id) return s;
+
+                        const currentDayBlocks = s.schedule[originDay] || [];
+                        const targetDayBlocks = s.schedule[targetDay] || [];
+
+                        // Quitamos el bloque del día origen
+                        const filteredOrigin = currentDayBlocks.filter((b: any) => b.id !== blockId);
+
+                        // Construimos el bloque con las nuevas horas
+                        const updatedBlock: BlockData = {
+                            ...targetBlock,
+                            startTime: minutesToTime(nuevosMinutosInicio),
+                            endTime: minutesToTime(nuevosMinutosFin)
+                        };
+
+                        // Si se mueve en el mismo día, añadimos el bloque al arreglo que ya fue filtrado
+                        const baseTargetBlocks = (originDay === targetDay) ? filteredOrigin : targetDayBlocks;
+                        const newTargetBlocks = [...baseTargetBlocks, updatedBlock].sort((a, b) =>
+                            a.startTime.localeCompare(b.startTime)
+                        );
+
+                        return {
+                            ...s,
+                            schedule: {
+                                ...s.schedule,
+                                [originDay]: filteredOrigin,
+                                [targetDay]: newTargetBlocks
+                            }
+                        };
+                    });
+
+                    return { ...g, schedules: updatedSchedules };
+                });
+
+                // Retornamos el estado completo del salón con su lista de grupos actualizada
+                return { ...prev, groups: updatedGroups };
+            });
 
         } catch (err) {
-            console.error(err);
+            console.error("Error en handleDrop:", err);
         }
     };
 
@@ -249,54 +240,54 @@ export default function SchedulePage() {
     const handleCreateBlock = (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
-
-        const { groupId, day, startTime, endTime, label } = newBlockData;
-        if (!groupId || !startTime || !endTime) return;
-
-        const startMin = timeToMinutes(startTime);
-        const endMin = timeToMinutes(endTime);
-
-        if (startMin >= endMin) {
-            setErrorMsg("La hora de salida debe ser posterior a la de entrada.");
-            return;
-        }
-
-        // Validar colisiones
-        const tieneColision = gruposDelSalonActivo.some(g => {
-            return Object.entries(g.schedules).some(([d, blocks]) => {
-                if (d !== day) return false;
-                return blocks.some(b => {
-                    const exStart = timeToMinutes(b.startTime);
-                    const exEnd = timeToMinutes(b.endTime);
-                    return (startMin < exEnd && endMin > exStart);
+        /* 
+                const { groupId, day, startTime, endTime, label } = newBlockData;
+                if (!groupId || !startTime || !endTime) return;
+        
+                const startMin = timeToMinutes(startTime);
+                const endMin = timeToMinutes(endTime);
+        
+                if (startMin >= endMin) {
+                    setErrorMsg("La hora de salida debe ser posterior a la de entrada.");
+                    return;
+                }
+        
+                // Validar colisiones
+                const tieneColision = gruposDelSalonActivo.some(g => {
+                    return Object.entries(g.schedules).some(([d, blocks]) => {
+                        if (d !== day) return false;
+                        return blocks.some(b => {
+                            const exStart = timeToMinutes(b.startTime);
+                            const exEnd = timeToMinutes(b.endTime);
+                            return (startMin < exEnd && endMin > exStart);
+                        });
+                    });
                 });
-            });
-        });
-
-        if (tieneColision) {
-            setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase del mismo salón.`);
-            return;
-        }
-
-        setGrupos(grupos.map(g => {
-            if (g.id !== groupId) return g;
-            const updatedDayBlocks = [...g.schedules[day], {
-                id: `blk-${crypto.randomUUID()}`,
-                startTime,
-                endTime,
-                label: label.trim() || undefined
-            }].sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-            return { ...g, schedules: { ...g.schedules, [day]: updatedDayBlocks } };
-        }));
-
-        setIsBlockModalOpen(false);
-        setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
+        
+                if (tieneColision) {
+                    setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase del mismo salón.`);
+                    return;
+                }
+        
+                setGrupos(grupos.map(g => {
+                    if (g.id !== groupId) return g;
+                    const updatedDayBlocks = [...g.schedules[day], {
+                        id: `blk-${crypto.randomUUID()}`,
+                        startTime,
+                        endTime,
+                        label: label.trim() || undefined
+                    }].sort((a, b) => a.startTime.localeCompare(b.startTime));
+        
+                    return { ...g, schedules: { ...g.schedules, [day]: updatedDayBlocks } };
+                }));
+        
+                setIsBlockModalOpen(false);
+                setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" }); */
     };
 
     const handleCreateGroup = (e: React.FormEvent) => {
         e.preventDefault();
-        const nuevo: Group = {
+        /* const nuevo: Group = {
             id: `grp-${crypto.randomUUID()}`,
             name: newGroupData.name,
             instructor: newGroupData.instructor,
@@ -309,11 +300,52 @@ export default function SchedulePage() {
         };
         setGrupos([...grupos, nuevo]);
         setIsGroupModalOpen(false);
-        setNewGroupData({ name: "", instructor: "", style: "", category: "Adulto", totalNumberOfSlots: 20 });
+        setNewGroupData({ name: "", instructor: "", style: "", category: "Adulto", totalNumberOfSlots: 20 }); */
     };
 
     const horasGuia = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
 
+
+    const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        startTransition(async () => {
+
+            setIsLoading(true)
+            const res = await getAllClassroomsAction({
+                page: pageToFetch,
+                limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+                search: undefined,
+                status: undefined,
+                type: undefined
+            });
+
+            setIsLoading(false)
+
+            if (res.success && res.data) {
+                setClassrooms(res.data);
+                setActiveClassroom(res.data[0] ?? null)
+            }
+        });
+    };
+
+    // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            fetchData(1, 10);
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="h-full p-6 relative">
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
+                    <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+        )
+    }
     return (
         <>
             <HeroSection
@@ -323,7 +355,7 @@ export default function SchedulePage() {
                     {
                         label: "Nuevo Bloque +",
                         onClick: () => {
-                            if (gruposDelSalonActivo.length === 0) {
+                            if (activeClassroom?.groups.length === 0) {
                                 setErrorMsg("Debes crear al menos un grupo en este salón primero.");
                                 return;
                             }
@@ -349,132 +381,220 @@ export default function SchedulePage() {
                 )}
 
                 {/* TABS DE SALONES */}
-                <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-purple-50">
-                    <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-purple-600" />
-                        <span className="font-questrial font-bold text-gray-700 text-xs uppercase tracking-wider">Infraestructura Activa:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {salonesDisponibles.map((sala) => (
-                            <button
-                                key={sala}
-                                onClick={() => { setActiveClassroom(sala); setActiveGroupFilter("all"); setSelectedElement(null); setErrorMsg(null); }}
-                                className={`px-4 py-2 font-questrial font-semibold text-xs transition cursor-pointer rounded ${activeClassroom === sala ? "bg-[#5e0472] text-white shadow-sm" : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"
-                                    }`}
-                            >
-                                {sala}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 🎯 NUEVA SECCIÓN DE PESTAÑAS: HORARIO GENERAL VS GRUPOS (CON COLORES INDICADORES) */}
-                <div className="flex items-center gap-1.5 border-b border-gray-200 overflow-x-auto pb-1">
-                    <button
-                        onClick={() => setActiveGroupFilter("all")}
-                        className={`px-3 py-2 font-questrial font-bold text-xs transition flex items-center gap-1 border-b-2 whitespace-nowrap cursor-pointer ${activeGroupFilter === "all"
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-gray-400 hover:text-gray-600"
-                            }`}
-                    >
-                        <Grid className="w-3.5 h-3.5" />
-                        Todo el Horario (General)
-                    </button>
-
-                    {gruposDelSalonActivo.map(grupo => {
-                        const colorMeta = getGroupColor(grupo.id);
-                        const isTargetActive = activeGroupFilter === grupo.id;
-                        return (
-                            <button
-                                key={grupo.id}
-                                onClick={() => setActiveGroupFilter(grupo.id)}
-                                className={`px-3 py-2 font-questrial font-semibold text-xs transition flex items-center gap-2 border-b-2 whitespace-nowrap cursor-pointer ${isTargetActive
-                                    ? "border-purple-600 text-purple-700 bg-purple-50/40 font-bold"
-                                    : "border-transparent text-gray-500 hover:bg-gray-50"
-                                    }`}
-                            >
-                                {/* Indicador esférico de color del grupo */}
-                                <span className={`w-2.5 h-2.5 rounded-full ${colorMeta.rawBorder} border-2`} style={{ backgroundColor: "currentColor" }} />
-                                {grupo.name}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* TIMELINE TIMELINE SEMANAL */}
-                <div className="glass-card border border-purple-50 bg-white shadow-sm rounded-xl overflow-x-auto">
-                    <div className="min-w-[1000px] relative flex flex-col font-questrial text-xs">
-
-                        {/* Días */}
-                        <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b bg-purple-50/40 font-bold text-gray-700 text-center uppercase tracking-wider py-3 sticky top-0 bg-white z-10">
-                            <div className="border-r border-purple-100 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-purple-600" /></div>
-                            {DIAS.map(d => <div key={d} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
+                {
+                    activeClassroom && (<><div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-purple-50">
+                        <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-purple-600" />
+                            <span className="font-questrial font-bold text-gray-700 text-xs uppercase tracking-wider">Infraestructura Activa:</span>
                         </div>
-
-                        {/* Malla del Tiempo */}
-                        <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative" style={{ height: `${horasGuia.length * PIXELS_PER_HOUR}px` }}>
-
-                            {/* Horas de Fondo */}
-                            {horasGuia.map((hora, index) => (
-                                <div key={hora} className="absolute left-0 right-0 border-b border-gray-100 flex items-start pointer-events-none" style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}>
-                                    <span className="w-[80px] text-right pr-3 pt-1 text-[10px] font-bold text-gray-400">
-                                        {hora.toString().padStart(2, "0")}:00
-                                    </span>
-                                </div>
+                        <div className="flex flex-wrap gap-2">
+                            {classrooms.map((classroom) => (
+                                <button
+                                    key={classroom.id}
+                                    onClick={() => {
+                                        setActiveClassroom(classroom);
+                                        setActiveGroupFilter("all");
+                                        setSelectedElement(null);
+                                        setErrorMsg(null);
+                                    }}
+                                    className={`px-4 py-2 font-questrial font-semibold text-xs transition cursor-pointer ${activeClassroom.id === classroom.id ? "bg-[#5e0472] text-white shadow-sm" : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"
+                                        }`}
+                                >
+                                    {classroom.name}
+                                </button>
                             ))}
+                        </div>
+                    </div>
+                    </>)
+                }
+                {
+                    activeClassroom && (<>
+                        {/* 🎯 NUEVA SECCIÓN DE PESTAÑAS: HORARIO GENERAL VS GRUPOS (CON COLORES INDICADORES) */}
+                        <div className="flex items-center gap-1.5 border-b border-gray-200 overflow-x-auto pb-1">
+                            <button
+                                onClick={() => setActiveGroupFilter("all")}
+                                className={`px-3 py-2 font-questrial font-bold text-xs transition flex items-center gap-1 border-b-2 whitespace-nowrap cursor-pointer ${activeGroupFilter === "all"
+                                    ? "border-purple-600 text-purple-700"
+                                    : "border-transparent text-gray-400 hover:text-gray-600"
+                                    }`}
+                            >
+                                <Grid className="w-3.5 h-3.5" />
+                                Todo el Horario (General)
+                            </button>
 
-                            <div className="border-r border-gray-100 bg-gray-50/20"></div>
-
-                            {/* Columnas Interactivas */}
-                            {DIAS.map((dia) => {
-                                const bloquesDelDia = bloquesFiltrados.filter(b => b.day === dia);
-
+                            {activeClassroom?.groups?.map((grupo: Group) => {
+                                const colorMeta = getGroupColor(grupo.id);
+                                const isTargetActive = activeGroupFilter === grupo.id;
                                 return (
-                                    <div
-                                        key={dia}
-                                        onDragOver={handleDragOver}
-                                        onDrop={(e) => handleDrop(e, dia)}
-                                        className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
+                                    <button
+                                        key={grupo.id}
+                                        onClick={() => setActiveGroupFilter(grupo.id)}
+                                        className={`px-3 py-2 font-questrial font-semibold text-xs transition flex items-center gap-2 border-b-2 whitespace-nowrap cursor-pointer ${isTargetActive
+                                            ? "border-purple-600 text-purple-700 bg-purple-50/40 font-bold"
+                                            : "border-transparent text-gray-500 hover:bg-gray-50"
+                                            }`}
                                     >
-                                        {bloquesDelDia.map(({ block, group }) => {
-                                            const posicionStyle = getPositionStyles(block.startTime, block.endTime);
-                                            const isSelected = selectedElement?.block.id === block.id;
-                                            const colorMeta = getGroupColor(group.id); // 🎯 Obtener paleta de color dinámica
-
-                                            return (
-                                                <div
-                                                    key={block.id}
-                                                    draggable
-                                                    onDragStart={(e) => handleDragStart(e, block.id, group.id, dia)}
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedElement({ block, day: dia, group }); }}
-                                                    style={posicionStyle}
-                                                    className={`absolute left-1 right-1 p-2 rounded border-l-4 overflow-hidden transition-all shadow-sm cursor-grab active:cursor-grabbing flex flex-col justify-between text-[11px] ${isSelected
-                                                        ? "bg-purple-700 text-white border-purple-900 z-20 scale-[1.01]"
-                                                        : `${colorMeta.bg} ${colorMeta.text} ${colorMeta.border} z-10`
-                                                        }`}
-                                                >
-                                                    <div className="font-bold tracking-tight uppercase text-[10px] truncate leading-tight">
-                                                        {group.name}
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-[9px] opacity-95">
-                                                        <span className="font-semibold">{block.startTime} - {block.endTime}</span>
-                                                        {block.label && (
-                                                            <span className={`px-1 rounded text-[8px] truncate max-w-[60px] ${isSelected ? "bg-purple-900" : colorMeta.labelBg
-                                                                }`}>
-                                                                {block.label}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                        {/* Indicador esférico de color del grupo */}
+                                        <span className={`w-2.5 h-2.5 rounded-full ${colorMeta.rawBorder} border-2`} style={{ backgroundColor: "currentColor" }} />
+                                        {grupo.name}
+                                    </button>
                                 );
                             })}
                         </div>
 
-                    </div>
-                </div>
+                        {/* TIMELINE TIMELINE SEMANAL */}
+                        <div className="glass-card border border-purple-50 bg-white shadow-sm overflow-x-auto">
+                            <div className="min-w-[1000px] relative flex flex-col font-questrial text-xs">
+
+                                {/* Días */}
+                                <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b bg-purple-50/40 font-bold text-gray-700 text-center uppercase tracking-wider py-3 sticky top-0 bg-white z-10">
+                                    <div className="border-r border-purple-100 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-purple-600" /></div>
+                                    {DIAS.map(d => <div key={d} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
+                                </div>
+
+                                {/* Malla del Tiempo */}
+                                <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative" style={{ height: `${horasGuia.length * PIXELS_PER_HOUR}px` }}>
+
+                                    {/* Horas de Fondo */}
+                                    {horasGuia.map((hora, index) => (
+                                        <div key={hora} className="absolute left-0 right-0 border-b border-gray-100 flex items-start pointer-events-none" style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}>
+                                            <span className="w-[80px] text-right pr-3 pt-1 text-[10px] font-bold text-gray-400">
+                                                {hora.toString().padStart(2, "0")}:00
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                    <div className="border-r border-gray-100 bg-gray-50/20"></div>
+
+                                    {/* Columnas Interactivas  (todo) */}
+                                    {
+                                        activeClassroom && (
+                                            DIAS.map((dia: ('lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo')) => {
+
+                                                if (activeGroupFilter != 'all') {
+                                                    const currentGroup = activeClassroom.groups.find((e: Group) => (e.id == activeGroupFilter));
+
+                                                    if (currentGroup) {
+                                                        const currentSchedule = currentGroup.schedules.find(e => (e.groupId == currentGroup.id && e.classroomId == activeClassroom.id));
+                                                        if (currentSchedule) {
+                                                            const blocksOfTheDay = currentSchedule.schedule[dia];
+
+                                                            return (
+                                                                <div
+                                                                    key={dia}
+                                                                    onDragOver={handleDragOver}
+                                                                    onDrop={(e) => handleDrop(e, dia)}
+                                                                    className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
+                                                                >
+                                                                    {blocksOfTheDay.map((e: BlockData) => {
+                                                                        const posicionStyle = getPositionStyles(e.startTime, e.endTime);
+                                                                        const isSelected = selectedElement?.id === e.id;
+                                                                        const colorMeta = getGroupColor(currentGroup.id);
+
+                                                                        return (
+                                                                            <div
+                                                                                key={e.id}
+                                                                                draggable
+                                                                                onDragStart={(evt) => handleDragStart(evt, e.id, activeGroupFilter, dia)}
+                                                                                onClick={(evt) => {
+                                                                                    evt.stopPropagation();
+                                                                                    const group = activeClassroom.groups.find(e => (e.id === activeGroupFilter))
+                                                                                    if (group) {
+                                                                                        setSelectedElement({ block: e, day: dia, group: group });
+                                                                                    }
+                                                                                }}
+                                                                                style={posicionStyle}
+                                                                                className={`absolute left-1 right-1 p-2 border-l-4 overflow-hidden transition-all shadow-sm cursor-grab active:cursor-grabbing flex flex-col justify-between text-[11px] ${isSelected
+                                                                                    ? "bg-purple-700 text-white border-purple-900 z-20 scale-[1.01]"
+                                                                                    : `${colorMeta.bg} ${colorMeta.text} ${colorMeta.border} z-10`
+                                                                                    }`}
+                                                                            >
+                                                                                <div className="font-bold tracking-tight uppercase text-[10px] truncate leading-tight">
+                                                                                    {currentGroup.name}
+                                                                                </div>
+                                                                                <div className="flex items-center justify-between text-[9px] opacity-95">
+                                                                                    <span className="font-semibold">{e.startTime} - {e.endTime}</span>
+                                                                                    {e.label && (
+                                                                                        <span className={`px-1 rounded text-[8px] truncate max-w-[60px] ${isSelected ? "bg-purple-900" : colorMeta.labelBg}`}>
+                                                                                            {e.label}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        }
+                                                    }
+                                                } else {
+                                                    // 🎯 SOLUCIÓN: Agrupamos todos los bloques de todos los grupos para este día en específico
+                                                    const allBlocksOfTheDay = activeClassroom.groups.flatMap((group: Group) => {
+                                                        // Buscamos el schedule del grupo
+                                                        const grupoSchedule = group.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
+                                                        const schedulesForDay = grupoSchedule?.schedule[dia] || [];
+                                                        // Le inyectamos los datos del grupo a cada bloque para que el render no falle
+                                                        return schedulesForDay.map((bloque: any) => ({
+                                                            ...bloque,
+                                                            group: group // Evitamos colisiones de nombres y pasamos la info limpia
+                                                        }));
+                                                    });
+
+                                                    return (
+                                                        <div
+                                                            key={dia}
+                                                            onDragOver={handleDragOver}
+                                                            onDrop={(e) => handleDrop(e, dia)}
+                                                            className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
+                                                        >
+                                                            {allBlocksOfTheDay.map((e: any) => {
+                                                                const posicionStyle = getPositionStyles(e.startTime, e.endTime);
+                                                                const isSelected = selectedElement?.id === e.id;
+                                                                const colorMeta = getGroupColor(e.group.id); // Color dinámico por grupo objetivo
+
+                                                                return (
+                                                                    <div
+                                                                        key={e.id}
+                                                                        draggable
+                                                                        onDragStart={(evt) => handleDragStart(evt, e.id, e.group.id, dia)}
+                                                                        onClick={(evt) => {
+                                                                            evt.stopPropagation();
+                                                                            setSelectedElement({ block: e, day: dia, group: e.group });
+                                                                        }}
+                                                                        style={posicionStyle}
+                                                                        className={`absolute left-1 right-1 p-2 border-l-4 overflow-hidden transition-all shadow-sm cursor-grab active:cursor-grabbing flex flex-col justify-between text-[11px] ${isSelected
+                                                                            ? "bg-purple-700 text-white border-purple-900 z-20 scale-[1.01]"
+                                                                            : `${colorMeta.bg} ${colorMeta.text} ${colorMeta.border} z-10`
+                                                                            }`}
+                                                                    >
+                                                                        <div className="font-bold tracking-tight uppercase text-[10px] truncate leading-tight">
+                                                                            {e.group.name} {/* 🎯 Nombre corregido */}
+                                                                        </div>
+                                                                        <div className="flex items-center justify-between text-[9px] opacity-95">
+                                                                            <span className="font-semibold">{e.startTime} - {e.endTime}</span>
+                                                                            {e.label && (
+                                                                                <span className={`px-1 rounded text-[8px] truncate max-w-[60px] ${isSelected ? "bg-purple-900" : colorMeta.labelBg}`}>
+                                                                                    {e.label}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })
+                                        )
+                                    }
+                                </div>
+
+                            </div>
+                        </div>
+                    </>)
+                }
+
             </div>
 
             {/* ================= 🎯 NUEVO MODAL: CREAR BLOQUE DE HORARIO ================= */}
@@ -490,7 +610,7 @@ export default function SchedulePage() {
                                 <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
                                 <select required value={newBlockData.groupId} onChange={e => setNewBlockData({ ...newBlockData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
                                     <option value="">-- Elige un grupo --</option>
-                                    {gruposDelSalonActivo.map(g => (
+                                    {activeClassroom?.groups.map(g => (
                                         <option key={g.id} value={g.id}>{g.name}</option>
                                     ))}
                                 </select>
@@ -527,11 +647,11 @@ export default function SchedulePage() {
             )}
 
             {/* ================= MODAL: REGISTRO DE NUEVO GRUPO ================= */}
-            {isGroupModalOpen && (
+            {(isGroupModalOpen && activeClassroom) && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl border border-purple-100 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">Nuevo Grupo en {activeClassroom}</h3>
+                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">Nuevo Grupo en {activeClassroom.name}</h3>
                             <button onClick={() => setIsGroupModalOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
                         </div>
                         <form onSubmit={handleCreateGroup} className="p-5 space-y-4 font-questrial text-xs">
@@ -548,12 +668,12 @@ export default function SchedulePage() {
                                     <label className="block text-gray-500 font-bold mb-1">Estilo de Baile</label>
                                     <input type="text" placeholder="Ej: Salsa Casino" value={newGroupData.style} onChange={e => setNewGroupData({ ...newGroupData, style: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400" />
                                 </div>
-                                <div>
+                                {/* <div>
                                     <label className="block text-gray-500 font-bold mb-1">Categoría</label>
                                     <select value={newGroupData.category} onChange={e => setNewGroupData({ ...newGroupData, category: e.target.value as Group["category"] })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
                                         <option value="Baby">Baby</option><option value="Infantil">Infantil</option><option value="Juvenil">Juvenil</option><option value="Adulto">Adulto</option>
                                     </select>
-                                </div>
+                                </div> */}
                             </div>
                             <div>
                                 <label className="block text-gray-500 font-bold mb-1">Cupos Disponibles</label>
@@ -573,14 +693,19 @@ export default function SchedulePage() {
                 <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150">
                     <div className="p-4 bg-purple-50/50 border-b border-purple-100 flex items-center justify-between">
                         <div className="flex items-center gap-1.5 font-bold uppercase text-gray-700 text-[11px]"><Info className="w-4 h-4 text-[#5e0472]" /> Propiedades del Bloque</div>
-                        <button onClick={() => setSelectedElement(null)} className="p-1 hover:bg-purple-100 text-gray-400 rounded"><X className="w-4 h-4" /></button>
+                        <button onClick={() => setSelectedElement(null)} className="cursor-pointer p-1 hover:bg-purple-100 text-gray-400 rounded"><X className="w-4 h-4" /></button>
                     </div>
                     <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-                        <div>
-                            <span className="text-[9px] font-bold bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded capitalize">{selectedElement.group.category}</span>
-                            <h4 className="font-anton text-gray-800 text-base mt-2 uppercase tracking-wide leading-tight">{selectedElement.group.name}</h4>
-                            <p className="text-[#5e0472] font-semibold text-xs mt-0.5">{selectedElement.group.style || "Estilo Libre"}</p>
-                        </div>
+                        {
+                            selectedElement.group && (
+                                <div>
+                                    <span className="text-[9px] font-bold bg-pink-100 text-pink-700 px-1.5 py-0.5 capitalize">{selectedElement.group.category}</span>
+                                    <h4 className="font-anton text-gray-800 text-base mt-2 uppercase tracking-wide leading-tight">{selectedElement.group.name}</h4>
+                                    <p className="text-[#5e0472] font-semibold text-xs mt-0.5">{selectedElement.group.style || "Estilo Libre"}</p>
+                                </div>
+                            )
+                        }
+
                         <div className="space-y-3 border-t border-gray-100 pt-3 text-gray-600">
                             <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Día</p><p className="font-medium text-gray-800 capitalize">{selectedElement.day}</p></div></div>
                             <div className="flex items-center gap-3"><Clock className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Horario Actual</p><p className="font-medium text-gray-800">{selectedElement.block.startTime} a {selectedElement.block.endTime}</p></div></div>
@@ -590,20 +715,69 @@ export default function SchedulePage() {
                             <button
                                 type="button"
                                 onClick={() => {
+                                    if (!selectedElement) return;
                                     if (!confirm("¿Deseas remover este bloque?")) return;
-                                    setGrupos(prev => prev.map(g => {
-                                        if (g.id !== selectedElement.group.id) return g;
-                                        return { ...g, schedules: { ...g.schedules, [selectedElement.day]: g.schedules[selectedElement.day].filter(b => b.id !== selectedElement.block.id) } };
-                                    }));
+
+                                    // Extraemos los datos correctos según lo guardado en el onClick del JSX
+                                    const blockId = selectedElement.block.id;
+                                    const targetDay = selectedElement.day;
+
+                                    // Si estabas en vista global 'all', el grupo real viene en e.group.id. 
+                                    // Si no, es el filtro activo.
+                                    const groupId = selectedElement.block.group?.id || selectedElement.group;
+
+                                    // 1. Actualizar el estado del Salón Activo (Grilla)
+                                    setActiveClassroom(prev => {
+                                        if (!prev) return prev;
+                                        return {
+                                            ...prev,
+                                            groups: prev.groups.map((g: any) => {
+                                                if (g.id !== groupId) return g;
+                                                return {
+                                                    ...g,
+                                                    schedules: g.schedules.map((s: any) => {
+                                                        if (s.classroomId !== prev.id) return s;
+                                                        return {
+                                                            ...s,
+                                                            schedule: {
+                                                                ...s.schedule,
+                                                                [targetDay]: (s.schedule[targetDay] || []).filter((b: any) => b.id !== blockId)
+                                                            }
+                                                        };
+                                                    })
+                                                };
+                                            })
+                                        };
+                                    });
+
+                                    // 2. Actualizar el estado global de Grupos (si lo sigues usando en paralelo)
+                                    /* setGrupos(prev => prev.map(g => {
+                                        if (g.id !== groupId) return g;
+                                        return {
+                                            ...g,
+                                            schedules: g.schedules.map((s: any) => {
+                                                if (s.classroomId !== activeClassroom?.id) return s;
+                                                return {
+                                                    ...s,
+                                                    schedule: {
+                                                        ...s.schedule,
+                                                        [targetDay]: (s.schedule[targetDay] || []).filter((b: any) => b.id !== blockId)
+                                                    }
+                                                };
+                                            })
+                                        };
+                                    })); */
+
+                                    // Limpiar la selección
                                     setSelectedElement(null);
                                 }}
-                                className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 rounded text-center cursor-pointer"
+                                className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer"
                             >
                                 Eliminar bloque de horario
                             </button>
                         </div>
                     </div>
-                    <div className="p-4 border-t bg-gray-50"><button onClick={() => alert("Módulo de alumnos e inscripciones")} className="w-full py-2 bg-white text-gray-700 border font-bold rounded flex items-center justify-center gap-1">Ver Alumnos <ChevronRight className="w-3.5 h-3.5" /></button></div>
+                    <div className="p-4 border-t border-purple-100 bg-gray-50"><button onClick={() => alert("Módulo de alumnos e inscripciones")} className="w-full py-2 bg-white text-gray-700 border font-bold cursor-pointer flex items-center justify-center gap-1">Ver Alumnos <ChevronRight className="w-3.5 h-3.5" /></button></div>
                 </div>
             )}
         </>
