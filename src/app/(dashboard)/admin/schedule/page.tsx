@@ -128,7 +128,7 @@ export default function SchedulePage() {
 
             // Cálculo de tiempos basado en la posición del contenedor (redondeado a bloques de 15 min)
             const minutosTotalesDrop = Math.round((relativeY / PIXELS_PER_HOUR) * 4) * 15;
-            const nuevosMinutosInicio = (HORA_INICIO_GRID * 60) + minutosTotalesDrop;
+            const newMinutesHome = (HORA_INICIO_GRID * 60) + minutosTotalesDrop;
 
             // 1. Buscar el grupo y su agenda correspondiente al salón activo
             const targetGroup = activeClassroom?.groups.find(g => g.id === groupId);
@@ -142,11 +142,11 @@ export default function SchedulePage() {
                 return;
             }
 
-            const duracionOriginal = timeToMinutes(targetBlock.endTime) - timeToMinutes(targetBlock.startTime);
-            const nuevosMinutosFin = nuevosMinutosInicio + duracionOriginal;
+            const originalDuration = timeToMinutes(targetBlock.endTime) - timeToMinutes(targetBlock.startTime);
+            const newMinutesEnd = newMinutesHome + originalDuration;
 
             // Validación: Límites de apertura/cierre de la grilla
-            if (nuevosMinutosFin > (HORA_FIN_GRID * 60)) {
+            if (newMinutesEnd > (HORA_FIN_GRID * 60)) {
                 setErrorMsg("El bloque excede el horario de cierre de la academia.");
                 return;
             }
@@ -162,7 +162,7 @@ export default function SchedulePage() {
 
                     const exStart = timeToMinutes(b.startTime);
                     const exEnd = timeToMinutes(b.endTime);
-                    return (nuevosMinutosInicio < exEnd && nuevosMinutosFin > exStart);
+                    return (newMinutesHome < exEnd && newMinutesEnd > exStart);
                 });
             });
 
@@ -192,8 +192,8 @@ export default function SchedulePage() {
                         // Construimos el bloque con las nuevas horas
                         const updatedBlock: BlockData = {
                             ...targetBlock,
-                            startTime: minutesToTime(nuevosMinutosInicio),
-                            endTime: minutesToTime(nuevosMinutosFin)
+                            startTime: minutesToTime(newMinutesHome),
+                            endTime: minutesToTime(newMinutesEnd)
                         };
 
                         // Si se mueve en el mismo día, añadimos el bloque al arreglo que ya fue filtrado
@@ -428,7 +428,7 @@ export default function SchedulePage() {
             <div className="p-4 md:p-8 w-full space-y-4">
 
                 {errorMsg && (
-                    <div className="text-red-700 text-xs bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
+                    <div className="text-red-700 text-xs bg-red-50 p-3 border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
                         <AlertCircle className="w-4 h-4 shrink-0" />
                         <span className="font-semibold">{errorMsg}</span>
                     </div>
@@ -665,6 +665,13 @@ export default function SchedulePage() {
                             <button onClick={() => setIsBlockModalOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
                         </div>
                         <form onSubmit={handleCreateBlock} className="p-5 space-y-4 font-questrial text-xs">
+                            {errorMsg && (
+                                <div className="text-red-700 text-xs bg-red-50 p-3 border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    <span className="font-semibold">{errorMsg}</span>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
                                 <select required value={newBlockData.groupId} onChange={e => setNewBlockData({ ...newBlockData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
