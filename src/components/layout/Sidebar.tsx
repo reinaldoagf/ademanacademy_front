@@ -55,7 +55,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
-    { key: '', name: 'Ensayos y Clases', href: '/admin/ensayos', icon: CalendarDays, badge: 2 },
+    { key: '', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays, badge: 2 },
   ]);
 
   const [operationalManagement, setOperationalManagement] = useState([

@@ -16,17 +16,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classrooms";
 import { Classroom } from "@/types/classroom";
-
-export const ClassroomTypeLabel: Record<string, string> = {
-    mirrors: 'Área Espejos',
-    urban: 'Área Urbano',
-    free: 'Estudio Libre',
-    theories: 'Aula de Teorías',
-};
-export const ClassroomStatusLabel: Record<string, string> = {
-    active: 'Activo',
-    maintenance: 'Mantenimiento',
-};
+import { ClassroomTypeLabel, ClassroomStatusLabel } from "@/consts/classroom";
 
 export default function ClassroomPage() {
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);

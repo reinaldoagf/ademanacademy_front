@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/ensayos/page.tsx
+// src/app/(dashboard)/admin/groups/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -69,7 +69,7 @@ export default function EnsayosPage() {
 
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection
-        htmlTitle={`Cronograma de <em class="text-[#5e0472]">Ensayos y Clases</em>`}
+        htmlTitle={`Grupos de <em class="text-[#5e0472]">Clases</em>`}
         htmlSubTitle={`Monitorea el uso de los salones, bloques de danza del día y montajes extraordinarios.`}
         actions={[{
           label: "Agendar Bloque / Ensayo →",
@@ -180,8 +180,8 @@ export default function EnsayosPage() {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap font-questrial">
                       <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 font-bold ${act.prioridad === "Montaje Final" ? "bg-red-100 text-red-700" :
-                          act.prioridad === "Crítica" ? "bg-amber-100 text-amber-700" :
-                            "bg-gray-100 text-gray-500"
+                        act.prioridad === "Crítica" ? "bg-amber-100 text-amber-700" :
+                          "bg-gray-100 text-gray-500"
                         }`}>
                         {act.prioridad}
                       </span>
@@ -211,8 +211,8 @@ export default function EnsayosPage() {
                 {/* Estado de Ejecución en Salón */}
                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
                   <span className={`text-xs font-bold px-3 py-1 ${act.estado === "En Curso" ? "bg-purple-100 text-purple-700 animate-pulse" :
-                      act.estado === "Concluido" ? "bg-gray-100 text-gray-400" :
-                        "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                    act.estado === "Concluido" ? "bg-gray-100 text-gray-400" :
+                      "bg-emerald-50 text-emerald-700 border border-emerald-100"
                     }`}>
                     {act.estado}
                   </span>

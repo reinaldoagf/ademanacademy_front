@@ -6,7 +6,7 @@ import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
-export async function saveClassroomAction(formData: Omit<Classroom, 'id'>, id?: string | null) {
+export async function saveClassroomAction(formData: Omit<Classroom, 'id' | 'groups' | 'schedules'>, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/classrooms/${id}` : `${BACKEND_URL}/classrooms`;
         const headers = await getAuthHeaders();
