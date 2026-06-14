@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
 import {
+    Sparkles,
     Clock,
     MapPin,
     User,
@@ -13,12 +14,13 @@ import {
     AlertCircle,
     Grid
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
 import { getAllClassroomsAction } from "@/app/actions/classrooms";
-
 
 const HORA_INICIO_GRID = 8;
 const HORA_FIN_GRID = 21;
@@ -36,12 +38,24 @@ const COLOR_PALETTE = [
     { bg: "bg-rose-50 hover:bg-rose-100/90", text: "text-rose-700", border: "border-rose-500", rawBorder: "border-rose-700", labelBg: "bg-rose-200/60" },
 ];
 
-
-
 export default function SchedulePage() {
     const [activeClassroom, setActiveClassroom] = useState<Classroom | null>(null);
-    const [selectedElement, setSelectedElement] = useState<{ block: BlockData, day: string, group: Group } | null>(null);
+    const [selectedElement, setSelectedElement] = useState<{ id: string; block: BlockData, day: string, group: Group } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: "simple" | "word" | "email";
+        title: string;
+        description: string;
+        requiredWord?: string;
+        userEmail?: string;
+        id?: string;
+    }>({
+        isOpen: false,
+        type: "word",
+        title: "",
+        description: "",
+    });
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const [isPending, startTransition] = useTransition();
@@ -53,12 +67,7 @@ export default function SchedulePage() {
     const [activeGroupFilter, setActiveGroupFilter] = useState<string>("all");
 
     // Estados para modales
-    const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-
-    const [newGroupData, setNewGroupData] = useState({
-        name: "", instructor: "", style: "", category: "Adulto" as Group["category"], totalNumberOfSlots: 20
-    });
 
     const [newBlockData, setNewBlockData] = useState({
         groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
@@ -84,27 +93,6 @@ export default function SchedulePage() {
         const m = mins % 60;
         return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
     };
-
-    // Grupos que pertenecen al salón seleccionado actualmente
-    /*    const gruposDelSalonActivo = useMemo(() => {
-           return grupos.filter(g => g.classroom === activeClassroom);
-       }, [grupos, activeClassroom]); */
-
-    // Malla horaria filtrada por Salón Y por Pestaña de Grupo seleccionada
-    /* const bloquesFiltrados = useMemo(() => {
-        const lista: BlockData[] = [];
-        gruposDelSalonActivo.forEach(grupo => {
-            // Si la pestaña no es "todos" y no coincide con el grupo iterado, lo ignoramos
-            if (activeGroupFilter !== "all" && activeGroupFilter !== grupo.id) return;
-
-            Object.entries(grupo.schedules).forEach(([day, blocks]) => {
-                blocks.forEach(block => {
-                    lista.push({ block, day: day as WeekDay, group: grupo });
-                });
-            });
-        });
-        return lista;
-    }, [gruposDelSalonActivo, activeGroupFilter]); */
 
     const getPositionStyles = (startTime: string, endTime: string) => {
         const minutosDesdeEje = timeToMinutes(startTime) - (HORA_INICIO_GRID * 60);
@@ -147,7 +135,7 @@ export default function SchedulePage() {
             const targetScheduleRelation = targetGroup?.schedules?.find((s: any) => s.classroomId === activeClassroom?.id);
 
             // 2. Buscar el bloque original dentro del día de origen
-            const targetBlock = targetScheduleRelation?.schedule?.[originDay]?.find((b: any) => b.id === blockId);
+            const targetBlock = targetScheduleRelation?.schedule?.[originDay]?.find((b: BlockData) => b.id === blockId);
 
             if (!targetGroup || !targetScheduleRelation || !targetBlock) {
                 console.warn("No se encontró el bloque o grupo de origen.");
@@ -240,71 +228,83 @@ export default function SchedulePage() {
     const handleCreateBlock = (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
-        /* 
-                const { groupId, day, startTime, endTime, label } = newBlockData;
-                if (!groupId || !startTime || !endTime) return;
-        
-                const startMin = timeToMinutes(startTime);
-                const endMin = timeToMinutes(endTime);
-        
-                if (startMin >= endMin) {
-                    setErrorMsg("La hora de salida debe ser posterior a la de entrada.");
-                    return;
-                }
-        
-                // Validar colisiones
-                const tieneColision = gruposDelSalonActivo.some(g => {
-                    return Object.entries(g.schedules).some(([d, blocks]) => {
-                        if (d !== day) return false;
-                        return blocks.some(b => {
-                            const exStart = timeToMinutes(b.startTime);
-                            const exEnd = timeToMinutes(b.endTime);
-                            return (startMin < exEnd && endMin > exStart);
-                        });
-                    });
-                });
-        
-                if (tieneColision) {
-                    setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase del mismo salón.`);
-                    return;
-                }
-        
-                setGrupos(grupos.map(g => {
-                    if (g.id !== groupId) return g;
-                    const updatedDayBlocks = [...g.schedules[day], {
-                        id: `blk-${crypto.randomUUID()}`,
-                        startTime,
-                        endTime,
-                        label: label.trim() || undefined
-                    }].sort((a, b) => a.startTime.localeCompare(b.startTime));
-        
-                    return { ...g, schedules: { ...g.schedules, [day]: updatedDayBlocks } };
-                }));
-        
-                setIsBlockModalOpen(false);
-                setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" }); */
-    };
 
-    const handleCreateGroup = (e: React.FormEvent) => {
-        e.preventDefault();
-        /* const nuevo: Group = {
-            id: `grp-${crypto.randomUUID()}`,
-            name: newGroupData.name,
-            instructor: newGroupData.instructor,
-            style: newGroupData.style || null,
-            classroom: activeClassroom,
-            category: newGroupData.category,
-            usedSlots: 0,
-            totalNumberOfSlots: Number(newGroupData.totalNumberOfSlots),
-            schedules: { lunes: [], martes: [], miércoles: [], jueves: [], viernes: [], sábado: [], domingo: [] }
+        const { groupId, day, startTime, endTime, label } = newBlockData;
+        if (!groupId || !startTime || !endTime || !activeClassroom) return;
+
+        const startMin = timeToMinutes(startTime);
+        const endMin = timeToMinutes(endTime);
+
+        if (startMin >= endMin) {
+            setErrorMsg("La hora de salida debe ser posterior a la de entrada.");
+            return;
+        }
+
+        // 1. Validar colisiones contra TODOS los bloques existentes en este salón para el día destino
+        const tieneColision = activeClassroom.groups.some((g: any) => {
+            // Buscamos la agenda de este grupo asociada al salón activo
+            const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
+            const blocksForDay = grupoSchedule?.schedule?.[day] || [];
+
+            return blocksForDay.some((b: any) => {
+                const exStart = timeToMinutes(b.startTime);
+                const exEnd = timeToMinutes(b.endTime);
+                return (startMin < exEnd && endMin > exStart);
+            });
+        });
+
+        if (tieneColision) {
+            setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase en este salón.`);
+            return;
+        }
+
+        // 2. Construcción del nuevo bloque de horario
+        const nuevoBloque = {
+            id: `blk-${crypto.randomUUID()}`,
+            startTime,
+            endTime,
+            label: label.trim() || undefined
         };
-        setGrupos([...grupos, nuevo]);
-        setIsGroupModalOpen(false);
-        setNewGroupData({ name: "", instructor: "", style: "", category: "Adulto", totalNumberOfSlots: 20 }); */
+
+        // 3. Actualización inmutable del estado del salón activo (activeClassroom)
+        setActiveClassroom(prev => {
+            if (!prev) return prev;
+
+            const updatedGroups = prev.groups.map((g: any) => {
+                if (g.id !== groupId) return g;
+
+                const updatedSchedules = g.schedules.map((s: any) => {
+                    // Aseguramos alterar la agenda correspondiente al salón actual
+                    if (s.classroomId !== prev.id) return s;
+
+                    const currentDayBlocks = s.schedule[day] || [];
+                    // Agregamos el nuevo bloque y ordenamos cronológicamente
+                    const newTargetBlocks = [...currentDayBlocks, nuevoBloque].sort((a, b) =>
+                        a.startTime.localeCompare(b.startTime)
+                    );
+
+                    return {
+                        ...s,
+                        schedule: {
+                            ...s.schedule,
+                            [day]: newTargetBlocks
+                        }
+                    };
+                });
+
+                return { ...g, schedules: updatedSchedules };
+            });
+
+            return { ...prev, groups: updatedGroups };
+        });
+
+        // 4. Limpieza y cierre del modal
+        setIsBlockModalOpen(false);
+        setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
+        toast.success(`✨ Bloque añadido exitosamente de la agenda.`);
     };
 
     const horasGuia = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
-
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
@@ -318,6 +318,8 @@ export default function SchedulePage() {
                 type: undefined
             });
 
+            console.log({ res })
+
             setIsLoading(false)
 
             if (res.success && res.data) {
@@ -328,7 +330,64 @@ export default function SchedulePage() {
     };
 
     // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
+    const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    // Acción definitiva que se ejecuta al pasar el filtro del Modal
+    const handleConfirmAction = async () => {
+        if (modalConfig?.id && activeClassroom) {
+            try {
+                // Desempaquetamos la metadata almacenada
+                const [blockId, targetDay, groupId] = modalConfig.id.split("|");
 
+                if (!blockId || !targetDay || !groupId) return;
+
+                // Actualización inmutable del estado del salón activo (grilla visual)
+                setActiveClassroom(prev => {
+                    if (!prev) return prev;
+
+                    const updatedGroups = prev.groups.map((g: any) => {
+                        // Solo modificamos el grupo dueño del bloque
+                        if (g.id !== groupId) return g;
+
+                        const updatedSchedules = g.schedules.map((s: any) => {
+                            // Aseguramos modificar la relación vinculada al salón actual
+                            if (s.classroomId !== prev.id) return s;
+
+                            const currentDayBlocks = s.schedule[targetDay] || [];
+
+                            // Filtramos para remover el bloque seleccionado de ese día específico
+                            const filteredBlocks = currentDayBlocks.filter((b: any) => b.id !== blockId);
+
+                            return {
+                                ...s,
+                                schedule: {
+                                    ...s.schedule,
+                                    [targetDay]: filteredBlocks
+                                }
+                            };
+                        });
+
+                        return { ...g, schedules: updatedSchedules };
+                    });
+
+                    return { ...prev, groups: updatedGroups };
+                });
+
+                toast.success(`✨ Bloque eliminado exitosamente de la agenda.`);
+
+            } catch (error) {
+                console.error("Error procesando la eliminación del bloque:", error);
+                setErrorMsg("Ocurrió un error inesperado al intentar remover el bloque.");
+            }
+        }
+
+        // Cerramos el modal de confirmación restaurando el estado inicial de la configuración
+        setModalConfig({
+            isOpen: false,
+            type: "word",
+            title: "",
+            description: "",
+        });
+    };
     useEffect(() => {
         const handler = setTimeout(() => {
             fetchData(1, 10);
@@ -362,11 +421,6 @@ export default function SchedulePage() {
                             setIsBlockModalOpen(true);
                         },
                         icon: <Clock className="w-4 h-4" />,
-                    },
-                    {
-                        label: "Crear Grupo",
-                        onClick: () => setIsGroupModalOpen(true),
-                        icon: <Plus className="w-4 h-4" />,
                     }
                 ]}
             />
@@ -500,7 +554,12 @@ export default function SchedulePage() {
                                                                                     evt.stopPropagation();
                                                                                     const group = activeClassroom.groups.find(e => (e.id === activeGroupFilter))
                                                                                     if (group) {
-                                                                                        setSelectedElement({ block: e, day: dia, group: group });
+                                                                                        setSelectedElement({
+                                                                                            id: e.id,
+                                                                                            block: e,
+                                                                                            day: dia,
+                                                                                            group: group
+                                                                                        });
                                                                                     }
                                                                                 }}
                                                                                 style={posicionStyle}
@@ -559,7 +618,7 @@ export default function SchedulePage() {
                                                                         onDragStart={(evt) => handleDragStart(evt, e.id, e.group.id, dia)}
                                                                         onClick={(evt) => {
                                                                             evt.stopPropagation();
-                                                                            setSelectedElement({ block: e, day: dia, group: e.group });
+                                                                            setSelectedElement({ id: e.id, block: e, day: dia, group: e.group });
                                                                         }}
                                                                         style={posicionStyle}
                                                                         className={`absolute left-1 right-1 p-2 border-l-4 overflow-hidden transition-all shadow-sm cursor-grab active:cursor-grabbing flex flex-col justify-between text-[11px] ${isSelected
@@ -594,15 +653,15 @@ export default function SchedulePage() {
                         </div>
                     </>)
                 }
-
             </div>
-
             {/* ================= 🎯 NUEVO MODAL: CREAR BLOQUE DE HORARIO ================= */}
             {isBlockModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl border border-purple-100 shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-white border border-purple-100 shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">Añadir Bloque de Horario</h3>
+                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">
+                                <Sparkles className="w-4 h-4 text-purple-600" /> Añadir Bloque de Horario
+                            </h3>
                             <button onClick={() => setIsBlockModalOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
                         </div>
                         <form onSubmit={handleCreateBlock} className="p-5 space-y-4 font-questrial text-xs">
@@ -637,57 +696,27 @@ export default function SchedulePage() {
                                     <input required type="time" value={newBlockData.endTime} onChange={e => setNewBlockData({ ...newBlockData, endTime: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
                                 </div>
                             </div>
-                            <div className="pt-2 border-t flex justify-end gap-2">
-                                <button type="button" onClick={() => setIsBlockModalOpen(false)} className="px-4 py-1.5 bg-gray-100 rounded">Cancelar</button>
-                                <button type="submit" className="px-4 py-1.5 gradient-purple text-white font-bold rounded shadow-sm">Guardar Bloque</button>
+
+                            {/* Botonera */}
+                            <div className="pt-2 flex justify-between">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsBlockModalOpen(false)}
+                                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                                >
+                                    Guardar Bloque
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-
-            {/* ================= MODAL: REGISTRO DE NUEVO GRUPO ================= */}
-            {(isGroupModalOpen && activeClassroom) && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl border border-purple-100 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                        <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">Nuevo Grupo en {activeClassroom.name}</h3>
-                            <button onClick={() => setIsGroupModalOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
-                        </div>
-                        <form onSubmit={handleCreateGroup} className="p-5 space-y-4 font-questrial text-xs">
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">Nombre del Grupo *</label>
-                                <input required type="text" placeholder="Ej: Bachata Principiantes" value={newGroupData.name} onChange={e => setNewGroupData({ ...newGroupData, name: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400" />
-                            </div>
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">Profesor / Instructor *</label>
-                                <input required type="text" placeholder="Ej: Andrea Mendoza" value={newGroupData.instructor} onChange={e => setNewGroupData({ ...newGroupData, instructor: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Estilo de Baile</label>
-                                    <input type="text" placeholder="Ej: Salsa Casino" value={newGroupData.style} onChange={e => setNewGroupData({ ...newGroupData, style: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400" />
-                                </div>
-                                {/* <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Categoría</label>
-                                    <select value={newGroupData.category} onChange={e => setNewGroupData({ ...newGroupData, category: e.target.value as Group["category"] })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
-                                        <option value="Baby">Baby</option><option value="Infantil">Infantil</option><option value="Juvenil">Juvenil</option><option value="Adulto">Adulto</option>
-                                    </select>
-                                </div> */}
-                            </div>
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">Cupos Disponibles</label>
-                                <input type="number" min={5} value={newGroupData.totalNumberOfSlots} onChange={e => setNewGroupData({ ...newGroupData, totalNumberOfSlots: Number(e.target.value) })} className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400" />
-                            </div>
-                            <div className="pt-2 border-t flex justify-end gap-2">
-                                <button type="button" onClick={() => setIsGroupModalOpen(false)} className="px-4 py-1.5 bg-gray-100 rounded">Cancelar</button>
-                                <button type="submit" className="px-4 py-1.5 gradient-purple text-white font-bold rounded shadow-sm">Registrar Grupo</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
             {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
             {selectedElement && (
                 <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150">
@@ -716,59 +745,18 @@ export default function SchedulePage() {
                                 type="button"
                                 onClick={() => {
                                     if (!selectedElement) return;
-                                    if (!confirm("¿Deseas remover este bloque?")) return;
+                                    // Empaquetamos la metadata crítica: id_bloque | dia_semana | id_grupo
+                                    const compositeId = `${selectedElement.id}|${selectedElement.day}|${selectedElement.group.id}`;
 
-                                    // Extraemos los datos correctos según lo guardado en el onClick del JSX
-                                    const blockId = selectedElement.block.id;
-                                    const targetDay = selectedElement.day;
-
-                                    // Si estabas en vista global 'all', el grupo real viene en e.group.id. 
-                                    // Si no, es el filtro activo.
-                                    const groupId = selectedElement.block.group?.id || selectedElement.group;
-
-                                    // 1. Actualizar el estado del Salón Activo (Grilla)
-                                    setActiveClassroom(prev => {
-                                        if (!prev) return prev;
-                                        return {
-                                            ...prev,
-                                            groups: prev.groups.map((g: any) => {
-                                                if (g.id !== groupId) return g;
-                                                return {
-                                                    ...g,
-                                                    schedules: g.schedules.map((s: any) => {
-                                                        if (s.classroomId !== prev.id) return s;
-                                                        return {
-                                                            ...s,
-                                                            schedule: {
-                                                                ...s.schedule,
-                                                                [targetDay]: (s.schedule[targetDay] || []).filter((b: any) => b.id !== blockId)
-                                                            }
-                                                        };
-                                                    })
-                                                };
-                                            })
-                                        };
+                                    setModalConfig({
+                                        isOpen: true,
+                                        type: "word",
+                                        title: "Remover Bloque de Horario",
+                                        description: `¿Estás seguro de que deseas eliminar este bloque de clase? Para confirmar, escribe la palabra requerida.`,
+                                        requiredWord: "ELIMINAR", // Palabra de seguridad requerida por tu modal tipo "word"
+                                        id: compositeId,
                                     });
-
-                                    // 2. Actualizar el estado global de Grupos (si lo sigues usando en paralelo)
-                                    /* setGrupos(prev => prev.map(g => {
-                                        if (g.id !== groupId) return g;
-                                        return {
-                                            ...g,
-                                            schedules: g.schedules.map((s: any) => {
-                                                if (s.classroomId !== activeClassroom?.id) return s;
-                                                return {
-                                                    ...s,
-                                                    schedule: {
-                                                        ...s.schedule,
-                                                        [targetDay]: (s.schedule[targetDay] || []).filter((b: any) => b.id !== blockId)
-                                                    }
-                                                };
-                                            })
-                                        };
-                                    })); */
-
-                                    // Limpiar la selección
+                                    // Limpiamos la selección del panel lateral inmediatamente
                                     setSelectedElement(null);
                                 }}
                                 className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer"
@@ -780,6 +768,19 @@ export default function SchedulePage() {
                     <div className="p-4 border-t border-purple-100 bg-gray-50"><button onClick={() => alert("Módulo de alumnos e inscripciones")} className="w-full py-2 bg-white text-gray-700 border font-bold cursor-pointer flex items-center justify-center gap-1">Ver Alumnos <ChevronRight className="w-3.5 h-3.5" /></button></div>
                 </div>
             )}
+            {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                onConfirm={handleConfirmAction}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                description={modalConfig.description}
+                requiredWord={modalConfig.requiredWord}
+                userEmail={modalConfig.userEmail}
+                variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+                confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+            />
         </>
     );
 }
