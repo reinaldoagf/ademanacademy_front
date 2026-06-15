@@ -72,7 +72,7 @@ export default function ClassroomPage() {
                         toast.success("Operación exitosa");
                         setClassrooms(classrooms.filter((item) => item.id !== modalConfig.id));
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event('refresh-deleteClassroomAction-count'));
+                        window.dispatchEvent(new Event('refresh-classrooms-count'));
                     }
                 }
             });

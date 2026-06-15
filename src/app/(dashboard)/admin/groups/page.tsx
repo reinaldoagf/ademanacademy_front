@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
-import { getAllGroupsAction, saveGroupAction } from "@/app/actions/group";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
 import { getAllInstructorsAction } from "@/app/actions/instructor";
 
@@ -45,11 +46,42 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "simple" | "word" | "email";
+    title: string;
+    description: string;
+    requiredWord?: string;
+    userEmail?: string;
+    id?: string;
+  }>({
+    isOpen: false,
+    type: "word",
+    title: "",
+    description: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Estado del formulario tipado correctamente
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
 
+  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  // Acción definitiva que se ejecuta al pasar el filtro del Modal
+  const handleConfirmAction = async () => {
+    if (modalConfig?.id) {
+      startTransition(async () => {
+        if (modalConfig?.id) {
+          const res = await deleteGroupAction(modalConfig.id);
+          if (res.success) {
+            toast.success("Operación exitosa");
+            setGroups(groups.filter((item) => item.id !== modalConfig.id));
+            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+            window.dispatchEvent(new Event('refresh-groups-count'));
+          }
+        }
+      });
+    }
+  };
   const [meta, setMeta] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -400,8 +432,16 @@ export default function GroupsPage() {
                 {/* Estado de Ejecución en Salón */}
                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
 
-                  <button className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
-                    Gestionar
+                  <button onClick={() => {
+                    setModalConfig({
+                      isOpen: true,
+                      type: "word",
+                      title: "Confirmar operación",
+                      description: "¿Quieres eliminar el registro del grupo?",
+                      id: group.id,
+                    });
+                  }} className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
+                    Eliminar
                   </button>
                 </div>
 
@@ -707,6 +747,19 @@ export default function GroupsPage() {
           </div>
         </div>
       )}
+      {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={handleConfirmAction}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        description={modalConfig.description}
+        requiredWord={modalConfig.requiredWord}
+        userEmail={modalConfig.userEmail}
+        variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+        confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+      />
     </>
   );
 }
