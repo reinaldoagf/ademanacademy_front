@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { User, Users2, Plus, Trash2, CheckCircle2, ArrowRight, Home, ShieldAlert } from "lucide-react";
 import { completeOnboardingAction } from "@/app/actions/user";
-import { saveClassroomAction } from "@/app/actions/classrooms";
+import { saveClassroomAction } from "@/app/actions/classroom";
 
 import { useAuthStore } from "@/store/authStore";
 

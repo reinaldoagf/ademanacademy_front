@@ -10,11 +10,15 @@ import {
 } from "@/app/actions/user";
 import {
   getAllClassroomsAction,
-} from "@/app/actions/classrooms";
+} from "@/app/actions/classroom";
 import {
   getMyRepresentedAction,
   getAllStudentsAction
 } from "@/app/actions/student";
+import {
+  getAllGroupsAction,
+} from "@/app/actions/group";
+
 import {
   ChartPie,
   HeartPulse,
@@ -55,7 +59,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
-    { key: '', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays, badge: 2 },
+    { key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays, badge: 0 },
   ]);
 
   const [operationalManagement, setOperationalManagement] = useState([
@@ -166,6 +170,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchGroupsBadgeCount = async () => {
+    try {
+      const res = await getAllGroupsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.meta) {
+        const totalGroups = res.meta.totalItems;
+        setAcademicManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "groups" ? { ...item, badge: totalGroups } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   const fetchClassroomsBadgeCount = async () => {
     try {
       const res = await getAllClassroomsAction({
@@ -206,9 +229,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
       // Cargamos al inicio
       fetchUsersBadgeCount();
       fetchStudentsBadgeCount();
+      fetchGroupsBadgeCount();
       fetchClassroomsBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
+      window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
       window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
       window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
     }

@@ -93,7 +93,7 @@ export async function saveStudentAction(formData: Omit<Student, 'id'>, id?: stri
     }
 }
 
-// 5. Eliminar Estudiante (Mutación)
+// 6. Eliminar Estudiante (Mutación)
 export async function deleteStudentAction(id: string): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario

@@ -311,8 +311,6 @@ export default function RepresentedPage() {
             </div>
 
             {/* MODAL */}
-            {/* MODAL MODERNO DE REGISTRO */}
-
             {isOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">

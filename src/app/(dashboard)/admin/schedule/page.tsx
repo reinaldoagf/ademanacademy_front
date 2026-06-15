@@ -20,7 +20,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
-import { getAllClassroomsAction } from "@/app/actions/classrooms";
+import { getAllClassroomsAction } from "@/app/actions/classroom";
 
 const HORA_INICIO_GRID = 8;
 const HORA_FIN_GRID = 21;

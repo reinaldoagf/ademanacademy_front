@@ -4,10 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { OnboardingWizard } from "@/components/layout/OnboardingWizard";
 import { useAuthStore } from "@/store/authStore";
-
-import {
-  getAllClassroomsAction,
-} from "@/app/actions/classrooms";
+import { getAllClassroomsAction } from "@/app/actions/classroom";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
