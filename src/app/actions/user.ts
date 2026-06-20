@@ -3,7 +3,8 @@
 
 import axios from "axios";
 import { FetchUsersParams } from "@/types/user";
-import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
+import { getAuthHeaders, getAuthHeadersForMultipart } from "@/helpers/auth-headers";
+import FormDataNode from "form-data";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
@@ -33,26 +34,50 @@ interface OnboardingPayload {
     receiptFile?: File | null;
 }
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
 
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    };
-}
-export async function completeOnboardingAction(payload: OnboardingPayload) {
+export async function completeOnboardingAction(formData: FormData) {
     try {
-        // getAuthHeaders() obtiene el token Bearer JWT del usuario logueado
-        const headers = await getAuthHeaders();
+        const headers = await getAuthHeadersForMultipart();
 
-        const response = await axios.post(`${BACKEND_URL}/users/complete-onboarding`, payload, { headers });
+        // 🚀 Creamos una instancia de FormData limpia del lado del servidor de Node.js
+        const backendForm = new FormDataNode();
 
-        // Forzamos a Next.js a refrescar el Layout para que detecte profileOnboarding: true
-        // revalidatePath("/", "layout");
+        // 1. Traspasamos los valores stringificados comunes
+        backendForm.append("profileType", formData.get("profileType"));
+
+        if (formData.get("profileType") === "representative") {
+            backendForm.append("representativeOccupation", formData.get("representativeOccupation"));
+            backendForm.append("representedStudents", formData.get("representedStudents"));
+            backendForm.append("payment", formData.get("payment"));
+
+            // 2. Extraemos el archivo binario real que Next.js recibió temporalmente
+            const file = formData.get("receiptFile") as File | null;
+            if (file && file.size > 0) {
+                const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos el archivo a un Buffer binario de Node
+                backendForm.append("receiptFile", buffer, {
+                    filename: file.name,
+                    contentType: file.type,
+                });
+            }
+        } else {
+            backendForm.append("payment", formData.get("payment"));
+        }
+
+        // 3. Enviamos a NestJS combinando los headers dinámicos del Multipart
+        const response = await axios.post(
+            `${BACKEND_URL}/users/complete-onboarding`,
+            backendForm,
+            {
+                headers: {
+                    ...headers,
+                    ...backendForm.getHeaders() // 🔥 Esto inyecta el multipart/form-data con su boundary correcto
+                }
+            }
+        );
+
         return { success: true, data: response.data };
     } catch (error: any) {
+        console.error("Error en Server Action:", error.response?.data || error.message);
         return {
             success: false,
             error: error.response?.data?.message || "Ocurrió un error al guardar tu perfil."

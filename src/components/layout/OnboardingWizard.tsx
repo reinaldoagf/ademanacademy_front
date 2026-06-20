@@ -114,17 +114,26 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
 
         startTransition(async () => {
             setError(null);
+            // ✨ Construimos un FormData para adjuntar el archivo binario
+            const formData = new FormData();
+            formData.append("profileType", finalRole);
 
-            // Si necesitas enviar el archivo binario a un Server Action, 
-            // recuerda que no se pueden pasar instancias complejas como 'File' directamente en objetos JSON ordinarios.
-            // Lo ideal es convertirlo a FormData o gestionar su subida. Aquí estructuramos el payload básico:
-            const res = await completeOnboardingAction({
-                profileType: finalRole,
-                representativeOccupation: finalRole === "representative" ? occupation?.trim() : undefined,
-                representedStudents: finalRole === "representative" ? finalStudents : undefined,
-                // ✨ Enviamos la información del cobro a la acción
-                payment: finalRole === "representative" ? paymentData : { amount: REGISTRATION_FEE },
-            });
+            if (finalRole === "representative") {
+                formData.append("representativeOccupation", occupation?.trim() || "");
+                formData.append("representedStudents", JSON.stringify(finalStudents)); // Lo serializamos como string
+
+                if (paymentData) {
+                    formData.append("payment", JSON.stringify(paymentData));
+                }
+                console.log({ receiptFile })
+                if (receiptFile) {
+                    formData.append("receiptFile", receiptFile); // 📂 Adjunto del archivo original
+                }
+            } else {
+                formData.append("payment", JSON.stringify({ amount: REGISTRATION_FEE }));
+            }
+            console.log('completeOnboardingAction')
+            const res = await completeOnboardingAction(formData);
 
             if (res.success) {
                 setUser({ ...user, ...res.data.user });
