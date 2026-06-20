@@ -18,6 +18,7 @@ import {
 import {
   getAllGroupsAction,
 } from "@/app/actions/group";
+import { getAllTransactionsAction } from "@/app/actions/transaction";
 
 import {
   ChartPie,
@@ -82,7 +83,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: '', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
     { key: 'represented', name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
     { key: '', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
-    { key: '', name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
+    { key: 'payments', name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
     { key: '', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
     { key: '', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
   ]);
@@ -223,6 +224,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchPaymentsBadgeCount = async () => {
+    try {
+      const res = await getAllTransactionsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalPayments = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "payments" ? { ...item, badge: totalPayments } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
     if (isAdminView) {
@@ -231,17 +251,21 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchStudentsBadgeCount();
       fetchGroupsBadgeCount();
       fetchClassroomsBadgeCount();
+      fetchPaymentsBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
       window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
       window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
+      window.addEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
     return () => {
+      window.removeEventListener('refresh-groups-count', fetchGroupsBadgeCount);
       window.removeEventListener('refresh-students-count', fetchStudentsBadgeCount);
       window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
+      window.removeEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
     };
   }, [isAdminView]);
   // useEffect para cargar la data real al montar el Sidebar por primera vez

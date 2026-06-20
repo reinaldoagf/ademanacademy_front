@@ -4,7 +4,6 @@
 import axios from "axios";
 import { FetchUsersParams } from "@/types/user";
 import { cookies } from "next/headers"; // 💡 Helper nativo de Next.js
-// import { revalidatePath } from "next/cache";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
@@ -25,6 +24,13 @@ interface OnboardingPayload {
         medicalObservations: string;
         group: string;
     }[];
+    // ✨ Cambiamos las propiedades internas a opcionales para admitir solo el monto
+    payment?: {
+        bankName?: string;
+        reference?: string;
+        amount: number
+    };
+    receiptFile?: File | null;
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {

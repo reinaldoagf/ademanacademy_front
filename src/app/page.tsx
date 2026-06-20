@@ -65,9 +65,9 @@ export default function LandingPage() {
           />
         </div>
         <div className="hidden md:flex gap-8 text-white text-xs font-bold uppercase tracking-widest">
-          <a href="#academia" className="text-purple-300 hover:text-pink-400 transition-colors">La Academia</a>
-          <a href="#disciplinas" className="text-purple-300 hover:text-pink-400 transition-colors">Disciplinas</a>
-          <a href="#contacto" className="text-purple-300 hover:text-pink-400 transition-colors">Contacto</a>
+          <a href="#academia" className="text-[#5e0472] hover:text-pink-400 transition-colors">La Academia</a>
+          <a href="#disciplinas" className="text-[#5e0472] hover:text-pink-400 transition-colors">Disciplinas</a>
+          <a href="#contacto" className="text-[#5e0472] hover:text-pink-400 transition-colors">Contacto</a>
         </div>
         <button
           onClick={() => router.push("/login")}

@@ -78,7 +78,6 @@ export default function RepresentedPage() {
         phone: "",              // 🎯 Nuevo
         address: "",            // 🎯 Nuevo
         shirtSize: "",          // 🎯 Nuevo
-        group: "",              // 🎯 Nuevo
         hasExperience: false,   // 🎯 Nuevo
         medicalObservations: "",
     });
@@ -133,7 +132,6 @@ export default function RepresentedPage() {
             address: student.address || "",
             phone: student.phone || "",
             shirtSize: student.shirtSize || "",
-            group: student.group || "",
             hasExperience: student.hasExperience ?? false, // Operador de coalescencia nula para booleanos
         });
         setEditingId(student.id);
@@ -160,7 +158,6 @@ export default function RepresentedPage() {
                                 address: "",
                                 phone: "",
                                 shirtSize: "",
-                                group: "",
                                 hasExperience: false, // Operador de coalescencia nula para booleanos
                             });
                             setEditingId(null);
@@ -210,7 +207,7 @@ export default function RepresentedPage() {
                                                 {rep.firstName} {rep.lastName}
                                             </h3>
                                         </div>
-                                        <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold rounded-full capitalize shrink-0">
+                                        <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold capitalize shrink-0">
                                             {rep.kinship}
                                         </span>
                                     </div>
@@ -220,7 +217,7 @@ export default function RepresentedPage() {
                                         {/* Grupo asignado */}
                                         <div className="flex items-center gap-1.5 bg-purple-50/50 px-2 py-1 border border-purple-100/50 text-[#5e0472] font-semibold rounded">
                                             <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                                            <span className="capitalize">Grupo: {rep.group?.replace("_", " ")}</span>
+                                            <span className="capitalize">Grupo: {rep.group ? rep.group?.replace("_", " ") : 'Por definir'}</span>
                                         </div>
 
                                         {/* Fecha de Nacimiento */}
@@ -470,26 +467,6 @@ export default function RepresentedPage() {
                                         <option value="S">S (Adulto)</option>
                                         <option value="M">M (Adulto)</option>
                                         <option value="L">L (Adulto)</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">
-                                        Grupo a Inscribir
-                                    </label>
-                                    <select
-                                        required
-                                        value={formData.group}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, group: e.target.value })
-                                        }
-                                        className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                                    >
-                                        <option value="" disabled>Selecciona el grupo</option>
-                                        <option value="baby_dance">Baby Dance</option>
-                                        <option value="infantil">Infantil</option>
-                                        <option value="juvenil">Juvenil</option>
-                                        <option value="adulto">Adulto</option>
                                     </select>
                                 </div>
                             </div>

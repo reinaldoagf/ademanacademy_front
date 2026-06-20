@@ -1,10 +1,10 @@
+// src/components/layout/OnboardingWizard.tsx
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { User, Users2, Plus, Trash2, CheckCircle2, ArrowRight, Home, ShieldAlert } from "lucide-react";
+import { User, Users2, Plus, Trash2, Home, ShieldAlert } from "lucide-react";
 import { completeOnboardingAction } from "@/app/actions/user";
 import { saveClassroomAction } from "@/app/actions/classroom";
-
 import { useAuthStore } from "@/store/authStore";
 
 interface OnboardingWizardProps {
@@ -27,7 +27,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const [newStudent, setNewStudent] = useState({
         firstName: "", lastName: "", dni: "", birthDate: "",
         kinship: "son", address: "", phone: "", shirtSize: "M",
-        hasExperience: false, medicalObservations: "", group: ""
+        hasExperience: false, medicalObservations: ""
     });
 
     // 🎯 ESTADOS EXCLUSIVOS PARA EL FORMULARIO DE SALÓN (MODO INFRAESTRUCTURA)
@@ -40,6 +40,22 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         description: "",
     });
 
+    // --- ESTADOS PARA COBRO DE INSCRIPCIÓN ---
+    const [paymentInfo, setPaymentInfo] = useState({
+        reference: "",
+        bankName: "",
+        amount: 0,
+    });
+    const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+
+    // Constante del costo fijo
+    const REGISTRATION_FEE = 10;
+
+    // Cálculo dinámico del total
+    const calculatedTotal = profileType === "student"
+        ? REGISTRATION_FEE
+        : students.length * REGISTRATION_FEE;
+
     const handleAddStudent = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newStudent.firstName || !newStudent.lastName || !newStudent.birthDate) {
@@ -50,7 +66,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         setNewStudent({
             firstName: "", lastName: "", dni: "", birthDate: "",
             kinship: "son", address: "", phone: "", shirtSize: "M",
-            hasExperience: false, medicalObservations: "", group: ""
+            hasExperience: false, medicalObservations: ""
         });
         setError(null);
     };
@@ -75,8 +91,11 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const handleSubmit = (
         finalRole: "student" | "representative",
         finalStudents: any[],
-        occupation?: string
+        occupation?: string,
+        paymentData?: { bankName: string; reference: string; amount: number },
+        receiptFile?: File | null
     ) => {
+        console.log({ finalRole, finalStudents, occupation, paymentData, receiptFile })
         if (finalRole === "representative") {
             if (finalStudents.length === 0) {
                 setError("Como representante, debes registrar al menos a un estudiante.");
@@ -86,15 +105,25 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 setError("Por favor, ingresa tu ocupación o profesión.");
                 return;
             }
+
+            if (!paymentData?.reference || !paymentData?.bankName || !receiptFile) {
+                setError("Por favor, completa los datos de pago y adjunta el comprobante.");
+                return;
+            }
         }
 
         startTransition(async () => {
             setError(null);
 
+            // Si necesitas enviar el archivo binario a un Server Action, 
+            // recuerda que no se pueden pasar instancias complejas como 'File' directamente en objetos JSON ordinarios.
+            // Lo ideal es convertirlo a FormData o gestionar su subida. Aquí estructuramos el payload básico:
             const res = await completeOnboardingAction({
                 profileType: finalRole,
                 representativeOccupation: finalRole === "representative" ? occupation?.trim() : undefined,
                 representedStudents: finalRole === "representative" ? finalStudents : undefined,
+                // ✨ Enviamos la información del cobro a la acción
+                payment: finalRole === "representative" ? paymentData : { amount: REGISTRATION_FEE },
             });
 
             if (res.success) {
@@ -309,7 +338,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             <div>
                                                 <p className="font-bold text-purple-300">{student.firstName} {student.lastName}</p>
                                                 <p className="text-[10px] text-gray-400 font-mono">
-                                                    DNI: {student.dni || "N/A"} | {student.kinship} | Grupo: {student.group}
+                                                    DNI: {student.dni || "N/A"} | {student.kinship}
                                                 </p>
                                             </div>
                                             <button onClick={() => handleRemoveStudent(student.id)} className="text-gray-400 hover:text-red-400 p-1">
@@ -360,7 +389,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     <div className="flex flex-col gap-1">
                                         <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
                                         <input
-                                            type="tel" placeholder="Ej: 0414-1234567"
+                                            type="type" placeholder="Ej: 0414-1234567"
                                             value={newStudent.phone || ""}
                                             onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
                                             className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
@@ -384,7 +413,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             <option value="L">L (Adulto)</option>
                                         </select>
                                     </div>
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-1 sm:col-span-2">
                                         <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
                                         <select
                                             value={newStudent.kinship}
@@ -397,21 +426,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             <option value="niece">Sobrina</option>
                                             <option value="tutored">Tutorado</option>
                                             <option value="other">Otro</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Grupo a Inscribirse</label>
-                                        <select
-                                            required
-                                            value={newStudent.group || ""}
-                                            onChange={(e) => setNewStudent({ ...newStudent, group: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        >
-                                            <option value="" disabled>Seleccione un grupo...</option>
-                                            <option value="baby_dance">Baby Dance (2-4 años)</option>
-                                            <option value="infantil">Infantil (5-11 años)</option>
-                                            <option value="juvenil">Juvenil (12-17 años)</option>
-                                            <option value="adulto">Adulto (18+ años)</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1 sm:col-span-2">
@@ -438,9 +452,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                         <div className="flex gap-6">
                                             <label className="flex items-center gap-2 text-white cursor-pointer">
                                                 <input
-                                                    type="radio"
-                                                    name="danceExperience"
-                                                    value="true"
+                                                    type="radio" name="danceExperience" value="true"
                                                     checked={newStudent.hasExperience === true}
                                                     onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
                                                     className="accent-pink-500 w-4 h-4"
@@ -449,9 +461,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             </label>
                                             <label className="flex items-center gap-2 text-white cursor-pointer">
                                                 <input
-                                                    type="radio"
-                                                    name="danceExperience"
-                                                    value="false"
+                                                    type="radio" name="danceExperience" value="false"
                                                     checked={newStudent.hasExperience === false}
                                                     onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
                                                     className="accent-pink-500 w-4 h-4"
@@ -474,14 +484,66 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     <div className="flex flex-col gap-1.5 font-questrial text-xs">
                                         <label className="text-[10px] text-gray-400">Ocupación / Profesión *</label>
                                         <input
-                                            type="text"
-                                            required
-                                            placeholder="Ej: Ingeniero de Sistemas, Comerciante, Docente..."
+                                            type="text" required placeholder="Ej: Ingeniero de Sistemas, Comerciante, Docente..."
                                             value={representativeOccupation || ""}
                                             onChange={(e) => setRepresentativeOccupation(e.target.value)}
                                             className="p-2.5 bg-black/40 border border-white/10 focus:border-pink-400 outline-none text-white w-full"
                                         />
                                     </div>
+                                </div>
+
+                                {/* ========================================================================= */}
+                                {/* ✨ NUEVA SECCIÓN: CONTROL Y COBRO DE INSCRIPCIONES */}
+                                {/* ========================================================================= */}
+                                <div className="bg-gradient-to-b from-purple-950/20 to-black/50 border border-purple-500/30 p-4 space-y-4 font-questrial rounded-sm">
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                        <div>
+                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wide">Pago de Inscripción</h4>
+                                            <p className="text-[10px] text-gray-400">Costo: 10$ por alumno registrado.</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-gray-400 block">Total a Reportar:</span>
+                                            <span className="text-xl font-anton text-white tracking-wider">{calculatedTotal}$</span>
+                                        </div>
+                                    </div>
+
+                                    {calculatedTotal > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Banco de Origen *</label>
+                                                <input
+                                                    type="text" required placeholder="Ej: Banesco, Mercantil, Zelle..."
+                                                    value={paymentInfo.bankName}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Número de Referencia *</label>
+                                                <input
+                                                    type="text" required placeholder="Últimos 4 o 6 dígitos"
+                                                    value={paymentInfo.reference}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, reference: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1 sm:col-span-2">
+                                                <label className="text-[10px] text-gray-400">Adjuntar Comprobante (Capture / PDF) *</label>
+                                                <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/20 p-3 text-center cursor-pointer">
+                                                    <input
+                                                        type="file" required accept="image/*,application/pdf"
+                                                        onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    />
+                                                    <p className="text-gray-400 text-[11px]">
+                                                        {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[11px] text-yellow-400/80 italic text-center">Agrega al menos un alumno para habilitar la pasarela de pago.</p>
+                                    )}
                                 </div>
 
                                 {error && <p className="text-xs text-center text-red-400 font-questrial font-semibold bg-red-500/10 py-2 border border-red-500/20">{error}</p>}
@@ -496,8 +558,16 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={students.length === 0 || !representativeOccupation || isPending}
-                                        onClick={() => handleSubmit("representative", students, representativeOccupation)}
+                                        disabled={students.length === 0 || !representativeOccupation || !paymentInfo.reference || !paymentInfo.bankName || !paymentReceipt || isPending}
+                                        onClick={() => {
+                                            handleSubmit(
+                                                "representative",
+                                                students,
+                                                representativeOccupation,
+                                                { ...paymentInfo, amount: calculatedTotal },
+                                                paymentReceipt
+                                            );
+                                        }}
                                         className="cursor-pointer w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                                     >
                                         {isPending ? "Guardando datos..." : "Finalizar y Entrar al Sistema ✓"}
