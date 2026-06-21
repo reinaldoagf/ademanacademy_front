@@ -1,4 +1,5 @@
 import { User } from "@/types/user";
+import { Group } from "@/types/group";
 export interface Student {
     id: string;
     dni: string;
@@ -7,7 +8,7 @@ export interface Student {
     birthDate: string;
     kinship: "son" | "daughter" | "nephew" | "niece" | "tutored" | "other" | undefined;
     shirtSize: string;
-    group: string;
+    group: Group;
     phone: string;
     address: string;
     hasExperience: boolean;

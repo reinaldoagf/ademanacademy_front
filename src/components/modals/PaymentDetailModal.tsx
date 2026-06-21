@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useTransition, useRef } from "react";
 import { Sparkles, X, User, GraduationCap, Receipt, Calendar, CreditCard, ExternalLink } from "lucide-react";
+import { toast } from "react-hot-toast";
+import Badge from "@/components/common/Badge";
 import { approveTransactionAction } from "@/app/actions/transaction";
 import { getAllGroupsAction } from "@/app/actions/group";
 import { Group } from "@/types/group";
@@ -84,7 +86,10 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
             // Pasamos el realId junto al groupId (si aplica) al Server Action
             const res = await approveTransactionAction(transaction.realId, selectedGroupId || undefined);
 
+            console.log({ res })
+
             if (res.success) {
+                toast.success(res.data.message ?? 'Operación exitosa')
                 onSuccess();
                 onClose();
             } else {
@@ -161,7 +166,7 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
 
                                 <div className="flex justify-between items-center text-[11px] text-gray-600">
                                     <span className="text-gray-400">Concepto</span>
-                                    <span className="font-medium text-gray-800 bg-gray-100 px-2 py-0.5 text-[10px]">Matrícula</span>
+                                    <Badge variant={transaction.concept} />
                                 </div>
 
                                 <div className="flex justify-between items-center text-[11px] text-gray-600">
@@ -180,12 +185,7 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
                                 </div>
 
                                 <div className="flex justify-end pt-1">
-                                    <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${transaction.status === "approved"
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                        : "bg-amber-50 text-amber-700 border border-amber-100"
-                                        }`}>
-                                        {transaction.status}
-                                    </span>
+                                    <Badge variant={transaction.status} />
                                 </div>
                             </div>
                         </div>
@@ -262,6 +262,7 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
                                             <li
                                                 key={c.id}
                                                 onClick={() => {
+                                                    setSelectedGroupId(c.id);
                                                     setGroupSearch(`${c.name} (${c.type || 'Aula'})`);
                                                     setShowGroupDropdown(false);
                                                 }}
@@ -290,7 +291,10 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
                             <button
                                 onClick={handleApprove}
                                 disabled={isPending || isLoadingGroups || !selectedGroupId}
-                                className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                                className={`font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs text-white shadow-md ${isPending || isLoadingGroups || !selectedGroupId
+                                    ? "bg-purple-400"
+                                    : "cursor-pointer gradient-purple shadow-purple-200 hover:opacity-90"
+                                    }`}
                             >
                                 {isPending ? "Aprobando..." : "Aprobar Pago ✓"}
                             </button>

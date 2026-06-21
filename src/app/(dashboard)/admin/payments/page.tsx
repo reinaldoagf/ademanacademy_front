@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import HeroSection from '@/components/layout/HeroSection';
 import DataTable, { Column } from "@/components/common/DataTable";
+import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import PaymentDetailModal from "@/components/modals/PaymentDetailModal";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
@@ -32,16 +33,13 @@ export default function PaymentsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [filterConcepto, setFilterConcepto] = useState("Todos");
-    const [filterAlumno, setFilterAlumno] = useState("Todos");
+    const [filterConcept, setFilterConcept] = useState("all");
     // 💡 Estados para controlar el modal
     const [selectedPayment, setSelectedPayment] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleSuccessApproval = () => {
-        // Ejecuta tu lógica para refrescar los datos de la tabla, ej:
-        // router.refresh() o volver a llamar a tu función de fetch.
-        window.location.reload();
+        fetchTableData(currentPage, itemsPerPage);
     };
 
     // Métricas financieras calculadas dinámicamente
@@ -58,6 +56,7 @@ export default function PaymentsPage() {
                 page: pageToFetch,
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined,
+                concept: filterConcept == 'all' ? undefined : filterConcept
             });
             if (res.success && res.data) {
                 setTransactions(res.data);
@@ -74,7 +73,7 @@ export default function PaymentsPage() {
         }, 300);
 
         return () => clearTimeout(handler);
-    }, [searchTerm, currentPage, itemsPerPage]);
+    }, [searchTerm, filterConcept, currentPage, itemsPerPage]);
 
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
@@ -98,12 +97,6 @@ export default function PaymentsPage() {
                 <p className="text-[11px] text-gray-400 mt-0.5">
                     <DatePipe value={transaction.createdAt} format="short" />
                 </p>
-            ),
-        },
-        {
-            header: "ID",
-            render: (transaction) => (
-                <span className="py-3.5 font-mono text-xs text-gray-400">{transaction.id}</span>
             ),
         },
         {
@@ -148,12 +141,7 @@ export default function PaymentsPage() {
         {
             header: "Concepto",
             render: (transaction) => (
-                <span className={`px-2 py-0.5 ${transaction.concept === "Mensualidad" ? "bg-purple-50 text-purple-700" :
-                    transaction.concept === "Uniforme" ? "bg-pink-50 text-pink-700" :
-                        "bg-indigo-50 text-indigo-700"
-                    }`}>
-                    {transaction.concept}
-                </span>
+                <Badge variant={transaction.concept} />
             ),
         },
         {
@@ -167,21 +155,13 @@ export default function PaymentsPage() {
         {
             header: "Método de Pago",
             render: (transaction) => (
-
-                <span className="flex items-center gap-1">
-                    <CreditCard className="w-3.5 h-3.5 text-gray-400" /> {transaction.method}
-                </span>
-
-
+                <Badge variant={transaction.method} />
             ),
         },
         {
             header: "Status",
             render: (transaction) => (
-                <span className={`px-2.5 py-0.5 text-xs font-semibold ${transaction.status === 'Aprobado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                    {transaction.status}
-                </span>
+                <Badge variant={transaction.status} />
             ),
         },
         {
@@ -268,15 +248,15 @@ export default function PaymentsPage() {
                     </div>
 
                     <select
-                        value={filterConcepto}
-                        onChange={(e) => setFilterConcepto(e.target.value)}
+                        value={filterConcept}
+                        onChange={(e) => setFilterConcept(e.target.value)}
                         className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                     >
                         <option value="Todos">Todos los conceptos</option>
-                        <option value="Mensualidad">Mensualidades</option>
-                        <option value="Matrícula">Matrículas</option>
-                        <option value="Uniforme">Tienda / Uniformes</option>
-                        <option value="Entradas Gala">Entradas de Eventos</option>
+                        <option value="monthly_payment">Mensualidades</option>
+                        <option value="tuition">Matrículas</option>
+                        <option value="locker_room">Tienda / Uniformes</option>
+                        <option value="ticket">Entradas de Eventos</option>
                     </select>
                 </div>
 

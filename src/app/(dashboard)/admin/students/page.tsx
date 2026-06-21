@@ -65,7 +65,7 @@ export default function StudentsPage() {
         search: searchTerm || undefined,
         kinship: kinshipFilter === "Todos" ? undefined : kinshipFilter,
       });
-
+      console.log({ res })
       if (res.success && res.data) {
         setStudents(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
@@ -169,6 +169,26 @@ export default function StudentsPage() {
       },
     },
     {
+      header: "Grupo",
+      render: (student) => {
+        if (!student.group) {
+          return <p className="text-[11px] text-gray-400 mt-0.5">Sin grupo asignado</p>;
+        }
+        const userInitials = student.group.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {userInitials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">{student.group.name}</span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.group.style}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       header: "Fecha de Nacimiento",
       render: (student) => (
         <p className="text-[11px] text-gray-400 mt-0.5">
@@ -183,23 +203,6 @@ export default function StudentsPage() {
           {student.kinship}
         </span>
       ),
-    },
-    {
-      header: "Asistencia Mensual",
-      render: (student) => {
-        const attendance = 0;
-        return (
-          <div className="w-32">
-            <span className="text-[11px] text-gray-500 font-semibold">{attendance}%</span>
-            <div className="w-full bg-gray-100 h-1.5 overflow-hidden mt-1 rounded-full">
-              <div
-                className="h-full bg-purple-500 transition-all duration-300"
-                style={{ width: `${attendance}%` }}
-              ></div>
-            </div>
-          </div>
-        );
-      },
     },
     {
       header: "Acciones",

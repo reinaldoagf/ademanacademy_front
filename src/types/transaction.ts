@@ -19,5 +19,6 @@ export interface FetchTransactionsParams {
     page?: number;
     limit?: number;
     search?: string;
+    concept?: string;
     userId?: string;
 }

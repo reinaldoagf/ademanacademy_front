@@ -1,0 +1,61 @@
+import React from "react";
+import { CheckCircle2, Clock, AlertCircle, Info, LucideIcon, CreditCard } from "lucide-react";
+
+// 🌟 El "Custom Pipe" (Función pura de transformación)
+function statusTranslatePipe(value: string): string {
+    if (!value) return "";
+
+    const translations: Record<string, string> = {
+        approved: "Aprobado",
+        pending: "Pendiente",
+        rejected: "Rechazado",
+        info: "Información",
+        tuition: "Matrícula",
+        bank_transfer: "Transferencia Bancaria",
+    };
+
+    const normalized = value.toLowerCase().trim();
+    // Retorna la traducción si existe, de lo contrario devuelve el valor original capitalizado
+    return translations[normalized] || value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+interface BadgeProps {
+    variant: string;
+    children?: React.ReactNode; // Ahora es opcional, si no viene, usamos la variante traducida
+    className?: string;
+}
+
+export default function Badge({ variant, children, className = "" }: BadgeProps) {
+    const normalizedVariant = variant.toLowerCase().trim();
+
+    // Diccionario de configuraciones visuales (Mapea llaves del sistema a Estilos + Iconos)
+    const config: Record<string, { styles: string; icon: LucideIcon }> = {
+        approved: { styles: "bg-emerald-50 text-emerald-700 border-emerald-100/80", icon: CheckCircle2 },
+        aprobado: { styles: "bg-emerald-50 text-emerald-700 border-emerald-100/80", icon: CheckCircle2 },
+        pending: { styles: "bg-amber-50 text-amber-700 border-amber-100/80", icon: Clock },
+        pendiente: { styles: "bg-amber-50 text-amber-700 border-amber-100/80", icon: Clock },
+        rejected: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
+        rechazado: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
+        info: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Info },
+        bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard }
+    };
+
+    const currentConfig = config[normalizedVariant] || {
+        styles: "bg-gray-50 text-gray-600 border-gray-200",
+        icon: Info
+    };
+
+    const Icon = currentConfig.icon;
+
+    // 🌟 Aplicamos el Pipe: si hay hijos usamos los hijos, si no, traducimos la variante automáticamente
+    const displayedText = children ? children : statusTranslatePipe(variant);
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border transition-colors ${currentConfig.styles} ${className}`}
+        >
+            <Icon className="w-3 h-3 shrink-0 stroke-[2.5]" />
+            {displayedText}
+        </span>
+    );
+}
