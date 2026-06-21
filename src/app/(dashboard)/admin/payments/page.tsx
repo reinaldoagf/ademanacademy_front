@@ -14,6 +14,7 @@ import {
 import HeroSection from '@/components/layout/HeroSection';
 import DataTable, { Column } from "@/components/common/DataTable";
 import DatePipe from "@/components/pipes/DatePipe";
+import PaymentDetailModal from "@/components/modals/PaymentDetailModal";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
 
@@ -33,7 +34,15 @@ export default function PaymentsPage() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [filterConcepto, setFilterConcepto] = useState("Todos");
     const [filterAlumno, setFilterAlumno] = useState("Todos");
+    // 💡 Estados para controlar el modal
+    const [selectedPayment, setSelectedPayment] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const handleSuccessApproval = () => {
+        // Ejecuta tu lógica para refrescar los datos de la tabla, ej:
+        // router.refresh() o volver a llamar a tu función de fetch.
+        window.location.reload();
+    };
 
     // Métricas financieras calculadas dinámicamente
     const ingresosMes = 6450;
@@ -180,10 +189,13 @@ export default function PaymentsPage() {
             className: "text-right", // Alinea el encabezado a la derecha
             render: (student) => (
                 <button
-                    onClick={() => console.log(student.id)}
+                    onClick={() => {
+                        setSelectedPayment(student); // Seteamos el objeto de la consola
+                        setIsModalOpen(true);        // Abrimos el modal
+                    }}
                     className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
                 >
-                    Progreso
+                    Ver detalles
                 </button>
             ),
         },
@@ -281,6 +293,15 @@ export default function PaymentsPage() {
                 />
 
             </div>
+            <PaymentDetailModal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedPayment(null);
+                }}
+                transaction={selectedPayment}
+                onSuccess={handleSuccessApproval}
+            />
         </>
     );
 }

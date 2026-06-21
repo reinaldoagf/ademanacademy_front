@@ -23,7 +23,6 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
 import { getAllInstructorsAction } from "@/app/actions/instructor";
-
 import { Group } from "@/types/group";
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules" | "usedSlots"> & {

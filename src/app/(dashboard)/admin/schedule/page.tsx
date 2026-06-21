@@ -659,10 +659,10 @@ export default function SchedulePage() {
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white border border-purple-100 shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wide">
+                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-purple-600" /> Añadir Bloque de Horario
                             </h3>
-                            <button onClick={() => setIsBlockModalOpen(false)} className="p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
+                            <button onClick={() => setIsBlockModalOpen(false)} className="cursor-pointer p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
                         </div>
                         <form onSubmit={handleCreateBlock} className="p-5 space-y-4 font-questrial text-xs">
                             {errorMsg && (
