@@ -36,7 +36,7 @@ export default function StudentsPage() {
 
   // Estados de Filtros
   const [searchTerm, setSearchTerm] = useState("");
-  const [kinshipFilter, setKinshipFilter] = useState("Todos");
+  const [kinshipFilter, setKinshipFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -53,7 +53,6 @@ export default function StudentsPage() {
     medicalObservations: "",
     address: "",
     shirtSize: "M",
-    group: "",
     phone: "",
     hasExperience: true
   });
@@ -63,7 +62,7 @@ export default function StudentsPage() {
         page: pageToFetch,
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
         search: searchTerm || undefined,
-        kinship: kinshipFilter === "Todos" ? undefined : kinshipFilter,
+        kinship: kinshipFilter === "all" ? undefined : kinshipFilter,
       });
       console.log({ res })
       if (res.success && res.data) {
@@ -235,7 +234,6 @@ export default function StudentsPage() {
               medicalObservations: "",
               address: "",
               shirtSize: "M",
-              group: "",
               phone: "",
               hasExperience: true
             });
@@ -315,7 +313,7 @@ export default function StudentsPage() {
               onChange={(e) => handleFilterChange("kinship", e.target.value)}
               className="p-2 border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
-              <option value="Todos">Todos</option>
+              <option value="all">Todos</option>
               <option value="son">Hijo</option>
               <option value="daughter">Hija</option>
               <option value="nephew">Sobrino</option>
@@ -448,15 +446,10 @@ export default function StudentsPage() {
                     className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                   >
                     <option value="Hijo">Hijo</option>
-
                     <option value="Hija">Hija</option>
-
                     <option value="Sobrino">Sobrino</option>
-
                     <option value="Sobrina">Sobrina</option>
-
                     <option value="Tutorado">Tutorado</option>
-
                     <option value="Otro">Otro</option>
                   </select>
                 </div>

@@ -8,7 +8,7 @@ export interface Student {
     birthDate: string;
     kinship: "son" | "daughter" | "nephew" | "niece" | "tutored" | "other" | undefined;
     shirtSize: string;
-    group: Group;
+    group?: Group;
     phone: string;
     address: string;
     hasExperience: boolean;

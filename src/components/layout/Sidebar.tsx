@@ -39,7 +39,8 @@ import {
   Users2,
   UsersIcon,
   Calendar,
-  House
+  House,
+  UserPlus2
 } from "lucide-react";
 
 interface SidebarProps {
@@ -61,6 +62,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     { key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays, badge: 0 },
+    { key: 'registrations', name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
   ]);
 
   const [operationalManagement, setOperationalManagement] = useState([
