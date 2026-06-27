@@ -8,7 +8,6 @@ import {
     Plus,
     Search,
     TrendingUp,
-    CreditCard,
     AlertCircle
 } from "lucide-react";
 import HeroSection from '@/components/layout/HeroSection';
