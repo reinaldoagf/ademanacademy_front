@@ -23,4 +23,13 @@ export interface WeeklyScheduleJSON {
     domingo: BlockData[];
 }
 
+export interface Schedule {
+    classroomId: string,
+    groupId: string,
+    id: string,
+    schedule: WeeklyScheduleJSON,
+    createdAt: string,
+    updatedAt: string,
+}
+
 export type WeekDay = 'lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo';

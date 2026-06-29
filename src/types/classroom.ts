@@ -17,6 +17,8 @@ export interface Classroom {
         createdAt: string,
         updatedAt: string,
     }[];
+    createdAt?: string,
+    updatedAt?: string,
 }
 
 export interface FetchClassroomsParams {

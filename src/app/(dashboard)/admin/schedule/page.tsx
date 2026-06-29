@@ -17,10 +17,11 @@ import {
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import TimeAnalogPicker from "@/components/common/TimeAnalogPicker";
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
-import { getAllClassroomsAction } from "@/app/actions/classroom";
+import { getAllClassroomsAction, updateClassroomAction } from "@/app/actions/classroom";
 
 const HORA_INICIO_GRID = 8;
 const HORA_FIN_GRID = 21;
@@ -114,7 +115,7 @@ export default function SchedulePage() {
         e.preventDefault();
     };
 
-    const handleDrop = (e: React.DragEvent, targetDay: WeekDay) => {
+    const handleDrop = async (e: React.DragEvent, targetDay: WeekDay) => {
         e.preventDefault();
         setErrorMsg(null);
 
@@ -126,15 +127,11 @@ export default function SchedulePage() {
             const rect = e.currentTarget.getBoundingClientRect();
             const relativeY = e.clientY - rect.top;
 
-            // Cálculo de tiempos basado en la posición del contenedor (redondeado a bloques de 15 min)
             const minutosTotalesDrop = Math.round((relativeY / PIXELS_PER_HOUR) * 4) * 15;
             const newMinutesHome = (HORA_INICIO_GRID * 60) + minutosTotalesDrop;
 
-            // 1. Buscar el grupo y su agenda correspondiente al salón activo
             const targetGroup = activeClassroom?.groups.find(g => g.id === groupId);
             const targetScheduleRelation = targetGroup?.schedules?.find((s: any) => s.classroomId === activeClassroom?.id);
-
-            // 2. Buscar el bloque original dentro del día de origen
             const targetBlock = targetScheduleRelation?.schedule?.[originDay]?.find((b: BlockData) => b.id === blockId);
 
             if (!targetGroup || !targetScheduleRelation || !targetBlock) {
@@ -145,78 +142,87 @@ export default function SchedulePage() {
             const originalDuration = timeToMinutes(targetBlock.endTime) - timeToMinutes(targetBlock.startTime);
             const newMinutesEnd = newMinutesHome + originalDuration;
 
-            // Validación: Límites de apertura/cierre de la grilla
             if (newMinutesEnd > (HORA_FIN_GRID * 60)) {
                 setErrorMsg("El bloque excede el horario de cierre de la academia.");
                 return;
             }
 
-            // 3. Validación de colisiones contra TODOS los bloques del salón activo en el día destino
-            const tieneColision = activeClassroom?.groups.some((g: any) => {
+            const hasACollision = activeClassroom?.groups.some((g: any) => {
                 const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
                 const blocksForDay = grupoSchedule?.schedule?.[targetDay] || [];
 
                 return blocksForDay.some((b: any) => {
-                    // Excluir de la colisión a sí mismo si se está moviendo dentro del mismo día y grupo
                     if (b.id === blockId && g.id === groupId && targetDay === originDay) return false;
-
                     const exStart = timeToMinutes(b.startTime);
                     const exEnd = timeToMinutes(b.endTime);
                     return (newMinutesHome < exEnd && newMinutesEnd > exStart);
                 });
             });
 
-            if (tieneColision) {
+            if (hasACollision) {
                 setErrorMsg(`Conflicto de agenda: Ya existe una clase en ese rango de horas el día ${targetDay}.`);
                 return;
             }
 
-            // 4. Actualización correcta e inmutable de activeClassroom
-            setActiveClassroom(prev => {
-                if (!prev) return prev;
+            // 🌟 PASO 1: Calcular de forma pura el nuevo estado sin depender de la asincronía de React
+            if (!activeClassroom) return;
 
-                // Mapeamos los grupos del salón para alterar solo el afectado
-                const updatedGroups = prev.groups.map((g: any) => {
-                    if (g.id !== groupId) return g;
+            const updatedGroups = activeClassroom.groups.map((g: any) => {
+                if (g.id !== groupId) return g;
 
-                    // Mapeamos las relaciones de horarios del grupo afectado
-                    const updatedSchedules = g.schedules.map((s: any) => {
-                        if (s.classroomId !== prev.id) return s;
+                const updatedSchedules = g.schedules.map((s: any) => {
+                    if (s.classroomId !== activeClassroom.id) return s;
 
-                        const currentDayBlocks = s.schedule[originDay] || [];
-                        const targetDayBlocks = s.schedule[targetDay] || [];
+                    const currentDayBlocks = s.schedule[originDay] || [];
+                    const targetDayBlocks = s.schedule[targetDay] || [];
+                    const filteredOrigin = currentDayBlocks.filter((b: any) => b.id !== blockId);
 
-                        // Quitamos el bloque del día origen
-                        const filteredOrigin = currentDayBlocks.filter((b: any) => b.id !== blockId);
+                    const updatedBlock: BlockData = {
+                        ...targetBlock,
+                        startTime: minutesToTime(newMinutesHome),
+                        endTime: minutesToTime(newMinutesEnd)
+                    };
 
-                        // Construimos el bloque con las nuevas horas
-                        const updatedBlock: BlockData = {
-                            ...targetBlock,
-                            startTime: minutesToTime(newMinutesHome),
-                            endTime: minutesToTime(newMinutesEnd)
-                        };
+                    const baseTargetBlocks = (originDay === targetDay) ? filteredOrigin : targetDayBlocks;
+                    const newTargetBlocks = [...baseTargetBlocks, updatedBlock].sort((a, b) =>
+                        a.startTime.localeCompare(b.startTime)
+                    );
 
-                        // Si se mueve en el mismo día, añadimos el bloque al arreglo que ya fue filtrado
-                        const baseTargetBlocks = (originDay === targetDay) ? filteredOrigin : targetDayBlocks;
-                        const newTargetBlocks = [...baseTargetBlocks, updatedBlock].sort((a, b) =>
-                            a.startTime.localeCompare(b.startTime)
-                        );
+                    // activeClassroom.schedules = activeClassroom.schedules.map(x => x.id == s.id ? s : x)
 
-                        return {
-                            ...s,
-                            schedule: {
-                                ...s.schedule,
-                                [originDay]: filteredOrigin,
-                                [targetDay]: newTargetBlocks
-                            }
-                        };
-                    });
-
-                    return { ...g, schedules: updatedSchedules };
+                    return {
+                        ...s,
+                        schedule: {
+                            ...s.schedule,
+                            [originDay]: filteredOrigin,
+                            [targetDay]: newTargetBlocks
+                        }
+                    };
                 });
 
-                // Retornamos el estado completo del salón con su lista de grupos actualizada
-                return { ...prev, groups: updatedGroups };
+                return { ...g, schedules: updatedSchedules };
+            });
+
+            const updatedClassroomData = {
+                ...activeClassroom,
+                groups: updatedGroups,
+                schedules: activeClassroom.schedules.map(s => {
+                    const group = updatedGroups.find(g => g.id == s.groupId)
+                    return group?.schedules?.find((item: any) => item.id == s.id) || s
+                })
+            };
+
+            // 🌟 PASO 2: Actualizar la UI localmente
+            setActiveClassroom(updatedClassroomData);
+
+            // 🌟 PASO 3: Enviar los datos calculados reales inmediatamente al servidor
+            startTransition(async () => {
+                const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
+                if (!res.success) {
+                    setErrorMsg(res.error || "Ocurrió un error al guardar.");
+                    return;
+                }
+                toast.success(`✨ Operación registrada exitosamente en la agenda.`);
             });
 
         } catch (err) {
@@ -241,8 +247,7 @@ export default function SchedulePage() {
         }
 
         // 1. Validar colisiones contra TODOS los bloques existentes en este salón para el día destino
-        const tieneColision = activeClassroom.groups.some((g: any) => {
-            // Buscamos la agenda de este grupo asociada al salón activo
+        const hasACollision = activeClassroom.groups.some((g: any) => {
             const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
             const blocksForDay = grupoSchedule?.schedule?.[day] || [];
 
@@ -253,58 +258,64 @@ export default function SchedulePage() {
             });
         });
 
-        if (tieneColision) {
+        if (hasACollision) {
             setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase en este salón.`);
             return;
         }
 
         // 2. Construcción del nuevo bloque de horario
-        const nuevoBloque = {
+        const newBlock = {
             id: `blk-${crypto.randomUUID()}`,
             startTime,
             endTime,
             label: label.trim() || undefined
         };
 
-        // 3. Actualización inmutable del estado del salón activo (activeClassroom)
-        setActiveClassroom(prev => {
-            if (!prev) return prev;
+        // 🌟 PASO 1: Calcular el objeto Classroom final de forma síncrona y pura
+        const updatedGroups = activeClassroom.groups.map((g: any) => {
+            if (g.id !== groupId) return g;
 
-            const updatedGroups = prev.groups.map((g: any) => {
-                if (g.id !== groupId) return g;
+            const updatedSchedules = g.schedules.map((s: any) => {
+                if (s.classroomId !== activeClassroom.id) return s;
 
-                const updatedSchedules = g.schedules.map((s: any) => {
-                    // Aseguramos alterar la agenda correspondiente al salón actual
-                    if (s.classroomId !== prev.id) return s;
+                const currentDayBlocks = s.schedule[day] || [];
+                const newTargetBlocks = [...currentDayBlocks, newBlock].sort((a, b) =>
+                    a.startTime.localeCompare(b.startTime)
+                );
 
-                    const currentDayBlocks = s.schedule[day] || [];
-                    // Agregamos el nuevo bloque y ordenamos cronológicamente
-                    const newTargetBlocks = [...currentDayBlocks, nuevoBloque].sort((a, b) =>
-                        a.startTime.localeCompare(b.startTime)
-                    );
-
-                    return {
-                        ...s,
-                        schedule: {
-                            ...s.schedule,
-                            [day]: newTargetBlocks
-                        }
-                    };
-                });
-
-                return { ...g, schedules: updatedSchedules };
+                return {
+                    ...s,
+                    schedule: {
+                        ...s.schedule,
+                        [day]: newTargetBlocks
+                    }
+                };
             });
 
-            return { ...prev, groups: updatedGroups };
+            return { ...g, schedules: updatedSchedules };
+        });
+
+        const updatedClassroomData = { ...activeClassroom, groups: updatedGroups };
+
+        // 🌟 PASO 2: Actualizar el estado local para reflejar el cambio inmediato en la UI
+        setActiveClassroom(updatedClassroomData);
+
+        // 🌟 PASO 3: Enviar los datos calculados de forma segura hacia el backend
+        startTransition(async () => {
+            const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
+            if (!res.success) {
+                setErrorMsg(res.error || "Ocurrió un error al registrar el nuevo bloque.");
+                return;
+            }
+            toast.success(`✨ Operación registrada exitosamente en la agenda.`);
         });
 
         // 4. Limpieza y cierre del modal
         setIsBlockModalOpen(false);
         setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
-        toast.success(`✨ Bloque añadido exitosamente de la agenda.`);
     };
 
-    const horasGuia = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
+    const guideHours = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
@@ -317,8 +328,6 @@ export default function SchedulePage() {
                 status: undefined,
                 type: undefined
             });
-
-            console.log({ res })
 
             setIsLoading(false)
 
@@ -388,6 +397,7 @@ export default function SchedulePage() {
             description: "",
         });
     };
+
     useEffect(() => {
         const handler = setTimeout(() => {
             fetchData(1, 10);
@@ -507,10 +517,10 @@ export default function SchedulePage() {
                                 </div>
 
                                 {/* Malla del Tiempo */}
-                                <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative" style={{ height: `${horasGuia.length * PIXELS_PER_HOUR}px` }}>
+                                <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative" style={{ height: `${guideHours.length * PIXELS_PER_HOUR}px` }}>
 
                                     {/* Horas de Fondo */}
-                                    {horasGuia.map((hora, index) => (
+                                    {guideHours.map((hora, index) => (
                                         <div key={hora} className="absolute left-0 right-0 border-b border-gray-100 flex items-start pointer-events-none" style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}>
                                             <span className="w-[80px] text-right pr-3 pt-1 text-[10px] font-bold text-gray-400">
                                                 {hora.toString().padStart(2, "0")}:00
@@ -694,14 +704,37 @@ export default function SchedulePage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Hora Inicio *</label>
-                                    <input required type="time" value={newBlockData.startTime} onChange={e => setNewBlockData({ ...newBlockData, startTime: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Hora Fin *</label>
-                                    <input required type="time" value={newBlockData.endTime} onChange={e => setNewBlockData({ ...newBlockData, endTime: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
-                                </div>
+                                {/* Hora Inicio */}
+                                <TimeAnalogPicker
+                                    label="Hora Inicio *"
+                                    value={newBlockData.startTime}
+                                    minTime="08:00"
+                                    maxTime="21:00"
+                                    onChange={(time) => {
+                                        let updatedEndTime = newBlockData.endTime;
+                                        // Si la hora final es menor o igual a la nueva de inicio, la reiniciamos para forzar coherencia
+                                        if (newBlockData.endTime && newBlockData.endTime <= time) {
+                                            updatedEndTime = "";
+                                        }
+                                        setNewBlockData({
+                                            ...newBlockData,
+                                            startTime: time,
+                                            endTime: updatedEndTime
+                                        });
+                                    }}
+                                />
+
+                                {/* Hora Fin */}
+                                <TimeAnalogPicker
+                                    label="Hora Fin *"
+                                    value={newBlockData.endTime}
+                                    disabled={!newBlockData.startTime} // Deshabilitado hasta elegir inicio
+                                    minTime={newBlockData.startTime || "08:00"} // No permite marcar una aguja anterior al inicio
+                                    maxTime="21:00"
+                                    onChange={(time) => {
+                                        setNewBlockData({ ...newBlockData, endTime: time });
+                                    }}
+                                />
                             </div>
 
                             {/* Botonera */}

@@ -1,4 +1,4 @@
-import { WeeklyScheduleJSON } from "@/types/schedule";
+import { Schedule } from "@/types/schedule";
 import { Classroom } from "@/types/classroom";
 
 export interface Group {
@@ -13,14 +13,7 @@ export interface Group {
     };
     classroomId: string | null;  // Guardamos la referencia por ID para los selects
     classroom?: Classroom;
-    schedules?: {
-        classroomId: string,
-        groupId: string,
-        id: string,
-        schedule: WeeklyScheduleJSON,
-        createdAt: string,
-        updatedAt: string,
-    }[];
+    schedules?: Schedule[];
     usedSlots: number;
     totalNumberOfSlots: number;
     category: "baby" | "childrens" | "youth" | "adult";
