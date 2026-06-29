@@ -71,7 +71,7 @@ export default function SchedulePage() {
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
     const [newBlockData, setNewBlockData] = useState({
-        groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
+        id: "", groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
     });
 
     // Generador de Color determinista por ID de grupo
@@ -231,12 +231,12 @@ export default function SchedulePage() {
     };
 
     // ================= AÑADIR NUEVO BLOQUE DESDE EL MODAL =================
-    const handleCreateBlock = (e: React.FormEvent) => {
+    const handleSaveBlock = (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
 
-        const { groupId, day, startTime, endTime, label } = newBlockData;
-        if (!groupId || !startTime || !endTime || !activeClassroom) return;
+        const { id, groupId, day, startTime, endTime, label } = newBlockData;
+        if (!id || !groupId || !startTime || !endTime || !activeClassroom) return; // 🌟 Agregamos !id a la validación
 
         const startMin = timeToMinutes(startTime);
         const endMin = timeToMinutes(endTime);
@@ -246,12 +246,15 @@ export default function SchedulePage() {
             return;
         }
 
-        // 1. Validar colisiones contra TODOS los bloques existentes en este salón para el día destino
+        // 1. Validar colisiones contra TODOS los bloques (Excluyendo el bloque que estamos editando)
         const hasACollision = activeClassroom.groups.some((g: any) => {
             const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
             const blocksForDay = grupoSchedule?.schedule?.[day] || [];
 
             return blocksForDay.some((b: any) => {
+                // 🌟 EXCLUSIÓN: Si es el mismo bloque que estamos editando en el mismo grupo, ignoramos la colisión
+                if (b.id === id && g.id === groupId) return false;
+
                 const exStart = timeToMinutes(b.startTime);
                 const exEnd = timeToMinutes(b.endTime);
                 return (startMin < exEnd && endMin > exStart);
@@ -259,19 +262,11 @@ export default function SchedulePage() {
         });
 
         if (hasACollision) {
-            setErrorMsg(`No se pudo agregar: El horario seleccionado colisiona con otra clase en este salón.`);
+            setErrorMsg(`No se pudo guardar: El horario seleccionado colisiona con otra clase en este salón.`);
             return;
         }
 
-        // 2. Construcción del nuevo bloque de horario
-        const newBlock = {
-            id: `blk-${crypto.randomUUID()}`,
-            startTime,
-            endTime,
-            label: label.trim() || undefined
-        };
-
-        // 🌟 PASO 1: Calcular el objeto Classroom final de forma síncrona y pura
+        // 🌟 PASO 1: Calcular el objeto Classroom final mutando inmutablemente el bloque correcto
         const updatedGroups = activeClassroom.groups.map((g: any) => {
             if (g.id !== groupId) return g;
 
@@ -279,9 +274,17 @@ export default function SchedulePage() {
                 if (s.classroomId !== activeClassroom.id) return s;
 
                 const currentDayBlocks = s.schedule[day] || [];
-                const newTargetBlocks = [...currentDayBlocks, newBlock].sort((a, b) =>
-                    a.startTime.localeCompare(b.startTime)
-                );
+
+                // 🌟 EDICIÓN: Mapeamos los bloques del día. Si coincide el ID, lo actualizamos.
+                const newTargetBlocks = currentDayBlocks.map((b: any) => {
+                    if (b.id !== id) return b;
+                    return {
+                        ...b,
+                        startTime,
+                        endTime,
+                        label: label.trim() || undefined
+                    };
+                }).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
                 return {
                     ...s,
@@ -295,7 +298,14 @@ export default function SchedulePage() {
             return { ...g, schedules: updatedSchedules };
         });
 
-        const updatedClassroomData = { ...activeClassroom, groups: updatedGroups };
+        const updatedClassroomData = {
+            ...activeClassroom,
+            groups: updatedGroups,
+            schedules: activeClassroom.schedules.map(s => {
+                const group = updatedGroups.find(g => g.id == s.groupId)
+                return group?.schedules?.find((item: any) => item.id == s.id) || s
+            })
+        };
 
         // 🌟 PASO 2: Actualizar el estado local para reflejar el cambio inmediato en la UI
         setActiveClassroom(updatedClassroomData);
@@ -304,15 +314,15 @@ export default function SchedulePage() {
         startTransition(async () => {
             const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
             if (!res.success) {
-                setErrorMsg(res.error || "Ocurrió un error al registrar el nuevo bloque.");
+                setErrorMsg(res.error || "Ocurrió un error al actualizar el bloque.");
                 return;
             }
-            toast.success(`✨ Operación registrada exitosamente en la agenda.`);
+            toast.success(`✨ Cambios guardados exitosamente en la agenda.`);
         });
 
         // 4. Limpieza y cierre del modal
         setIsBlockModalOpen(false);
-        setNewBlockData({ groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
+        setNewBlockData({ id: "", groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
     };
 
     const guideHours = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
@@ -670,11 +680,14 @@ export default function SchedulePage() {
                     <div className="bg-white border border-purple-100 shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
                             <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-purple-600" /> Añadir Bloque de Horario
+                                <Sparkles className="w-4 h-4 text-purple-600" /> {
+                                    selectedElement?.id ? 'Actualizar Bloque de Horario' : 'Añadir Bloque de Horario'
+                                }
+
                             </h3>
                             <button onClick={() => setIsBlockModalOpen(false)} className="cursor-pointer p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
                         </div>
-                        <form onSubmit={handleCreateBlock} className="p-5 space-y-4 font-questrial text-xs">
+                        <form onSubmit={handleSaveBlock} className="p-5 space-y-4 font-questrial text-xs">
                             {errorMsg && (
                                 <div className="text-red-700 text-xs bg-red-50 p-3 border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -780,29 +793,52 @@ export default function SchedulePage() {
                             <div className="flex items-center gap-3"><Clock className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Horario Actual</p><p className="font-medium text-gray-800">{selectedElement.block.startTime} a {selectedElement.block.endTime}</p></div></div>
                             <div className="flex items-center gap-3"><User className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Profesor</p><p className="font-medium text-gray-800">{selectedElement.group.instructor}</p></div></div>
                         </div>
-                        <div className="border-t border-gray-100 pt-3 space-y-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!selectedElement) return;
-                                    // Empaquetamos la metadata crítica: id_bloque | dia_semana | id_grupo
-                                    const compositeId = `${selectedElement.id}|${selectedElement.day}|${selectedElement.group.id}`;
+                        <div className="border-t border-gray-100 pt-3 space-y-2 flex gap-2">
+                            <div className="w-full flex-1">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!selectedElement) return;
+                                        setNewBlockData({
+                                            id: selectedElement.id,
+                                            groupId: selectedElement.group.id,
+                                            day: selectedElement.day as WeekDay,
+                                            startTime: selectedElement.block.startTime,
+                                            endTime: selectedElement.block.endTime,
+                                            label: selectedElement.block.label?.trim() || ''
+                                        });
+                                        setIsBlockModalOpen(true)
+                                    }}
+                                    className="w-full py-1.5 bg-green-50 text-green-600 hover:bg-green-100 font-bold border border-green-200 text-center cursor-pointer"
+                                >
+                                    Editar
+                                </button>
 
-                                    setModalConfig({
-                                        isOpen: true,
-                                        type: "word",
-                                        title: "Remover Bloque de Horario",
-                                        description: `¿Estás seguro de que deseas eliminar este bloque de clase? Para confirmar, escribe la palabra requerida.`,
-                                        requiredWord: "ELIMINAR", // Palabra de seguridad requerida por tu modal tipo "word"
-                                        id: compositeId,
-                                    });
-                                    // Limpiamos la selección del panel lateral inmediatamente
-                                    setSelectedElement(null);
-                                }}
-                                className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer"
-                            >
-                                Eliminar bloque de horario
-                            </button>
+                            </div>
+                            <div className="w-full flex-1">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!selectedElement) return;
+                                        // Empaquetamos la metadata crítica: id_bloque | dia_semana | id_grupo
+                                        const compositeId = `${selectedElement.id}|${selectedElement.day}|${selectedElement.group.id}`;
+
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: "word",
+                                            title: "Remover Bloque de Horario",
+                                            description: `¿Estás seguro de que deseas eliminar este bloque de clase? Para confirmar, escribe la palabra requerida.`,
+                                            requiredWord: "ELIMINAR", // Palabra de seguridad requerida por tu modal tipo "word"
+                                            id: compositeId,
+                                        });
+                                        // Limpiamos la selección del panel lateral inmediatamente
+                                        setSelectedElement(null);
+                                    }}
+                                    className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div className="p-4 border-t border-purple-100 bg-gray-50"><button onClick={() => alert("Módulo de alumnos e inscripciones")} className="w-full py-2 bg-white text-gray-700 border font-bold cursor-pointer flex items-center justify-center gap-1">Ver Alumnos <ChevronRight className="w-3.5 h-3.5" /></button></div>
