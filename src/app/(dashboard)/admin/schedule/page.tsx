@@ -12,12 +12,13 @@ import {
     Info,
     Plus,
     AlertCircle,
-    Grid
+    Grid,
+    Users
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
-import TimeAnalogPicker from "@/components/common/TimeAnalogPicker";
+import TimeRangeSlider from "@/components/common/TimeRangeSlider";
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
@@ -214,6 +215,10 @@ export default function SchedulePage() {
 
             // 🌟 PASO 2: Actualizar la UI localmente
             setActiveClassroom(updatedClassroomData);
+            setClassrooms(prev => {
+                if (!prev) return prev;
+                return prev.map(e => e.id == updatedClassroomData.id ? updatedClassroomData : e);
+            });
 
             // 🌟 PASO 3: Enviar los datos calculados reales inmediatamente al servidor
             startTransition(async () => {
@@ -236,7 +241,7 @@ export default function SchedulePage() {
         setErrorMsg(null);
 
         const { id, groupId, day, startTime, endTime, label } = newBlockData;
-        if (!id || !groupId || !startTime || !endTime || !activeClassroom) return; // 🌟 Agregamos !id a la validación
+        if (!groupId || !startTime || !endTime || !activeClassroom) return;
 
         const startMin = timeToMinutes(startTime);
         const endMin = timeToMinutes(endTime);
@@ -246,14 +251,18 @@ export default function SchedulePage() {
             return;
         }
 
+        // Obtener el grupo y día de ORIGEN reales desde el elemento seleccionado
+        const originGroupId = selectedElement?.group?.id || groupId;
+        const originDay = selectedElement?.day || day;
+
         // 1. Validar colisiones contra TODOS los bloques (Excluyendo el bloque que estamos editando)
         const hasACollision = activeClassroom.groups.some((g: any) => {
             const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
             const blocksForDay = grupoSchedule?.schedule?.[day] || [];
 
             return blocksForDay.some((b: any) => {
-                // 🌟 EXCLUSIÓN: Si es el mismo bloque que estamos editando en el mismo grupo, ignoramos la colisión
-                if (b.id === id && g.id === groupId) return false;
+                // EXCLUSIÓN PRECISA
+                if (((id && b.id === id) || !id) && g.id === originGroupId && day === originDay) return false;
 
                 const exStart = timeToMinutes(b.startTime);
                 const exEnd = timeToMinutes(b.endTime);
@@ -266,51 +275,81 @@ export default function SchedulePage() {
             return;
         }
 
-        // 🌟 PASO 1: Calcular el objeto Classroom final mutando inmutablemente el bloque correcto
-        const updatedGroups = activeClassroom.groups.map((g: any) => {
-            if (g.id !== groupId) return g;
+        // 2. Definir las propiedades del bloque actualizado
+        const updatedBlock = {
+            id: id || crypto.randomUUID(),
+            startTime,
+            endTime,
+            label: label.trim() || undefined,
+        };
 
-            const updatedSchedules = g.schedules.map((s: any) => {
+        // 3. Calcular de forma pura el nuevo array de grupos manteniendo consistencia interna
+        const updatedGroups = activeClassroom.groups.map((g: any) => {
+            // Si este grupo no se ve afectado, se retorna idéntico
+            if (g.id !== originGroupId && g.id !== groupId) return g;
+
+            const updatedSchedules = (g.schedules || []).map((s: any) => {
                 if (s.classroomId !== activeClassroom.id) return s;
 
-                const currentDayBlocks = s.schedule[day] || [];
+                let newScheduleStructure = { ...s.schedule };
 
-                // 🌟 EDICIÓN: Mapeamos los bloques del día. Si coincide el ID, lo actualizamos.
-                const newTargetBlocks = currentDayBlocks.map((b: any) => {
-                    if (b.id !== id) return b;
-                    return {
-                        ...b,
-                        startTime,
-                        endTime,
-                        label: label.trim() || undefined
-                    };
-                }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+                // CASO A: El bloque se mueve DENTRO del mismo grupo
+                if (originGroupId === groupId) {
+                    const filteredOrigin = (newScheduleStructure[originDay] || []).filter((b: any) => b.id !== id);
+                    newScheduleStructure[originDay] = filteredOrigin;
+
+                    const baseTarget = newScheduleStructure[day] || [];
+                    newScheduleStructure[day] = [...baseTarget, updatedBlock].sort((a, b) =>
+                        a.startTime.localeCompare(b.startTime)
+                    );
+                }
+                // CASO B: El bloque CAMBIA de grupo
+                else {
+                    // Si es el grupo de origen => Eliminar el bloque de su día de origen
+                    if (g.id === originGroupId) {
+                        newScheduleStructure[originDay] = (newScheduleStructure[originDay] || []).filter((b: any) => b.id !== id);
+                    }
+                    // Si es el grupo de destino => Añadir el bloque al nuevo día
+                    if (g.id === groupId) {
+                        const baseTarget = newScheduleStructure[day] || [];
+                        newScheduleStructure[day] = [...baseTarget, updatedBlock].sort((a, b) =>
+                            a.startTime.localeCompare(b.startTime)
+                        );
+                    }
+                }
 
                 return {
                     ...s,
-                    schedule: {
-                        ...s.schedule,
-                        [day]: newTargetBlocks
-                    }
+                    schedule: newScheduleStructure
                 };
             });
 
             return { ...g, schedules: updatedSchedules };
         });
 
+        // 4. 🌟 CORRECCIÓN CRÍTICA: Extraer de manera directa todos los schedules limpios de cada grupo
+        // Esto garantiza que la raíz de activeClassroom.schedules sea un fiel reflejo de lo que hay en los grupos
+        const allSchedulesFromGroups = updatedGroups.reduce((acc: any[], currentGroup: any) => {
+            if (currentGroup.schedules && Array.isArray(currentGroup.schedules)) {
+                return [...acc, ...currentGroup.schedules];
+            }
+            return acc;
+        }, []);
+
         const updatedClassroomData = {
             ...activeClassroom,
             groups: updatedGroups,
-            schedules: activeClassroom.schedules.map(s => {
-                const group = updatedGroups.find(g => g.id == s.groupId)
-                return group?.schedules?.find((item: any) => item.id == s.id) || s
-            })
+            schedules: allSchedulesFromGroups // 🌟 Sincronización masiva instantánea sin pérdidas de mutación externa
         };
 
-        // 🌟 PASO 2: Actualizar el estado local para reflejar el cambio inmediato en la UI
+        // 5. Actualizar estados locales de React de forma inmutable
         setActiveClassroom(updatedClassroomData);
+        setClassrooms(prev => {
+            if (!prev) return prev;
+            return prev.map(e => e.id === updatedClassroomData.id ? updatedClassroomData : e);
+        });
 
-        // 🌟 PASO 3: Enviar los datos calculados de forma segura hacia el backend
+        // 6. Enviar los datos mutados de forma segura hacia el backend
         startTransition(async () => {
             const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
             if (!res.success) {
@@ -320,11 +359,10 @@ export default function SchedulePage() {
             toast.success(`✨ Cambios guardados exitosamente en la agenda.`);
         });
 
-        // 4. Limpieza y cierre del modal
+        // 7. Limpieza y cierre del modal
         setIsBlockModalOpen(false);
         setNewBlockData({ id: "", groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
     };
-
     const guideHours = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -354,26 +392,22 @@ export default function SchedulePage() {
     const handleConfirmAction = async () => {
         if (modalConfig?.id && activeClassroom) {
             try {
-                // Desempaquetamos la metadata almacenada
+                // 1️⃣ Desempaquetamos la metadata almacenada
                 const [blockId, targetDay, groupId] = modalConfig.id.split("|");
 
                 if (!blockId || !targetDay || !groupId) return;
 
-                // Actualización inmutable del estado del salón activo (grilla visual)
-                setActiveClassroom(prev => {
-                    if (!prev) return prev;
-
-                    const updatedGroups = prev.groups.map((g: any) => {
-                        // Solo modificamos el grupo dueño del bloque
+                // 2️⃣ Calculamos la mutación inmutable asegurando doble consistencia (.groups y .schedules)
+                const updatedClassroomData = {
+                    ...activeClassroom,
+                    // A. Mapeo y limpieza interna de cada grupo
+                    groups: activeClassroom.groups.map((g: any) => {
                         if (g.id !== groupId) return g;
 
                         const updatedSchedules = g.schedules.map((s: any) => {
-                            // Aseguramos modificar la relación vinculada al salón actual
-                            if (s.classroomId !== prev.id) return s;
+                            if (s.classroomId !== activeClassroom.id) return s;
 
                             const currentDayBlocks = s.schedule[targetDay] || [];
-
-                            // Filtramos para remover el bloque seleccionado de ese día específico
                             const filteredBlocks = currentDayBlocks.filter((b: any) => b.id !== blockId);
 
                             return {
@@ -386,12 +420,43 @@ export default function SchedulePage() {
                         });
 
                         return { ...g, schedules: updatedSchedules };
-                    });
+                    }),
 
-                    return { ...prev, groups: updatedGroups };
+                    // B. 🌟 NUEVO: Mapeo y consistencia directa en la raíz de activeClassroom.schedules
+                    schedules: (activeClassroom.schedules || []).map((s: any) => {
+                        // Validamos que el schedule pertenezca al grupo afectado y al salón actual
+                        if (s.groupId !== groupId || s.classroomId !== activeClassroom.id) return s;
+
+                        const currentDayBlocks = s.schedule[targetDay] || [];
+                        const filteredBlocks = currentDayBlocks.filter((b: any) => b.id !== blockId);
+
+                        return {
+                            ...s,
+                            schedule: {
+                                ...s.schedule,
+                                [targetDay]: filteredBlocks
+                            }
+                        };
+                    })
+                };
+
+                // 3️⃣ Seteamos los estados locales de React de forma segura usando la constante calculada
+                setActiveClassroom(updatedClassroomData);
+
+                setClassrooms(prev => {
+                    if (!prev) return prev;
+                    return prev.map(e => e.id === updatedClassroomData.id ? updatedClassroomData : e);
                 });
 
-                toast.success(`✨ Bloque eliminado exitosamente de la agenda.`);
+                // 4️⃣ Enviamos los datos calculados en paralelo hacia el backend usando startTransition
+                startTransition(async () => {
+                    const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
+                    if (!res.success) {
+                        setErrorMsg(res.error || "Ocurrió un error al actualizar el bloque.");
+                        return;
+                    }
+                    toast.success(`✨ Bloque eliminado exitosamente de la agenda.`);
+                });
 
             } catch (error) {
                 console.error("Error procesando la eliminación del bloque:", error);
@@ -399,7 +464,7 @@ export default function SchedulePage() {
             }
         }
 
-        // Cerramos el modal de confirmación restaurando el estado inicial de la configuración
+        // Cerramos el modal de confirmación restaurando el estado inicial
         setModalConfig({
             isOpen: false,
             type: "word",
@@ -523,7 +588,7 @@ export default function SchedulePage() {
                                 {/* Días */}
                                 <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b bg-purple-50/40 font-bold text-gray-700 text-center uppercase tracking-wider py-3 sticky top-0 bg-white z-10">
                                     <div className="border-r border-purple-100 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-purple-600" /></div>
-                                    {DIAS.map(d => <div key={d} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
+                                    {DIAS.map((d, index) => <div key={d + '1-' + index} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
                                 </div>
 
                                 {/* Malla del Tiempo */}
@@ -531,7 +596,7 @@ export default function SchedulePage() {
 
                                     {/* Horas de Fondo */}
                                     {guideHours.map((hora, index) => (
-                                        <div key={hora} className="absolute left-0 right-0 border-b border-gray-100 flex items-start pointer-events-none" style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}>
+                                        <div key={hora + '-' + index} className="absolute left-0 right-0 border-b border-gray-100 flex items-start pointer-events-none" style={{ top: `${index * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}>
                                             <span className="w-[80px] text-right pr-3 pt-1 text-[10px] font-bold text-gray-400">
                                                 {hora.toString().padStart(2, "0")}:00
                                             </span>
@@ -543,7 +608,7 @@ export default function SchedulePage() {
                                     {/* Columnas Interactivas  (todo) */}
                                     {
                                         activeClassroom && (
-                                            DIAS.map((dia: ('lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo')) => {
+                                            DIAS.map((dia: ('lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo'), index) => {
 
                                                 if (activeGroupFilter != 'all') {
                                                     const currentGroup = activeClassroom.groups.find((e: Group) => (e.id == activeGroupFilter));
@@ -555,19 +620,19 @@ export default function SchedulePage() {
 
                                                             return (
                                                                 <div
-                                                                    key={dia}
+                                                                    key={dia + '3-' + index}
                                                                     onDragOver={handleDragOver}
                                                                     onDrop={(e) => handleDrop(e, dia)}
                                                                     className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
                                                                 >
-                                                                    {blocksOfTheDay.map((e: BlockData) => {
+                                                                    {blocksOfTheDay.map((e: BlockData, index: number) => {
                                                                         const posicionStyle = getPositionStyles(e.startTime, e.endTime);
                                                                         const isSelected = selectedElement?.id === e.id;
                                                                         const colorMeta = getGroupColor(currentGroup.id);
 
                                                                         return (
                                                                             <div
-                                                                                key={e.id}
+                                                                                key={e.id + '-' + index}
                                                                                 draggable
                                                                                 onDragStart={(evt) => handleDragStart(evt, e.id, activeGroupFilter, dia)}
                                                                                 onClick={(evt) => {
@@ -621,19 +686,19 @@ export default function SchedulePage() {
 
                                                     return (
                                                         <div
-                                                            key={dia}
+                                                            key={dia + '4-' + index}
                                                             onDragOver={handleDragOver}
                                                             onDrop={(e) => handleDrop(e, dia)}
                                                             className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
                                                         >
-                                                            {allBlocksOfTheDay.map((e: any) => {
+                                                            {allBlocksOfTheDay.map((e: any, index: number) => {
                                                                 const posicionStyle = getPositionStyles(e.startTime, e.endTime);
                                                                 const isSelected = selectedElement?.id === e.id;
                                                                 const colorMeta = getGroupColor(e.group.id); // Color dinámico por grupo objetivo
 
                                                                 return (
                                                                     <div
-                                                                        key={e.id}
+                                                                        key={e.id + '1-' + index}
                                                                         draggable
                                                                         onDragStart={(evt) => handleDragStart(evt, e.id, e.group.id, dia)}
                                                                         onClick={(evt) => {
@@ -677,7 +742,7 @@ export default function SchedulePage() {
             {/* ================= 🎯 NUEVO MODAL: CREAR BLOQUE DE HORARIO ================= */}
             {isBlockModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-purple-100 shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="bg-white border border-purple-100 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
                             <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-purple-600" /> {
@@ -699,8 +764,8 @@ export default function SchedulePage() {
                                 <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
                                 <select required value={newBlockData.groupId} onChange={e => setNewBlockData({ ...newBlockData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
                                     <option value="">-- Elige un grupo --</option>
-                                    {activeClassroom?.groups.map(g => (
-                                        <option key={g.id} value={g.id}>{g.name}</option>
+                                    {activeClassroom?.groups.map((g, index) => (
+                                        <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
                                     ))}
                                 </select>
                             </div>
@@ -708,7 +773,7 @@ export default function SchedulePage() {
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
                                     <select value={newBlockData.day} onChange={e => setNewBlockData({ ...newBlockData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
-                                        {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+                                        {DIAS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -716,9 +781,22 @@ export default function SchedulePage() {
                                     <input type="text" placeholder="Ej: Técnica" value={newBlockData.label} onChange={e => setNewBlockData({ ...newBlockData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                {/* Hora Inicio */}
-                                <TimeAnalogPicker
+                            <div className="w-full">
+                                <TimeRangeSlider
+                                    startTime={newBlockData.startTime}
+                                    endTime={newBlockData.endTime}
+                                    onChange={({ startTime, endTime }) => {
+                                        setNewBlockData({
+                                            ...newBlockData,
+                                            startTime,
+                                            endTime
+                                        });
+                                    }}
+                                />
+                            </div>
+                            {/* <div className="grid grid-cols-2 gap-2"> */}
+                            {/* Hora Inicio */}
+                            {/* <TimeAnalogPicker
                                     label="Hora Inicio *"
                                     value={newBlockData.startTime}
                                     minTime="08:00"
@@ -735,10 +813,32 @@ export default function SchedulePage() {
                                             endTime: updatedEndTime
                                         });
                                     }}
-                                />
+                                /> */}
 
-                                {/* Hora Fin */}
-                                <TimeAnalogPicker
+                            {/* <TimeGridPicker
+                                    label="Hora Inicio *"
+                                    value={newBlockData.startTime}
+                                    minTime="08:00"
+                                    maxTime="20:30" // Se limita a las 8:30 PM como máximo inicio para que pueda haber un bloque final de 9:00 PM
+                                    intervalMinutes={30} // Puedes cambiarlo a 15 si requieres más precisión
+                                    onChange={(time) => {
+                                        let updatedEndTime = newBlockData.endTime;
+
+                                        // Si la hora final actual es menor o igual a la nueva hora de inicio elegida, la reiniciamos
+                                        if (newBlockData.endTime && newBlockData.endTime <= time) {
+                                            updatedEndTime = "";
+                                        }
+
+                                        setNewBlockData({
+                                            ...newBlockData,
+                                            startTime: time,
+                                            endTime: updatedEndTime
+                                        });
+                                    }}
+                                /> */}
+
+                            {/* Hora Fin */}
+                            {/* <TimeAnalogPicker
                                     label="Hora Fin *"
                                     value={newBlockData.endTime}
                                     disabled={!newBlockData.startTime} // Deshabilitado hasta elegir inicio
@@ -747,8 +847,29 @@ export default function SchedulePage() {
                                     onChange={(time) => {
                                         setNewBlockData({ ...newBlockData, endTime: time });
                                     }}
-                                />
-                            </div>
+                                /> */}
+                            {/* <TimeGridPicker
+                                    label="Hora Fin *"
+                                    value={newBlockData.endTime}
+                                    disabled={!newBlockData.startTime} // Deshabilitado de forma segura hasta elegir la de inicio
+                                    // 🌟 CLAVE: El mínimo de la hora final es siempre un intervalo después de la hora de inicio seleccionada
+                                    minTime={
+                                        newBlockData.startTime
+                                            ? (() => {
+                                                const [h, m] = newBlockData.startTime.split(":").map(Number);
+                                                // Le sumamos 30 minutos automáticos al mínimo para evitar que duren 0 minutos
+                                                const totalMin = h * 60 + m + 30;
+                                                return `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
+                                            })()
+                                            : "08:30"
+                                    }
+                                    maxTime="21:00" // El límite estricto de cierre de la institución (9:00 PM)
+                                    intervalMinutes={30}
+                                    onChange={(time) => {
+                                        setNewBlockData({ ...newBlockData, endTime: time });
+                                    }}
+                                /> */}
+                            {/*  </div> */}
 
                             {/* Botonera */}
                             <div className="pt-2 flex justify-between">
@@ -771,29 +892,64 @@ export default function SchedulePage() {
                 </div>
             )}
             {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
+            {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
             {selectedElement && (
-                <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150">
-                    <div className="p-4 bg-purple-50/50 border-b border-purple-100 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 font-bold uppercase text-gray-700 text-[11px]"><Info className="w-4 h-4 text-[#5e0472]" /> Propiedades del Bloque</div>
-                        <button onClick={() => setSelectedElement(null)} className="cursor-pointer p-1 hover:bg-purple-100 text-gray-400 rounded"><X className="w-4 h-4" /></button>
+                <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150 h-full">
+
+                    {/* Cabecera (Fija) */}
+                    <div className="p-4 bg-purple-50/50 border-b border-purple-100 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-1.5 font-bold uppercase text-gray-700 text-[11px]">
+                            <Info className="w-4 h-4 text-gray-600" /> Propiedades del Bloque
+                        </div>
+                        <button onClick={() => setSelectedElement(null)} className="cursor-pointer p-1 hover:bg-purple-100 text-gray-400 rounded">
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
-                    <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-                        {
-                            selectedElement.group && (
-                                <div>
-                                    <span className="text-[9px] font-bold bg-pink-100 text-pink-700 px-1.5 py-0.5 capitalize">{selectedElement.group.category}</span>
-                                    <h4 className="font-anton text-gray-800 text-base mt-2 uppercase tracking-wide leading-tight">{selectedElement.group.name}</h4>
-                                    <p className="text-[#5e0472] font-semibold text-xs mt-0.5">{selectedElement.group.style || "Estilo Libre"}</p>
-                                </div>
-                            )
-                        }
+
+                    {/* Cuerpo Principal (Scrolleable para los datos del bloque) */}
+                    <div className="p-5 space-y-4 shrink-0 border-b border-gray-100">
+                        {selectedElement.group && (
+                            <div>
+                                <span className="text-[9px] font-bold bg-pink-100 text-pink-700 px-1.5 py-0.5 capitalize">
+                                    {selectedElement.group.category}
+                                </span>
+                                <h4 className="font-anton text-gray-800 text-base mt-2 uppercase tracking-wide leading-tight">
+                                    {selectedElement.group.name}
+                                </h4>
+                                <p className="text-[#5e0472] font-semibold text-xs mt-0.5">
+                                    {selectedElement.group.style || "Estilo Libre"}
+                                </p>
+                            </div>
+                        )}
 
                         <div className="space-y-3 border-t border-gray-100 pt-3 text-gray-600">
-                            <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Día</p><p className="font-medium text-gray-800 capitalize">{selectedElement.day}</p></div></div>
-                            <div className="flex items-center gap-3"><Clock className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Horario Actual</p><p className="font-medium text-gray-800">{selectedElement.block.startTime} a {selectedElement.block.endTime}</p></div></div>
-                            <div className="flex items-center gap-3"><User className="w-4 h-4 text-gray-400" /><div><p className="text-[9px] text-gray-400 font-bold">Profesor</p><p className="font-medium text-gray-800">{selectedElement.group.instructor}</p></div></div>
+                            <div className="flex items-center gap-3">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <div>
+                                    <p className="text-[9px] text-gray-400 font-bold">Día</p>
+                                    <p className="font-medium text-gray-800 capitalize">{selectedElement.day}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <div>
+                                    <p className="text-[9px] text-gray-400 font-bold">Horario Actual</p>
+                                    <p className="font-medium text-gray-800">
+                                        {selectedElement.block.startTime} a {selectedElement.block.endTime}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <User className="w-4 h-4 text-gray-400" />
+                                <div>
+                                    <p className="text-[9px] text-gray-400 font-bold">Profesor</p>
+                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor || "Sin asignar"}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="border-t border-gray-100 pt-3 space-y-2 flex gap-2">
+
+                        {/* Acciones */}
+                        <div className="border-t border-gray-100 pt-3 flex gap-2">
                             <div className="w-full flex-1">
                                 <button
                                     type="button"
@@ -807,41 +963,82 @@ export default function SchedulePage() {
                                             endTime: selectedElement.block.endTime,
                                             label: selectedElement.block.label?.trim() || ''
                                         });
-                                        setIsBlockModalOpen(true)
+                                        setIsBlockModalOpen(true);
                                     }}
-                                    className="w-full py-1.5 bg-green-50 text-green-600 hover:bg-green-100 font-bold border border-green-200 text-center cursor-pointer"
+                                    className="w-full py-1.5 bg-green-50 text-green-600 hover:bg-green-100 font-bold border border-green-200 text-center cursor-pointer transition-colors"
                                 >
                                     Editar
                                 </button>
-
                             </div>
                             <div className="w-full flex-1">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         if (!selectedElement) return;
-                                        // Empaquetamos la metadata crítica: id_bloque | dia_semana | id_grupo
                                         const compositeId = `${selectedElement.id}|${selectedElement.day}|${selectedElement.group.id}`;
-
                                         setModalConfig({
                                             isOpen: true,
                                             type: "word",
                                             title: "Remover Bloque de Horario",
                                             description: `¿Estás seguro de que deseas eliminar este bloque de clase? Para confirmar, escribe la palabra requerida.`,
-                                            requiredWord: "ELIMINAR", // Palabra de seguridad requerida por tu modal tipo "word"
+                                            requiredWord: "ELIMINAR",
                                             id: compositeId,
                                         });
-                                        // Limpiamos la selección del panel lateral inmediatamente
                                         setSelectedElement(null);
                                     }}
-                                    className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer"
+                                    className="w-full py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold border border-red-200 text-center cursor-pointer transition-colors"
                                 >
                                     Eliminar
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div className="p-4 border-t border-purple-100 bg-gray-50"><button onClick={() => alert("Módulo de alumnos e inscripciones")} className="w-full py-2 bg-white text-gray-700 border font-bold cursor-pointer flex items-center justify-center gap-1">Ver Alumnos <ChevronRight className="w-3.5 h-3.5" /></button></div>
+
+                    {/* 🌟 NUEVA SECCIÓN: Lista de Alumnos Dinámica y Autoadaptable al alto */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-gray-50/50">
+                        <div className="px-5 py-3 border-b border-gray-100 bg-white flex items-center justify-between shrink-0">
+                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5 text-purple-500" /> Alumnos Inscritos
+                            </span>
+                            <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5">
+                                {selectedElement.group.students?.length || 0} / {selectedElement.group.totalNumberOfSlots || 20}
+                            </span>
+                        </div>
+
+                        {/* Contenedor scrolleable autónomo */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2 generic-scrollbar">
+                            {selectedElement.group.students && selectedElement.group.students.length > 0 ? (
+                                selectedElement.group.students.map((student: any) => (
+                                    <div
+                                        key={student.id}
+                                        className="p-2.5 bg-white border border-purple-100/70 shadow-sm flex items-center justify-between hover:border-purple-200 transition-all"
+                                    >
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="font-bold text-gray-800 text-xs">
+                                                {student.firstName} {student.lastName}
+                                            </p>
+                                            <p className="text-[9px] text-gray-400 font-medium">
+                                                Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
+                                                {student.hasExperience && " • Con Experiencia"}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[8px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-1.5 py-0.5">
+                                                {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 my-auto">
+                                    <Users className="w-8 h-8 text-gray-300 stroke-[1.5] mb-2" />
+                                    <p className="font-medium text-xs">No hay alumnos inscritos</p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">En este grupo todavía.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                 </div>
             )}
             {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}

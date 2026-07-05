@@ -5,7 +5,7 @@ export interface BlockData {
     startTime: string;
     endTime: string;
     label?: string; // Opcional para soportar "Ensayo intensivo"
-    group: Group; // Opcional para soportar "Ensayo intensivo"
+    group?: Group; // Opcional para soportar "Ensayo intensivo"
 }
 
 /* export interface ScheduleBlock {

@@ -1,3 +1,4 @@
+// src/components/common/TimeAnalogPicker.tsx
 "use client";
 
 import React from "react";
@@ -36,9 +37,31 @@ export default function TimeAnalogPicker({
     disabled = false,
 }: TimeAnalogPickerProps) {
 
-    const dayjsValue = value ? dayjs(value, "HH:mm") : null;
-    const minDayjs = dayjs(minTime, "HH:mm");
-    const maxDayjs = dayjs(maxTime, "HH:mm");
+    // 🌟 Seteamos una fecha base idéntica (hoy) para evitar desfases de días en las comparaciones
+    const baseDateStr = dayjs().format("YYYY-MM-DD");
+
+    const dayjsValue = value ? dayjs(`${baseDateStr} ${value}`, "YYYY-MM-DD HH:mm") : null;
+    const minDayjs = dayjs(`${baseDateStr} ${minTime}`, "YYYY-MM-DD HH:mm");
+    const maxDayjs = dayjs(`${baseDateStr} ${maxTime}`, "YYYY-MM-DD HH:mm");
+
+    // 🌟 Validación unificada y exacta tanto para la vista de horas como de minutos
+    const handleDisableTime = (timeValue: Dayjs, view: "hours" | "minutes" | "seconds") => {
+        // Forzamos a que el clon temporal use exactamente el mismo día base para la validación limpia
+        const normalizedTime = timeValue.date(dayjs().date()).month(dayjs().month()).year(dayjs().year());
+
+        if (view === "hours") {
+            // Evaluamos solo a nivel de hora (ignorando minutos para no bloquear el círculo analógico prematuramente)
+            const hour = normalizedTime.hour();
+            return hour < minDayjs.hour() || hour > maxDayjs.hour();
+        }
+
+        if (view === "minutes") {
+            // Comparación estricta al minuto en los extremos PM/AM
+            return normalizedTime.isBefore(minDayjs) || normalizedTime.isAfter(maxDayjs);
+        }
+
+        return false;
+    };
 
     return (
         <ThemeProvider theme={purpleTheme}>
@@ -58,18 +81,17 @@ export default function TimeAnalogPicker({
                         }}
                         minTime={minDayjs}
                         maxTime={maxDayjs}
+                        // 🌟 Se utiliza la función unificada que respeta los cambios de cuadrante PM sin bloquearse
+                        shouldDisableTime={handleDisableTime}
                         ampm={true}
                         views={['hours', 'minutes']}
-                        // 🌟 NUEVA SINTAXIS: Configuración directa en slotProps de la raíz
                         slotProps={{
                             htmlInput: {
-                                // Tus clases exactas de Tailwind aplicadas directamente al elemento HTML <input>
                                 className: "w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize text-xs font-medium text-gray-800 cursor-pointer text-left rounded-lg transition-all",
                                 readOnly: true,
                                 required: true,
                             },
                             textField: {
-                                // Limpieza del diseño heredado de Material UI
                                 sx: {
                                     width: "100%",
                                     "& .MuiOutlinedInput-notchedOutline": { border: "none" },

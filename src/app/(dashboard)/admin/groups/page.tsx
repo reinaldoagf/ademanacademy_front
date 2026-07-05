@@ -25,10 +25,9 @@ import { getAllClassroomsAction } from "@/app/actions/classroom";
 import { getAllInstructorsAction } from "@/app/actions/instructor";
 import { Group } from "@/types/group";
 // 1. Tipado preciso para los datos que controla el formulario
-type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules" | "usedSlots"> & {
+type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"> & {
   classroomId: string;
   instructorId: string;
-  usedSlots: number;
 };
 
 // 2. Estado inicial limpio del formulario
@@ -37,7 +36,6 @@ const initialFormState: GroupFormData = {
   style: "",
   category: "baby",
   totalNumberOfSlots: 20,
-  usedSlots: 0,
   classroomId: "",
   instructorId: ""
 };
@@ -424,7 +422,7 @@ export default function GroupsPage() {
                   </div>
                   <div className="flex items-center gap-2 col-span-2">
                     <User className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span className="font-questrial">Capacidad ocupada: <strong className="text-gray-700 font-semibold">{group.usedSlots} alumnos</strong></span>
+                    <span className="font-questrial">Capacidad ocupada: <strong className="text-gray-700 font-semibold">{group.students?.length || 0} alumnos</strong></span>
                   </div>
                 </div>
 
@@ -602,21 +600,6 @@ export default function GroupsPage() {
                     value={formData.totalNumberOfSlots || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Cupos Utilizados Iniciales
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={formData.usedSlots ?? 0}
-                    onChange={(e) =>
-                      setFormData({ ...formData, usedSlots: parseInt(e.target.value) || 0 })
                     }
                     className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
                   />
