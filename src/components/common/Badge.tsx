@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, Clock, AlertCircle, Info, LucideIcon, CreditCard } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, Info, LucideIcon, CreditCard, User } from "lucide-react";
 
 // 🌟 El "Custom Pipe" (Función pura de transformación)
 function statusTranslatePipe(value: string): string {
@@ -12,6 +12,12 @@ function statusTranslatePipe(value: string): string {
         info: "Información",
         tuition: "Matrícula",
         bank_transfer: "Transferencia Bancaria",
+        son: "Hijo",
+        daughter: "Hija",
+        nephew: "Sobrino",
+        niece: "Sobrina",
+        tutored: "Tutorado",
+        other: "Otro",
     };
 
     const normalized = value.toLowerCase().trim();
@@ -37,7 +43,13 @@ export default function Badge({ variant, children, className = "" }: BadgeProps)
         rejected: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
         rechazado: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
         info: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Info },
-        bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard }
+        bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
+        son: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
+        daughter: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
+        nephew: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
+        niece: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
+        tutored: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
+        other: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
     };
 
     const currentConfig = config[normalizedVariant] || {

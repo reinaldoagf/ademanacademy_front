@@ -16,6 +16,7 @@ import {
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
+import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import { Student } from "@/types/student";
 import {
@@ -262,9 +263,7 @@ export default function StudentsPage() {
     {
       header: "Parentesco",
       render: (student) => (
-        <span className="px-2.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">
-          {student.kinship}
-        </span>
+        <Badge variant={student.kinship || ''} />
       ),
     },
     {
@@ -273,7 +272,6 @@ export default function StudentsPage() {
       render: (student) => (
         <button
           onClick={() => {
-            console.log({ student })
             setEditingId(student.id);
             // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
             const formattedBirthDate = student.birthDate
@@ -314,19 +312,8 @@ export default function StudentsPage() {
           label: "Registrar Nuevo Alumno →",
           onClick: () => {
             setEditingId(null);
-            setFormData({
-              dni: "",
-              firstName: "",
-              lastName: "",
-              birthDate: "",
-              kinship: "son",
-              medicalObservations: "",
-              address: "",
-              shirtSize: "M",
-              phone: "",
-              hasExperience: true,
-              groupId: "",
-            });
+            setFormData(initialFormState);
+            setGroupSearch("")
             setErrorMsg(null);
             setIsModalOpen(true);
           },
