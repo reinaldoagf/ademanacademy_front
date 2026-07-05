@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/students/page.tsx
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useRef } from "react";
 import {
   Sparkles,
   X,
@@ -22,8 +22,35 @@ import {
   saveStudentAction,
   getAllStudentsAction
 } from "@/app/actions/student";
+import { getAllGroupsAction } from "@/app/actions/group";
+import { Group } from "@/types/group";
 
-
+type GroupFormData = {
+  dni: string,
+  firstName: string,
+  lastName: string,
+  birthDate: string,
+  kinship: Student["kinship"],
+  medicalObservations: string,
+  address: string,
+  shirtSize: string,
+  phone: string,
+  hasExperience: boolean,
+  groupId: string | undefined,
+};
+const initialFormState: GroupFormData = {
+  dni: "",
+  firstName: "",
+  lastName: "",
+  birthDate: "",
+  kinship: "son" as Student["kinship"],
+  medicalObservations: "",
+  address: "",
+  shirtSize: "M",
+  phone: "",
+  hasExperience: true,
+  groupId: "",
+};
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [meta, setMeta] = useState({
@@ -44,18 +71,16 @@ export default function StudentsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    dni: "",
-    firstName: "",
-    lastName: "",
-    birthDate: "",
-    kinship: "son" as Student["kinship"],
-    medicalObservations: "",
-    address: "",
-    shirtSize: "M",
-    phone: "",
-    hasExperience: true
-  });
+  // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+  const [groupSearch, setGroupSearch] = useState("");
+  const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
+  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+  // Refs para cerrar los menús si el usuario hace click afuera
+  const groupRef = useRef<HTMLDivElement>(null);
+  // Refs para cerrar los menús si el usuario hace click afuera
+  const [formData, setFormData] = useState<GroupFormData>(initialFormState);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
       const res = await getAllStudentsAction({
@@ -64,7 +89,7 @@ export default function StudentsPage() {
         search: searchTerm || undefined,
         kinship: kinshipFilter === "all" ? undefined : kinshipFilter,
       });
-      console.log({ res })
+
       if (res.success && res.data) {
         setStudents(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
@@ -81,6 +106,46 @@ export default function StudentsPage() {
     return () => clearTimeout(handler);
   }, [searchTerm, kinshipFilter, currentPage, itemsPerPage]);
 
+  // --- EFFECT PARA grupos (Vía Server Action) ---
+  useEffect(() => {
+    // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
+    if (filteredGroups.find(c => c.id === formData.groupId)?.name === groupSearch) {
+      return;
+    }
+
+    setIsLoadingGroups(true);
+
+    const isSearchEmpty = !groupSearch.trim();
+    const delay = isSearchEmpty ? 0 : 400;
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // Construimos los parámetros requeridos por FetchGroupsParams
+        const params = isSearchEmpty
+          ? { limit: 5 }
+          : { search: groupSearch.trim() };
+
+        // Llamada directa al Server Action
+        const result = await getAllGroupsAction(params);
+
+        if (result.success && result.data) {
+          // Axios mapea la respuesta en result.data. data.data suele ser el array
+          // Si tu backend anida los grupos en 'groups', úsalo; de lo contrario asigna result.data
+          setFilteredGroups(result.data.groups || result.data);
+        } else {
+          console.error("Error en Server Action (grupos):", result.error);
+          setFilteredGroups([]);
+        }
+      } catch (error) {
+        console.error("Error crítico buscando grupos:", error);
+        setFilteredGroups([]);
+      } finally {
+        setIsLoadingGroups(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(delayDebounce);
+  }, [isModalOpen, groupSearch]);
   // 🎯 MANEJADORES DE LA TABLA
 
   const handleLimitChange = (newLimit: number) => {
@@ -98,18 +163,23 @@ export default function StudentsPage() {
     e.preventDefault();
     setErrorMsg(null);
     startTransition(async () => {
-      const res = await saveStudentAction(formData, null);
+      const res = await saveStudentAction(formData, editingId);
       if (!res.success) {
         setErrorMsg(res.error || "Ocurrió un error.");
         return;
       }
       toast.success("Operación exitosa");
-
-      setStudents([res.data!, ...students]);
-      // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-      window.dispatchEvent(new Event('refresh-students-count'));
+      // Sincronizar estado local
+      if (editingId) {
+        setStudents(students.map((item) => (item.id === editingId ? res.data! : item)));
+      } else {
+        setStudents([res.data!, ...students]);
+        // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+        window.dispatchEvent(new Event('refresh-students-count'));
+      }
       setIsModalOpen(false);
     });
+
   };
   // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
   const handlePageChange = (newPage: number) => {
@@ -120,12 +190,6 @@ export default function StudentsPage() {
     //window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 4️⃣ 🎯 MANEJADOR DE REDIRECCIÓN A PROGRESO
-  const handleShowProgress = (studentId: string) => {
-    // Redirige al administrador a la sub-ruta dinámica del alumno
-    // Asegúrate de tener creada la estructura de carpetas: /admin/students/[id]/progress/page.tsx
-    console.log(`/admin/students/${studentId}/progress`);
-  };
   // 🎯 Configuración declarativa de las columnas
   const columns: Column<Student>[] = [
     {
@@ -208,14 +272,38 @@ export default function StudentsPage() {
       className: "text-right", // Alinea el encabezado a la derecha
       render: (student) => (
         <button
-          onClick={() => handleShowProgress(student.id)}
+          onClick={() => {
+            console.log({ student })
+            setEditingId(student.id);
+            // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
+            const formattedBirthDate = student.birthDate
+              ? student.birthDate.split("T")[0]
+              : "";
+            setFormData({
+              dni: student.dni,
+              firstName: student.firstName,
+              lastName: student.lastName,
+              birthDate: formattedBirthDate,
+              kinship: student.kinship,
+              medicalObservations: student.medicalObservations || "",
+              address: student.address,
+              shirtSize: student.shirtSize,
+              phone: student.phone,
+              hasExperience: student.hasExperience,
+              groupId: student.groupId,
+            });
+            setGroupSearch(student.group?.name || "")
+            setIsModalOpen(true);
+            setShowGroupDropdown(false);
+          }}
           className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
         >
-          Progreso
+          Editar
         </button>
       ),
     },
   ];
+
   return (
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
@@ -225,6 +313,7 @@ export default function StudentsPage() {
         actions={[{
           label: "Registrar Nuevo Alumno →",
           onClick: () => {
+            setEditingId(null);
             setFormData({
               dni: "",
               firstName: "",
@@ -235,7 +324,8 @@ export default function StudentsPage() {
               address: "",
               shirtSize: "M",
               phone: "",
-              hasExperience: true
+              hasExperience: true,
+              groupId: "",
             });
             setErrorMsg(null);
             setIsModalOpen(true);
@@ -342,8 +432,7 @@ export default function StudentsPage() {
 
             <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
               <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" /> Nuevo Alumno /
-                Representado
+                <Sparkles className="w-4 h-4 text-purple-600" /> Nuevo Alumno / Representado
               </h3>
 
               <button
@@ -445,14 +534,29 @@ export default function StudentsPage() {
                     }
                     className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                   >
-                    <option value="Hijo">Hijo</option>
-                    <option value="Hija">Hija</option>
-                    <option value="Sobrino">Sobrino</option>
-                    <option value="Sobrina">Sobrina</option>
-                    <option value="Tutorado">Tutorado</option>
-                    <option value="Otro">Otro</option>
+                    <option value="son">Hijo</option>
+                    <option value="daughter">Hija</option>
+                    <option value="nephew">Sobrino</option>
+                    <option value="niece">Sobrina</option>
+                    <option value="tutored">Tutorado</option>
+                    <option value="other">Otro</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-gray-500 font-bold mb-1">
+                  Dirección de Habitación
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Calle, Avenida, Edificio / Casa..."
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                />
               </div>
 
               <div>
@@ -470,6 +574,65 @@ export default function StudentsPage() {
                   className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
                 ></textarea>
               </div>
+
+              {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+
+              <div className="relative" ref={groupRef}>
+                <label className="block text-gray-500 font-bold mb-1">Asignación Obligatoria de Grupo Académico *</label>
+                <div className="relative">
+                  <input
+                    required
+                    type="text"
+                    placeholder="Escribe para buscar o selecciona de la lista..."
+                    value={groupSearch}
+                    onFocus={() => setShowGroupDropdown(true)} // Al hacer foco abre la lista inicial
+                    onChange={(e) => {
+                      setGroupSearch(e.target.value);
+                      setShowGroupDropdown(true);
+                      setFormData({
+                        ...formData,
+                        groupId: e.target.value as any,
+                      })
+                      // setError(null);
+                    }}
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+                  />
+                  {isLoadingGroups && (
+                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+
+
+                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+                {showGroupDropdown && (filteredGroups.length > 0 || isLoadingGroups || groupSearch.trim().length > 0) && (
+                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                    {isLoadingGroups ? (
+                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                    ) : filteredGroups.length === 0 ? (
+                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
+                    ) : (
+                      filteredGroups.map((c: any) => (
+                        <li
+                          key={c.id}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              groupId: c.id as any,
+                            })
+                            setGroupSearch(`${c.name} (${c.type || 'Aula'})`);
+                            setShowGroupDropdown(false);
+                          }}
+                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                        >
+                          <span className="font-medium text-gray-700">{c.name}</span>
+                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cap: {c.maxCapacity || c.capacity}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+
 
               {/* Botonera */}
 
