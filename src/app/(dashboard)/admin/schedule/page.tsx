@@ -7,10 +7,8 @@ import {
     MapPin,
     User,
     X,
-    ChevronRight,
     Calendar,
     Info,
-    Plus,
     AlertCircle,
     Grid,
     Users
@@ -24,11 +22,11 @@ import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
 import { getAllClassroomsAction, updateClassroomAction } from "@/app/actions/classroom";
 
-const HORA_INICIO_GRID = 8;
-const HORA_FIN_GRID = 21;
+const GRID_START_TIME = 8;
+const GRID_END_TIME = 21;
 const PIXELS_PER_HOUR = 60;
 
-const DIAS: WeekDay[] = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+const DAYS: WeekDay[] = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
 // Paleta de colores para asignar a cada grupo de forma única
 const COLOR_PALETTE = [
@@ -39,7 +37,19 @@ const COLOR_PALETTE = [
     { bg: "bg-sky-50 hover:bg-sky-100/90", text: "text-sky-700", border: "border-sky-500", rawBorder: "border-sky-700", labelBg: "bg-sky-200/60" },
     { bg: "bg-rose-50 hover:bg-rose-100/90", text: "text-rose-700", border: "border-rose-500", rawBorder: "border-rose-700", labelBg: "bg-rose-200/60" },
 ];
-
+// 1. Tipado preciso para los datos que controla el formulario
+type GroupFormData = {
+    id: string,
+    groupId: string,
+    day: WeekDay,
+    startTime: string,
+    endTime: string,
+    label: string
+};
+// 2. Estado inicial limpio del formulario
+const initialFormState: GroupFormData = {
+    id: "", groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
+};
 export default function SchedulePage() {
     const [activeClassroom, setActiveClassroom] = useState<Classroom | null>(null);
     const [selectedElement, setSelectedElement] = useState<{ id: string; block: BlockData, day: string, group: Group } | null>(null);
@@ -71,9 +81,8 @@ export default function SchedulePage() {
     // Estados para modales
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
-    const [newBlockData, setNewBlockData] = useState({
-        id: "", groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
-    });
+    // Estado del formulario tipado correctamente
+    const [formData, setFormData] = useState<GroupFormData>(initialFormState);
 
     // Generador de Color determinista por ID de grupo
     const getGroupColor = (groupId: string) => {
@@ -97,7 +106,7 @@ export default function SchedulePage() {
     };
 
     const getPositionStyles = (startTime: string, endTime: string) => {
-        const minutosDesdeEje = timeToMinutes(startTime) - (HORA_INICIO_GRID * 60);
+        const minutosDesdeEje = timeToMinutes(startTime) - (GRID_START_TIME * 60);
         const duracion = timeToMinutes(endTime) - timeToMinutes(startTime);
         return {
             top: `${(minutosDesdeEje / 60) * PIXELS_PER_HOUR}px`,
@@ -129,7 +138,7 @@ export default function SchedulePage() {
             const relativeY = e.clientY - rect.top;
 
             const minutosTotalesDrop = Math.round((relativeY / PIXELS_PER_HOUR) * 4) * 15;
-            const newMinutesHome = (HORA_INICIO_GRID * 60) + minutosTotalesDrop;
+            const newMinutesHome = (GRID_START_TIME * 60) + minutosTotalesDrop;
 
             const targetGroup = activeClassroom?.groups.find(g => g.id === groupId);
             const targetScheduleRelation = targetGroup?.schedules?.find((s: any) => s.classroomId === activeClassroom?.id);
@@ -143,7 +152,7 @@ export default function SchedulePage() {
             const originalDuration = timeToMinutes(targetBlock.endTime) - timeToMinutes(targetBlock.startTime);
             const newMinutesEnd = newMinutesHome + originalDuration;
 
-            if (newMinutesEnd > (HORA_FIN_GRID * 60)) {
+            if (newMinutesEnd > (GRID_END_TIME * 60)) {
                 setErrorMsg("El bloque excede el horario de cierre de la academia.");
                 return;
             }
@@ -240,7 +249,7 @@ export default function SchedulePage() {
         e.preventDefault();
         setErrorMsg(null);
 
-        const { id, groupId, day, startTime, endTime, label } = newBlockData;
+        const { id, groupId, day, startTime, endTime, label } = formData;
         if (!groupId || !startTime || !endTime || !activeClassroom) return;
 
         const startMin = timeToMinutes(startTime);
@@ -361,9 +370,9 @@ export default function SchedulePage() {
 
         // 7. Limpieza y cierre del modal
         setIsBlockModalOpen(false);
-        setNewBlockData({ id: "", groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
+        setFormData({ id: "", groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
     };
-    const guideHours = Array.from({ length: HORA_FIN_GRID - HORA_INICIO_GRID + 1 }, (_, i) => HORA_INICIO_GRID + i);
+    const guideHours = Array.from({ length: GRID_END_TIME - GRID_START_TIME + 1 }, (_, i) => GRID_START_TIME + i);
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
@@ -588,7 +597,7 @@ export default function SchedulePage() {
                                 {/* Días */}
                                 <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b bg-purple-50/40 font-bold text-gray-700 text-center uppercase tracking-wider py-3 sticky top-0 bg-white z-10">
                                     <div className="border-r border-purple-100 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-purple-600" /></div>
-                                    {DIAS.map((d, index) => <div key={d + '1-' + index} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
+                                    {DAYS.map((d, index) => <div key={d + '1-' + index} className="border-r border-purple-50 last:border-0 text-[11px] capitalize">{d}</div>)}
                                 </div>
 
                                 {/* Malla del Tiempo */}
@@ -608,21 +617,21 @@ export default function SchedulePage() {
                                     {/* Columnas Interactivas  (todo) */}
                                     {
                                         activeClassroom && (
-                                            DIAS.map((dia: ('lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo'), index) => {
+                                            DAYS.map((day: ('lunes' | 'martes' | 'miércoles' | 'jueves' | 'viernes' | 'sábado' | 'domingo'), index) => {
 
                                                 if (activeGroupFilter != 'all') {
                                                     const currentGroup = activeClassroom.groups.find((e: Group) => (e.id == activeGroupFilter));
 
                                                     if (currentGroup) {
-                                                        const currentSchedule = currentGroup.schedules.find(e => (e.groupId == currentGroup.id && e.classroomId == activeClassroom.id));
+                                                        const currentSchedule = currentGroup.schedules?.find(e => (e.groupId == currentGroup.id && e.classroomId == activeClassroom.id));
                                                         if (currentSchedule) {
-                                                            const blocksOfTheDay = currentSchedule.schedule[dia];
+                                                            const blocksOfTheDay = currentSchedule.schedule[day];
 
                                                             return (
                                                                 <div
-                                                                    key={dia + '3-' + index}
+                                                                    key={day + '3-' + index}
                                                                     onDragOver={handleDragOver}
-                                                                    onDrop={(e) => handleDrop(e, dia)}
+                                                                    onDrop={(e) => handleDrop(e, day)}
                                                                     className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
                                                                 >
                                                                     {blocksOfTheDay.map((e: BlockData, index: number) => {
@@ -634,7 +643,7 @@ export default function SchedulePage() {
                                                                             <div
                                                                                 key={e.id + '-' + index}
                                                                                 draggable
-                                                                                onDragStart={(evt) => handleDragStart(evt, e.id, activeGroupFilter, dia)}
+                                                                                onDragStart={(evt) => handleDragStart(evt, e.id, activeGroupFilter, day)}
                                                                                 onClick={(evt) => {
                                                                                     evt.stopPropagation();
                                                                                     const group = activeClassroom.groups.find(e => (e.id === activeGroupFilter))
@@ -642,7 +651,7 @@ export default function SchedulePage() {
                                                                                         setSelectedElement({
                                                                                             id: e.id,
                                                                                             block: e,
-                                                                                            day: dia,
+                                                                                            day: day,
                                                                                             group: group
                                                                                         });
                                                                                     }
@@ -676,7 +685,7 @@ export default function SchedulePage() {
                                                     const allBlocksOfTheDay = activeClassroom.groups.flatMap((group: Group) => {
                                                         // Buscamos el schedule del grupo
                                                         const grupoSchedule = group.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
-                                                        const schedulesForDay = grupoSchedule?.schedule[dia] || [];
+                                                        const schedulesForDay = grupoSchedule?.schedule[day] || [];
                                                         // Le inyectamos los datos del grupo a cada bloque para que el render no falle
                                                         return schedulesForDay.map((bloque: any) => ({
                                                             ...bloque,
@@ -686,9 +695,9 @@ export default function SchedulePage() {
 
                                                     return (
                                                         <div
-                                                            key={dia + '4-' + index}
+                                                            key={day + '4-' + index}
                                                             onDragOver={handleDragOver}
-                                                            onDrop={(e) => handleDrop(e, dia)}
+                                                            onDrop={(e) => handleDrop(e, day)}
                                                             className="relative border-r border-gray-100/70 last:border-0 h-full bg-gray-50/5 transition-colors hover:bg-purple-50/10"
                                                         >
                                                             {allBlocksOfTheDay.map((e: any, index: number) => {
@@ -700,10 +709,10 @@ export default function SchedulePage() {
                                                                     <div
                                                                         key={e.id + '1-' + index}
                                                                         draggable
-                                                                        onDragStart={(evt) => handleDragStart(evt, e.id, e.group.id, dia)}
+                                                                        onDragStart={(evt) => handleDragStart(evt, e.id, e.group.id, day)}
                                                                         onClick={(evt) => {
                                                                             evt.stopPropagation();
-                                                                            setSelectedElement({ id: e.id, block: e, day: dia, group: e.group });
+                                                                            setSelectedElement({ id: e.id, block: e, day: day, group: e.group });
                                                                         }}
                                                                         style={posicionStyle}
                                                                         className={`absolute left-1 right-1 p-2 border-l-4 overflow-hidden transition-all shadow-sm cursor-grab active:cursor-grabbing flex flex-col justify-between text-[11px] ${isSelected
@@ -762,7 +771,7 @@ export default function SchedulePage() {
 
                             <div>
                                 <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
-                                <select required value={newBlockData.groupId} onChange={e => setNewBlockData({ ...newBlockData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
+                                <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
                                     <option value="">-- Elige un grupo --</option>
                                     {activeClassroom?.groups.map((g, index) => (
                                         <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
@@ -772,104 +781,28 @@ export default function SchedulePage() {
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
-                                    <select value={newBlockData.day} onChange={e => setNewBlockData({ ...newBlockData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
-                                        {DIAS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
+                                    <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
+                                        {DAYS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-gray-500 font-bold mb-1">Contenido / Nota</label>
-                                    <input type="text" placeholder="Ej: Técnica" value={newBlockData.label} onChange={e => setNewBlockData({ ...newBlockData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
+                                    <input type="text" placeholder="Ej: Técnica" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
                                 </div>
                             </div>
                             <div className="w-full">
                                 <TimeRangeSlider
-                                    startTime={newBlockData.startTime}
-                                    endTime={newBlockData.endTime}
+                                    startTime={formData.startTime}
+                                    endTime={formData.endTime}
                                     onChange={({ startTime, endTime }) => {
-                                        setNewBlockData({
-                                            ...newBlockData,
+                                        setFormData({
+                                            ...formData,
                                             startTime,
                                             endTime
                                         });
                                     }}
                                 />
                             </div>
-                            {/* <div className="grid grid-cols-2 gap-2"> */}
-                            {/* Hora Inicio */}
-                            {/* <TimeAnalogPicker
-                                    label="Hora Inicio *"
-                                    value={newBlockData.startTime}
-                                    minTime="08:00"
-                                    maxTime="21:00"
-                                    onChange={(time) => {
-                                        let updatedEndTime = newBlockData.endTime;
-                                        // Si la hora final es menor o igual a la nueva de inicio, la reiniciamos para forzar coherencia
-                                        if (newBlockData.endTime && newBlockData.endTime <= time) {
-                                            updatedEndTime = "";
-                                        }
-                                        setNewBlockData({
-                                            ...newBlockData,
-                                            startTime: time,
-                                            endTime: updatedEndTime
-                                        });
-                                    }}
-                                /> */}
-
-                            {/* <TimeGridPicker
-                                    label="Hora Inicio *"
-                                    value={newBlockData.startTime}
-                                    minTime="08:00"
-                                    maxTime="20:30" // Se limita a las 8:30 PM como máximo inicio para que pueda haber un bloque final de 9:00 PM
-                                    intervalMinutes={30} // Puedes cambiarlo a 15 si requieres más precisión
-                                    onChange={(time) => {
-                                        let updatedEndTime = newBlockData.endTime;
-
-                                        // Si la hora final actual es menor o igual a la nueva hora de inicio elegida, la reiniciamos
-                                        if (newBlockData.endTime && newBlockData.endTime <= time) {
-                                            updatedEndTime = "";
-                                        }
-
-                                        setNewBlockData({
-                                            ...newBlockData,
-                                            startTime: time,
-                                            endTime: updatedEndTime
-                                        });
-                                    }}
-                                /> */}
-
-                            {/* Hora Fin */}
-                            {/* <TimeAnalogPicker
-                                    label="Hora Fin *"
-                                    value={newBlockData.endTime}
-                                    disabled={!newBlockData.startTime} // Deshabilitado hasta elegir inicio
-                                    minTime={newBlockData.startTime || "08:00"} // No permite marcar una aguja anterior al inicio
-                                    maxTime="21:00"
-                                    onChange={(time) => {
-                                        setNewBlockData({ ...newBlockData, endTime: time });
-                                    }}
-                                /> */}
-                            {/* <TimeGridPicker
-                                    label="Hora Fin *"
-                                    value={newBlockData.endTime}
-                                    disabled={!newBlockData.startTime} // Deshabilitado de forma segura hasta elegir la de inicio
-                                    // 🌟 CLAVE: El mínimo de la hora final es siempre un intervalo después de la hora de inicio seleccionada
-                                    minTime={
-                                        newBlockData.startTime
-                                            ? (() => {
-                                                const [h, m] = newBlockData.startTime.split(":").map(Number);
-                                                // Le sumamos 30 minutos automáticos al mínimo para evitar que duren 0 minutos
-                                                const totalMin = h * 60 + m + 30;
-                                                return `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
-                                            })()
-                                            : "08:30"
-                                    }
-                                    maxTime="21:00" // El límite estricto de cierre de la institución (9:00 PM)
-                                    intervalMinutes={30}
-                                    onChange={(time) => {
-                                        setNewBlockData({ ...newBlockData, endTime: time });
-                                    }}
-                                /> */}
-                            {/*  </div> */}
 
                             {/* Botonera */}
                             <div className="pt-2 flex justify-between">
@@ -882,6 +815,7 @@ export default function SchedulePage() {
                                 </button>
                                 <button
                                     type="submit"
+                                    disabled={isPending}
                                     className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
                                 >
                                     Guardar Bloque
@@ -891,7 +825,6 @@ export default function SchedulePage() {
                     </div>
                 </div>
             )}
-            {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
             {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
             {selectedElement && (
                 <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150 h-full">
@@ -955,7 +888,7 @@ export default function SchedulePage() {
                                     type="button"
                                     onClick={() => {
                                         if (!selectedElement) return;
-                                        setNewBlockData({
+                                        setFormData({
                                             id: selectedElement.id,
                                             groupId: selectedElement.group.id,
                                             day: selectedElement.day as WeekDay,
