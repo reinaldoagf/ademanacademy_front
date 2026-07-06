@@ -111,8 +111,8 @@ export default function ClassroomPage() {
             name: classroom.name || "",
             address: classroom.address || "",
             maxCapacity: classroom.maxCapacity || "",
-            type: ClassroomTypeLabel[classroom.type] || "mirrors",
-            status: ClassroomStatusLabel[classroom.status] || "active",
+            type: classroom.type,
+            status: classroom.status,
             description: classroom.description || ""
         });
         setEditingId(classroom.id);
@@ -388,7 +388,8 @@ export default function ClassroomPage() {
 
                         <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
                             <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-purple-600" /> Dar de alta Salón
+                                <Sparkles className="w-4 h-4 text-purple-600" />
+                                {editingId ? 'Actualizar Salón' : 'Dar de alta Salón'}
                             </h3>
 
                             <button
