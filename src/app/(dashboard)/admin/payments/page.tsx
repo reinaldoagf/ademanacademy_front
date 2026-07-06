@@ -166,10 +166,10 @@ export default function PaymentsPage() {
         {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
-            render: (student) => (
+            render: (transaction) => (
                 <button
                     onClick={() => {
-                        setSelectedPayment(student); // Seteamos el objeto de la consola
+                        setSelectedPayment(transaction); // Seteamos el objeto de la consola
                         setIsModalOpen(true);        // Abrimos el modal
                     }}
                     className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"

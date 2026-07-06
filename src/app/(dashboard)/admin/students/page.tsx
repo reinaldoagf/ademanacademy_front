@@ -18,13 +18,17 @@ import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
-  getAllStudentsAction
+  getAllStudentsAction,
+  deleteStudentAction
 } from "@/app/actions/student";
 import { getAllGroupsAction } from "@/app/actions/group";
+import { getAllUsersAction } from "@/app/actions/user";
 import { Group } from "@/types/group";
+import { User } from "@/types/user";
 
 type GroupFormData = {
   dni: string,
@@ -38,6 +42,7 @@ type GroupFormData = {
   phone: string,
   hasExperience: boolean,
   groupId: string | undefined,
+  userId: string | undefined,
 };
 const initialFormState: GroupFormData = {
   dni: "",
@@ -51,6 +56,7 @@ const initialFormState: GroupFormData = {
   phone: "",
   hasExperience: true,
   groupId: "",
+  userId: "",
 };
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -79,9 +85,48 @@ export default function StudentsPage() {
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   // Refs para cerrar los menús si el usuario hace click afuera
   const groupRef = useRef<HTMLDivElement>(null);
+  // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+  const [userSearch, setUserSearch] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   // Refs para cerrar los menús si el usuario hace click afuera
+  const userRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "simple" | "word" | "email";
+    title: string;
+    description: string;
+    requiredWord?: string;
+    userEmail?: string;
+    id?: string;
+  }>({
+    isOpen: false,
+    type: "word",
+    title: "",
+    description: "",
+  });
+  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  // Acción definitiva que se ejecuta al pasar el filtro del Modal
+  const handleConfirmAction = async () => {
+    if (modalConfig?.id) {
+      startTransition(async () => {
+        if (modalConfig?.id) {
+          const res = await deleteStudentAction(modalConfig.id);
+          if (res.success) {
+            toast.success("Operación exitosa");
+            setStudents(students.filter((item) => item.id !== modalConfig.id));
+            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+            window.dispatchEvent(new Event('refresh-students-count'));
+          }
+        }
+      });
+    }
+  };
   const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
       const res = await getAllStudentsAction({
@@ -106,7 +151,6 @@ export default function StudentsPage() {
 
     return () => clearTimeout(handler);
   }, [searchTerm, kinshipFilter, currentPage, itemsPerPage]);
-
   // --- EFFECT PARA grupos (Vía Server Action) ---
   useEffect(() => {
     // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
@@ -147,6 +191,47 @@ export default function StudentsPage() {
 
     return () => clearTimeout(delayDebounce);
   }, [isModalOpen, groupSearch]);
+  // 🎯 MANEJADORES DE LA TABLA
+  // --- EFFECT PARA usuarios (Vía Server Action) ---
+  useEffect(() => {
+    // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
+    if (filteredUsers.find(c => c.id === formData.userId)?.name === userSearch) {
+      return;
+    }
+
+    setIsLoadingUsers(true);
+
+    const isSearchEmpty = !userSearch.trim();
+    const delay = isSearchEmpty ? 0 : 400;
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // Construimos los parámetros requeridos por FetchUsersParams
+        const params = isSearchEmpty
+          ? { limit: 5 }
+          : { search: userSearch.trim() };
+
+        // Llamada directa al Server Action
+        const result = await getAllUsersAction(params);
+
+        if (result.success && result.data) {
+          // Axios mapea la respuesta en result.data. data.data suele ser el array
+          // Si tu backend anida los grupos en 'users', úsalo; de lo contrario asigna result.data
+          setFilteredUsers(result.data.users || result.data);
+        } else {
+          console.error("Error en Server Action (usuarios):", result.error);
+          setFilteredUsers([]);
+        }
+      } catch (error) {
+        console.error("Error crítico buscando usuarios:", error);
+        setFilteredUsers([]);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(delayDebounce);
+  }, [isModalOpen, userSearch]);
   // 🎯 MANEJADORES DE LA TABLA
 
   const handleLimitChange = (newLimit: number) => {
@@ -270,34 +355,54 @@ export default function StudentsPage() {
       header: "Acciones",
       className: "text-right", // Alinea el encabezado a la derecha
       render: (student) => (
-        <button
-          onClick={() => {
-            setEditingId(student.id);
-            // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
-            const formattedBirthDate = student.birthDate
-              ? student.birthDate.split("T")[0]
-              : "";
-            setFormData({
-              dni: student.dni,
-              firstName: student.firstName,
-              lastName: student.lastName,
-              birthDate: formattedBirthDate,
-              kinship: student.kinship,
-              medicalObservations: student.medicalObservations || "",
-              address: student.address,
-              shirtSize: student.shirtSize,
-              phone: student.phone,
-              hasExperience: student.hasExperience,
-              groupId: student.groupId,
+        <div className="flex gap-2 justify-end">
+
+          <button
+            onClick={() => {
+              setEditingId(student.id);
+              // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
+              const formattedBirthDate = student.birthDate
+                ? student.birthDate.split("T")[0]
+                : "";
+              setFormData({
+                dni: student.dni,
+                firstName: student.firstName,
+                lastName: student.lastName,
+                birthDate: formattedBirthDate,
+                kinship: student.kinship,
+                medicalObservations: student.medicalObservations || "",
+                address: student.address,
+                shirtSize: student.shirtSize,
+                phone: student.phone,
+                hasExperience: student.hasExperience,
+                groupId: student.groupId,
+                userId: student.userId,
+              });
+              setGroupSearch(student.group?.name || "")
+              setUserSearch(student.user?.name || "")
+              setShowGroupDropdown(false);
+              setShowUserDropdown(false);
+              setIsModalOpen(true);
+            }}
+            className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+          >
+            Editar
+          </button>
+          <button onClick={() => {
+            setModalConfig({
+              isOpen: true,
+              type: "word",
+              title: "Confirmar operación",
+              description: "¿Quieres eliminar el registro del alumno?",
+              id: student.id,
             });
-            setGroupSearch(student.group?.name || "")
-            setIsModalOpen(true);
-            setShowGroupDropdown(false);
           }}
-          className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
-        >
-          Editar
-        </button>
+            disabled={!!student.user}
+            className={`text-xs  border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold  transition shadow-sm ${!student.user ? "cursor-pointer bg-white hover:bg-[#5e0472] hover:text-white" : "bg-gray-200"}`}
+          >
+            Eliminar
+          </button>
+        </div>
       ),
     },
   ];
@@ -419,7 +524,8 @@ export default function StudentsPage() {
 
             <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
               <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" /> Nuevo Alumno / Representado
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                {editingId ? "Actualizar Alumno / Representado" : "Nuevo Alumno / Representado"}
               </h3>
 
               <button
@@ -563,7 +669,6 @@ export default function StudentsPage() {
               </div>
 
               {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-
               <div className="relative" ref={groupRef}>
                 <label className="block text-gray-500 font-bold mb-1">Asignación Obligatoria de Grupo Académico *</label>
                 <div className="relative">
@@ -606,13 +711,13 @@ export default function StudentsPage() {
                               ...formData,
                               groupId: c.id as any,
                             })
-                            setGroupSearch(`${c.name} (${c.type || 'Aula'})`);
+                            setGroupSearch(`${c.name} (${c.category || 'Grupo'})`);
                             setShowGroupDropdown(false);
                           }}
                           className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
                         >
                           <span className="font-medium text-gray-700">{c.name}</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cap: {c.maxCapacity || c.capacity}</span>
+                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cat: {c.category}</span>
                         </li>
                       ))
                     )}
@@ -620,6 +725,61 @@ export default function StudentsPage() {
                 )}
               </div>
 
+              {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+              <div className="relative" ref={userRef}>
+                <label className="block text-gray-500 font-bold mb-1">Asignación de representante académico</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Escribe para buscar o selecciona de la lista..."
+                    value={userSearch}
+                    onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setShowUserDropdown(true);
+                      setFormData({
+                        ...formData,
+                        userId: e.target.value as any,
+                      })
+                      // setError(null);
+                    }}
+                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+                  />
+                  {isLoadingUsers && (
+                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+
+
+                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+                {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
+                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                    {isLoadingUsers ? (
+                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                    ) : filteredUsers.length === 0 ? (
+                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
+                    ) : (
+                      filteredUsers.map((c: any) => (
+                        <li
+                          key={c.id}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              userId: c.id as any,
+                            })
+                            setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
+                            setShowUserDropdown(false);
+                          }}
+                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                        >
+                          <span className="font-medium text-gray-700">{c.name}</span>
+                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
 
               {/* Botonera */}
 
@@ -634,20 +794,27 @@ export default function StudentsPage() {
 
                 <button
                   type="submit"
-                  className="
-
-                                        font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
-
-                                        gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90
-
-                                    "
+                  className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
                 >
-                  Guardar Alumno
+                  {editingId ? "Actualizar" : "Registrar Alumno"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+      {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={handleConfirmAction}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        description={modalConfig.description}
+        requiredWord={modalConfig.requiredWord}
+        userEmail={modalConfig.userEmail}
+        variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+        confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+      />
     </>);
 }
