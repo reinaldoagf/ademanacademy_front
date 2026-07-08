@@ -16,7 +16,6 @@ import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classroom";
 import { Classroom } from "@/types/classroom";
-import { ClassroomTypeLabel, ClassroomStatusLabel } from "@/consts/classroom";
 
 export default function ClassroomPage() {
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);

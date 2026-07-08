@@ -109,6 +109,7 @@ export default function GroupsPage() {
   const classroomRef = useRef<HTMLDivElement>(null);
   const instructorRef = useRef<HTMLDivElement>(null);
 
+  const [editingId, setEditingId] = useState<string | null>(null)
   // Clic afuera para cerrar dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -231,16 +232,23 @@ export default function GroupsPage() {
 
     try {
       startTransition(async () => {
-        const res = await saveGroupAction(formData, null);
+        const res = await saveGroupAction(formData, editingId);
+
         if (!res.success) {
           setErrorMsg(res.error || "Ocurrió un error.");
           return;
         }
-        toast.success("Operación exitosa");
 
-        setGroups([res.data!, ...groups]);
+        toast.success("Operación exitosa");
+        // Sincronizar estado local
+        if (editingId) {
+          setGroups(groups.map((item) => (item.id === editingId ? res.data! : item)));
+        } else {
+          setGroups([res.data!, ...groups]);
+          // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+          window.dispatchEvent(new Event('refresh-groups-count'));
+        }
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-        window.dispatchEvent(new Event('refresh-groups-count'));
         setIsModalOpen(false);
       });
 
@@ -270,6 +278,25 @@ export default function GroupsPage() {
       }
     });
   };
+
+  const handleEditModal = (group: Group) => { // Puedes usar la interfaz de tu Student de Prisma
+    setFormData({
+      name: group.name || "",
+      style: group.style || "",
+      category: group.category || "",
+      totalNumberOfSlots: group.totalNumberOfSlots || 10,
+      classroomId: group.classroomId || "",
+      instructorId: group.instructorId || "",
+    });
+    setClassroomSearch(group.classroom?.name || "")
+    setInstructorSearch(group.instructor?.name || "")
+    setShowClassroomDropdown(false);
+    setShowInstructorDropdown(false);
+    setEditingId(group.id);
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
   // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
   useEffect(() => {
     setCurrentPage(1);
@@ -282,6 +309,7 @@ export default function GroupsPage() {
 
     return () => clearTimeout(handler);
   }, [searchTerm, categoryFilter, currentPage, itemsPerPage]);
+
   return (
     <>
 
@@ -428,7 +456,13 @@ export default function GroupsPage() {
 
                 {/* Estado de Ejecución en Salón */}
                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
-
+                  <button
+                    onClick={() => handleEditModal(group)}
+                    className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                    title="Editar Parámetros"
+                  >
+                    Editar
+                  </button>
                   <button onClick={() => {
                     setModalConfig({
                       isOpen: true,
@@ -510,7 +544,8 @@ export default function GroupsPage() {
             {/* Cabecera del Modal */}
             <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
               <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" /> Registrar Nuevo Grupo de Danza
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                {editingId ? 'Actualizar Grupo de Danza' : 'Registrar Nuevo Grupo de Danza'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -722,7 +757,7 @@ export default function GroupsPage() {
                   disabled={isSubmitting}
                   className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Guardando..." : "Guardar Grupo"}
+                  {isSubmitting ? "Guardando..." : (editingId ? 'Actualizar' : 'Registrar')}
                 </button>
               </div>
             </form>
