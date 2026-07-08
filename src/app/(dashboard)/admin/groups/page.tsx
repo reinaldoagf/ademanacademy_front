@@ -5,6 +5,7 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import {
   CalendarDays,
   User,
+  Users,
   Plus,
   Search,
   ChevronLeft,
@@ -64,6 +65,9 @@ export default function GroupsPage() {
 
   const [selectedGroupSchedule, setSelectedGroupSchedule] = useState<any | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+
+  const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
+  const [selectedGroupStudents, setSelectedGroupStudents] = useState<any>(null);
 
   const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
@@ -489,6 +493,20 @@ export default function GroupsPage() {
                   </div>
                   <div className="relative inline-block group">
                     <button
+                      onClick={() => {
+                        setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
+                        setIsStudentsModalOpen(true);
+                      }}
+                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                    >
+                      Ver Alumnos
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                      Ver Alumnos
+                    </div>
+                  </div>
+                  <div className="relative inline-block group">
+                    <button
                       onClick={() => handleEditModal(group)}
                       className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
                     >
@@ -845,7 +863,7 @@ export default function GroupsPage() {
             <div className="bg-white shadow-xl w-full max-w-6xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
 
               {/* Encabezado del Modal */}
-              <div className="bg-gradient-to-r from-[#5e0472] to-purple-700 p-4 text-white flex justify-between items-center shrink-0">
+              <div className="bg-gradient-to-tr from-purple-900 to-[#400252] p-4 text-white flex justify-between items-center shrink-0">
                 <div>
                   <h3 className="font-questrial font-bold text-lg">{selectedGroupSchedule.name}</h3>
                   <p className="text-xs text-purple-200 font-medium">📍 Ubicación: {selectedGroupSchedule.classroom}</p>
@@ -976,6 +994,85 @@ export default function GroupsPage() {
           </div>
         );
       })()}
+      {/* 👥 MODAL DE VISUALIZACIÓN DE ALUMNOS INSCRITOS */}
+      {isStudentsModalOpen && selectedGroupStudents && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+
+            {/* Encabezado del Modal */}
+            <div className="bg-gradient-to-r from-[#5e0472] to-purple-700 p-4 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="font-questrial font-bold text-lg">
+                  {selectedGroupStudents.name || "Lista de Alumnos"}
+                </h3>
+                <p className="text-xs text-purple-200 font-medium">
+                  👥 Total inscritos: {selectedGroupStudents.students?.length || 0} alumnos
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsStudentsModalOpen(false);
+                  setSelectedGroupStudents(null);
+                }}
+                className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Cuerpo del Modal: Lista de Alumnos */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-purple-50/10 generic-scrollbar">
+              {selectedGroupStudents.students && selectedGroupStudents.students.length > 0 ? (
+                selectedGroupStudents.students.map((student: any) => (
+                  <div
+                    key={student.id}
+                    className="p-3 bg-white border border-purple-100/70 shadow-2xs flex items-center justify-between hover:border-purple-200 rounded-sm transition-all"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-bold text-gray-800 text-xs">
+                        {student.firstName} {student.lastName}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
+                        {student.hasExperience && (
+                          <span className="text-purple-600 font-semibold"> • Con Experiencia</span>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-[#5e0472] border border-purple-100 px-2 py-0.5">
+                        {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center text-center text-gray-400">
+                  <Users className="w-10 h-10 text-gray-300 stroke-[1.5] mb-2" />
+                  <p className="font-medium text-xs font-questrial text-gray-500">No hay alumnos inscritos</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Este grupo todavía no registra estudiantes.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Botonera de Acción / Footer */}
+            <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsStudentsModalOpen(false);
+                  setSelectedGroupStudents(null);
+                }}
+                className="cursor-pointer font-questrial px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition border border-gray-200 shadow-2xs"
+              >
+                Cerrar lista
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
