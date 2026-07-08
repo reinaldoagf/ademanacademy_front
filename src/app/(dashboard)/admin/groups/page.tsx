@@ -71,9 +71,9 @@ export default function GroupsPage() {
           const res = await deleteGroupAction(modalConfig.id);
           if (res.success) {
             toast.success("Operación exitosa");
-            setGroups(groups.filter((item) => item.id !== modalConfig.id));
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
             window.dispatchEvent(new Event('refresh-groups-count'));
+            fetchData(currentPage, itemsPerPage);
           }
         }
       });
@@ -241,13 +241,11 @@ export default function GroupsPage() {
 
         toast.success("Operación exitosa");
         // Sincronizar estado local
-        if (editingId) {
-          setGroups(groups.map((item) => (item.id === editingId ? res.data! : item)));
-        } else {
-          setGroups([res.data!, ...groups]);
+        if (!editingId) {
           // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
           window.dispatchEvent(new Event('refresh-groups-count'));
         }
+        fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
         setIsModalOpen(false);
       });
@@ -271,6 +269,8 @@ export default function GroupsPage() {
         search: searchTerm || undefined,
         category: categoryFilter == 'all' ? undefined : categoryFilter
       });
+
+      console.log({ res })
 
       if (res.success && res.data) {
         setGroups(res.data);
@@ -317,12 +317,16 @@ export default function GroupsPage() {
       <HeroSection
         htmlTitle={`Grupos de <em class="text-[#5e0472]">Clases</em>`}
         htmlSubTitle={`Monitorea el uso de los grupos de clases.`}
-
         actions={[{
           label: "Registrar Nuevo Grupo →",
           onClick: () => {
             setFormData(initialFormState);
             setErrorMsg(null);
+            setClassroomSearch("")
+            setInstructorSearch("")
+            setShowClassroomDropdown(false);
+            setShowInstructorDropdown(false);
+            setEditingId(null);
             setIsModalOpen(true);
           },
           icon: <Plus className="w-4 h-4" />,
