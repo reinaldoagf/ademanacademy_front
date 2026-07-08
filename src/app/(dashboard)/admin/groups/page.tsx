@@ -62,6 +62,9 @@ export default function GroupsPage() {
   // Estado del formulario tipado correctamente
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
 
+  const [selectedGroupSchedule, setSelectedGroupSchedule] = useState<any | null>(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+
   const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
@@ -460,24 +463,57 @@ export default function GroupsPage() {
 
                 {/* Estado de Ejecución en Salón */}
                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
-                  <button
-                    onClick={() => handleEditModal(group)}
-                    className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
-                    title="Editar Parámetros"
-                  >
-                    Editar
-                  </button>
-                  <button onClick={() => {
-                    setModalConfig({
-                      isOpen: true,
-                      type: "word",
-                      title: "Confirmar operación",
-                      description: "¿Quieres eliminar el registro del grupo?",
-                      id: group.id,
-                    });
-                  }} className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
-                    Eliminar
-                  </button>
+                  <div className="relative inline-block group">
+                    <button
+                      onClick={() => {
+                        // Tomamos el primer elemento del array de horarios del grupo
+                        const groupSchedule = group.schedules?.[0]?.schedule;
+                        if (groupSchedule) {
+                          setSelectedGroupSchedule({
+                            name: group.name,
+                            classroom: group.classroom?.name || "Salón no asignado",
+                            days: groupSchedule
+                          });
+                          setIsScheduleModalOpen(true);
+                        } else {
+                          alert("Este grupo aún no tiene un horario asignado.");
+                        }
+                      }}
+                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                    >
+                      Ver horario
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                      Ver horario
+                    </div>
+                  </div>
+                  <div className="relative inline-block group">
+                    <button
+                      onClick={() => handleEditModal(group)}
+                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                    >
+                      Editar
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                      Editar Parámetros
+                    </div>
+                  </div>
+                  <div className="relative inline-block group">
+                    <button onClick={() => {
+                      setModalConfig({
+                        isOpen: true,
+                        type: "word",
+                        title: "Confirmar operación",
+                        description: "¿Quieres eliminar el registro del grupo?",
+                        id: group.id,
+                      });
+                    }} className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
+                      Eliminar
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                      Eliminar
+                    </div>
+                  </div>
                 </div>
 
               </div>
@@ -768,6 +804,178 @@ export default function GroupsPage() {
           </div>
         </div>
       )}
+      {/* 🗓️ MODAL DE VISUALIZACIÓN DE HORARIO EN MALLA CONTINUA */}
+      {isScheduleModalOpen && selectedGroupSchedule && (() => {
+        const GRID_START_TIME = 8;
+        const GRID_END_TIME = 21;
+        const PIXELS_PER_HOUR = 60;
+        const TOTAL_HOURS = GRID_END_TIME - GRID_START_TIME;
+        const TOTAL_HEIGHT = TOTAL_HOURS * PIXELS_PER_HOUR;
+
+        const daysOfWeek = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+
+        // Función auxiliar para convertir una cadena "HH:MM" a minutos totales desde las 00:00
+        const timeToMinutes = (timeStr: string): number => {
+          if (!timeStr) return 0;
+          const [hours, minutes] = timeStr.split(":").map(Number);
+          return hours * 60 + minutes;
+        };
+
+        // Calcula la posición 'top' y la altura 'height' en píxeles para una clase
+        const getSlotStyles = (startTimeStr: string, endTimeStr: string) => {
+          const startMinutes = timeToMinutes(startTimeStr);
+          const endMinutes = timeToMinutes(endTimeStr);
+          const gridStartMinutes = GRID_START_TIME * 60;
+
+          // Calcular distancia desde el inicio de la cuadrícula (en horas)
+          const topInHours = (startMinutes - gridStartMinutes) / 60;
+          const durationInHours = (endMinutes - startMinutes) / 60;
+
+          return {
+            top: `${topInHours * PIXELS_PER_HOUR}px`,
+            height: `${durationInHours * PIXELS_PER_HOUR}px`,
+          };
+        };
+
+        // Generar el array de horas para el eje izquierdo [8, 9, 10, ..., 20]
+        const hourLabels = Array.from({ length: TOTAL_HOURS }, (_, i) => GRID_START_TIME + i);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white shadow-xl w-full max-w-6xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+
+              {/* Encabezado del Modal */}
+              <div className="bg-gradient-to-r from-[#5e0472] to-purple-700 p-4 text-white flex justify-between items-center shrink-0">
+                <div>
+                  <h3 className="font-questrial font-bold text-lg">{selectedGroupSchedule.name}</h3>
+                  <p className="text-xs text-purple-200 font-medium">📍 Ubicación: {selectedGroupSchedule.classroom}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsScheduleModalOpen(false);
+                    setSelectedGroupSchedule(null);
+                  }}
+                  className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Cuerpo del Modal: Vista de Agenda por Píxeles */}
+              <div className="p-6 overflow-auto bg-purple-50/10 flex-1">
+                <div className="min-w-[850px] border border-purple-100 bg-white shadow-xs flex flex-col">
+
+                  {/* Cabecera Fija de Días (1 columna para horas + 7 para los días) */}
+                  <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] bg-purple-50 text-[#5e0472] font-questrial font-bold text-xs uppercase tracking-wider text-center py-3 border-b border-purple-100 sticky top-0 z-10">
+                    <div className="text-purple-900/60 font-semibold">Hora</div>
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mié</div>
+                    <div>Jue</div>
+                    <div>Vie</div>
+                    <div>Sáb</div>
+                    <div>Dom</div>
+                  </div>
+
+                  {/* Contenedor del canvas del Horario */}
+                  <div
+                    className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative"
+                    style={{ height: `${TOTAL_HEIGHT}px` }}
+                  >
+
+                    {/* COLUMNA IZQUIERDA: Bloques e hilos de horas */}
+                    <div className="relative border-r border-purple-100 bg-gray-50/50">
+                      {hourLabels.map((hour) => (
+                        <div
+                          key={hour}
+                          className="absolute left-0 right-0 border-b border-gray-100 flex items-start justify-center pt-1"
+                          style={{
+                            top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
+                            height: `${PIXELS_PER_HOUR}px`
+                          }}
+                        >
+                          <span className="text-[#5e0472] font-bold text-[11px] font-questrial">
+                            {String(hour).padStart(2, "0")}:00
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* COLUMNAS DE DÍAS: Mapeo y posicionamiento absoluto */}
+                    {daysOfWeek.map((day) => {
+                      const daySlots = selectedGroupSchedule.days[day] || [];
+
+                      return (
+                        <div
+                          key={day}
+                          className="relative border-r last:border-r-0 border-purple-50/50 h-full"
+                        >
+                          {/* Líneas guía horizontales de fondo por cada hora para mejorar legibilidad */}
+                          {hourLabels.map((hour) => (
+                            <div
+                              key={`line-${hour}`}
+                              className="absolute left-0 right-0 border-b border-dashed border-gray-100 pointer-events-none"
+                              style={{
+                                top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
+                                height: `${PIXELS_PER_HOUR}px`
+                              }}
+                            />
+                          ))}
+
+                          {/* Render de las clases del día sobre la cuadrícula */}
+                          {daySlots.map((slot: any) => {
+                            const styles = getSlotStyles(slot.startTime, slot.endTime);
+
+                            return (
+                              <div
+                                key={slot.id}
+                                className="absolute left-1 right-1 bg-purple-100/90 border border-purple-300 p-1.5 shadow-2xs overflow-hidden flex flex-col justify-between transition-all hover:bg-purple-200/90 hover:z-20 group"
+                                style={{
+                                  top: styles.top,
+                                  height: styles.height,
+                                }}
+                              >
+                                <div className="flex flex-col h-full justify-start overflow-hidden">
+                                  <span
+                                    className="font-questrial font-bold text-[#5e0472] text-[10px] sm:text-[11px] leading-tight line-clamp-2"
+                                    title={slot.label}
+                                  >
+                                    {slot.label}
+                                  </span>
+                                  <span className="text-purple-700/80 text-[9px] font-semibold mt-0.5 whitespace-nowrap">
+                                    {slot.startTime} - {slot.endTime}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Botonera de Acción */}
+              <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-end shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsScheduleModalOpen(false);
+                    setSelectedGroupSchedule(null);
+                  }}
+                  className="cursor-pointer font-questrial px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition border border-gray-200 shadow-2xs"
+                >
+                  Cerrar vista
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
