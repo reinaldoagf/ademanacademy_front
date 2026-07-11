@@ -5,67 +5,17 @@ import { useEffect, useState, useTransition } from "react";
 import {
     Plus,
     Search,
-    DollarSign,
-    Calendar,
-    User,
-    Layers,
     X,
-    FileText,
-    CheckCircle2,
-    AlertCircle,
-    Clock,
-    Ban
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
-
-// Interfaz para simular el tipado de Prisma (PaymentOrder enriquecido)
-interface PaymentOrder {
-    id: string;
-    concept: "mensualidad" | "matricula" | "uniforme" | "entradas_gala";
-    amount: number;
-    dueDate: string;
-    status: "pendiente" | "pagada" | "vencida" | "anulada";
-    user: { name: string; dni: string; email: string };
-    student?: { firstName: string; lastName: string; dni: string; } | null;
-    createdAt: string;
-}
+import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
+import { PaymentOrder } from "@/types/payment-order";
 
 export default function PaymentOrdersPage() {
     // Mock Data alineado con tu esquema prisma nuevo
-    const [orders, setOrders] = useState<PaymentOrder[]>([
-        {
-            id: "PO-7741",
-            concept: "mensualidad",
-            amount: 45.00,
-            dueDate: "2026-06-15",
-            status: "pendiente",
-            user: { name: "Carlos Mendoza", dni: "V-12345678", email: "test@gmail.com" },
-            student: { firstName: "Sofía", lastName: "Mendoza", dni: "V-14555666" },
-            createdAt: "2026-06-01"
-        },
-        {
-            id: "PO-3210",
-            concept: "uniforme",
-            amount: 25.50,
-            dueDate: "2026-05-30",
-            status: "pagada",
-            user: { name: "Mariana Silva", dni: "V-18765432", email: "test@gmail.com" },
-            student: { firstName: "Thiago", lastName: "Silva", dni: "V-14555666" },
-            createdAt: "2026-05-20"
-        },
-        {
-            id: "PO-1102",
-            concept: "matricula",
-            amount: 80.00,
-            dueDate: "2026-05-01",
-            status: "vencida",
-            user: { name: "Alejandro Ruiz", dni: "V-14555666", email: "test@gmail.com" },
-            student: null,
-            createdAt: "2026-04-15"
-        }
-    ]);
+    const [orders, setOrders] = useState<PaymentOrder[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -80,7 +30,8 @@ export default function PaymentOrdersPage() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [isOpen, setIsOpen] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState("Todos")
+    const [statusFilter, setStatusFilter] = useState("all")
+    const [filterConcept, setFilterConcept] = useState("all");
 
 
     // Estados del formulario para nueva Orden
@@ -134,17 +85,18 @@ export default function PaymentOrdersPage() {
         {
             header: "Usuario",
             render: (order) => {
-                const initials = order.user ? `${order.user.name[0] || ""}${order.user.name[1] || ""}`.toUpperCase() : "";
+                if (!order.user) {
+                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin usuario</p>;
+                }
+                const userInitials = order.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                        {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {initials}
-                        </div>}
+                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            {userInitials}
+                        </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">
-                                {order.user?.name}
-                            </span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.user?.email}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.user.name}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.user.email}</span>
                         </div>
                     </div>
                 );
@@ -156,15 +108,15 @@ export default function PaymentOrdersPage() {
                 if (!order.student) {
                     return <p className="text-[11px] text-gray-400 mt-0.5">Sin alumno</p>;
                 }
-                const userInitials = order.student.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                const userInitials = order.student?.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
                             {userInitials}
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.student.firstName} {order.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.student.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.student?.firstName} {order.student?.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.student?.dni}</span>
                         </div>
                     </div>
                 );
@@ -199,6 +151,29 @@ export default function PaymentOrdersPage() {
             ),
         }
     ];
+    const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        startTransition(async () => {
+            const res = await getAllPaymentOrdersAction({
+                page: pageToFetch,
+                limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+                search: searchTerm || undefined,
+                status: statusFilter == 'all' ? undefined : statusFilter,
+                concept: filterConcept == 'all' ? undefined : filterConcept,
+            });
+            if (res.success && res.data) {
+                setOrders(res.data);
+                setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+            }
+        });
+    };
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            fetchData(currentPage, itemsPerPage);
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [searchTerm, statusFilter, filterConcept, currentPage, itemsPerPage]);
     return (
         <>
             {/* TOPBAR / HERO */}
@@ -227,18 +202,31 @@ export default function PaymentOrdersPage() {
                             className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
                         />
                     </div>
+                    <div className="flex gap-2">
+                        <select
+                            value={filterConcept}
+                            onChange={(e) => setFilterConcept(e.target.value)}
+                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                        >
+                            <option value="all">Todos los conceptos</option>
+                            <option value="monthly_payment">Mensualidades</option>
+                            <option value="tuition">Matrículas</option>
+                            <option value="locker_room">Tienda / Uniformes</option>
+                            <option value="ticket">Entradas de Eventos</option>
+                        </select>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                        >
+                            <option value="all">Todos los estados</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="paid">Pagada</option>
+                            <option value="defeated">Vencida</option>
+                            <option value="annulled">Anulada</option>
+                        </select>
 
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-                    >
-                        <option value="Todos">Todos los estados</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="paid">Pagada</option>
-                        <option value="defeated">Vencida</option>
-                        <option value="annulled">Anulada</option>
-                    </select>
+                    </div>
                 </div>
                 {/* TABLA DE ALUMNOS */}
                 <DataTable
