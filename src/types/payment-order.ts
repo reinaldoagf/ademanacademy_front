@@ -2,10 +2,10 @@ import { User } from "@/types/user";
 import { Student } from "@/types/student";
 export interface PaymentOrder {
     id: string;
-    concept: "mensualidad" | "matricula" | "uniforme" | "entradas_gala";
+    concept: "monthly_payment" | "tuition" | "locker_room" | "ticket";
     amount: number;
     dueDate: string;
-    status: "pendiente" | "pagada" | "vencida" | "anulada";
+    status: "pending" | "approved" | "refused";
     user: User;
     student?: Student;
     createdAt: string,

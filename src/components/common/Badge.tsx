@@ -17,6 +17,9 @@ function statusTranslatePipe(value: string): string {
         nephew: "Sobrino",
         niece: "Sobrina",
         tutored: "Tutorado",
+        monthly_payment: "Pago mensual",
+        locker_room: "Vestuario",
+        ticket: "boleto",
         other: "Otro",
     };
 
@@ -44,6 +47,10 @@ export default function Badge({ variant, children, className = "" }: BadgeProps)
         rechazado: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
         info: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Info },
         bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
+        monthly_payment: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
+        tuition: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
+        locker_room: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
+        ticket: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
         son: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
         daughter: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
         nephew: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },

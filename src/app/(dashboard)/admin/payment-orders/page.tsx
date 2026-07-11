@@ -10,6 +10,7 @@ import {
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
+import Badge from "@/components/common/Badge";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
 
@@ -28,7 +29,7 @@ export default function PaymentOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [isOpen, setIsOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("all")
     const [filterConcept, setFilterConcept] = useState("all");
@@ -45,12 +46,7 @@ export default function PaymentOrdersPage() {
 
 
     const handleNewElement = () => {
-        setIsOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsOpen(false);
-        setFormData({ userDni: "", studentDni: "", concept: "mensualidad", amount: "", dueDate: "" });
+        setIsModalOpen(true);
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -125,12 +121,7 @@ export default function PaymentOrdersPage() {
         {
             header: "Concepto",
             render: (order) => (
-                <span className={`px-2 py-0.5 ${order.concept === "mensualidad" ? "bg-purple-50 text-purple-700" :
-                    order.concept === "uniforme" ? "bg-pink-50 text-pink-700" :
-                        "bg-indigo-50 text-indigo-700"
-                    }`}>
-                    {order.concept}
-                </span>
+                <Badge variant={order.concept} />
             ),
         },
         {
@@ -144,10 +135,7 @@ export default function PaymentOrdersPage() {
         {
             header: "Status",
             render: (order) => (
-                <span className={`px-2.5 py-0.5 text-xs font-semibold ${order.status === 'pagada' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                    {order.status}
-                </span>
+                <Badge variant={order.status} />
             ),
         }
     ];
@@ -243,7 +231,7 @@ export default function PaymentOrdersPage() {
 
             {/* MODAL NEÓN DE REGISTRO MANUAL */}
 
-            {isOpen && (
+            {isModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
                         {/* Cabecera del Modal */}
@@ -254,7 +242,7 @@ export default function PaymentOrdersPage() {
                             </h3>
 
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => setIsModalOpen(false)}
                                 className="text-gray-400 hover:text-gray-600 cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
@@ -293,7 +281,7 @@ export default function PaymentOrdersPage() {
                             <div className="pt-2 flex justify-between">
                                 <button
                                     type="button"
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={() => setIsModalOpen(false)}
                                     className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
                                 >
                                     Cancelar

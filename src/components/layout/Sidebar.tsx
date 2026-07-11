@@ -19,7 +19,7 @@ import {
   getAllGroupsAction,
 } from "@/app/actions/group";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
-
+import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import {
   ChartPie,
   HeartPulse,
@@ -245,6 +245,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchPaymentOrdersBadgeCount = async () => {
+    try {
+      const res = await getAllPaymentOrdersAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalPaymentOrders = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "payment-orders" ? { ...item, badge: totalPaymentOrders } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
     if (isAdminView) {
@@ -254,6 +273,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchGroupsBadgeCount();
       fetchClassroomsBadgeCount();
       fetchPaymentsBadgeCount();
+      fetchPaymentOrdersBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
