@@ -79,6 +79,14 @@ export default function PaymentOrdersPage() {
             ),
         },
         {
+            header: "Fecha de Vencimiento",
+            render: (order) => (
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                    <DatePipe value={order.dueDate} format="short" />
+                </p>
+            ),
+        },
+        {
             header: "Usuario",
             render: (order) => {
                 if (!order.user) {
@@ -119,17 +127,17 @@ export default function PaymentOrdersPage() {
             },
         },
         {
-            header: "Concepto",
-            render: (order) => (
-                <Badge variant={order.concept} />
-            ),
-        },
-        {
             header: "Monto",
             render: (transaction) => (
                 <span className="font-bold text-gray-800">
                     ${transaction.amount}
                 </span>
+            ),
+        },
+        {
+            header: "Concepto",
+            render: (order) => (
+                <Badge variant={order.concept} />
             ),
         },
         {

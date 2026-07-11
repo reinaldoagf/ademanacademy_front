@@ -86,12 +86,14 @@ export default function PaymentDetailModal({ isOpen, onClose, transaction, onSuc
             // Pasamos el realId junto al groupId (si aplica) al Server Action
             const res = await approveTransactionAction(transaction.realId, selectedGroupId || undefined);
 
-            console.log({ res })
-
             if (res.success) {
                 toast.success(res.data.message ?? 'Operación exitosa')
                 onSuccess();
                 onClose();
+                setGroupSearch("");
+                setShowGroupDropdown(false);
+                setSelectedGroupId("");
+                setError(null);
             } else {
                 setError(res.error);
             }
