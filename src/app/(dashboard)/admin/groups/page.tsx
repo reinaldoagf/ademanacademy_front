@@ -277,8 +277,6 @@ export default function GroupsPage() {
         category: categoryFilter == 'all' ? undefined : categoryFilter
       });
 
-      console.log({ res })
-
       if (res.success && res.data) {
         setGroups(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta

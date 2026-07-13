@@ -71,7 +71,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
     { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
     { key: '', name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
-    { key: '', name: 'Vestuarios', href: '/admin/vestuarios', icon: Shirt, badge: 12 },
+    { key: 'costumes', name: 'Vestuarios', href: '/admin/costumes', icon: Shirt, badge: 12 },
     { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
   ]);
 

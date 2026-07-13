@@ -1,5 +1,6 @@
 import React from "react";
-import { CheckCircle2, Clock, AlertCircle, Info, LucideIcon, CreditCard, User } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, Info, LucideIcon, CreditCard, User, Users } from "lucide-react";
+
 
 // 🌟 El "Custom Pipe" (Función pura de transformación)
 function statusTranslatePipe(value: string): string {
@@ -20,6 +21,14 @@ function statusTranslatePipe(value: string): string {
         monthly_payment: "Pago mensual",
         locker_room: "Vestuario",
         ticket: "boleto",
+        pending_preparation: "Por Confeccionar",
+        available: "En lavandería / Reparación",
+        retired: "Fuera de servicio",
+        canceled: "Cancelado",
+        baby: "Baby",
+        childrens: "Infantil",
+        youth: "Juvenil",
+        adult: "Adulto",
         other: "Otro",
     };
 
@@ -40,11 +49,8 @@ export default function Badge({ variant, children, className = "" }: BadgeProps)
     // Diccionario de configuraciones visuales (Mapea llaves del sistema a Estilos + Iconos)
     const config: Record<string, { styles: string; icon: LucideIcon }> = {
         approved: { styles: "bg-emerald-50 text-emerald-700 border-emerald-100/80", icon: CheckCircle2 },
-        aprobado: { styles: "bg-emerald-50 text-emerald-700 border-emerald-100/80", icon: CheckCircle2 },
         pending: { styles: "bg-amber-50 text-amber-700 border-amber-100/80", icon: Clock },
-        pendiente: { styles: "bg-amber-50 text-amber-700 border-amber-100/80", icon: Clock },
         rejected: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
-        rechazado: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
         info: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Info },
         bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
         monthly_payment: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
@@ -56,6 +62,14 @@ export default function Badge({ variant, children, className = "" }: BadgeProps)
         nephew: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
         niece: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
         tutored: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
+        available: { styles: "bg-green-50 text-green-700 border-green-100/80", icon: AlertCircle },
+        retired: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: AlertCircle },
+        pending_preparation: { styles: "bg-orange-50 text-orange-700 border-orange-100/80", icon: AlertCircle },
+        canceled: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
+        baby: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Users },
+        childrens: { styles: "bg-yellow-50 text-yellow-700 border-yellow-100/80", icon: Users },
+        youth: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Users },
+        adult: { styles: "bg-yellow-50 text-yellow-700 border-yellow-100/80", icon: Users },
         other: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
     };
 
