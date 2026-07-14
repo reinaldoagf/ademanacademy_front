@@ -4,26 +4,21 @@ import {
     Tag,
     AlertTriangle,
     ChevronLeft,
-    ChevronRight,
-    Image as ImageIcon
+    ChevronRight
 } from "lucide-react";
 import Badge from "@/components/common/Badge";
-
-const PLACEHOLDER_GALLERY = [
-    "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=600&h=800",
-    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600&h=800",
-    "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=600&h=800"
-];
 
 export function WardrobeCard({ costume }: any) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
 
+    const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
+
     let images: string[] = [];
     try {
         images = typeof costume.images === "string"
             ? JSON.parse(costume.images)
-            : (costume.images || ["/img/default.png"]);
+            : (costume.images.length ? costume.images.map((e: string) => (`${backendUrl}${e}`)) : ["/img/default.png"]);
     } catch (e) {
         images = ["/img/default.png"];
     }
@@ -76,20 +71,20 @@ export function WardrobeCard({ costume }: any) {
 
             {/* 2. BOTONES DE NAVEGACIÓN INDEPENDIENTES */}
             {images.length > 1 && (
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <div className="absolute inset-x-0 bottom-1 -translate-y-1/2 flex justify-between px-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <button
                         type="button"
                         onClick={prevImage}
                         className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3 h-3" />
                     </button>
                     <button
                         type="button"
                         onClick={nextImage}
                         className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3 h-3" />
                     </button>
                 </div>
             )}
@@ -108,7 +103,7 @@ export function WardrobeCard({ costume }: any) {
                 </div>
 
                 {/* Bloque Inferior Desplazable */}
-                <div className="transform translate-y-[155px] group-hover:translate-y-0 transition-transform duration-500 ease-out space-y-4 pointer-events-auto">
+                <div className="transform translate-y-[140px] group-hover:translate-y-0 transition-transform duration-500 ease-out space-y-4 pointer-events-auto">
 
                     {/* Título y Ritmo */}
                     <div className="drop-shadow-md">
