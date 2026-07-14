@@ -308,7 +308,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   return (
     <aside className={`
       bg-white/80 backdrop-blur-md flex flex-col justify-between border-r border-purple-100 
-      fixed md:static inset-y-0 left-0 z-40 transition-all duration-300 h-vh overflow-y-auto
+      fixed md:static inset-y-0 left-0 z-40 transition-all duration-300 h-vh overflow-y-none
       ${isOpen
         ? 'w-64 translate-x-0'
         : '-translate-x-full md:translate-x-0 md:w-16'

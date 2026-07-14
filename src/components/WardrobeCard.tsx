@@ -1,0 +1,187 @@
+"use client";
+import { useState, useEffect } from "react";
+import {
+    Tag,
+    AlertTriangle,
+    ChevronLeft,
+    ChevronRight,
+    Image as ImageIcon
+} from "lucide-react";
+import Badge from "@/components/common/Badge";
+
+const PLACEHOLDER_GALLERY = [
+    "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=600&h=800",
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600&h=800",
+    "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&q=80&w=600&h=800"
+];
+
+export function WardrobeCard({ costume }: any) {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
+
+    let images: string[] = [];
+    try {
+        images = typeof costume.images === "string"
+            ? JSON.parse(costume.images)
+            : (costume.images || ["/img/default.png"]);
+    } catch (e) {
+        images = ["/img/default.png"];
+    }
+
+    /*  if (images.length === 0) {
+         images = PLACEHOLDER_GALLERY;
+     } */
+
+    // 🎯 EFECTO DE AUTOPLAY: Cambia de imagen cada 4 segundos si el usuario no tiene el mouse encima
+    useEffect(() => {
+        if (images.length <= 1 || isHovered) return;
+
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        }, 4000); // 4000ms = 4 segundos
+
+        return () => clearInterval(interval); // Limpieza al desmontar el componente
+    }, [images.length, isHovered]);
+
+    const stockReal: number = costume.availableSizes?.reduce((acum: number, current: any) => acum + current.quantity, 0) ?? 0;
+    const assigned: number = costume.assignments?.filter((e: any) => e.status == "assigned").length ?? 0;
+    const percentageAssigned = assigned && stockReal ? Math.round((assigned / stockReal) * 100) : 0;
+
+    const nextImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    };
+
+    const prevImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    };
+
+    return (
+        <div
+            onMouseEnter={() => setIsHovered(true)}   // Pausa el autoplay
+            onMouseLeave={() => setIsHovered(false)} // Reanuda el autoplay
+            className="group relative w-full h-[380px] overflow-hidden border border-purple-100 shadow-sm hover:shadow-xl transition-all duration-500 bg-purple-950 rounded-none"
+        >
+            {/* 1. IMAGEN DE FONDO */}
+            <div className="absolute inset-0 w-full h-full z-0">
+                <img
+                    src={images[currentImageIndex]}
+                    alt={costume.name}
+                    className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
+                />
+            </div>
+
+            {/* 2. BOTONES DE NAVEGACIÓN INDEPENDIENTES */}
+            {images.length > 1 && (
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <button
+                        type="button"
+                        onClick={prevImage}
+                        className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={nextImage}
+                        className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
+            {/* 3. GRADIENTES DE OSCURECIMIENTO */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-purple-950/10 group-hover:bg-purple-950/60 transition-colors duration-500 z-10 pointer-events-none" />
+
+            {/* 4. CAPA DE CONTENIDO TEXTUAL */}
+            <div className="absolute inset-0 z-20 p-5 flex flex-col justify-between text-white pointer-events-none">
+
+                {/* Cabecera Superior */}
+                <div className="flex justify-between items-start gap-2 relative drop-shadow-md pointer-events-auto">
+                    <Badge variant={costume.category} />
+                    <Badge variant={costume.status} />
+                </div>
+
+                {/* Bloque Inferior Desplazable */}
+                <div className="transform translate-y-[155px] group-hover:translate-y-0 transition-transform duration-500 ease-out space-y-4 pointer-events-auto">
+
+                    {/* Título y Ritmo */}
+                    <div className="drop-shadow-md">
+                        <h3 className="font-anton text-lg uppercase tracking-wide leading-tight text-white group-hover:text-purple-200 transition-colors">
+                            {costume.name}
+                        </h3>
+                        <p className="text-xs text-purple-300 font-questrial font-medium">
+                            {costume.beat || "Sin ritmo asignado"}
+                        </p>
+                    </div>
+
+                    {/* CONTENIDO OCULTO */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75 pt-2 border-t border-white/10 space-y-4">
+
+                        {/* Tallas */}
+                        <div>
+                            <p className="text-[9px] font-questrial font-bold text-purple-300 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                <Tag className="w-3 h-3" /> Tallas Disponibles
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {costume.availableSizes?.map((t: any, index: number) => (
+                                    <div
+                                        key={index}
+                                        className={`font-questrial border px-2 py-1 text-center min-w-[42px] transition-colors ${t.quantity > 0
+                                            ? "bg-white/10 border-white/20"
+                                            : "bg-black/40 border-red-500/30 opacity-40"
+                                            }`}
+                                    >
+                                        <p className="text-[9px] text-purple-200 font-bold">{t.size}</p>
+                                        <p className="text-xs font-black">{t.quantity}u</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Métricas */}
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-[11px] font-questrial text-gray-300">
+                                <span>Total: <strong>{stockReal} uds.</strong></span>
+                                <span>Asignados: <strong className="text-purple-300">{assigned} ({percentageAssigned}%)</strong></span>
+                            </div>
+
+                            <div className="w-full bg-white/10 h-1 overflow-hidden backdrop-blur-xs">
+                                <div
+                                    className="h-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-500"
+                                    style={{ width: `${percentageAssigned}%` }}
+                                />
+                            </div>
+
+                            {stockReal === 0 && (
+                                <p className="text-[10px] font-questrial font-semibold text-pink-400 flex items-center gap-1 pt-0.5 animate-pulse">
+                                    <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Diseño sin existencias en almacén.
+                                </p>
+                            )}
+                        </div>
+
+                    </div>
+
+                    {/* Dots dinámicos vinculados al autoplay */}
+                    {images.length > 1 && (
+                        <div className="flex justify-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            {images.map((_, idx) => (
+                                <span
+                                    key={idx}
+                                    className={`h-1 rounded-full transition-all duration-300 ${idx === currentImageIndex ? "w-3 bg-white" : "w-1 bg-white/30"
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                </div>
+            </div>
+        </div>
+    );
+}

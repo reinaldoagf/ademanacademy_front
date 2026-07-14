@@ -6,9 +6,7 @@ import {
   Scissors,
   Shirt,
   Search,
-  Tag,
   UserCheck2,
-  AlertTriangle,
   Plus,
   RefreshCw,
   ChevronLeft,
@@ -18,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
-import Badge from "@/components/common/Badge";
+import { WardrobeCard } from "@/components/WardrobeCard";
 import { CostumeCategory, CostumeStatus, SizeStock, Costume } from "@/types/costume";
 import { getAllCostumesAction, saveCustomeAction } from "@/app/actions/costume";
 
@@ -240,95 +238,7 @@ export default function CostumesPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {costumes.length > 0 ? (
             costumes.map((costume) => {
-              const stockReal: number = costume.availableSizes.reduce((acum, current) => acum + current.quantity, 0);
-              const assigned: number = costume.assignments?.filter((e) => e.status == "assigned").length ?? 0;
-              const percentageAssigned = assigned ? Math.round(
-                (assigned / stockReal) * 100,
-              ) : 0;
-
-              return (
-                <div
-                  key={costume.id}
-                  className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col justify-between hover:shadow-md transition"
-                >
-                  <div>
-                    {/* Encabezado Fila */}
-                    <div className="flex justify-between items-start gap-3">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant={costume.category} />
-                        </div>
-                        <h3 className="font-anton text-gray-800 text-base mt-1">
-                          {costume.name}
-                        </h3>
-                        <p className="text-xs text-purple-600 font-questrial font-semibold">
-                          {costume.beat}
-                        </p>
-                      </div>
-
-                      <Badge variant={costume.status} />
-                    </div>
-
-                    {/* Distribución por tallas en cuadritos */}
-                    <div className="mt-4">
-                      <p className="text-[10px] font-questrial font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                        <Tag className="w-3 h-3 text-purple-400" /> Distribución
-                        de Tallas (Totales)
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {costume.availableSizes.map((t, index) => (
-                          <div
-                            key={index}
-                            className="font-questrial bg-white/70 border border-purple-100 px-3 py-1.5 text-center min-w-[50px]"
-                          >
-                            <p className="text-[10px] text-gray-400 font-questrial font-bold">
-                              {t.size}
-                            </p>
-                            <p className="text-xs font-questrial font-black text-gray-700">
-                              {t.quantity} u.
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Métricas de Uso y Alquileres */}
-                  <div className="mt-5 pt-4 border-t border-purple-50/60 space-y-2">
-                    <div className="flex justify-between text-xs font-questrial font-medium text-gray-500">
-                      <span>
-                        Total registrados:{" "}
-                        <strong className="text-gray-700">
-                          {stockReal} trajes
-                        </strong>
-                      </span>
-                      <span>
-                        Asignados:{" "}
-                        <strong className="text-purple-700">
-                          {assigned} ({percentageAssigned}%)
-                        </strong>
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${percentageAssigned === 100
-                          ? "bg-purple-600"
-                          : "gradient-purple"
-                          }`}
-                        style={{ width: `${percentageAssigned}%` }}
-                      ></div>
-                    </div>
-
-                    {stockReal === 0 && (
-                      <p className="text-[10px] font-questrial font-semibold text-pink-600 flex items-center gap-1 pt-1">
-                        <AlertTriangle className="w-3 h-3" /> Todo el lote de
-                        este diseño se encuentra fuera del almacén.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
+              return <WardrobeCard key={costume.id} costume={costume} />
             })
           ) : (
             <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
