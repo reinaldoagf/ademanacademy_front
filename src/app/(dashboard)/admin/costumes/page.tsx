@@ -21,6 +21,8 @@ import { CostumeCategory, CostumeStatus, SizeStock, Costume } from "@/types/cost
 import { getAllCostumesAction, saveCustomeAction } from "@/app/actions/costume";
 
 export default function CostumesPage() {
+  const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
+
   const [costumes, setCostumes] = useState<Costume[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,6 +58,8 @@ export default function CostumesPage() {
   // Estados locales exclusivos para la gestión de archivos
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  // Almacena el ID del vestuario que se está editando (null si es una creación)
 
   // 2. Manejador de selección de imágenes
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,15 +75,7 @@ export default function CostumesPage() {
     }
   };
 
-  // 3. Eliminar una imagen antes de enviar
-  const removeImage = (indexToRemove: number) => {
-    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    setPreviews((prev) => {
-      // Es buena práctica liberar la memoria de la URL creada
-      URL.revokeObjectURL(prev[indexToRemove]);
-      return prev.filter((_, idx) => idx !== indexToRemove);
-    });
-  };
+
 
   // Métricas de inventario text-analíticas
   const totalTrajes = 2; /* DEMO_VESTUARIOS.reduce(
@@ -100,42 +96,107 @@ export default function CostumesPage() {
       reader.onerror = (error) => reject(error);
     });
   };
+  {/* Función auxiliar para remover una imagen ya existente del servidor */ }
+  const removeExistingImage = (indexToRemove: number) => {
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  {/* Tu función actual para remover nuevos archivos locales */ }
+  const removeNewImage = (indexToRemove: number) => {
+    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+  // 1. Definimos las funciones que recibirán el elemento capturado
+  const handleEdit = (costume: any) => {
+    setEditingId(costume.id);
+    setIsModalOpen(true);
+    setFormData({
+      name: costume.name ?? '',
+      beat: costume.beat ?? '',
+      category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
+      status: costume.status as CostumeStatus,
+      availableSizes: costume.availableSizes as SizeStock[]
+    })
+    // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
+    let imagesParsed: string[] = [];
+    try {
+      if (typeof costume.images === "string") {
+        imagesParsed = JSON.parse(costume.images);
+      } else if (Array.isArray(costume.images)) {
+        imagesParsed = costume.images;
+      }
+
+      const formattedImages = imagesParsed.map((img: any) => {
+        const path = typeof img === 'object' ? img.url || img.path : img;
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+          return path;
+        }
+        const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${cleanBackendUrl}${cleanPath}`;
+      });
+
+      // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
+      setExistingImages(formattedImages);
+    } catch (e) {
+      console.error("Error al procesar imágenes existentes para edición", e);
+      setExistingImages([]);
+    }
+
+    // Limpiamos los archivos nuevos que estuviesen cargados de antes
+    setSelectedFiles([]);
+    setPreviews([]);
+  };
+
+  const handleDelete = (costume: any) => {
+    console.log("Eliminando el vestuario con ID:", costume.id);
+    // Aquí disparas tu fetch/axios de borrado o actualizas el estado local
+    // Ej: setCostumes(prev => prev.filter(c => c.id !== costume.id));
+  };
   // 4. Adaptación del envío del formulario
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     try {
-      // 🎯 CORRECCIÓN: Adjuntamos el "type" original de cada archivo
+      // 1. Procesar los archivos nuevos cargados localmente a Base64
       const imagesPromises = selectedFiles.map(async (file) => {
         const base64String = await fileToBase64(file);
         return {
           name: file.name,
-          type: file.type, // 🚀 Añadimos esto para propagar el Content-Type correcto (ej. 'image/png')
+          type: file.type, // 'image/png', 'image/jpeg', etc.
           base64: base64String,
         };
       });
 
-      const imagesPayload = await Promise.all(imagesPromises);
+      const newImagesPayload = await Promise.all(imagesPromises);
 
+      // 2. Construir el payload definitivo
       const payload = {
         name: formData.name,
         beat: formData.beat || '',
         category: formData.category,
         status: formData.status,
         availableSizes: formData.availableSizes || [],
-        images: imagesPayload, // Array de {name, type, base64}
+        images: newImagesPayload, // Nuevas imágenes Base64
+        // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
+        existingImages: editingId ? existingImages : [],
       };
 
+      // saveCostumeAction debe recibir el payload y el editingId (si existe)
       const result = await saveCustomeAction(payload, editingId);
 
       if (result.success) {
         fetchData(currentPage, itemsPerPage);
-        toast.success("Vestuario guardado correctamente.");
+        toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
 
+        // Limpieza de estados tras el guardado exitoso
         setSelectedFiles([]);
         setPreviews([]);
+        setExistingImages([]);
+        setEditingId(null); // Reset del ID de edición
 
+        // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
         if (!editingId) {
           setFormData({
             name: '',
@@ -309,7 +370,12 @@ export default function CostumesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {costumes.length > 0 ? (
             costumes.map((costume) => {
-              return <WardrobeCard key={costume.id} costume={costume} />
+              return <WardrobeCard
+                key={costume.id}
+                costume={costume}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             })
           ) : (
             <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
@@ -558,7 +624,27 @@ export default function CostumesPage() {
                       className="hidden"
                     />
                   </label>
-
+                  {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
+                  {existingImages.map((src, index) => (
+                    <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
+                      <img
+                        src={src}
+                        alt={`Guardada ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Etiqueta sutil que indica que está guardada */}
+                      <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
+                        Guardada
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                   {previews.map((src, index) => (
                     <div key={index} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
                       <img
@@ -568,7 +654,7 @@ export default function CostumesPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => removeImage(index)}
+                        onClick={() => removeNewImage(index)}
                         className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
                       >
                         <X className="w-3 h-3" />

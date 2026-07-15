@@ -32,6 +32,7 @@ interface SaveCostumePayload {
     status: string;
     availableSizes: any[];
     images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
+    existingImages: string[]; // 🚀 'type' agregado aquí
 }
 
 export async function saveCustomeAction(payload: SaveCostumePayload, id?: string | null) {
@@ -49,27 +50,35 @@ export async function saveCustomeAction(payload: SaveCostumePayload, id?: string
         apiFormData.append('status', payload.status);
         apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || []));
 
-        // 3. Re-construimos los archivos binarios
+        // 3. Procesamos y limpiamos las imágenes existentes si estamos editando
+        if (id && payload.existingImages) {
+            const cleanBackendUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+
+            const relativeExistingImages = payload.existingImages.map((urlStr) => {
+                // Si la URL contiene el backend URL, lo removemos para dejar solo la ruta relativa
+                if (urlStr.startsWith(cleanBackendUrl)) {
+                    return urlStr.replace(cleanBackendUrl, '');
+                }
+                return urlStr;
+            });
+
+            apiFormData.append('existingImages', JSON.stringify(relativeExistingImages));
+        }
+
+        // 4. Re-construimos los archivos binarios de las nuevas imágenes
         if (payload.images && payload.images.length > 0) {
             for (const img of payload.images) {
-                // Removemos el prefijo data:image/...;base64 del string de datos
                 const cleanBase64 = img.base64.replace(/^data:image\/\w+;base64,/, "");
                 const buffer = Buffer.from(cleanBase64, 'base64');
 
-                // 🚀 SOLUCIÓN: Usamos "File" en lugar de un "Blob" plano e inyectamos el 'type' original.
-                // Esto garantiza que al enviarlo a NestJS, Multer lo reciba como una imagen real.
                 const fileFromBuffer = new File([buffer], img.name, {
-                    type: img.type || 'image/jpeg' // Si no viene tipo, ponemos fallback común
+                    type: img.type || 'image/jpeg'
                 });
 
-                // Añadimos a la clave 'images' esperando por Multer en NestJS
                 apiFormData.append('images', fileFromBuffer);
             }
         }
 
-        // En Next.js Server Actions, al usar Axios para pasar un FormData nativo de Node,
-        // necesitamos eliminar de las cabeceras manuales cualquier Content-Type forzado
-        // para dejar que Axios configure automáticamente el boundary correcto.
         const requestHeaders = { ...headers };
         if (requestHeaders['Content-Type']) {
             delete requestHeaders['Content-Type'];
@@ -84,10 +93,8 @@ export async function saveCustomeAction(payload: SaveCostumePayload, id?: string
     } catch (error: any) {
         console.error("Error en saveCustomeAction:", error?.response?.data || error);
         if (error.response) {
-            // Capturamos el mensaje que viene desde el servidor NestJS
             const backendMessage = error.response.data?.message;
 
-            // 🎯 DETECCIÓN DEL UNIQUE CONSTRAINT DE PRISMA
             if (
                 typeof backendMessage === 'string' &&
                 backendMessage.includes('Unique constraint failed on the constraint: `costumes_name_key`')
@@ -98,7 +105,6 @@ export async function saveCustomeAction(payload: SaveCostumePayload, id?: string
                 };
             }
 
-            // Si el backend envía los errores en un array (ej: validaciones de class-validator)
             if (Array.isArray(backendMessage)) {
                 return {
                     success: false,

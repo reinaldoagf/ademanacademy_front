@@ -4,28 +4,61 @@ import {
     Tag,
     AlertTriangle,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Trash2,
+    Pencil
 } from "lucide-react";
 import Badge from "@/components/common/Badge";
-
-export function WardrobeCard({ costume }: any) {
+// Props tipadas (puedes cambiar 'any' por tu interfaz si lo prefieres)
+interface WardrobeCardProps {
+    costume: any;
+    onEdit?: (costume: any) => void;
+    onDelete?: (costume: any) => void;
+}
+export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
 
     const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
 
+    // 🎯 Normalizar y sanitizar las URLs de las imágenes
     let images: string[] = [];
     try {
-        images = typeof costume.images === "string"
-            ? JSON.parse(costume.images)
-            : (costume.images.length ? costume.images.map((e: string) => (`${backendUrl}${e}`)) : ["/img/default.png"]);
+        let rawImages: any[] = [];
+
+        if (typeof costume.images === "string") {
+            rawImages = JSON.parse(costume.images);
+        } else if (Array.isArray(costume.images)) {
+            rawImages = costume.images;
+        }
+
+        if (rawImages && rawImages.length > 0) {
+            images = rawImages.map((img: any) => {
+                const path = typeof img === 'object' ? img.url || img.path : img;
+
+                // Si la ruta ya es una URL absoluta (comienza con http o https), la dejamos intacta
+                if (path.startsWith('http://') || path.startsWith('https://')) {
+                    return path;
+                }
+
+                // Limpiamos barras duplicadas al concatenar: "http://localhost:3000" + "/uploads/img.jpg"
+                const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+                const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+                return `${cleanBackendUrl}${cleanPath}`;
+            });
+        } else {
+            images = ["/img/default.png"];
+        }
     } catch (e) {
+        console.error("Error procesando imágenes de costume", e);
         images = ["/img/default.png"];
     }
 
-    /*  if (images.length === 0) {
-         images = PLACEHOLDER_GALLERY;
-     } */
+    // Por si el procesamiento anterior devolvió un array vacío
+    if (images.length === 0) {
+        images = ["/img/default.png"];
+    }
 
     // 🎯 EFECTO DE AUTOPLAY: Cambia de imagen cada 4 segundos si el usuario no tiene el mouse encima
     useEffect(() => {
@@ -54,6 +87,19 @@ export function WardrobeCard({ costume }: any) {
         setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     };
 
+    // 🎯 Acciones para disparar eventos al componente padre
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onEdit) onEdit(costume);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onDelete) onDelete(costume);
+    };
+
     return (
         <div
             onMouseEnter={() => setIsHovered(true)}   // Pausa el autoplay
@@ -66,6 +112,10 @@ export function WardrobeCard({ costume }: any) {
                     src={images[currentImageIndex]}
                     alt={costume.name}
                     className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
+                    onError={(e) => {
+                        // Fallback por si la imagen física no existe en el servidor
+                        (e.target as HTMLImageElement).src = "/img/default.png";
+                    }}
                 />
             </div>
 
@@ -93,13 +143,38 @@ export function WardrobeCard({ costume }: any) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 pointer-events-none" />
             <div className="absolute inset-0 bg-purple-950/10 group-hover:bg-purple-950/60 transition-colors duration-500 z-10 pointer-events-none" />
 
-            {/* 4. CAPA DE CONTENIDO TEXTUAL */}
+            {/* 4. BOTONES FLOTANTES DE ACCIÓN (EDITAR Y ELIMINAR) */}
+            {/* Se posicionan de manera absoluta arriba a la derecha y solo aparecen al hacer Hover */}
+            <div className="absolute top-5 right-4 z-40 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0">
+                <button
+                    type="button"
+                    onClick={handleEdit}
+                    className="bg-white/90 text-gray-800 p-2 shadow-md hover:bg-green-600 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Editar diseño"
+                >
+                    <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="bg-white/90 text-red-600 p-2 shadow-md hover:bg-red-600 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Eliminar diseño"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
+            </div>
+
+            {/* 5. CAPA DE CONTENIDO TEXTUAL */}
             <div className="absolute inset-0 z-20 p-5 flex flex-col justify-between text-white pointer-events-none">
 
-                {/* Cabecera Superior */}
-                <div className="flex justify-between items-start gap-2 relative drop-shadow-md pointer-events-auto">
-                    <Badge variant={costume.category} />
-                    <Badge variant={costume.status} />
+                {/* Cabecera Superior (Se añade pr-20 para evitar solapamiento visual con los botones de acción) */}
+                <div className="flex flex-col gap-2 relative drop-shadow-md pointer-events-auto">
+                    <div>
+                        <Badge variant={costume.status} />
+                    </div>
+                    <div>
+                        <Badge variant={costume.category} />
+                    </div>
                 </div>
 
                 {/* Bloque Inferior Desplazable */}
