@@ -149,7 +149,7 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                 <button
                     type="button"
                     onClick={handleEdit}
-                    className="bg-white/90 text-gray-800 p-2 shadow-md hover:bg-green-600 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    className="bg-white/80 text-gray-800 p-2 shadow-md hover:bg-green-600/40 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
                     title="Editar diseño"
                 >
                     <Pencil className="w-3.5 h-3.5" />
@@ -157,7 +157,7 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                 <button
                     type="button"
                     onClick={handleDelete}
-                    className="bg-white/90 text-red-600 p-2 shadow-md hover:bg-red-600 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    className="bg-white/80 text-red-600 p-2 shadow-md hover:bg-red-600/40 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
                     title="Eliminar diseño"
                 >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -170,10 +170,10 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                 {/* Cabecera Superior (Se añade pr-20 para evitar solapamiento visual con los botones de acción) */}
                 <div className="flex flex-col gap-2 relative drop-shadow-md pointer-events-auto">
                     <div>
-                        <Badge variant={costume.status} />
+                        <Badge variant={costume.status} theme={'dark'} />
                     </div>
                     <div>
-                        <Badge variant={costume.category} />
+                        <Badge variant={costume.category} theme={'dark'} />
                     </div>
                 </div>
 

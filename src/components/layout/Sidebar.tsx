@@ -20,6 +20,7 @@ import {
 } from "@/app/actions/group";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
+import { getAllCostumesAction } from "@/app/actions/costume";
 import {
   ChartPie,
   HeartPulse,
@@ -264,6 +265,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchCostumesBadgeCount = async () => {
+    try {
+      const res = await getAllCostumesAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalCostumes = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "costumes" ? { ...item, badge: totalCostumes } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
     if (isAdminView) {
@@ -274,12 +294,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchClassroomsBadgeCount();
       fetchPaymentsBadgeCount();
       fetchPaymentOrdersBadgeCount();
+      fetchCostumesBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
       window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
       window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.addEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
+      window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
@@ -288,6 +310,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.removeEventListener('refresh-students-count', fetchStudentsBadgeCount);
       window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.removeEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
+      window.removeEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
     };
   }, [isAdminView]);
   // useEffect para cargar la data real al montar el Sidebar por primera vez

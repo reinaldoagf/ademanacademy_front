@@ -35,7 +35,7 @@ interface SaveCostumePayload {
     existingImages: string[]; // 🚀 'type' agregado aquí
 }
 
-export async function saveCustomeAction(payload: SaveCostumePayload, id?: string | null) {
+export async function saveCostumeAction(payload: SaveCostumePayload, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/costumes/${id}` : `${BACKEND_URL}/costumes`;
         const headers = await getAuthHeaders();
@@ -91,7 +91,7 @@ export async function saveCustomeAction(payload: SaveCostumePayload, id?: string
         return { success: true, data: response.data };
 
     } catch (error: any) {
-        console.error("Error en saveCustomeAction:", error?.response?.data || error);
+        console.error("Error en saveCostumeAction:", error?.response?.data || error);
         if (error.response) {
             const backendMessage = error.response.data?.message;
 
@@ -119,5 +119,25 @@ export async function saveCustomeAction(payload: SaveCostumePayload, id?: string
         }
 
         return { success: false, error: "Error crítico de red en el servidor." };
+    }
+
+}
+
+export async function deleteCostumeAction(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        await axios.delete(`${BACKEND_URL}/costumes/${id}`, { headers });
+
+        return { success: true };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el salón."
+            };
+        }
+        return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }

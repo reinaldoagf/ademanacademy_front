@@ -17,8 +17,9 @@ import {
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { CostumeCategory, CostumeStatus, SizeStock, Costume } from "@/types/costume";
-import { getAllCostumesAction, saveCustomeAction } from "@/app/actions/costume";
+import { getAllCostumesAction, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 
 export default function CostumesPage() {
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
@@ -29,6 +30,37 @@ export default function CostumesPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "simple" | "word" | "email";
+    title: string;
+    description: string;
+    requiredWord?: string;
+    userEmail?: string;
+    id?: string;
+  }>({
+    isOpen: false,
+    type: "word",
+    title: "",
+    description: "",
+  });
+  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  // Acción definitiva que se ejecuta al pasar el filtro del Modal
+  const handleConfirmAction = async () => {
+    if (modalConfig?.id) {
+      startTransition(async () => {
+        if (modalConfig?.id) {
+          const res = await deleteCostumeAction(modalConfig.id);
+          if (res.success) {
+            toast.success("Operación exitosa");
+            fetchData(currentPage, itemsPerPage);
+            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+            window.dispatchEvent(new Event('refresh-costumes-count'));
+          }
+        }
+      });
+    }
+  };
   const [meta, setMeta] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -149,9 +181,14 @@ export default function CostumesPage() {
   };
 
   const handleDelete = (costume: any) => {
-    console.log("Eliminando el vestuario con ID:", costume.id);
-    // Aquí disparas tu fetch/axios de borrado o actualizas el estado local
-    // Ej: setCostumes(prev => prev.filter(c => c.id !== costume.id));
+    setModalConfig({
+      isOpen: true,
+      type: "word",
+      title: "Confirmar operación",
+      description: "¿Quieres eliminar el registro de tu vestuario?",
+      id: costume.id,
+    });
+
   };
   // 4. Adaptación del envío del formulario
   const handleSave = async (e: React.FormEvent) => {
@@ -184,7 +221,7 @@ export default function CostumesPage() {
       };
 
       // saveCostumeAction debe recibir el payload y el editingId (si existe)
-      const result = await saveCustomeAction(payload, editingId);
+      const result = await saveCostumeAction(payload, editingId);
 
       if (result.success) {
         fetchData(currentPage, itemsPerPage);
@@ -198,6 +235,7 @@ export default function CostumesPage() {
 
         // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
         if (!editingId) {
+          window.dispatchEvent(new Event('refresh-costumes-count'));
           setFormData({
             name: '',
             beat: '',
@@ -692,6 +730,19 @@ export default function CostumesPage() {
           </div>
         </div>
       )}
+      {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={handleConfirmAction}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        description={modalConfig.description}
+        requiredWord={modalConfig.requiredWord}
+        userEmail={modalConfig.userEmail}
+        variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+        confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+      />
     </>
   );
 }

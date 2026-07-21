@@ -40,41 +40,140 @@ function statusTranslatePipe(value: string): string {
 interface BadgeProps {
     variant: string;
     children?: React.ReactNode; // Ahora es opcional, si no viene, usamos la variante traducida
+    theme?: string;
     className?: string;
 }
 
-export default function Badge({ variant, children, className = "" }: BadgeProps) {
+export default function Badge({ variant, children, theme = "light", className = "" }: BadgeProps) {
     const normalizedVariant = variant.toLowerCase().trim();
 
     // Diccionario de configuraciones visuales (Mapea llaves del sistema a Estilos + Iconos)
     const config: Record<string, { styles: string; icon: LucideIcon }> = {
-        approved: { styles: "bg-emerald-50 text-emerald-700 border-emerald-100/80", icon: CheckCircle2 },
-        pending: { styles: "bg-amber-50 text-amber-700 border-amber-100/80", icon: Clock },
-        rejected: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
-        info: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Info },
-        bank_transfer: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
-        monthly_payment: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
-        tuition: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
-        locker_room: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
-        ticket: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: CreditCard },
-        son: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
-        daughter: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
-        nephew: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
-        niece: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: User },
-        tutored: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
-        available: { styles: "bg-green-50 text-green-700 border-green-100/80", icon: AlertCircle },
-        retired: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: AlertCircle },
-        pending_preparation: { styles: "bg-orange-50 text-orange-700 border-orange-100/80", icon: AlertCircle },
-        canceled: { styles: "bg-red-50 text-red-700 border-red-100/80", icon: AlertCircle },
-        baby: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Users },
-        childrens: { styles: "bg-yellow-50 text-yellow-700 border-yellow-100/80", icon: Users },
-        youth: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: Users },
-        adult: { styles: "bg-yellow-50 text-yellow-700 border-yellow-100/80", icon: Users },
-        other: { styles: "bg-blue-50 text-blue-700 border-blue-100/80", icon: User },
+        approved: {
+            styles: theme == "light" ?
+                "bg-emerald-50 text-emerald-700 border-emerald-100/80" :
+                "bg-emerald-950/40 text-emerald-400 border-emerald-800/60",
+            icon: CheckCircle2
+        },
+        pending: {
+            styles: theme == "light" ?
+                "bg-amber-50 text-amber-700 border-amber-100/80" :
+                "bg-amber-950/40 text-amber-400 border-amber-800/60",
+            icon: Clock
+        },
+        rejected: {
+            styles: theme == "light" ?
+                "bg-red-50 text-red-700 border-red-100/80" :
+                "bg-red-950/40 text-red-400 border-red-800/60",
+            icon: AlertCircle
+        },
+        info: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60",
+            icon: Info
+        },
+        bank_transfer: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60",
+            icon: CreditCard
+        },
+        monthly_payment: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60",
+            icon: CreditCard
+        },
+        tuition: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: CreditCard
+        },
+        locker_room: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: CreditCard
+        },
+        ticket: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: CreditCard
+        },
+        son: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: User
+        },
+        daughter: {
+            styles: theme == "light" ?
+                "bg-red-50 text-red-700 border-red-100/80" :
+                "bg-red-950/40 text-red-400 border-red-800/60", icon: User
+        },
+        nephew: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: User
+        },
+        niece: {
+            styles: theme == "light" ?
+                "bg-red-50 text-red-700 border-red-100/80" :
+                "bg-red-950/40 text-red-400 border-red-800/60", icon: User
+        },
+        tutored: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: User
+        },
+        available: {
+            styles: theme == "light" ?
+                "bg-green-50 text-green-700 border-green-100/80" :
+                "bg-green-950/40 text-green-400 border-green-800/60", icon: AlertCircle
+        },
+        retired: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: AlertCircle
+        },
+        pending_preparation: {
+            styles: theme == "light" ?
+                "bg-orange-50 text-orange-700 border-orange-100/80" :
+                "bg-orange-950/40 text-orange-400 border-orange-800/60", icon: AlertCircle
+        },
+        canceled: {
+            styles: theme == "light" ?
+                "bg-red-50 text-red-700 border-red-100/80" :
+                "bg-red-950/40 text-red-400 border-red-800/60", icon: AlertCircle
+        },
+        baby: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: Users
+        },
+        childrens: {
+            styles: theme == "light" ?
+                "bg-yellow-50 text-yellow-700 border-yellow-100/80" :
+                "bg-yellow-950/40 text-yellow-400 border-yellow-800/60", icon: Users
+        },
+        youth: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: Users
+        },
+        adult: {
+            styles: theme == "light" ?
+                "bg-yellow-50 text-yellow-700 border-yellow-100/80" :
+                "bg-yellow-950/40 text-yellow-400 border-yellow-800/60", icon: Users
+        },
+        other: {
+            styles: theme == "light" ?
+                "bg-blue-50 text-blue-700 border-blue-100/80" :
+                "bg-blue-950/40 text-blue-400 border-blue-800/60", icon: User
+        },
     };
 
     const currentConfig = config[normalizedVariant] || {
-        styles: "bg-gray-50 text-gray-600 border-gray-200",
+        styles: theme == "light" ? "bg-gray-50 text-gray-600 border-gray-200" : "bg-gray-950/40 text-gray-400 border-gray-800/60",
         icon: Info
     };
 
