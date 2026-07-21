@@ -2,10 +2,30 @@
 "use server";
 
 import axios from "axios";
-import { Costume, FetchCostumesParams } from "@/types/costume";
+import { SaveCostumePayload, FetchCostumesParams } from "@/types/costume";
 import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
+
+
+export async function getCostumeCountByStatus() {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/costumes/count-by-status`, {
+            params: {},
+            headers: headers
+        });
+
+        console.log({ response })
+
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
 
 export async function getAllCostumesAction(params: FetchCostumesParams) {
     try {
@@ -22,17 +42,6 @@ export async function getAllCostumesAction(params: FetchCostumesParams) {
             error: error.response?.data?.message || "Error al conectar con la academia."
         };
     }
-}
-
-// 🎯 Definimos una interfaz limpia para los datos serializables
-interface SaveCostumePayload {
-    name: string;
-    beat?: string;
-    category: string;
-    status: string;
-    availableSizes: any[];
-    images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
-    existingImages: string[]; // 🚀 'type' agregado aquí
 }
 
 export async function saveCostumeAction(payload: SaveCostumePayload, id?: string | null) {

@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/costumes/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import {
   Scissors,
   Shirt,
@@ -12,17 +12,63 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  ImagePlus, X
+  CheckCircle2,
+  ImagePlus, Wrench, ArchiveX, X
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
-import { CostumeCategory, CostumeStatus, SizeStock, Costume } from "@/types/costume";
-import { getAllCostumesAction, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
-
+import { CostumeCategory, CostumeStatus, SizeStock, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
+import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
+// 2. Configuración visual estática fuera del componente
+const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
+  available: {
+    title: "Disponibles / En Stock",
+    subtitle: "Listos para asignación e inventario activo.",
+    icon: CheckCircle2,
+    iconBgClass: "bg-emerald-100",
+    iconTextClass: "text-emerald-600",
+    unitLabel: "Piezas",
+  },
+  pending_preparation: {
+    title: "En Confección",
+    subtitle: "Prendas en etapa de preparación o taller.",
+    icon: Shirt,
+    iconBgClass: "bg-purple-100",
+    iconTextClass: "text-[#5e0472]",
+    unitLabel: "Modelos",
+  },
+  maintenance: {
+    title: "En Lavandería / Reparación",
+    subtitle: "Retenidos para mantenimiento y ajustes.",
+    icon: Wrench,
+    iconBgClass: "bg-amber-100",
+    iconTextClass: "text-amber-600",
+    unitLabel: "Prendas",
+  },
+  retired: {
+    title: "Fuera de Servicio",
+    subtitle: "Inactivos, dados de baja o en desecho.",
+    icon: ArchiveX,
+    iconBgClass: "bg-rose-100",
+    iconTextClass: "text-rose-600",
+    unitLabel: "Unidades",
+  },
+};
 export default function CostumesPage() {
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
+  const formRef = useRef<HTMLFormElement>(null);
+
+
+  // 3. Estado enfocado puramente en los totales numéricos
+  const [statusCounts, setStatusCounts] = useState<Record<LockerRoomStatus, number>>({
+    pending_preparation: 0,
+    available: 0,
+    maintenance: 0,
+    retired: 0,
+  });
+  const [totalCostumes, setTotalCostumes] = useState<number>(0);
 
   const [costumes, setCostumes] = useState<Costume[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -247,26 +293,45 @@ export default function CostumesPage() {
 
         setIsModalOpen(false);
       } else {
+        toast.error(result.error);
         setErrorMsg(result.error);
+        scrollToTopForm();
       }
     } catch (error) {
       setErrorMsg("Ocurrió un error al procesar las imágenes seleccionadas.");
       console.error(error);
     }
   };
+  const scrollToTopForm = () => {
+    if (formRef.current) {
+      formRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth' // 'smooth' para animación suave, o 'auto' para instantáneo
+      });
+    }
+  };
+  // 4. Carga e integración de datos
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
-      const res = await getAllCostumesAction({
+      // Petición del resumen por estado
+      const res1 = await getCostumeCountByStatus();
+      if (res1.data?.byStatus) {
+        setStatusCounts(res1.data.byStatus);
+        setTotalCostumes(res1.data.total ?? 0);
+      }
+
+      // Petición de la lista paginada
+      const res2 = await getAllCostumesAction({
         page: pageToFetch,
-        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+        limit: limitToFetch,
         search: searchTerm || undefined,
-        status: statusFilter == 'all' ? undefined : statusFilter,
-        category: categoryFilter == 'all' ? undefined : categoryFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
       });
 
-      if (res.success && res.data) {
-        setCostumes(res.data);
-        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      if (res2?.success && res2.data) {
+        setCostumes(res2.data);
+        setMeta(res2.meta);
       }
     });
   };
@@ -312,55 +377,34 @@ export default function CostumesPage() {
 
       <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
         {/* TARJETAS DE INDICADORES RÁPIDOS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-              <Shirt className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                Total Prendas en Stock
-              </p>
-              <h4 className="text-xl font-anton text-gray-800">
-                {totalTrajes} Piezas
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Disponibles en el almacén de utilería.
-              </p>
-            </div>
-          </div>
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-indigo-100 flex items-center justify-center text-indigo-600">
-              <UserCheck2 className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                Trajes Alquilados / Asignados
-              </p>
-              <h4 className="text-xl font-anton text-gray-800">
-                {trajesAsignados} en Uso
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Bailarines con trajes bajo su custodia.
-              </p>
-            </div>
-          </div>
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600">
-              <Scissors className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                En Modista / Ajustes
-              </p>
-              <h4 className="text-xl font-anton text-gray-800">
-                {enTaller} Modelos
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Prendas retenidas por ajustes de bastilla o cierres.
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(Object.keys(STATUS_CONFIG) as LockerRoomStatus[]).map((statusKey) => {
+            const config = STATUS_CONFIG[statusKey];
+            const count = statusCounts[statusKey] || 0;
+            const Icon = config.icon;
+
+            return (
+              <div
+                key={statusKey}
+                className="glass-card shadow-sm p-4 flex items-center gap-4 border border-purple-50/50 bg-white/70"
+              >
+                <div className={`w-10 h-10 shrink-0 flex items-center justify-center ${config.iconBgClass} ${config.iconTextClass}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider truncate">
+                    {config.title}
+                  </p>
+                  <h4 className="text-xl font-anton text-gray-800">
+                    {count} {config.unitLabel}
+                  </h4>
+                  <p className="font-questrial text-xs text-gray-500 line-clamp-1">
+                    {config.subtitle}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* FILTROS */}
@@ -478,10 +522,7 @@ export default function CostumesPage() {
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          {/* 
-      1. Agregado `max-h-[calc(100vh-2rem)]` para limitar la altura total del modal en pantallas pequeñas.
-      2. Agregado `flex flex-col` para poder estructurar la cabecera y el formulario de forma desacoplada.
-    */}
+
           <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
 
             {/* Cabecera del Modal (Fija en la parte superior) */}
@@ -501,6 +542,7 @@ export default function CostumesPage() {
 
             {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
             <form
+              ref={formRef}
               id="costume-form" // <-- Añadimos este ID
               onSubmit={handleSave}
               className="flex-1 overflow-y-auto p-5 space-y-4 font-questrial text-xs scrollbar-thin"

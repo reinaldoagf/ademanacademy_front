@@ -1,4 +1,7 @@
 import { Student } from "@/types/student";
+import {
+    LucideIcon
+} from "lucide-react";
 
 // 🎯 Enums del ciclo de vida de la asignación
 export type AssignmentStatus = "assigned" | "returned" | "damaged" | "lost";
@@ -49,3 +52,24 @@ export interface FetchCostumesParams {
     status?: string;
     category?: string;
 }
+
+// 🎯 Definimos una interfaz limpia para los datos serializables
+export interface SaveCostumePayload {
+    name: string;
+    beat?: string;
+    category: string;
+    status: string;
+    availableSizes: any[];
+    images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
+    existingImages: string[]; // 🚀 'type' agregado aquí
+}
+
+export interface StatusCardConfig {
+    title: string;
+    subtitle: string;
+    icon: LucideIcon;
+    iconBgClass: string;
+    iconTextClass: string;
+    unitLabel: string;
+}
+export type LockerRoomStatus = "pending_preparation" | "available" | "maintenance" | "retired";

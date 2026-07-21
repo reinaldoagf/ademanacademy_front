@@ -22,13 +22,14 @@ function statusTranslatePipe(value: string): string {
         locker_room: "Vestuario",
         ticket: "boleto",
         pending_preparation: "Por Confeccionar",
-        available: "En lavandería / Reparación",
+        available: "Disponible",
         retired: "Fuera de servicio",
         canceled: "Cancelado",
         baby: "Baby",
         childrens: "Infantil",
         youth: "Juvenil",
         adult: "Adulto",
+        maintenance: "Mantenimiento",
         other: "Otro",
     };
 
