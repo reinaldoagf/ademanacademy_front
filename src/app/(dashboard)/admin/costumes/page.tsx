@@ -3,17 +3,16 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import {
-  Scissors,
   Shirt,
   Search,
-  UserCheck2,
   Plus,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   CheckCircle2,
-  ImagePlus, Wrench, ArchiveX, X
+  ImagePlus, Wrench, ArchiveX, X,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
@@ -21,6 +20,8 @@ import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { CostumeCategory, CostumeStatus, SizeStock, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
+import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
+
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
   available: {
@@ -58,7 +59,8 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
 };
 export default function CostumesPage() {
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
-  const formRef = useRef<HTMLFormElement>(null);
+  const clothingFormReference = useRef<HTMLFormElement>(null);
+  const policyFormReference = useRef<HTMLFormElement>(null);
 
 
   // 3. Estado enfocado puramente en los totales numéricos
@@ -68,10 +70,10 @@ export default function CostumesPage() {
     maintenance: 0,
     retired: 0,
   });
-  const [totalCostumes, setTotalCostumes] = useState<number>(0);
 
   const [costumes, setCostumes] = useState<Costume[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalFormOpen, setIsModalFormOpen] = useState(false);
+  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -125,8 +127,14 @@ export default function CostumesPage() {
     { size: 'L', quantity: 0 },
     { size: 'XL', quantity: 0 }
   ];
+  const [policyFormData, setPolicyFormData] = useState({
+    id: '',
+    key: 'usage_policies',
+    value: '',
+    active: false,
+  });
   // 1. Estado del formulario interno del modal
-  const [formData, setFormData] = useState({
+  const [costumeFormData, setCostumeFormData] = useState({
     name: '',
     beat: '',
     category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
@@ -152,19 +160,6 @@ export default function CostumesPage() {
       setPreviews((prev) => [...prev, ...newPreviews]);
     }
   };
-
-
-
-  // Métricas de inventario text-analíticas
-  const totalTrajes = 2; /* DEMO_VESTUARIOS.reduce(
-    (acc, curr) => acc + curr.totalUnidades,
-    0,
-  ); */
-  const trajesAsignados = 1; /* DEMO_VESTUARIOS.reduce(
-    (acc, curr) => acc + curr.asignados,
-    0,
-  ); */
-  const enTaller = 6
   // Manejo de inserción de nuevo salón
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -187,8 +182,8 @@ export default function CostumesPage() {
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (costume: any) => {
     setEditingId(costume.id);
-    setIsModalOpen(true);
-    setFormData({
+    setIsModalFormOpen(true);
+    setCostumeFormData({
       name: costume.name ?? '',
       beat: costume.beat ?? '',
       category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
@@ -236,8 +231,34 @@ export default function CostumesPage() {
     });
 
   };
+
+  const savePolicies = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    console.log('savePolicies')
+    try {
+      // 2. Construir el payload definitivo
+      const payload = {
+        id: policyFormData.id,
+        key: policyFormData.key,
+        value: policyFormData.value,
+        active: policyFormData.active,
+      };
+
+      // saveCostumeAction debe recibir el payload
+      const result = await saveSettingAction(payload, payload.id);
+      console.log({ result })
+      if (result.success) {
+        toast.success("Los Términos y Condiciones se actualizado correctamente.");
+        setIsPoliciesModalOpen(false)
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   // 4. Adaptación del envío del formulario
-  const handleSave = async (e: React.FormEvent) => {
+  const wardrobeStorage = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -256,11 +277,11 @@ export default function CostumesPage() {
 
       // 2. Construir el payload definitivo
       const payload = {
-        name: formData.name,
-        beat: formData.beat || '',
-        category: formData.category,
-        status: formData.status,
-        availableSizes: formData.availableSizes || [],
+        name: costumeFormData.name,
+        beat: costumeFormData.beat || '',
+        category: costumeFormData.category,
+        status: costumeFormData.status,
+        availableSizes: costumeFormData.availableSizes || [],
         images: newImagesPayload, // Nuevas imágenes Base64
         // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
         existingImages: editingId ? existingImages : [],
@@ -282,7 +303,7 @@ export default function CostumesPage() {
         // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
         if (!editingId) {
           window.dispatchEvent(new Event('refresh-costumes-count'));
-          setFormData({
+          setCostumeFormData({
             name: '',
             beat: '',
             category: 'childrens' as CostumeCategory,
@@ -291,7 +312,7 @@ export default function CostumesPage() {
           });
         }
 
-        setIsModalOpen(false);
+        setIsModalFormOpen(false);
       } else {
         toast.error(result.error);
         setErrorMsg(result.error);
@@ -303,8 +324,8 @@ export default function CostumesPage() {
     }
   };
   const scrollToTopForm = () => {
-    if (formRef.current) {
-      formRef.current.scrollTo({
+    if (clothingFormReference.current) {
+      clothingFormReference.current.scrollTo({
         top: 0,
         behavior: 'smooth' // 'smooth' para animación suave, o 'auto' para instantáneo
       });
@@ -313,11 +334,11 @@ export default function CostumesPage() {
   // 4. Carga e integración de datos
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
+
       // Petición del resumen por estado
       const res1 = await getCostumeCountByStatus();
       if (res1.data?.byStatus) {
         setStatusCounts(res1.data.byStatus);
-        setTotalCostumes(res1.data.total ?? 0);
       }
 
       // Petición de la lista paginada
@@ -350,15 +371,29 @@ export default function CostumesPage() {
         htmlSubTitle="Asigna prendas de baile, gestiona tallas por alumno y controla el estatus del taller de costura."
         actions={[
           {
-            label: "Control de Lavandería",
-            onClick: () => console.log("Abriendo lavandería..."),
-            icon: <RefreshCw className="w-4 h-4" />,
+            label: "Política de Uso",
+            onClick: async () => {
+              startTransition(async () => {
+                // Petición del resumen por estado
+                const res0 = await getSettingByKeyAction("usage_policies");
+                if (res0.data?.id && res0.data?.value) {
+                  setIsPoliciesModalOpen(true)
+                  setPolicyFormData({
+                    ...policyFormData,
+                    id: res0.data?.id,
+                    value: res0.data.value,
+                    active: res0.data.active
+                  })
+                }
+              })
+            },
+            icon: <AlertCircle className="w-4 h-4" />,
             variant: "secondary" as const,
           },
           {
             label: "Agregar Diseño / Traje →",
             onClick: () => {
-              setFormData({
+              setCostumeFormData({
                 name: '',
                 beat: '',
                 category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
@@ -367,7 +402,7 @@ export default function CostumesPage() {
               });
               setEditingId(null);
               setErrorMsg(null);
-              setIsModalOpen(true)
+              setIsModalFormOpen(true)
             },
             icon: <Plus className="w-4 h-4" />,
             variant: "primary" as const,
@@ -520,7 +555,7 @@ export default function CostumesPage() {
         )}
       </div>
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
-      {isModalOpen && (
+      {isModalFormOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
 
           <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
@@ -533,7 +568,7 @@ export default function CostumesPage() {
               </h3>
 
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsModalFormOpen(false)}
                 className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
               >
                 <X className="w-4 h-4" />
@@ -542,9 +577,9 @@ export default function CostumesPage() {
 
             {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
             <form
-              ref={formRef}
+              ref={clothingFormReference}
               id="costume-form" // <-- Añadimos este ID
-              onSubmit={handleSave}
+              onSubmit={wardrobeStorage}
               className="flex-1 overflow-y-auto p-5 space-y-4 font-questrial text-xs scrollbar-thin"
             >
               {errorMsg && (
@@ -563,8 +598,8 @@ export default function CostumesPage() {
                     type="text"
                     placeholder="Ej. Set urbano..."
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={costumeFormData.name}
+                    onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
                     className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
                   />
                 </div>
@@ -575,8 +610,8 @@ export default function CostumesPage() {
                   </label>
                   <input
                     type="text"
-                    value={formData.beat}
-                    onChange={(e) => setFormData({ ...formData, beat: e.target.value })}
+                    value={costumeFormData.beat}
+                    onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
                     className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
                     placeholder="Ej. Salsa, Urbana..."
                   />
@@ -590,8 +625,8 @@ export default function CostumesPage() {
                     Categoría *
                   </label>
                   <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as CostumeCategory })}
+                    value={costumeFormData.category}
+                    onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
                     className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                   >
                     <option value="baby">Baby</option>
@@ -606,8 +641,8 @@ export default function CostumesPage() {
                     Estado Inicial *
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as CostumeStatus })}
+                    value={costumeFormData.status}
+                    onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
                     className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                   >
                     <option value="pending_preparation">Pendiente Preparación</option>
@@ -634,12 +669,12 @@ export default function CostumesPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-purple-50">
-                      {formData.availableSizes.map((item, idx) => {
+                      {costumeFormData.availableSizes.map((item, idx) => {
                         const handleUpdateQuantity = (newVal: number) => {
                           const safeVal = Math.max(0, newVal);
-                          const updatedSizes = [...formData.availableSizes];
+                          const updatedSizes = [...costumeFormData.availableSizes];
                           updatedSizes[idx] = { ...updatedSizes[idx], quantity: safeVal };
-                          setFormData({ ...formData, availableSizes: updatedSizes });
+                          setCostumeFormData({ ...costumeFormData, availableSizes: updatedSizes });
                         };
 
                         return (
@@ -749,7 +784,7 @@ export default function CostumesPage() {
             <div className="px-5 py-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsModalFormOpen(false)}
                 className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
               >
                 Cancelar
@@ -758,14 +793,101 @@ export default function CostumesPage() {
               <button
                 type="submit"
                 form="costume-form" // <-- Apunta al ID del formulario
-                onClick={(e) => {
-                  // Dado que el botón submit está fuera del área del formulario, forzamos
-                  // el submit nativo del formulario asociando el id del form, o manteniéndolo
-                  // de esta manera siempre que el botón esté dentro de la etiqueta <form>.
-                }}
+                onClick={(e) => { }}
                 className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
               >
                 {editingId ? 'Actualizar' : 'Registrar'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
+      {isPoliciesModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+
+          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
+
+            {/* Cabecera del Modal (Fija en la parte superior) */}
+            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
+              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                Política de Uso
+              </h3>
+
+              <button
+                onClick={() => setIsPoliciesModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form
+              ref={policyFormReference}
+              id="policies-form" // <-- Añadimos este ID
+              onSubmit={savePolicies}
+              className="flex-1 overflow-y-auto p-5 space-y-4 font-questrial text-xs scrollbar-thin"
+            >
+              {errorMsg && (
+                <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
+                  {errorMsg}
+                </p>
+              )}
+
+              {/* Control de Activación (Toggle Switch) */}
+              <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100">
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-700">Estado de la Política</span>
+                  <span className="text-gray-500 text-[11px]">
+                    {policyFormData.active ? "La política está activa y visible" : "La política está desactivada"}
+                  </span>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={policyFormData.active}
+                    onChange={(e) => setPolicyFormData({ ...policyFormData, active: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              {/* Campo de Políticas de Uso */}
+              <div>
+                <label className="block text-gray-500 font-bold mb-1">
+                  Políticas de Uso *
+                </label>
+                <textarea
+                  placeholder="Escribe las políticas de uso aquí..."
+                  rows={5}
+                  value={policyFormData.value}
+                  onChange={(e) => setPolicyFormData({ ...policyFormData, value: e.target.value })}
+                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                ></textarea>
+              </div>
+            </form>
+
+
+            {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
+            <div className="px-5 py-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPoliciesModalOpen(false)}
+                className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                form="policies-form" // <-- Apunta al ID del formulario
+                onClick={(e) => { }}
+                className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+              >
+                Actualizar
               </button>
             </div>
 
