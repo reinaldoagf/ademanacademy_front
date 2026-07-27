@@ -15,16 +15,19 @@ import {
   Flame,
   UserCheck2,
   Filter,
-  Sparkles,
   X
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { MacDockModal } from "@/components/ui/MacDockModal";
+import { getAllGroupCategoriesAction } from "@/app/actions/group-category";
 import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
 import { getAllInstructorsAction } from "@/app/actions/instructor";
 import { Group } from "@/types/group";
+import { GroupCategory } from "@/types/group-category";
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"> & {
   classroomId: string;
@@ -35,14 +38,15 @@ type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"
 const initialFormState: GroupFormData = {
   name: "",
   style: "",
-  category: "baby",
   totalNumberOfSlots: 20,
+  categoryId: "",
   classroomId: "",
   instructorId: ""
 };
 export default function GroupsListPage() {
+  const [groupCategories, setGroupCategories] = useState<GroupCategory[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isOpen, openModal, closeModal } = useModal();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -69,7 +73,7 @@ export default function GroupsListPage() {
   const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
   const [selectedGroupStudents, setSelectedGroupStudents] = useState<any>(null);
 
-  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
     if (modalConfig?.id) {
@@ -214,6 +218,7 @@ export default function GroupsListPage() {
   }, [instructorSearch]);
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
+    console.log('handleSave')
     e.preventDefault();
     setErrorMsg(null);
     setIsSubmitting(true);
@@ -254,11 +259,11 @@ export default function GroupsListPage() {
         }
         fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-        setIsModalOpen(false);
+        closeModal();
       });
 
       // Si todo sale bien, refrescamos y limpiamos estados
-      setIsModalOpen(false);
+      closeModal();
       setFormData(initialFormState); // Resetea el formulario para el siguiente registro
 
     } catch (error: any) {
@@ -270,16 +275,25 @@ export default function GroupsListPage() {
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
-      const res = await getAllGroupsAction({
+      const res1 = await getAllGroupCategoriesAction({
+        page: pageToFetch,
+        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+        search: searchTerm || undefined,
+      });
+
+      if (res1.success && res1.data) {
+        setGroupCategories(res1.data);
+      }
+      const res2 = await getAllGroupsAction({
         page: pageToFetch,
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
         search: searchTerm || undefined,
         category: categoryFilter == 'all' ? undefined : categoryFilter
       });
 
-      if (res.success && res.data) {
-        setGroups(res.data);
-        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      if (res2.success && res2.data) {
+        setGroups(res2.data);
+        setMeta(res2.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }
     });
   };
@@ -288,7 +302,7 @@ export default function GroupsListPage() {
     setFormData({
       name: group.name || "",
       style: group.style || "",
-      category: group.category || "",
+      categoryId: group.categoryId || "",
       totalNumberOfSlots: group.totalNumberOfSlots || 10,
       classroomId: group.classroomId || "",
       instructorId: group.instructorId || "",
@@ -299,7 +313,7 @@ export default function GroupsListPage() {
     setShowInstructorDropdown(false);
     setEditingId(group.id);
     setErrorMsg(null);
-    setIsModalOpen(true);
+    openModal();
   };
 
   // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
@@ -332,7 +346,7 @@ export default function GroupsListPage() {
             setShowClassroomDropdown(false);
             setShowInstructorDropdown(false);
             setEditingId(null);
-            setIsModalOpen(true);
+            openModal();
           },
           icon: <Plus className="w-4 h-4" />,
           variant: "primary",
@@ -435,11 +449,8 @@ export default function GroupsListPage() {
 
                   <div>
                     <div className="flex items-center gap-2 flex-wrap font-questrial">
-                      <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 font-bold ${group.category === "baby" ? "bg-red-100 text-red-700" :
-                        group.category === "childrens" ? "bg-amber-100 text-amber-700" :
-                          "bg-gray-100 text-gray-500"
-                        }`}>
-                        {group.category}
+                      <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 font-bold bg-amber-100 text-amber-700`}>
+                        {group.category?.name}
                       </span>
                       <span className="text-[10px] text-gray-400 font-questrial">
                         {group.classroom?.name}, {group.classroom?.address}
@@ -594,232 +605,221 @@ export default function GroupsListPage() {
           </div>
         )}
       </div>
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
-            {/* Cabecera del Modal */}
-            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
-              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                {editingId ? 'Actualizar Grupo de Danza' : 'Registrar Nuevo Grupo de Danza'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      <MacDockModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={editingId ? "Actualizar Categoría de Grupo" : "Registrar Nueva Categoría de Grupo"}
+      >
+        {/* Formulario */}
+        <form
+          onSubmit={handleSave}
+          className="space-y-4 font-questrial text-xs"
+        >
+          {errorMsg && (
+            <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4">
+              {errorMsg}
+            </p>
+          )}
+
+          {/* Fila 1: Nombre del Grupo */}
+          <div>
+            <label className="block text-gray-500 font-bold mb-1">
+              Nombre del Grupo / Sección *
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Ej: Hip Hop Juvenil - Sección A"
+              value={formData.name || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+            />
+          </div>
+
+          {/* Fila 2: Estilo de Baile y Categoría (Edad) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Estilo de Baile
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: Urban Dance, Salsa, Ballet"
+                value={formData.style || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, style: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
             </div>
 
-            {/* Formulario */}
-            <form
-              onSubmit={handleSave}
-              className="p-5 space-y-4 font-questrial text-xs"
-            >
-              {errorMsg && (
-                <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4">
-                  {errorMsg}
-                </p>
-              )}
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Categoría (Rango de Edad) *
+              </label>
+              <select
+                required
+                value={formData.categoryId || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, categoryId: e.target.value as any })
+                }
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+              >
+                <option value="" disabled className="bg-neutral-900 text-white">Selecciona la categoría</option>
 
-              {/* Fila 1: Nombre del Grupo */}
-              <div>
-                <label className="block text-gray-500 font-bold mb-1">
-                  Nombre del Grupo / Sección *
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Ej: Hip Hop Juvenil - Sección A"
-                  value={formData.name || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                />
-              </div>
-
-              {/* Fila 2: Estilo de Baile y Categoría (Edad) */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Estilo de Baile
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Urban Dance, Salsa, Ballet"
-                    value={formData.style || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, style: e.target.value })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Categoría (Rango de Edad) *
-                  </label>
-                  <select
-                    required
-                    value={formData.category || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value as any })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                  >
-                    <option value="" disabled>Selecciona la categoría</option>
-                    <option value="baby">Baby (3-5 años)</option>
-                    <option value="childrens">Infantil (6-11 años)</option>
-                    <option value="youth">Juvenil (12-17 años)</option>
-                    <option value="adult">Adulto (18+ años)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Fila 3: Cupos de la sección */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Cupos Máximos (Capacidad) *
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min={1}
-                    placeholder="Ej: 20"
-                    value={formData.totalNumberOfSlots || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-              </div>
-              {/* Fila 4: Salón de Clases */}
-              <div className="relative" ref={classroomRef}>
-                <label className="block text-gray-500 font-bold mb-1">Salón de Clases Asignado *</label>
-                <div className="relative">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Escribe para buscar o selecciona de la lista..."
-                    value={classroomSearch}
-                    onFocus={() => setShowClassroomDropdown(true)} // Al hacer foco abre la lista inicial
-                    onChange={(e) => {
-                      setClassroomSearch(e.target.value);
-                      setShowClassroomDropdown(true);
-                      if (formData.classroomId) setFormData({ ...formData, classroomId: "" });
-                    }}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-                  />
-                  {isLoadingClassrooms && (
-                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-
-                <input type="hidden" required value={formData.classroomId} name="classroomId" />
-
-                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-                {showClassroomDropdown && (filteredClassrooms.length > 0 || isLoadingClassrooms || classroomSearch.trim().length > 0) && (
-                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                    {isLoadingClassrooms ? (
-                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                    ) : filteredClassrooms.length === 0 ? (
-                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron salones coincidentes</li>
-                    ) : (
-                      filteredClassrooms.map((c: any) => (
-                        <li
-                          key={c.id}
-                          onClick={() => {
-                            setFormData({ ...formData, classroomId: c.id });
-                            setClassroomSearch(`${c.name} (${c.type || 'Aula'})`);
-                            setShowClassroomDropdown(false);
-                          }}
-                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                        >
-                          <span className="font-medium text-gray-700">{c.name}</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cap: {c.maxCapacity || c.capacity}</span>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
-
-              {/* Fila 5: Instructor */}
-              <div className="relative" ref={instructorRef}>
-                <label className="block text-gray-500 font-bold mb-1">Instructor / Coreógrafo Responsable *</label>
-                <div className="relative">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Escribe para buscar o selecciona de la lista..."
-                    value={instructorSearch}
-                    onFocus={() => setShowInstructorDropdown(true)} // Al hacer foco abre la lista inicial
-                    onChange={(e) => {
-                      setInstructorSearch(e.target.value);
-                      setShowInstructorDropdown(true);
-                      if (formData.instructorId) setFormData({ ...formData, instructorId: "" });
-                    }}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-                  />
-                  {isLoadingInstructors && (
-                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-
-                <input type="hidden" required value={formData.instructorId} name="instructorId" />
-
-                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-                {showInstructorDropdown && (filteredInstructors.length > 0 || isLoadingInstructors || instructorSearch.trim().length > 0) && (
-                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                    {isLoadingInstructors ? (
-                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                    ) : filteredInstructors.length === 0 ? (
-                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron instructores</li>
-                    ) : (
-                      filteredInstructors.map((inst: any) => (
-                        <li
-                          key={inst.id}
-                          onClick={() => {
-                            setFormData({ ...formData, instructorId: inst.id });
-                            setInstructorSearch(inst.name);
-                            setShowInstructorDropdown(false);
-                          }}
-                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex flex-col gap-0.5"
-                        >
-                          <span className="font-medium text-gray-700">{inst.name}</span>
-                          {inst.dni && <span className="text-[10px] text-gray-400">DNI: {inst.dni}</span>}
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
-
-              {/* Botonera de Acción */}
-              <div className="pt-2 flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "Guardando..." : (editingId ? 'Actualizar' : 'Registrar')}
-                </button>
-              </div>
-            </form>
+                {groupCategories.map((c: GroupCategory) => (
+                  <option key={c.id} value={c.id} className="bg-neutral-900 text-white">
+                    {c.name} ({c.minimumAge} - {c.maximumAge} años)
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Fila 3: Cupos de la sección */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Cupos Máximos (Capacidad) *
+              </label>
+              <input
+                required
+                type="number"
+                min={1}
+                placeholder="Ej: 20"
+                value={formData.totalNumberOfSlots || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
+            </div>
+          </div>
+          {/* Fila 4: Salón de Clases */}
+          <div className="relative" ref={classroomRef}>
+            <label className="block text-gray-500 font-bold mb-1">Salón de Clases Asignado *</label>
+            <div className="relative">
+              <input
+                required
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={classroomSearch}
+                onFocus={() => setShowClassroomDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setClassroomSearch(e.target.value);
+                  setShowClassroomDropdown(true);
+                  if (formData.classroomId) setFormData({ ...formData, classroomId: "" });
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingClassrooms && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+            <input type="hidden" required value={formData.classroomId} name="classroomId" />
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showClassroomDropdown && (filteredClassrooms.length > 0 || isLoadingClassrooms || classroomSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingClassrooms ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredClassrooms.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron salones coincidentes</li>
+                ) : (
+                  filteredClassrooms.map((c: any) => (
+                    <li
+                      key={c.id}
+                      onClick={() => {
+                        setFormData({ ...formData, classroomId: c.id });
+                        setClassroomSearch(`${c.name} (${c.type || 'Aula'})`);
+                        setShowClassroomDropdown(false);
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <span className="font-medium text-gray-700">{c.name}</span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cap: {c.maxCapacity || c.capacity}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* Fila 5: Instructor */}
+          <div className="relative" ref={instructorRef}>
+            <label className="block text-gray-500 font-bold mb-1">Instructor / Coreógrafo Responsable *</label>
+            <div className="relative">
+              <input
+                required
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={instructorSearch}
+                onFocus={() => setShowInstructorDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setInstructorSearch(e.target.value);
+                  setShowInstructorDropdown(true);
+                  if (formData.instructorId) setFormData({ ...formData, instructorId: "" });
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingInstructors && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+            <input type="hidden" required value={formData.instructorId} name="instructorId" />
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showInstructorDropdown && (filteredInstructors.length > 0 || isLoadingInstructors || instructorSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingInstructors ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredInstructors.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron instructores</li>
+                ) : (
+                  filteredInstructors.map((inst: any) => (
+                    <li
+                      key={inst.id}
+                      onClick={() => {
+                        setFormData({ ...formData, instructorId: inst.id });
+                        setInstructorSearch(inst.name);
+                        setShowInstructorDropdown(false);
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex flex-col gap-0.5"
+                    >
+                      <span className="font-medium text-gray-700">{inst.name}</span>
+                      {inst.dni && <span className="text-[10px] text-gray-400">DNI: {inst.dni}</span>}
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* Botonera de Acción */}
+          <div className="pt-2 flex justify-between">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Guardando..." : (editingId ? 'Actualizar' : 'Registrar')}
+            </button>
+          </div>
+        </form>
+      </MacDockModal>
+
       {/* 🗓️ MODAL DE VISUALIZACIÓN DE HORARIO EN MALLA CONTINUA */}
       {isScheduleModalOpen && selectedGroupSchedule && (() => {
         const GRID_START_TIME = 8;
@@ -1074,7 +1074,7 @@ export default function GroupsListPage() {
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
-        onClose={closeModal}
+        onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}
         type={modalConfig.type}
         title={modalConfig.title}

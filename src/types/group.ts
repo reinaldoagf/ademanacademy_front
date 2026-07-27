@@ -1,11 +1,14 @@
 import { Schedule } from "@/types/schedule";
 import { Student } from "@/types/student";
 import { Classroom } from "@/types/classroom";
+import { GroupCategory } from "@/types/group-category";
 
 export interface Group {
     id: string;
     name: string;
     style: string | null;
+    categoryId: string | null;  // Guardamos la referencia por ID para los selects
+    category?: GroupCategory;
     instructorId: string | null; // Guardamos la referencia por ID para los selects
     instructor?: {
         id: string;
@@ -17,7 +20,6 @@ export interface Group {
     schedules?: Schedule[];
     students?: Student[];
     totalNumberOfSlots: number;
-    category: "baby" | "childrens" | "youth" | "adult";
 }
 
 export interface FetchGroupsParams {

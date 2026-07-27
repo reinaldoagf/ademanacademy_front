@@ -84,6 +84,7 @@ export default function GroupsCategroiesPage() {
         openModal();
     };
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
+        console.log('handleSave')
         e.preventDefault();
         setErrorMsg(null);
 
