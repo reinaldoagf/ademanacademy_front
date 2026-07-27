@@ -24,8 +24,7 @@ import { getAllCostumesAction } from "@/app/actions/costume";
 import {
   ChartPie,
   HeartPulse,
-  Users,
-  CheckSquare,
+  ChevronDown,
   CalendarDays,
   ReceiptText,
   Package,
@@ -51,6 +50,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   // Secciones modulares del software (Administrador)
   const [systemAdministration, setSystemAdministration] = useState([
@@ -62,7 +62,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
-    { key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays, badge: 0 },
+    {
+      key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
+      // 🎯 Submenú añadido
+      children: [
+        { key: 'groups-categories', name: 'Categorías', href: '/admin/groups/categories' },
+        { key: 'groups-list', name: 'Lista de Grupos', href: '/admin/groups/list', badge: 0 },
+      ]
+    },
     { key: 'registrations', name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
   ]);
 
@@ -92,13 +99,93 @@ export function Sidebar({ isOpen }: SidebarProps) {
   ]);
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
+  // Función auxiliar para renderizar enlaces simples o padres con submenús
   const renderLink = (item: any) => {
     const Icon = item.icon;
-    const isActive = pathname === item.href;
+    const hasChildren = Boolean(item.children && item.children.length > 0);
+    const isSubmenuOpen = openSubmenus[item.key];
+
+    // Un elemento hijo está activo si su href coincide exactamente
+    const isChildActive = hasChildren && item.children.some((child: any) => pathname === child.href);
+    const isActive = pathname === item.href || isChildActive;
+
+    // Si tiene hijos, renderizamos el botón desplegable con la lista de subrutas
+    if (hasChildren) {
+      return (
+        <div key={item.key} className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => toggleSubmenu(item.key)}
+            className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative w-full ${isActive
+              ? 'border-l-4 border-l-[#5e0472] bg-purple-50 text-[#5e0472]'
+              : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
+              } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
+          >
+            <div className="flex items-center gap-3">
+              <Icon className="w-5 h-5 shrink-0" />
+              <span className={`transition-all duration-200 ${!isOpen ? 'md:hidden' : ''}`}>
+                {item.name}
+              </span>
+            </div>
+
+            <div className={`flex items-center gap-1 ${!isOpen ? 'md:hidden' : ''}`}>
+              {!hasChildren && item.badge !== undefined && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 shrink-0 ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
+                  }`}>
+                  {item.badge}
+                </span>
+              )}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180 text-[#5e0472]' : 'text-gray-400'
+                  }`}
+              />
+            </div>
+
+            {!isOpen && (
+              <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap">
+                {item.name}
+              </div>
+            )}
+          </button>
+
+          {/* Submenú desplegable (se oculta cuando el sidebar se colapsa en vista md) */}
+          {isSubmenuOpen && (
+            <div className={`flex flex-col pl-9 pr-2 space-y-1 my-1 ${!isOpen ? 'md:hidden' : ''}`}>
+              {item.children.map((child: any) => {
+                const isSubActive = pathname === child.href;
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className={`font-questrial text-xs font-medium py-1.5 px-3 transition flex items-center justify-between ${isSubActive
+                      ? 'bg-[#5e0472] text-white font-semibold'
+                      : 'text-gray-500 hover:bg-purple-100 hover:text-[#5e0472]'
+                      }`}
+                  >
+
+                    <div className="flex items-center gap-3">
+                      {child.name}
+                    </div>
+                    {child.badge !== undefined && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 shrink-0 ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
+                        }`}>
+                        {child.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Renderizado estándar para ítems sin submenú
     return (
       <Link
-        key={item.href}
-        href={item.href}
+        key={item.href || item.key}
+        href={item.href || '#'}
         className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${isActive
           ? 'border-l-4 border-l-[#5e0472] bg-purple-100 text-[#5e0472]'
           : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
@@ -113,7 +200,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         {item.badge !== undefined && (
           <span className={`
-            text-[10px] font-bold px-2 py-0.5 shrink-0 rounded
+            text-[10px] font-bold px-2 py-0.5 shrink-0
             ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'}
             ${!isOpen ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[15px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]' : ''}
           `}>
@@ -122,7 +209,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         )}
 
         {!isOpen && (
-          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap rounded">
+          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap">
             {item.name}
           </div>
         )}
@@ -184,9 +271,24 @@ export function Sidebar({ isOpen }: SidebarProps) {
       if (res.meta) {
         const totalGroups = res.meta.totalItems;
         setAcademicManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "groups" ? { ...item, badge: totalGroups } : item
-          )
+          currentItems.map((item) => {
+            if (item.key === "groups") {
+              // Actualizamos el badge en el hijo "groups-list"
+              const updatedChildren = item.children?.map((child) =>
+                child.key === "groups-list"
+                  ? { ...child, badge: totalGroups }
+                  : child
+              );
+
+              return {
+                ...item,
+                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
+                badge: totalGroups,
+                children: updatedChildren,
+              };
+            }
+            return item;
+          })
         );
       }
     } catch (error) {
@@ -328,6 +430,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.removeEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
     };
   }, [isClientView]);
+  const toggleSubmenu = (key: string) => {
+    setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+  // Abrir automáticamente el submenú si la ruta actual coincide con alguna de sus subrutas
+  useEffect(() => {
+    if (pathname.startsWith('/admin/groups')) {
+      setOpenSubmenus((prev) => ({ ...prev, groups: true }));
+    }
+  }, [pathname]);
   return (
     <aside className={`
       bg-white/80 backdrop-blur-md flex flex-col justify-between border-r border-purple-100 

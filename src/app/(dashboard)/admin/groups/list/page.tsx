@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/groups/page.tsx
+// src/app/(dashboard)/admin/groups/list/page.tsx
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
@@ -40,7 +40,7 @@ const initialFormState: GroupFormData = {
   classroomId: "",
   instructorId: ""
 };
-export default function GroupsPage() {
+export default function GroupsListPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -320,7 +320,7 @@ export default function GroupsPage() {
 
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
       <HeroSection
-        htmlTitle={`Grupos de <em class="text-[#5e0472]">Clases</em>`}
+        htmlTitle={`Lista de Grupos de <em class="text-[#5e0472]">Clases</em>`}
         htmlSubTitle={`Monitorea el uso de los grupos de clases.`}
         actions={[{
           label: "Registrar Nuevo Grupo →",
