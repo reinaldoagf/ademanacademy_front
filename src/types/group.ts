@@ -6,7 +6,6 @@ import { GroupCategory } from "@/types/group-category";
 export interface Group {
     id: string;
     name: string;
-    style: string | null;
     categoryId: string | null;  // Guardamos la referencia por ID para los selects
     category?: GroupCategory;
     instructorId: string | null; // Guardamos la referencia por ID para los selects

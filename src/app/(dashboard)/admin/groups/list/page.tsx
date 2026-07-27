@@ -37,7 +37,6 @@ type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"
 // 2. Estado inicial limpio del formulario
 const initialFormState: GroupFormData = {
   name: "",
-  style: "",
   totalNumberOfSlots: 20,
   categoryId: "",
   classroomId: "",
@@ -301,7 +300,6 @@ export default function GroupsListPage() {
   const handleEditModal = (group: Group) => { // Puedes usar la interfaz de tu Student de Prisma
     setFormData({
       name: group.name || "",
-      style: group.style || "",
       categoryId: group.categoryId || "",
       totalNumberOfSlots: group.totalNumberOfSlots || 10,
       classroomId: group.classroomId || "",
@@ -457,7 +455,6 @@ export default function GroupsListPage() {
                       </span>
                     </div>
                     <h3 className="font-anton text-gray-800 text-base mt-1">{group.name}</h3>
-                    <p className="text-xs text-gray-500 font-questrial font-medium">{group.style}</p>
                   </div>
                 </div>
 
@@ -640,16 +637,19 @@ export default function GroupsListPage() {
 
           {/* Fila 2: Estilo de Baile y Categoría (Edad) */}
           <div className="grid grid-cols-2 gap-3">
+
             <div>
               <label className="block text-gray-500 font-bold mb-1">
-                Estilo de Baile
+                Cupos Máximos (Capacidad) *
               </label>
               <input
-                type="text"
-                placeholder="Ej: Urban Dance, Salsa, Ballet"
-                value={formData.style || ""}
+                required
+                type="number"
+                min={1}
+                placeholder="Ej: 20"
+                value={formData.totalNumberOfSlots || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, style: e.target.value })
+                  setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
                 }
                 className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
               />
@@ -678,25 +678,6 @@ export default function GroupsListPage() {
             </div>
           </div>
 
-          {/* Fila 3: Cupos de la sección */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Cupos Máximos (Capacidad) *
-              </label>
-              <input
-                required
-                type="number"
-                min={1}
-                placeholder="Ej: 20"
-                value={formData.totalNumberOfSlots || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-          </div>
           {/* Fila 4: Salón de Clases */}
           <div className="relative" ref={classroomRef}>
             <label className="block text-gray-500 font-bold mb-1">Salón de Clases Asignado *</label>
