@@ -21,6 +21,7 @@ import {
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { getAllCostumesAction } from "@/app/actions/costume";
+import { getAllEmployeesAction } from "@/app/actions/employee";
 import {
   ChartPie,
   HeartPulse,
@@ -78,7 +79,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
     { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
     { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
-    { key: '', name: 'Profesores y Nómina', href: '/admin/profesores', icon: Contact },
+    { key: 'employees', name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
     { key: 'costumes', name: 'Vestuarios', href: '/admin/costumes', icon: Shirt, badge: 12 },
     { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
   ]);
@@ -386,6 +387,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchEmployeesBadgeCount = async () => {
+    try {
+      const res = await getAllEmployeesAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalEmployees = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) =>
+            item.key === "employees" ? { ...item, badge: totalEmployees } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
     if (isAdminView) {
@@ -397,6 +417,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchPaymentsBadgeCount();
       fetchPaymentOrdersBadgeCount();
       fetchCostumesBadgeCount();
+      fetchEmployeesBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
@@ -404,6 +425,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.addEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
       window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
+      window.addEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
@@ -413,6 +435,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.removeEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
       window.removeEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
+      window.removeEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
     };
   }, [isAdminView]);
   // useEffect para cargar la data real al montar el Sidebar por primera vez
