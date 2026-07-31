@@ -331,7 +331,6 @@ export default function StudentsPage() {
             </div>
             <div className="hidden md:flex flex-col text-left font-questrial">
               <span className="text-xs font-bold text-gray-700 leading-tight">{student.group.name}</span>
-              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.group.style}</span>
             </div>
           </div>
         );
@@ -757,7 +756,7 @@ export default function StudentsPage() {
                     {isLoadingUsers ? (
                       <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
                     ) : filteredUsers.length === 0 ? (
-                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
+                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
                     ) : (
                       filteredUsers.map((c: any) => (
                         <li

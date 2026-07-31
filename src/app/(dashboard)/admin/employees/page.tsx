@@ -1,19 +1,15 @@
-// src/app/(dashboard)/employeeesores/page.tsx
+// src/app/(dashboard)/employeees/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import {
-  Contact,
   Plus,
   Search,
   Clock,
-  BadgeDollarSign,
   UserCheck,
   CircleCheck,
   Briefcase,
   Layers,
-  ArrowUpRight,
-  DollarSign,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -21,6 +17,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
 import { EmployeeFormData, Employee } from "@/types/employee";
 
@@ -31,13 +28,22 @@ const initialFormState: EmployeeFormData = {
   dni: "",
   phone: "",
   typeOfContract: "fixed",
+  typeOfEmployee: "administrative",
   hourlyRate: 0,
   hoursTaughtMonth: 0,
   bonus: 0,
   birthDate: "",
   address: "",
+  userId: "",
 };
 export default function EmployeesPage() {
+  // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+  const [userSearch, setUserSearch] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  // Refs para cerrar los menús si el usuario hace click afuera
+  const userRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<EmployeeFormData>(initialFormState);
@@ -155,6 +161,7 @@ export default function EmployeesPage() {
       dni: employee.dni || "",
       phone: employee.phone || "",
       typeOfContract: employee.typeOfContract || "fixed",
+      typeOfEmployee: employee.typeOfEmployee || "administrative",
       hourlyRate: employee.hourlyRate || 0,
       hoursTaughtMonth: employee.hoursTaughtMonth || 0,
       bonus: employee.bonus || 0,
@@ -190,7 +197,7 @@ export default function EmployeesPage() {
         const initials = `${employee.firstName?.[0] || ""}${employee.lastName?.[0] || ""}`.toUpperCase();
         return (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0 font-questrial rounded-full">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
               {initials || "EM"}
             </div>
             <div>
@@ -200,6 +207,26 @@ export default function EmployeesPage() {
               <p className="text-[10px] text-gray-400 font-questrial">
                 DNI: {employee.dni || "Sin DNI"}
               </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Usuario",
+      render: (employee) => {
+        if (!employee.user) {
+          return <p className="text-[11px] text-gray-400 mt-0.5">Sin cuenta registrada</p>;
+        }
+        const userInitials = employee.user?.name?.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {userInitials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">{employee.user.name}</span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{employee.user.email}</span>
             </div>
           </div>
         );
@@ -219,6 +246,15 @@ export default function EmployeesPage() {
         <span className="flex items-center gap-1 text-xs text-gray-500 font-questrial capitalize">
           <Briefcase className="w-3.5 h-3.5 text-gray-400" />
           {employee.typeOfContract}
+        </span>
+      ),
+    },
+    {
+      header: "Tipo de Empleado",
+      render: (employee) => (
+        <span className="flex items-center gap-1 text-xs text-gray-500 font-questrial capitalize">
+          <Briefcase className="w-3.5 h-3.5 text-gray-400" />
+          {employee.typeOfEmployee}
         </span>
       ),
     },
@@ -329,6 +365,50 @@ export default function EmployeesPage() {
       }
     });
   };
+
+
+  // 🎯 MANEJADORES DE LA TABLA
+  // --- EFFECT PARA usuarios (Vía Server Action) ---
+  useEffect(() => {
+    // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
+    if (filteredUsers.find(c => c.id === formData.userId)?.name === userSearch) {
+      return;
+    }
+
+    setIsLoadingUsers(true);
+
+    const isSearchEmpty = !userSearch.trim();
+    const delay = isSearchEmpty ? 0 : 400;
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // Construimos los parámetros requeridos por FetchUsersParams
+        const params = isSearchEmpty
+          ? { limit: 5 }
+          : { search: userSearch.trim() };
+
+        // Llamada directa al Server Action
+        const result = await getAllUsersAction(params);
+
+        if (result.success && result.data) {
+          // Axios mapea la respuesta en result.data. data.data suele ser el array
+          // Si tu backend anida los grupos en 'users', úsalo; de lo contrario asigna result.data
+          setFilteredUsers(result.data.users || result.data);
+        } else {
+          console.error("Error en Server Action (usuarios):", result.error);
+          setFilteredUsers([]);
+        }
+      } catch (error) {
+        console.error("Error crítico buscando usuarios:", error);
+        setFilteredUsers([]);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(delayDebounce);
+  }, [isOpen, userSearch]);
+  // 🎯 MANEJADORES DE LA TABLA
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchData(currentPage, itemsPerPage);
@@ -357,62 +437,7 @@ export default function EmployeesPage() {
       />
 
       <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
-        {/* MÉTRICAS DE HONORARIOS DEL MES */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Horas totales ejecutadas */}
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-[#5e0472]">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                Horas pedagógicas frente a clase.
-              </p>
-              <h4 className="text-xl font-anton text-gray-800">
-                {totalHorasDictadas} Hrs
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Horas pedagógicas frente a clase.
-              </p>
-            </div>
-          </div>
 
-          {/* Total Nómina */}
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-indigo-100 flex items-center justify-center text-indigo-600">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                Presupuesto de Nómina
-              </p>
-              <h4 className="text-xl font-anton text-gray-800">
-                ${nominaTotalMes.toLocaleString()}
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Incluye sueldos base y bonos de montaje.
-              </p>
-            </div>
-          </div>
-
-          {/* Pendientes de pago */}
-          <div className="glass-card shadow-sm p-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600">
-              <UserCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
-                Pendiente por Liquidar
-              </p>
-              <h4 className="text-xl font-anton text-pink-600">
-                ${pendientesPorPagar.toLocaleString()}
-              </h4>
-              <p className="font-questrial text-xs text-gray-500">
-                Honorarios listos por transferir.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* BARRA DE BÚSQUEDA */}
         <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -525,19 +550,27 @@ export default function EmployeesPage() {
 
           {/* Fila 3: Teléfono y Tipo de Contrato */}
           <div className="grid grid-cols-2 gap-3">
+
+
             <div>
               <label className="block text-gray-500 font-bold mb-1">
-                Teléfono de Contacto
+                Tipo de Contrato *
               </label>
-              <input
-                type="text"
-                placeholder="Ej: +57 300 123 4567"
-                value={formData.phone || ""}
+              <select
+                required
+                value={formData.typeOfEmployee || "administrative"}
                 onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
+                  setFormData({
+                    ...formData,
+                    typeOfEmployee: e.target.value as EmployeeFormData["typeOfEmployee"],
+                  })
                 }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize"
+              >
+                <option value="administrative">Personal Administrativo y de Gestión</option>
+                <option value="teaching">Personal Docente y Artístico</option>
+                <option value="support">Personal de Soporte y Operaciones</option>
+              </select>
             </div>
 
             <div>
@@ -561,6 +594,22 @@ export default function EmployeesPage() {
               </select>
             </div>
           </div>
+          <div>
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Teléfono de Contacto
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: +57 300 123 4567"
+                value={formData.phone || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
+            </div>
+          </div>
 
           <div>
             <label className="block text-gray-500 font-bold mb-1">
@@ -574,6 +623,62 @@ export default function EmployeesPage() {
               onChange={e => setFormData({ ...formData, address: e.target.value })}
               className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
             ></textarea>
+          </div>
+
+          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+          <div className="relative" ref={userRef}>
+            <label className="block text-gray-500 font-bold mb-1">Asignación de usuario</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={userSearch}
+                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                  setFormData({
+                    ...formData,
+                    userId: e.target.value as any,
+                  })
+                  // setError(null);
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingUsers && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingUsers ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredUsers.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
+                ) : (
+                  filteredUsers.map((c: any) => (
+                    <li
+                      key={c.id}
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          userId: c.id as any,
+                        })
+                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
+                        setShowUserDropdown(false);
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <span className="font-medium text-gray-700">{c.name}</span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
           </div>
 
           {/* Fila 4: Tarifa por Hora, Horas Dictadas y Bono Extra */}

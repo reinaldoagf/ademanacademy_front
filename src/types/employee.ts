@@ -2,6 +2,7 @@
 
 // 🏷️ Enums según schema.prisma
 export type TypeOfContract = 'fixed' | 'temporary' | 'indefinite' | string; // Ajusta los valores a tu enum de Prisma
+export type TypeOfEmployee = 'administrative' | 'teaching' | 'support' | string; // Ajusta los valores a tu enum de Prisma
 export type PayrollStatus = 'pending' | 'paid' | string; // Ajusta los valores a tu enum de Prisma
 
 // 👔 Interfaz Principal del Empleado (Employee)
@@ -40,11 +41,13 @@ export interface EmployeeFormData {
     dni: string;
     phone: string;
     typeOfContract: TypeOfContract;
+    typeOfEmployee: TypeOfEmployee;
     hourlyRate: number;
     hoursTaughtMonth: number;
     bonus: number;
     birthDate: Date | string;
     address: string;
+    userId?: string | null;
 }
 // 🔍 Parámetros de Búsqueda y Paginación
 export interface FetchEmployeesParams {
