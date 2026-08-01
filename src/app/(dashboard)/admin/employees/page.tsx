@@ -340,7 +340,7 @@ export default function EmployeesPage() {
               id: employee.id,
             });
           }}
-            className={`text-xs  border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold  transition shadow-sm cursor-pointer bg-white hover:bg-[#5e0472] hover:text-white`}
+            className={`text-xs border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold transition shadow-sm cursor-pointer bg-white hover:bg-[#5e0472] hover:text-white`}
           >
             Eliminar
           </button>
@@ -429,6 +429,7 @@ export default function EmployeesPage() {
               setFormData(initialFormState);
               setErrorMsg(null);
               setEditingId(null);
+              setUserSearch(``);
               openModal();
             },
             icon: <Plus className="w-4 h-4" />,
@@ -471,6 +472,7 @@ export default function EmployeesPage() {
         isOpen={isOpen}
         onClose={closeModal}
         title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+        size={"lg"}
       >
         {/* Formulario */}
         <form onSubmit={handleSave} className="space-y-4 font-questrial text-xs">
@@ -480,6 +482,74 @@ export default function EmployeesPage() {
             </p>
           )}
 
+          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+          <div className="relative" ref={userRef}>
+            <label className="block text-gray-500 font-bold mb-1">Asignación de usuario (Opcional)</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={userSearch}
+                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                  setFormData({
+                    ...formData,
+                    userId: e.target.value as any,
+                  })
+                  // setError(null);
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingUsers && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingUsers ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredUsers.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
+                ) : (
+                  filteredUsers.map((c: any) => (
+                    <li
+                      key={c.id}
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          userId: c.id as any,
+                        })
+                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
+                        setShowUserDropdown(false);
+                        if (c.dni) {
+                          setFormData({
+                            ...formData,
+                            dni: c.dni,
+                          })
+                        }
+                        if (c.name) {
+                          setFormData({
+                            ...formData,
+                            firstName: c.name,
+                          })
+                        }
+                        console.log({ c })
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <span className="font-medium text-gray-700">{c.name}</span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
           {/* Fila 1: Nombre y Apellido */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -625,61 +695,6 @@ export default function EmployeesPage() {
             ></textarea>
           </div>
 
-          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-          <div className="relative" ref={userRef}>
-            <label className="block text-gray-500 font-bold mb-1">Asignación de usuario</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={userSearch}
-                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  setFormData({
-                    ...formData,
-                    userId: e.target.value as any,
-                  })
-                  // setError(null);
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-              />
-              {isLoadingUsers && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
-
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingUsers ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredUsers.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
-                ) : (
-                  filteredUsers.map((c: any) => (
-                    <li
-                      key={c.id}
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          userId: c.id as any,
-                        })
-                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
-                        setShowUserDropdown(false);
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                    >
-                      <span className="font-medium text-gray-700">{c.name}</span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
 
           {/* Fila 4: Tarifa por Hora, Horas Dictadas y Bono Extra */}
           <div className="grid grid-cols-3 gap-3">

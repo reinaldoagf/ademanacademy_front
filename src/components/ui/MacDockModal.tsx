@@ -9,10 +9,11 @@ interface MacDockModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
+    size: "lg" | "md" | "sm";
     children: ReactNode;
 }
 
-export function MacDockModal({ isOpen, onClose, title, children }: MacDockModalProps) {
+export function MacDockModal({ isOpen, onClose, title, size = "sm", children }: MacDockModalProps) {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -54,7 +55,7 @@ export function MacDockModal({ isOpen, onClose, title, children }: MacDockModalP
                                 ease: 'easeInOut',
                             },
                         }}
-                        className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative z-10"
+                        className={`bg-white border border-purple-100 shadow-2xl w-full overflow-hidden relative z-10 max-w-${size}`}
                     >
                         {/* Cabecera del Modal */}
                         <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
