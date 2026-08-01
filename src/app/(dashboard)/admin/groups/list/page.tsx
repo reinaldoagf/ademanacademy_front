@@ -605,7 +605,7 @@ export default function GroupsListPage() {
       <MacDockModal
         isOpen={isOpen}
         onClose={closeModal}
-        title={editingId ? "Actualizar Categoría de Grupo" : "Registrar Nueva Categoría de Grupo"}
+        title={editingId ? "Actualizar Grupo" : "Registrar Nuevo Grupo"}
         size={"lg"}
       >
         {/* Formulario */}

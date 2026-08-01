@@ -6,7 +6,6 @@ import {
   Shirt,
   Search,
   Plus,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -15,9 +14,11 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { MacDockModal } from "@/components/ui/MacDockModal";
 import { CostumeCategory, CostumeStatus, SizeStock, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
@@ -72,7 +73,7 @@ export default function CostumesPage() {
   });
 
   const [costumes, setCostumes] = useState<Costume[]>([]);
-  const [isModalFormOpen, setIsModalFormOpen] = useState(false);
+  const { isOpen, openModal, closeModal } = useModal();
   const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export default function CostumesPage() {
     title: "",
     description: "",
   });
-  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
     if (modalConfig?.id) {
@@ -181,8 +182,8 @@ export default function CostumesPage() {
   };
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (costume: any) => {
+    openModal();
     setEditingId(costume.id);
-    setIsModalFormOpen(true);
     setCostumeFormData({
       name: costume.name ?? '',
       beat: costume.beat ?? '',
@@ -312,7 +313,7 @@ export default function CostumesPage() {
           });
         }
 
-        setIsModalFormOpen(false);
+        closeModal();
       } else {
         toast.error(result.error);
         setErrorMsg(result.error);
@@ -402,7 +403,7 @@ export default function CostumesPage() {
               });
               setEditingId(null);
               setErrorMsg(null);
-              setIsModalFormOpen(true)
+              openModal()
             },
             icon: <Plus className="w-4 h-4" />,
             variant: "primary" as const,
@@ -555,254 +556,219 @@ export default function CostumesPage() {
         )}
       </div>
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
-      {isModalFormOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
 
-          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
+      <MacDockModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={editingId ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
+        size={"lg"}
+      >
 
-            {/* Cabecera del Modal (Fija en la parte superior) */}
-            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
-              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                {editingId ? 'Actualizar Vestuario' : 'Dar de alta Vestuario'}
-              </h3>
+        {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
+        <form
+          ref={clothingFormReference}
+          id="costume-form" // <-- Añadimos este ID
+          onSubmit={wardrobeStorage}
+          className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin"
+        >
+          {errorMsg && (
+            <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
+              {errorMsg}
+            </p>
+          )}
 
-              <button
-                onClick={() => setIsModalFormOpen(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
+          {/* Nombre y Beat - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Nombre del Vestuario *
+              </label>
+              <input
+                type="text"
+                placeholder="Ej. Set urbano..."
+                required
+                value={costumeFormData.name}
+                onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
             </div>
 
-            {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
-            <form
-              ref={clothingFormReference}
-              id="costume-form" // <-- Añadimos este ID
-              onSubmit={wardrobeStorage}
-              className="flex-1 overflow-y-auto p-5 space-y-4 font-questrial text-xs scrollbar-thin"
-            >
-              {errorMsg && (
-                <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
-                  {errorMsg}
-                </p>
-              )}
-
-              {/* Nombre y Beat - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Nombre del Vestuario *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Set urbano..."
-                    required
-                    value={costumeFormData.name}
-                    onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Ritmo / Coreografía (Beat)
-                  </label>
-                  <input
-                    type="text"
-                    value={costumeFormData.beat}
-                    onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                    placeholder="Ej. Salsa, Urbana..."
-                  />
-                </div>
-              </div>
-
-              {/* Categoría y Estado - Grid responsivo */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Categoría *
-                  </label>
-                  <select
-                    value={costumeFormData.category}
-                    onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
-                    className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                  >
-                    <option value="baby">Baby</option>
-                    <option value="childrens">Infantil</option>
-                    <option value="youth">Juvenil</option>
-                    <option value="adult">Adulto</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Estado Inicial *
-                  </label>
-                  <select
-                    value={costumeFormData.status}
-                    onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
-                    className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                  >
-                    <option value="pending_preparation">Pendiente Preparación</option>
-                    <option value="available">Disponible</option>
-                    <option value="maintenance">En Mantenimiento / Lavado</option>
-                    <option value="retired">Retirado</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Sección Dinámica: Control de Stock por Tallas */}
-              <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
-                <div>
-                  <label className="block text-gray-700 font-bold">Inventario disponible por Talla</label>
-                  <p className="text-[10px] text-gray-400">Ajusta el stock usando los controles laterales o escribiendo el número directo.</p>
-                </div>
-
-                <div className="border border-purple-100/60 overflow-hidden bg-white shadow-xs">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-purple-50/50 border-b border-purple-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="px-4 py-2 font-anton">Talla</th>
-                        <th className="px-4 py-2 text-right font-anton">Cantidad / Unidades</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-purple-50">
-                      {costumeFormData.availableSizes.map((item, idx) => {
-                        const handleUpdateQuantity = (newVal: number) => {
-                          const safeVal = Math.max(0, newVal);
-                          const updatedSizes = [...costumeFormData.availableSizes];
-                          updatedSizes[idx] = { ...updatedSizes[idx], quantity: safeVal };
-                          setCostumeFormData({ ...costumeFormData, availableSizes: updatedSizes });
-                        };
-
-                        return (
-                          <tr key={item.size} className="hover:bg-purple-50/20 transition-colors">
-                            <td className="px-4 py-1.5 font-mono font-bold text-purple-700 text-sm">
-                              {item.size}
-                            </td>
-
-                            <td className="px-4 py-1.5 flex justify-end">
-                              <div className="flex items-center border border-purple-100 bg-purple-50/10 overflow-hidden max-w-[130px]">
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateQuantity(item.quantity - 1)}
-                                  disabled={item.quantity <= 0}
-                                  className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm"
-                                >
-                                  –
-                                </button>
-
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={item.quantity}
-                                  onChange={(e) => handleUpdateQuantity(Number(e.target.value))}
-                                  className="w-12 text-center py-0.5 bg-transparent focus:outline-none font-mono text-xs text-gray-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateQuantity(item.quantity + 1)}
-                                  className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 text-sm"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Sección: Galería de Imágenes */}
-              <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
-                <div>
-                  <label className="block text-gray-700 font-bold">Galería de Imágenes</label>
-                  <p className="text-[10px] text-gray-400">Sube hasta 10 fotos del diseño en formato JPG, PNG o WEBP.</p>
-                </div>
-
-                {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group">
-                    <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                  {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
-                  {existingImages.map((src, index) => (
-                    <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                      <img
-                        src={src}
-                        alt={`Guardada ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Etiqueta sutil que indica que está guardada */}
-                      <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
-                        Guardada
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeExistingImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {previews.map((src, index) => (
-                    <div key={index} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                      <img
-                        src={src}
-                        alt={`Vista previa ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeNewImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </form>
-
-            {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
-            <div className="px-5 py-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsModalFormOpen(false)}
-                className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                form="costume-form" // <-- Apunta al ID del formulario
-                onClick={(e) => { }}
-                className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-              >
-                {editingId ? 'Actualizar' : 'Registrar'}
-              </button>
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Ritmo / Coreografía (Beat)
+              </label>
+              <input
+                type="text"
+                value={costumeFormData.beat}
+                onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                placeholder="Ej. Salsa, Urbana..."
+              />
             </div>
-
           </div>
-        </div>
-      )}
+
+          {/* Categoría y Estado - Grid responsivo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Categoría *
+              </label>
+              <select
+                value={costumeFormData.category}
+                onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+              >
+                <option value="baby">Baby</option>
+                <option value="childrens">Infantil</option>
+                <option value="youth">Juvenil</option>
+                <option value="adult">Adulto</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Estado Inicial *
+              </label>
+              <select
+                value={costumeFormData.status}
+                onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+              >
+                <option value="pending_preparation">Pendiente Preparación</option>
+                <option value="available">Disponible</option>
+                <option value="maintenance">En Mantenimiento / Lavado</option>
+                <option value="retired">Retirado</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sección Dinámica: Control de Stock por Tallas */}
+          <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
+            <div>
+              <label className="block text-gray-700 font-bold">Inventario disponible por Talla</label>
+              <p className="text-[10px] text-gray-400">Ajusta el stock usando los controles laterales o escribiendo el número directo.</p>
+            </div>
+
+            <div className="border border-purple-100/60 overflow-hidden bg-white shadow-xs">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-purple-50/50 border-b border-purple-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="px-4 py-2 font-anton">Talla</th>
+                    <th className="px-4 py-2 text-right font-anton">Cantidad / Unidades</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-purple-50">
+                  {costumeFormData.availableSizes.map((item, idx) => {
+                    const handleUpdateQuantity = (newVal: number) => {
+                      const safeVal = Math.max(0, newVal);
+                      const updatedSizes = [...costumeFormData.availableSizes];
+                      updatedSizes[idx] = { ...updatedSizes[idx], quantity: safeVal };
+                      setCostumeFormData({ ...costumeFormData, availableSizes: updatedSizes });
+                    };
+
+                    return (
+                      <tr key={item.size} className="hover:bg-purple-50/20 transition-colors">
+                        <td className="px-4 py-1.5 font-mono font-bold text-purple-700 text-sm">
+                          {item.size}
+                        </td>
+
+                        <td className="px-4 py-1.5 flex justify-end">
+                          <div className="flex items-center border border-purple-100 bg-purple-50/10 overflow-hidden max-w-[130px]">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQuantity(item.quantity - 1)}
+                              disabled={item.quantity <= 0}
+                              className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm"
+                            >
+                              –
+                            </button>
+
+                            <input
+                              type="number"
+                              min={0}
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateQuantity(Number(e.target.value))}
+                              className="w-12 text-center py-0.5 bg-transparent focus:outline-none font-mono text-xs text-gray-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQuantity(item.quantity + 1)}
+                              className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 text-sm"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Sección: Galería de Imágenes */}
+          <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
+            <div>
+              <label className="block text-gray-700 font-bold">Galería de Imágenes</label>
+              <p className="text-[10px] text-gray-400">Sube hasta 10 fotos del diseño en formato JPG, PNG o WEBP.</p>
+            </div>
+
+            {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group">
+                <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+              {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
+              {existingImages.map((src, index) => (
+                <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
+                  <img
+                    src={src}
+                    alt={`Guardada ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Etiqueta sutil que indica que está guardada */}
+                  <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
+                    Guardada
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {previews.map((src, index) => (
+                <div key={index} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
+                  <img
+                    src={src}
+                    alt={`Vista previa ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </form>
+      </MacDockModal>
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
       {isPoliciesModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -897,7 +863,7 @@ export default function CostumesPage() {
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
-        onClose={closeModal}
+        onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}
         type={modalConfig.type}
         title={modalConfig.title}

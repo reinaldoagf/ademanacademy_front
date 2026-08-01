@@ -381,7 +381,7 @@ export default function ClassroomPage() {
             <MacDockModal
                 isOpen={isOpen}
                 onClose={closeModal}
-                title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+                title={editingId ? "Actualizar Salón de Clases" : "Registrar Nuevo Salón de Clases"}
                 size={"lg"}
             >
                 {/* Formulario */}
