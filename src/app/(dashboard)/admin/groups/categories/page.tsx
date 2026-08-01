@@ -299,6 +299,7 @@ export default function GroupsCategroiesPage() {
                 isOpen={isOpen}
                 onClose={closeModal}
                 title={editingId ? "Actualizar Categoría de Grupo" : "Registrar Nueva Categoría de Grupo"}
+                size={"lg"}
             >
                 <form
                     className="space-y-4 font-questrial text-xs"
