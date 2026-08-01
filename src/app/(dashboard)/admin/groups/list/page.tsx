@@ -606,6 +606,7 @@ export default function GroupsListPage() {
         isOpen={isOpen}
         onClose={closeModal}
         title={editingId ? "Actualizar Categoría de Grupo" : "Registrar Nueva Categoría de Grupo"}
+        size={"lg"}
       >
         {/* Formulario */}
         <form
