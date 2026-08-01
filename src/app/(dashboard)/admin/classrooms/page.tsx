@@ -12,14 +12,16 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { MacDockModal } from "@/components/ui/MacDockModal";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classroom";
 import { Classroom } from "@/types/classroom";
 
 export default function ClassroomPage() {
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const { isOpen, openModal, closeModal } = useModal();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [modalConfig, setModalConfig] = useState<{
@@ -60,7 +62,7 @@ export default function ClassroomPage() {
         description: ""
     });
 
-    const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
     const handleConfirmAction = async () => {
         if (modalConfig?.id) {
@@ -97,10 +99,7 @@ export default function ClassroomPage() {
                 window.dispatchEvent(new Event('refresh-classrooms-count'));
             }
             // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-            setIsModalOpen(false);
-
-
-
+            closeModal();
         });
     };
 
@@ -116,7 +115,7 @@ export default function ClassroomPage() {
         });
         setEditingId(classroom.id);
         setErrorMsg(null);
-        setIsModalOpen(true);
+        openModal();
     };
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -168,7 +167,7 @@ export default function ClassroomPage() {
                             });
                             setEditingId(null);
                             setErrorMsg(null);
-                            setIsModalOpen(true)
+                            openModal()
                         },
                         icon: <Plus className="w-4 h-4" />,
                     },
@@ -379,149 +378,133 @@ export default function ClassroomPage() {
                 )}
             </div>
 
-            {/* MODAL: APERTURA / REGISTRO DE SALÓN */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
-                        {/* Cabecera del Modal */}
+            <MacDockModal
+                isOpen={isOpen}
+                onClose={closeModal}
+                title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+                size={"lg"}
+            >
+                {/* Formulario */}
 
-                        <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-purple-600" />
-                                {editingId ? 'Actualizar Salón' : 'Dar de alta Salón'}
-                            </h3>
+                <form
+                    onSubmit={handleSave}
+                    className="space-y-4 font-questrial text-xs"
+                >
+                    {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                    <div className="grid grid-cols-1 gap-3">
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">
+                                Nombre de la Estructura / Aula *
+                            </label>
+
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, name: e.target.value })
+                                }
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-gray-500 font-bold mb-1">
+                            Dirección
+                        </label>
+
+                        <textarea
+                            required
+                            rows={3}
+                            value={formData.address}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                        ></textarea>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">
+                                Especialidad de Área
+                            </label>
+
+                            <select
+                                value={formData.type}
+                                onChange={e => setFormData({ ...formData, type: e.target.value as Classroom["type"] })}
+                                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
                             >
-                                <X className="w-4 h-4" />
-                            </button>
+                                <option value="mirrors">Área Espejos</option>
+                                <option value="urban">Área Urbano</option>
+                                <option value="free">Estudio Libre</option>
+                                <option value="theories">Aula de Teorías</option>
+                            </select>
                         </div>
 
-                        {/* Formulario */}
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">
+                                Estado Operativo
+                            </label>
+                            <select
+                                value={formData.status}
+                                onChange={e => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
+                                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                            >
+                                <option value="active">Activo</option>
+                                <option value="maintenance">En Mantenimiento</option>
+                            </select>
+                        </div>
 
-                        <form
-                            onSubmit={handleSave}
-                            className="p-5 space-y-4 font-questrial text-xs"
-                        >
-                            {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
-
-                            <div className="grid grid-cols-1 gap-3">
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">
-                                        Nombre de la Estructura / Aula *
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, name: e.target.value })
-                                        }
-                                        className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">
-                                    Dirección
-                                </label>
-
-                                <textarea
-                                    required
-                                    rows={3}
-                                    value={formData.address}
-                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                                ></textarea>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">
-                                        Especialidad de Área
-                                    </label>
-
-                                    <select
-                                        value={formData.type}
-                                        onChange={e => setFormData({ ...formData, type: e.target.value as Classroom["type"] })}
-                                        className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                                    >
-                                        <option value="mirrors">Área Espejos</option>
-                                        <option value="urban">Área Urbano</option>
-                                        <option value="free">Estudio Libre</option>
-                                        <option value="theories">Aula de Teorías</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">
-                                        Estado Operativo
-                                    </label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
-                                        className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                                    >
-                                        <option value="active">Activo</option>
-                                        <option value="maintenance">En Mantenimiento</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Aforo Máximo de Seguridad (Alumnos) *</label>
-                                    <input
-                                        required
-                                        type="number"
-                                        min={1}
-                                        max={60}
-                                        value={formData.maxCapacity}
-                                        onChange={e => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
-                                        className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">Descripción de Equipamiento</label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="Detalla si el salón cuenta con barras de ballet, aire acondicionado o tipos específicos de pisos..."
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
-                                />
-                            </div>
-
-
-                            {/* Botonera */}
-
-                            <div className="pt-2 flex justify-between">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-                                >
-                                    Cancelar
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-                                >
-                                    {editingId ? 'Actualizar' : 'Registrar'}
-                                </button>
-                            </div>
-                        </form>
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">Aforo Máximo de Seguridad (Alumnos) *</label>
+                            <input
+                                required
+                                type="number"
+                                min={1}
+                                max={60}
+                                value={formData.maxCapacity}
+                                onChange={e => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
+                                className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400"
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div>
+                        <label className="block text-gray-500 font-bold mb-1">Descripción de Equipamiento</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Detalla si el salón cuenta con barras de ballet, aire acondicionado o tipos específicos de pisos..."
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
+                        />
+                    </div>
+
+
+                    {/* Botonera */}
+
+                    <div className="pt-2 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={() => closeModal()}
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                        >
+                            {editingId ? 'Actualizar' : 'Registrar'}
+                        </button>
+                    </div>
+                </form>
+            </MacDockModal>
             {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
             <ConfirmationModal
                 isOpen={modalConfig.isOpen}
-                onClose={closeModal}
+                onClose={closeConfirmModal}
                 onConfirm={handleConfirmAction}
                 type={modalConfig.type}
                 title={modalConfig.title}
