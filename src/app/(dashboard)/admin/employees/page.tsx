@@ -5,11 +5,8 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
-  Clock,
-  UserCheck,
   CircleCheck,
   Briefcase,
-  Layers,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -20,6 +17,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
 import { EmployeeFormData, Employee } from "@/types/employee";
+import { User } from "@/types/user";
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: EmployeeFormData = {
@@ -32,7 +30,7 @@ const initialFormState: EmployeeFormData = {
   hourlyRate: 0,
   hoursTaughtMonth: 0,
   bonus: 0,
-  birthDate: "",
+  birthDate: null,
   address: "",
   userId: "",
 };
@@ -75,11 +73,6 @@ export default function EmployeesPage() {
     title: "",
     description: "",
   });
-
-  // Totales financieros y de gestión del mes en curso (Mayo 2026)
-  const totalHorasDictadas = 15
-  const nominaTotalMes = 13
-  const pendientesPorPagar = 15
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -165,7 +158,7 @@ export default function EmployeesPage() {
       hourlyRate: employee.hourlyRate || 0,
       hoursTaughtMonth: employee.hoursTaughtMonth || 0,
       bonus: employee.bonus || 0,
-      birthDate: employee.birthDate || "",
+      birthDate: employee.birthDate || null,
       address: employee.address || "",
     })
     setEditingId(employee.id);
@@ -365,7 +358,8 @@ export default function EmployeesPage() {
       }
     });
   };
-
+  // ✅ CORRECT: Format the Date to "YYYY-MM-DD"
+  const formatDateForInput = (date: Date) => date.toISOString().split('T')[0];
 
   // 🎯 MANEJADORES DE LA TABLA
   // --- EFFECT PARA usuarios (Vía Server Action) ---
@@ -609,7 +603,13 @@ export default function EmployeesPage() {
               </label>
               <input
                 type="date"
-                value={formData.birthDate || ""}
+                value={
+                  formData.birthDate
+                    ? formData.birthDate instanceof Date
+                      ? formatDateForInput(formData.birthDate)
+                      : formData.birthDate
+                    : ''
+                }
                 onChange={(e) =>
                   setFormData({ ...formData, birthDate: e.target.value })
                 }

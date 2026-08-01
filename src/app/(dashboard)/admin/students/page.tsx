@@ -14,11 +14,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
-import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import DatePipe from "@/components/pipes/DatePipe";
+import { MacDockModal } from "@/components/ui/MacDockModal";
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -60,6 +62,7 @@ const initialFormState: GroupFormData = {
 };
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  const { isOpen, openModal, closeModal } = useModal();
   const [meta, setMeta] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -76,7 +79,6 @@ export default function StudentsPage() {
 
   const [isPending, startTransition] = useTransition();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [groupSearch, setGroupSearch] = useState("");
@@ -110,7 +112,7 @@ export default function StudentsPage() {
     title: "",
     description: "",
   });
-  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
     if (modalConfig?.id) {
@@ -190,7 +192,7 @@ export default function StudentsPage() {
     }, delay);
 
     return () => clearTimeout(delayDebounce);
-  }, [isModalOpen, groupSearch]);
+  }, [isOpen, groupSearch]);
   // 🎯 MANEJADORES DE LA TABLA
   // --- EFFECT PARA usuarios (Vía Server Action) ---
   useEffect(() => {
@@ -231,7 +233,7 @@ export default function StudentsPage() {
     }, delay);
 
     return () => clearTimeout(delayDebounce);
-  }, [isModalOpen, userSearch]);
+  }, [isOpen, userSearch]);
   // 🎯 MANEJADORES DE LA TABLA
 
   const handleLimitChange = (newLimit: number) => {
@@ -263,7 +265,7 @@ export default function StudentsPage() {
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
         window.dispatchEvent(new Event('refresh-students-count'));
       }
-      setIsModalOpen(false);
+      closeModal();
     });
 
   };
@@ -338,11 +340,15 @@ export default function StudentsPage() {
     },
     {
       header: "Fecha de Nacimiento",
-      render: (student) => (
-        <p className="text-[11px] text-gray-400 mt-0.5">
-          <DatePipe value={student.birthDate} format="short" />
+      render: (student) => {
+        if (student.birthDate)
+          return <p className="text-[11px] text-gray-400 mt-0.5">
+            <DatePipe value={student.birthDate} format="short" />
+          </p>
+        return <p className="text-[11px] text-gray-400 mt-0.5">
+          Facha no válida
         </p>
-      ),
+      },
     },
     {
       header: "Parentesco",
@@ -361,7 +367,7 @@ export default function StudentsPage() {
               setEditingId(student.id);
               // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
               const formattedBirthDate = student.birthDate
-                ? student.birthDate.split("T")[0]
+                && student.birthDate instanceof Date ? student.birthDate.toDateString().split("T")[0]
                 : "";
               setFormData({
                 dni: student.dni,
@@ -381,7 +387,7 @@ export default function StudentsPage() {
               setUserSearch(student.user?.name || "")
               setShowGroupDropdown(false);
               setShowUserDropdown(false);
-              setIsModalOpen(true);
+              openModal();
             }}
             className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
           >
@@ -419,7 +425,7 @@ export default function StudentsPage() {
             setFormData(initialFormState);
             setGroupSearch("")
             setErrorMsg(null);
-            setIsModalOpen(true);
+            openModal();
           },
           icon: <Plus className="w-4 h-4" />,
           variant: "primary",
@@ -516,296 +522,281 @@ export default function StudentsPage() {
           emptyMessage="No se encontraron alumnos registrados en la academia."
         />
       </div>
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
-            {/* Cabecera del Modal */}
+      <MacDockModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+        size={"lg"}
+      >
+        {/* Formulario */}
 
-            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
-              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                {editingId ? "Actualizar Alumno / Representado" : "Nuevo Alumno / Representado"}
-              </h3>
+        <form
+          onSubmit={handleSave}
+          className="space-y-4 font-questrial text-xs"
+        >
+          {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                DNI
+              </label>
+
+              <input
+                type="text"
+                value={formData.dni}
+                onChange={(e) =>
+                  setFormData({ ...formData, dni: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Nombre
+              </label>
+
+              <input
+                required
+                type="text"
+                value={formData.firstName}
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
             </div>
 
-            {/* Formulario */}
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Apellido
+              </label>
 
-            <form
-              onSubmit={handleSave}
-              className="p-5 space-y-4 font-questrial text-xs"
-            >
-              {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
-
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    DNI
-                  </label>
-
-                  <input
-                    type="text"
-                    value={formData.dni}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dni: e.target.value })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Nombre
-                  </label>
-
-                  <input
-                    required
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, firstName: e.target.value })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Apellido
-                  </label>
-
-                  <input
-                    required
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lastName: e.target.value })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    F. de Nacimiento
-                  </label>
-
-                  <input
-                    required
-                    type="date"
-                    value={formData.birthDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthDate: e.target.value })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-500 font-bold mb-1">
-                    Parentesco
-                  </label>
-
-                  <select
-                    value={formData.kinship}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        kinship: e.target.value as any,
-                      })
-                    }
-                    className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                  >
-                    <option value="son">Hijo</option>
-                    <option value="daughter">Hija</option>
-                    <option value="nephew">Sobrino</option>
-                    <option value="niece">Sobrina</option>
-                    <option value="tutored">Tutorado</option>
-                    <option value="other">Otro</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-500 font-bold mb-1">
-                  Dirección de Habitación
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Calle, Avenida, Edificio / Casa..."
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-500 font-bold mb-1">
-                  Observaciones Médicas o Alergias
-                </label>
-
-                <textarea
-                  rows={2}
-                  value={formData.medicalObservations}
-                  onChange={(e) =>
-                    setFormData({ ...formData, medicalObservations: e.target.value })
-                  }
-                  placeholder="Ej: Alérgico a la penicilina, asma, etc."
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
-                ></textarea>
-              </div>
-
-              {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-              <div className="relative" ref={groupRef}>
-                <label className="block text-gray-500 font-bold mb-1">Asignación Obligatoria de Grupo Académico *</label>
-                <div className="relative">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Escribe para buscar o selecciona de la lista..."
-                    value={groupSearch}
-                    onFocus={() => setShowGroupDropdown(true)} // Al hacer foco abre la lista inicial
-                    onChange={(e) => {
-                      setGroupSearch(e.target.value);
-                      setShowGroupDropdown(true);
-                      setFormData({
-                        ...formData,
-                        groupId: e.target.value as any,
-                      })
-                      // setError(null);
-                    }}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-                  />
-                  {isLoadingGroups && (
-                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-
-
-                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-                {showGroupDropdown && (filteredGroups.length > 0 || isLoadingGroups || groupSearch.trim().length > 0) && (
-                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                    {isLoadingGroups ? (
-                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                    ) : filteredGroups.length === 0 ? (
-                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
-                    ) : (
-                      filteredGroups.map((c: any) => (
-                        <li
-                          key={c.id}
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              groupId: c.id as any,
-                            })
-                            setGroupSearch(`${c.name} (${c.category || 'Grupo'})`);
-                            setShowGroupDropdown(false);
-                          }}
-                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                        >
-                          <span className="font-medium text-gray-700">{c.name}</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cat: {c.category}</span>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
-
-              {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-              <div className="relative" ref={userRef}>
-                <label className="block text-gray-500 font-bold mb-1">Asignación de representante académico</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Escribe para buscar o selecciona de la lista..."
-                    value={userSearch}
-                    onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
-                    onChange={(e) => {
-                      setUserSearch(e.target.value);
-                      setShowUserDropdown(true);
-                      setFormData({
-                        ...formData,
-                        userId: e.target.value as any,
-                      })
-                      // setError(null);
-                    }}
-                    className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-                  />
-                  {isLoadingUsers && (
-                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-
-
-                {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-                {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
-                  <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                    {isLoadingUsers ? (
-                      <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                    ) : filteredUsers.length === 0 ? (
-                      <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
-                    ) : (
-                      filteredUsers.map((c: any) => (
-                        <li
-                          key={c.id}
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              userId: c.id as any,
-                            })
-                            setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
-                            setShowUserDropdown(false);
-                          }}
-                          className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                        >
-                          <span className="font-medium text-gray-700">{c.name}</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
-
-              {/* Botonera */}
-
-              <div className="pt-2 flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-                >
-                  {editingId ? "Actualizar" : "Registrar Alumno"}
-                </button>
-              </div>
-            </form>
+              <input
+                required
+                type="text"
+                value={formData.lastName}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                F. de Nacimiento
+              </label>
+
+              <input
+                required
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, birthDate: e.target.value })
+                }
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-500 font-bold mb-1">
+                Parentesco
+              </label>
+
+              <select
+                value={formData.kinship}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    kinship: e.target.value as any,
+                  })
+                }
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+              >
+                <option value="son">Hijo</option>
+                <option value="daughter">Hija</option>
+                <option value="nephew">Sobrino</option>
+                <option value="niece">Sobrina</option>
+                <option value="tutored">Tutorado</option>
+                <option value="other">Otro</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-gray-500 font-bold mb-1">
+              Dirección de Habitación
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Calle, Avenida, Edificio / Casa..."
+              value={formData.address}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-500 font-bold mb-1">
+              Observaciones Médicas o Alergias
+            </label>
+
+            <textarea
+              rows={2}
+              value={formData.medicalObservations}
+              onChange={(e) =>
+                setFormData({ ...formData, medicalObservations: e.target.value })
+              }
+              placeholder="Ej: Alérgico a la penicilina, asma, etc."
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
+            ></textarea>
+          </div>
+
+          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+          <div className="relative" ref={groupRef}>
+            <label className="block text-gray-500 font-bold mb-1">Asignación Obligatoria de Grupo Académico *</label>
+            <div className="relative">
+              <input
+                required
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={groupSearch}
+                onFocus={() => setShowGroupDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setGroupSearch(e.target.value);
+                  setShowGroupDropdown(true);
+                  setFormData({
+                    ...formData,
+                    groupId: e.target.value as any,
+                  })
+                  // setError(null);
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingGroups && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showGroupDropdown && (filteredGroups.length > 0 || isLoadingGroups || groupSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingGroups ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredGroups.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
+                ) : (
+                  filteredGroups.map((c: any) => (
+                    <li
+                      key={c.id}
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          groupId: c.id as any,
+                        })
+                        setGroupSearch(`${c.name} (${c.category || 'Grupo'})`);
+                        setShowGroupDropdown(false);
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <span className="font-medium text-gray-700">{c.name}</span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cat: {c.category}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+          <div className="relative" ref={userRef}>
+            <label className="block text-gray-500 font-bold mb-1">Asignación de representante académico</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Escribe para buscar o selecciona de la lista..."
+                value={userSearch}
+                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                  setFormData({
+                    ...formData,
+                    userId: e.target.value as any,
+                  })
+                  // setError(null);
+                }}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+              />
+              {isLoadingUsers && (
+                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+
+            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
+            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
+              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                {isLoadingUsers ? (
+                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
+                ) : filteredUsers.length === 0 ? (
+                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
+                ) : (
+                  filteredUsers.map((c: any) => (
+                    <li
+                      key={c.id}
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          userId: c.id as any,
+                        })
+                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
+                        setShowUserDropdown(false);
+                      }}
+                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                    >
+                      <span className="font-medium text-gray-700">{c.name}</span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* Botonera */}
+
+          <div className="pt-2 flex justify-between">
+            <button
+              type="button"
+              onClick={() => closeModal()}
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+            >
+              {editingId ? "Actualizar" : "Registrar Alumno"}
+            </button>
+          </div>
+        </form>
+      </MacDockModal>
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
-        onClose={closeModal}
+        onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}
         type={modalConfig.type}
         title={modalConfig.title}

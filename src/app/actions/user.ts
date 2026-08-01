@@ -16,7 +16,7 @@ interface OnboardingPayload {
         firstName: string;
         lastName: string;
         dni: string | null;
-        birthDate: string;
+        birthDate: Date | string | number;
         kinship: string;
         address: string;
         phone: string | null;

@@ -11,8 +11,9 @@ export interface Employee {
     dni?: string | null;
     firstName: string;
     lastName: string;
-    birthDate: Date | string;
+    birthDate: Date | string | null,
     typeOfContract: TypeOfContract;
+    typeOfEmployee: TypeOfEmployee;
     medicalObservations?: string | null;
     address: string;
     phone?: string | null;
@@ -45,7 +46,7 @@ export interface EmployeeFormData {
     hourlyRate: number;
     hoursTaughtMonth: number;
     bonus: number;
-    birthDate: Date | string;
+    birthDate: Date | string | null,
     address: string;
     userId?: string | null;
 }

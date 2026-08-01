@@ -20,14 +20,26 @@ import {
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
-import { Student } from "@/types/student";
+import { RepresentedFormData, Student } from "@/types/student";
 import {
     getMyRepresentedAction,
     saveStudentAction,
     deleteStudentAction,
 } from "@/app/actions/student";
 import { useAuthStore } from "@/store/authStore";
-
+// Estado inicial limpio del formulario para Empleados
+const initialFormState: RepresentedFormData = {
+    dni: "",
+    firstName: "",
+    lastName: "",
+    birthDate: null,
+    kinship: "son",
+    medicalObservations: "",
+    address: "",
+    phone: "",
+    shirtSize: "",
+    hasExperience: false, // Operador de coalescencia nula para booleanos
+};
 export default function RepresentedPage() {
     const user = useAuthStore((state) => state.user);
     const [list, setList] = useState<Student[]>([]);
@@ -49,6 +61,9 @@ export default function RepresentedPage() {
         title: "",
         description: "",
     });
+    // ✅ CORRECT: Format the Date to "YYYY-MM-DD"
+    const formatDateForInput = (date: Date) => date.toISOString().split('T')[0];
+
     const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
     const handleConfirmAction = async () => {
@@ -69,18 +84,7 @@ export default function RepresentedPage() {
     // useTransition maneja de manera nativa el estado de carga (loading) de los Server Actions
     const [isPending, startTransition] = useTransition();
 
-    const [formData, setFormData] = useState({
-        dni: "",
-        firstName: "",
-        lastName: "",
-        birthDate: "",
-        kinship: "son" as Student["kinship"],
-        phone: "",              // 🎯 Nuevo
-        address: "",            // 🎯 Nuevo
-        shirtSize: "",          // 🎯 Nuevo
-        hasExperience: false,   // 🎯 Nuevo
-        medicalObservations: "",
-    });
+    const [formData, setFormData] = useState(initialFormState);
 
     // 🔄 Carga reactiva mediante Server Action
     useEffect(() => {
@@ -100,7 +104,10 @@ export default function RepresentedPage() {
         setErrorMsg(null);
         if (user) {
             startTransition(async () => {
-                const res = await saveStudentAction({ ...formData, userId: user.id }, editingId);
+                const res = await saveStudentAction({
+                    ...formData,
+                    userId: user.id
+                }, editingId);
                 if (!res.success) {
                     setErrorMsg(res.error || "Ocurrió un error.");
                     return;
@@ -148,18 +155,7 @@ export default function RepresentedPage() {
                     {
                         label: "Registrar Alumno",
                         onClick: () => {
-                            setFormData({
-                                dni: "",
-                                firstName: "",
-                                lastName: "",
-                                birthDate: "",
-                                kinship: "son",
-                                medicalObservations: "",
-                                address: "",
-                                phone: "",
-                                shirtSize: "",
-                                hasExperience: false, // Operador de coalescencia nula para booleanos
-                            });
+                            setFormData(initialFormState);
                             setEditingId(null);
                             setErrorMsg(null);
                             setIsOpen(true);
@@ -217,13 +213,13 @@ export default function RepresentedPage() {
                                         {/* Grupo asignado */}
                                         <div className="flex items-center gap-1.5 bg-purple-50/50 px-2 py-1 border border-purple-100/50 text-[#5e0472] font-semibold rounded">
                                             <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                                            <span className="capitalize">Grupo: {rep.group ? rep.group?.replace("_", " ") : 'Por definir'}</span>
+                                            <span className="capitalize">Grupo: {rep.group ? rep.group.name?.replace("_", " ") : 'Por definir'}</span>
                                         </div>
 
                                         {/* Fecha de Nacimiento */}
                                         <p className="flex items-center gap-1.5 px-1">
                                             <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                                            <span><strong>Nacimiento:</strong> {rep.birthDate?.split("T")[0]}</span>
+                                            <span><strong>Nacimiento:</strong> {rep.birthDate && rep.birthDate instanceof Date ? rep.birthDate.toISOString()?.split("T")[0] : ""}</span>
                                         </p>
 
                                         {/* Teléfono de contacto (si existe) */}
@@ -409,7 +405,13 @@ export default function RepresentedPage() {
                                     <input
                                         required
                                         type="date"
-                                        value={formData.birthDate}
+                                        value={
+                                            formData.birthDate
+                                                ? formData.birthDate instanceof Date
+                                                    ? formatDateForInput(formData.birthDate)
+                                                    : formData.birthDate
+                                                : ''
+                                        }
                                         onChange={(e) =>
                                             setFormData({ ...formData, birthDate: e.target.value })
                                         }
