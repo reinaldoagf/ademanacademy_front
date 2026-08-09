@@ -19,30 +19,30 @@ import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { CostumeCategory, CostumeStatus, SizeStock, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
+import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
-  available: {
-    title: "Disponibles / En Stock",
+  making: {
+    title: "Confeccionando",
     subtitle: "Listos para asignación e inventario activo.",
     icon: CheckCircle2,
     iconBgClass: "bg-emerald-100",
     iconTextClass: "text-emerald-600",
     unitLabel: "Piezas",
   },
-  pending_preparation: {
-    title: "En Confección",
+  payment_pending: {
+    title: "Pendiente por pago",
     subtitle: "Prendas en etapa de preparación o taller.",
     icon: Shirt,
     iconBgClass: "bg-purple-100",
     iconTextClass: "text-[#5e0472]",
     unitLabel: "Modelos",
   },
-  maintenance: {
-    title: "En Lavandería / Reparación",
+  available: {
+    title: "Disponibles / En Stock",
     subtitle: "Retenidos para mantenimiento y ajustes.",
     icon: Wrench,
     iconBgClass: "bg-amber-100",
@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     unitLabel: "Prendas",
   },
   retired: {
-    title: "Fuera de Servicio",
+    title: "Retirado",
     subtitle: "Inactivos, dados de baja o en desecho.",
     icon: ArchiveX,
     iconBgClass: "bg-rose-100",
@@ -66,15 +66,23 @@ export default function CostumesPage() {
 
   // 3. Estado enfocado puramente en los totales numéricos
   const [statusCounts, setStatusCounts] = useState<Record<LockerRoomStatus, number>>({
-    pending_preparation: 0,
+    payment_pending: 0,
+    making: 0,
     available: 0,
-    maintenance: 0,
     retired: 0,
   });
 
   const [costumes, setCostumes] = useState<Costume[]>([]);
-  const { isOpen, openModal, closeModal } = useModal();
-  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
+  const {
+    isOpen: isModalFormOpen,
+    openModal: openModalForm,
+    closeModal: closeModalForm
+  } = useModal();
+  const {
+    isOpen: isPoliciesModalOpen,
+    openModal: openPoliciesModal,
+    closeModal: closePoliciesModal,
+  } = useModal();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -121,26 +129,28 @@ export default function CostumesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
-  const DEFAULT_SIZES = [
-    { size: 'XS', quantity: 0 },
-    { size: 'S', quantity: 0 },
-    { size: 'M', quantity: 0 },
-    { size: 'L', quantity: 0 },
-    { size: 'XL', quantity: 0 }
-  ];
+  /*  const DEFAULT_SIZES = [
+     { size: 'XS', quantity: 0 },
+     { size: 'S', quantity: 0 },
+     { size: 'M', quantity: 0 },
+     { size: 'L', quantity: 0 },
+     { size: 'XL', quantity: 0 }
+   ]; */
   const [policyFormData, setPolicyFormData] = useState({
     id: '',
     key: 'usage_policies',
     value: '',
     active: false,
+    price: 0,
   });
   // 1. Estado del formulario interno del modal
   const [costumeFormData, setCostumeFormData] = useState({
     name: '',
+    price: 0, // 👈 Nuevo campo de precio
     beat: '',
     category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
-    status: 'pending_preparation' as CostumeStatus,
-    availableSizes: [...DEFAULT_SIZES] as SizeStock[]
+    status: 'payment_pending' as CostumeStatus,
+    /* availableSizes: [...DEFAULT_SIZES] as SizeStock[] */
   });
   // Estados locales exclusivos para la gestión de archivos
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -182,14 +192,15 @@ export default function CostumesPage() {
   };
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (costume: any) => {
-    openModal();
+    openModalForm();
     setEditingId(costume.id);
     setCostumeFormData({
       name: costume.name ?? '',
+      price: Number(costume.price) || 0,
       beat: costume.beat ?? '',
       category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
       status: costume.status as CostumeStatus,
-      availableSizes: costume.availableSizes as SizeStock[]
+      /* availableSizes: costume.availableSizes as SizeStock[] */
     })
     // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
     let imagesParsed: string[] = [];
@@ -236,7 +247,6 @@ export default function CostumesPage() {
   const savePolicies = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    console.log('savePolicies')
     try {
       // 2. Construir el payload definitivo
       const payload = {
@@ -248,10 +258,9 @@ export default function CostumesPage() {
 
       // saveCostumeAction debe recibir el payload
       const result = await saveSettingAction(payload, payload.id);
-      console.log({ result })
       if (result.success) {
         toast.success("Los Términos y Condiciones se actualizado correctamente.");
-        setIsPoliciesModalOpen(false)
+        closePoliciesModal();
       }
     } catch (error) {
       console.error(error);
@@ -281,8 +290,9 @@ export default function CostumesPage() {
         name: costumeFormData.name,
         beat: costumeFormData.beat || '',
         category: costumeFormData.category,
-        status: costumeFormData.status,
-        availableSizes: costumeFormData.availableSizes || [],
+        status: costumeFormData.status || '',
+        price: costumeFormData.price || 0,
+        /* availableSizes: costumeFormData.availableSizes || [], */
         images: newImagesPayload, // Nuevas imágenes Base64
         // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
         existingImages: editingId ? existingImages : [],
@@ -306,14 +316,15 @@ export default function CostumesPage() {
           window.dispatchEvent(new Event('refresh-costumes-count'));
           setCostumeFormData({
             name: '',
+            price: 0,
             beat: '',
             category: 'childrens' as CostumeCategory,
-            status: 'pending_preparation' as CostumeStatus,
-            availableSizes: [...DEFAULT_SIZES]
+            status: 'payment_pending' as CostumeStatus,
+            /* availableSizes: [...DEFAULT_SIZES] */
           });
         }
 
-        closeModal();
+        closeModalForm();
       } else {
         toast.error(result.error);
         setErrorMsg(result.error);
@@ -346,9 +357,9 @@ export default function CostumesPage() {
       const res2 = await getAllCostumesAction({
         page: pageToFetch,
         limit: limitToFetch,
-        search: searchTerm || undefined,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        category: categoryFilter === "all" ? undefined : categoryFilter,
+        ...(searchTerm ? { search: searchTerm } : {}),
+        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+        ...(categoryFilter !== "all" ? { category: categoryFilter } : {}),
       });
 
       if (res2?.success && res2.data) {
@@ -364,6 +375,7 @@ export default function CostumesPage() {
 
     return () => clearTimeout(handler);
   }, [searchTerm, statusFilter, categoryFilter, currentPage, itemsPerPage]);
+
   return (
     <>
       {/* HERO SECTION COMPONENTE REFACTORIZADO */}
@@ -372,13 +384,13 @@ export default function CostumesPage() {
         htmlSubTitle="Asigna prendas de baile, gestiona tallas por alumno y controla el estatus del taller de costura."
         actions={[
           {
-            label: "Política de Uso",
+            label: "Políticas de Uso",
             onClick: async () => {
               startTransition(async () => {
                 // Petición del resumen por estado
                 const res0 = await getSettingByKeyAction("usage_policies");
                 if (res0.data?.id && res0.data?.value) {
-                  setIsPoliciesModalOpen(true)
+                  openPoliciesModal()
                   setPolicyFormData({
                     ...policyFormData,
                     id: res0.data?.id,
@@ -396,14 +408,18 @@ export default function CostumesPage() {
             onClick: () => {
               setCostumeFormData({
                 name: '',
+                price: 0,
                 beat: '',
                 category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
-                status: 'pending_preparation' as CostumeStatus,
-                availableSizes: [...DEFAULT_SIZES] as SizeStock[]
+                status: 'payment_pending' as CostumeStatus,
+                /* availableSizes: [...DEFAULT_SIZES] as SizeStock[] */
               });
               setEditingId(null);
               setErrorMsg(null);
-              openModal()
+              setSelectedFiles([]);
+              setPreviews([]);
+              setExistingImages([]);
+              openModalForm()
             },
             icon: <Plus className="w-4 h-4" />,
             variant: "primary" as const,
@@ -475,10 +491,10 @@ export default function CostumesPage() {
               className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
             >
               <option value="all">Todos los estados</option>
-              <option value="retired">Fuera de servicio</option>
-              <option value="maintenance">En lavandería / Reparación</option>
-              <option value="available">Listo para usar / En stock</option>
-              <option value="pending_preparation">En confección / Preparación</option>
+              <option value="payment_pending">Pendiente por pago</option>
+              <option value="making">Confeccionando</option>
+              <option value="available">Disponible</option>
+              <option value="retired">Retirado</option>
             </select>
           </div>
 
@@ -558,8 +574,8 @@ export default function CostumesPage() {
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
 
       <MacDockModal
-        isOpen={isOpen}
-        onClose={closeModal}
+        isOpen={isModalFormOpen}
+        onClose={closeModalForm}
         title={editingId ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
         size={"lg"}
       >
@@ -607,6 +623,21 @@ export default function CostumesPage() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-gray-500 font-bold mb-1">
+              Precio / Tarifa ($)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="0.00"
+              value={costumeFormData.price || ''}
+              onChange={(e) => setCostumeFormData({ ...costumeFormData, price: parseFloat(e.target.value) || 0 })}
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+            />
+          </div>
+
           {/* Categoría y Estado - Grid responsivo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -634,16 +665,16 @@ export default function CostumesPage() {
                 onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
                 className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
               >
-                <option value="pending_preparation">Pendiente Preparación</option>
+                <option value="payment_pending">Pendiente por pago</option>
+                <option value="making">Confeccionando</option>
                 <option value="available">Disponible</option>
-                <option value="maintenance">En Mantenimiento / Lavado</option>
                 <option value="retired">Retirado</option>
               </select>
             </div>
           </div>
 
           {/* Sección Dinámica: Control de Stock por Tallas */}
-          <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
+          {/* <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
             <div>
               <label className="block text-gray-700 font-bold">Inventario disponible por Talla</label>
               <p className="text-[10px] text-gray-400">Ajusta el stock usando los controles laterales o escribiendo el número directo.</p>
@@ -706,7 +737,7 @@ export default function CostumesPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
 
           {/* Sección: Galería de Imágenes */}
           <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
@@ -768,98 +799,104 @@ export default function CostumesPage() {
             </div>
           </div>
         </form>
+        {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
+        <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+          <button
+            type="button"
+            onClick={() => closeModalForm()}
+            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            form="costume-form" // <-- Apunta al ID del formulario
+            onClick={(e) => { }}
+            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+          >
+            {editingId
+              ? "Actualizar"
+              : "Registrar"}
+          </button>
+        </div>
       </MacDockModal>
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
-      {isPoliciesModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <MacDockModal
+        isOpen={isPoliciesModalOpen}
+        onClose={closePoliciesModal}
+        title={editingId ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
+        size={"lg"}
+      >
+        <form
+          ref={policyFormReference}
+          id="policies-form" // <-- Añadimos este ID
+          onSubmit={savePolicies}
+          className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin"
+        >
+          {errorMsg && (
+            <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
+              {errorMsg}
+            </p>
+          )}
 
-          <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
-
-            {/* Cabecera del Modal (Fija en la parte superior) */}
-            <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
-              <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                Política de Uso
-              </h3>
-
-              <button
-                onClick={() => setIsPoliciesModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form
-              ref={policyFormReference}
-              id="policies-form" // <-- Añadimos este ID
-              onSubmit={savePolicies}
-              className="flex-1 overflow-y-auto p-5 space-y-4 font-questrial text-xs scrollbar-thin"
-            >
-              {errorMsg && (
-                <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
-                  {errorMsg}
-                </p>
-              )}
-
-              {/* Control de Activación (Toggle Switch) */}
-              <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100">
-                <div className="flex flex-col">
-                  <span className="font-bold text-gray-700">Estado de la Política</span>
-                  <span className="text-gray-500 text-[11px]">
-                    {policyFormData.active ? "La política está activa y visible" : "La política está desactivada"}
-                  </span>
-                </div>
-
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={policyFormData.active}
-                    onChange={(e) => setPolicyFormData({ ...policyFormData, active: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                </label>
-              </div>
-
-              {/* Campo de Políticas de Uso */}
-              <div>
-                <label className="block text-gray-500 font-bold mb-1">
-                  Políticas de Uso *
-                </label>
-                <textarea
-                  placeholder="Escribe las políticas de uso aquí..."
-                  rows={5}
-                  value={policyFormData.value}
-                  onChange={(e) => setPolicyFormData({ ...policyFormData, value: e.target.value })}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                ></textarea>
-              </div>
-            </form>
-
-
-            {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
-            <div className="px-5 py-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsPoliciesModalOpen(false)}
-                className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                form="policies-form" // <-- Apunta al ID del formulario
-                onClick={(e) => { }}
-                className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-              >
-                Actualizar
-              </button>
+          {/* Control de Activación (Toggle Switch) */}
+          <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100">
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-700">Estado de la Política</span>
+              <span className="text-gray-500 text-[11px]">
+                {policyFormData.active ? "La política está activa y visible" : "La política está desactivada"}
+              </span>
             </div>
 
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={policyFormData.active}
+                onChange={(e) => setPolicyFormData({ ...policyFormData, active: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
           </div>
+
+          {/* Campo de Políticas de Uso */}
+          <div>
+            <label className="block text-gray-500 font-bold mb-1">
+              Políticas de Uso *
+            </label>
+            <textarea
+              placeholder="Escribe las políticas de uso aquí..."
+              rows={5}
+              value={policyFormData.value}
+              onChange={(e) => setPolicyFormData({ ...policyFormData, value: e.target.value })}
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+            ></textarea>
+          </div>
+        </form>
+
+
+        {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
+        <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+          <button
+            type="button"
+            onClick={() => closePoliciesModal()}
+            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            form="policies-form" // <-- Apunta al ID del formulario
+            onClick={(e) => { }}
+            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+          >
+            Actualizar
+          </button>
         </div>
-      )}
+
+      </MacDockModal>
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}

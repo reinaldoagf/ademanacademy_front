@@ -59,7 +59,8 @@ export interface SaveCostumePayload {
     beat?: string;
     category: string;
     status: string;
-    availableSizes: any[];
+    price: number;
+    /* availableSizes: any[]; */
     images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
     existingImages: string[]; // 🚀 'type' agregado aquí
 }
@@ -72,4 +73,4 @@ export interface StatusCardConfig {
     iconTextClass: string;
     unitLabel: string;
 }
-export type LockerRoomStatus = "pending_preparation" | "available" | "maintenance" | "retired";
+export type LockerRoomStatus = "payment_pending" | "making" | "available" | "retired";

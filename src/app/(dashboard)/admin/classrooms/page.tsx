@@ -3,11 +3,9 @@
 import { useState, useTransition, useEffect } from "react";
 import {
     Plus,
-    Sparkles,
     Search,
     Trash2,
     Edit3,
-    X,
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";

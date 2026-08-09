@@ -202,7 +202,7 @@ export default function GroupsListPage() {
           // Si tu backend anida los instructor en 'instructors', úsalo; de lo contrario asigna result.data
           setFilteredInstructors(result.data.instructors || result.data);
         } else {
-          console.error("Error en Server Action (Instructores):", result.error);
+          console.log("Error en Server Action (Instructores):", result.error);
           setFilteredInstructors([]);
         }
       } catch (error) {

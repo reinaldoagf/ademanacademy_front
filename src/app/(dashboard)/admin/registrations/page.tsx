@@ -33,7 +33,6 @@ export default function RegistrationsPage() {
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined
             });
-            console.log({ res })
             if (res.success && res.data) {
                 setRegistrations(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta

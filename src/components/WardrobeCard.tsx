@@ -182,9 +182,16 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
 
                     {/* Título y Ritmo */}
                     <div className="drop-shadow-md">
-                        <h3 className="font-anton text-lg uppercase tracking-wide leading-tight text-white group-hover:text-purple-200 transition-colors">
-                            {costume.name}
-                        </h3>
+                        <div className="flex items-baseline justify-between gap-2">
+                            <h3 className="font-anton text-lg uppercase tracking-wide leading-tight text-white group-hover:text-purple-200 transition-colors">
+                                {costume.name}
+                            </h3>
+
+                            {/* Visualización del precio */}
+                            <span className="font-anton text-sm text-emerald-400 font-bold whitespace-nowrap">
+                                ${Number(costume.price || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 })}
+                            </span>
+                        </div>
                         <p className="text-xs text-purple-300 font-questrial font-medium">
                             {costume.beat || "Sin ritmo asignado"}
                         </p>

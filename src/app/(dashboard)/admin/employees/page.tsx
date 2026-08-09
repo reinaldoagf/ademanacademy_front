@@ -532,7 +532,6 @@ export default function EmployeesPage() {
                             firstName: c.name,
                           })
                         }
-                        console.log({ c })
                       }}
                       className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
                     >

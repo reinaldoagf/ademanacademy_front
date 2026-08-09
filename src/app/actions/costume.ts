@@ -16,8 +16,6 @@ export async function getCostumeCountByStatus() {
             headers: headers
         });
 
-        console.log({ response })
-
         return { success: true, data: response.data };
     } catch (error: any) {
         return {
@@ -57,7 +55,8 @@ export async function saveCostumeAction(payload: SaveCostumePayload, id?: string
         apiFormData.append('beat', payload.beat || '');
         apiFormData.append('category', payload.category);
         apiFormData.append('status', payload.status);
-        apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || []));
+        apiFormData.append('price', `${payload.price || 0}`);
+        /* apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || [])); */
 
         // 3. Procesamos y limpiamos las imágenes existentes si estamos editando
         if (id && payload.existingImages) {
