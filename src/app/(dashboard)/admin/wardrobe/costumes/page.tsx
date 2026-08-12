@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/costumes/page.tsx
+// src/app/(dashboard)/admin/wardrobe/costumes/page.tsx
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
@@ -8,7 +8,6 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   CheckCircle2,
   ImagePlus, Wrench, ArchiveX, X,
   AlertCircle
@@ -129,13 +128,7 @@ export default function CostumesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
-  /*  const DEFAULT_SIZES = [
-     { size: 'XS', quantity: 0 },
-     { size: 'S', quantity: 0 },
-     { size: 'M', quantity: 0 },
-     { size: 'L', quantity: 0 },
-     { size: 'XL', quantity: 0 }
-   ]; */
+
   const [policyFormData, setPolicyFormData] = useState({
     id: '',
     key: 'usage_policies',

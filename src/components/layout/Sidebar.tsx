@@ -80,7 +80,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
     { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
     { key: 'employees', name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
-    { key: 'costumes', name: 'Vestuarios', href: '/admin/costumes', icon: Shirt, badge: 12 },
+    {
+      key: 'wardrobe', name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
+      // 🎯 Submenú añadido
+      children: [
+        { key: 'wardrobe-costumes', name: 'Vestuarios', href: '/admin/wardrobe/costumes', badge: 0 },
+        { key: 'wardrobe-uniforms', name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
+      ]
+    },
     { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
   ]);
 
@@ -377,10 +384,26 @@ export function Sidebar({ isOpen }: SidebarProps) {
       });
       if (res.success && res.data) {
         const totalCostumes = res.meta.totalItems;
+
         setOperationalManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "costumes" ? { ...item, badge: totalCostumes } : item
-          )
+          currentItems.map((item) => {
+            if (item.key === "wardrobe") {
+              // Actualizamos el badge en el hijo "wardrobe-costumes"
+              const updatedChildren = item.children?.map((child) =>
+                child.key === "wardrobe-costumes"
+                  ? { ...child, badge: totalCostumes }
+                  : child
+              );
+
+              return {
+                ...item,
+                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
+                badge: totalCostumes,
+                children: updatedChildren,
+              };
+            }
+            return item;
+          })
         );
       }
     } catch (error) {

@@ -1,0 +1,278 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+    Tag,
+    ChevronLeft,
+    ChevronRight,
+    Trash2,
+    Pencil,
+    UserCheck,
+} from "lucide-react";
+import Badge from "@/components/common/Badge";
+import { Uniform } from "@/types/uniform"; // O utiliza 'any' si aún no tienes el archivo de tipos importado
+
+interface UniformCardProps {
+    uniform: Uniform | any;
+    onEdit?: (uniform: any) => void;
+    onDelete?: (uniform: any) => void;
+}
+
+export function UniformCard({ uniform, onEdit, onDelete }: UniformCardProps) {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
+
+    const backendUrl =
+        process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
+
+    // 🎯 1. Normalizar y sanitizar las URLs de las imágenes (campo Json en Prisma)
+    let images: string[] = [];
+    try {
+        let rawImages: any[] = [];
+
+        if (typeof uniform?.images === "string") {
+            rawImages = JSON.parse(uniform.images);
+        } else if (Array.isArray(uniform?.images)) {
+            rawImages = uniform.images;
+        }
+
+        if (rawImages && rawImages.length > 0) {
+            images = rawImages.map((img: any) => {
+                const path = typeof img === "object" ? img.url || img.path : img;
+
+                if (path.startsWith("http://") || path.startsWith("https://")) {
+                    return path;
+                }
+
+                const cleanBackendUrl = backendUrl.endsWith("/")
+                    ? backendUrl.slice(0, -1)
+                    : backendUrl;
+                const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+                return `${cleanBackendUrl}${cleanPath}`;
+            });
+        } else {
+            images = ["/img/default.png"];
+        }
+    } catch (e) {
+        console.error("Error procesando imágenes de Uniform", e);
+        images = ["/img/default.png"];
+    }
+
+    if (images.length === 0) {
+        images = ["/img/default.png"];
+    }
+
+    // 🎯 2. EFECTO AUTOPLAY: Cambia imagen cada 4s si el usuario no hace hover
+    useEffect(() => {
+        if (images.length <= 1 || isHovered) return;
+
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) =>
+                prev === images.length - 1 ? 0 : prev + 1
+            );
+        }, 4000);
+
+        return () => clearInterval(interval);
+    }, [images.length, isHovered]);
+
+    // 🎯 3. Cálculos basados en las asignaciones reales (StudentUniform[])
+    const activeAssignments =
+        uniform.assignments?.filter((a: any) => a.status === "assigned") ?? [];
+    const totalAssigned = activeAssignments.length;
+
+    // Agrupar las tallas actualmente asignadas a los alumnos
+    const assignedSizesCount: Record<string, number> = activeAssignments.reduce(
+        (acc: Record<string, number>, item: any) => {
+            const size = item.assignedSize || "Sin Talla";
+            acc[size] = (acc[size] || 0) + 1;
+            return acc;
+        },
+        {}
+    );
+
+    const nextImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentImageIndex((prev) =>
+            prev === images.length - 1 ? 0 : prev + 1
+        );
+    };
+
+    const prevImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentImageIndex((prev) =>
+            prev === 0 ? images.length - 1 : prev - 1
+        );
+    };
+
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onEdit) onEdit(uniform);
+    };
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onDelete) onDelete(uniform);
+    };
+
+    return (
+        <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="group relative w-full h-[380px] overflow-hidden border border-purple-100 shadow-sm hover:shadow-xl transition-all duration-500 bg-purple-950 rounded-none"
+        >
+            {/* 1. IMAGEN DE FONDO */}
+            <div className="absolute inset-0 w-full h-full z-0">
+                <img
+                    src={images[currentImageIndex]}
+                    alt={uniform.name}
+                    className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/img/default.png";
+                    }}
+                />
+            </div>
+
+            {/* 2. NAVEGACIÓN DE IMÁGENES */}
+            {images.length > 1 && (
+                <div className="absolute inset-x-0 bottom-1 -translate-y-1/2 flex justify-between px-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <button
+                        type="button"
+                        onClick={prevImage}
+                        className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
+                    >
+                        <ChevronLeft className="w-3 h-3" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={nextImage}
+                        className="bg-white/90 text-gray-800 p-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition cursor-pointer pointer-events-auto flex items-center justify-center"
+                    >
+                        <ChevronRight className="w-3 h-3" />
+                    </button>
+                </div>
+            )}
+
+            {/* 3. GRADIENTES DE OSCURECIMIENTO */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-purple-950/10 group-hover:bg-purple-950/60 transition-colors duration-500 z-10 pointer-events-none" />
+
+            {/* 4. BOTONES FLOTANTES DE ACCIÓN */}
+            <div className="absolute top-5 right-4 z-40 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-[-10px] group-hover:translate-y-0">
+                <button
+                    type="button"
+                    onClick={handleEdit}
+                    className="bg-white/80 text-gray-800 p-2 shadow-md hover:bg-green-600/40 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Editar uniforme"
+                >
+                    <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="bg-white/80 text-red-600 p-2 shadow-md hover:bg-red-600/40 hover:text-white active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Eliminar uniforme"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
+            </div>
+
+            {/* 5. CAPA DE CONTENIDO TEXTUAL */}
+            <div className="absolute inset-0 z-20 p-5 flex flex-col justify-between text-white pointer-events-none">
+                {/* Cabecera Superior: Badges de Estado y Categoría */}
+                <div className="flex flex-col gap-2 relative drop-shadow-md pointer-events-auto">
+                    <div>
+                        <Badge variant={uniform.status} theme={"dark"} />
+                    </div>
+                    <div>
+                        <Badge variant={uniform.category} theme={"dark"} />
+                    </div>
+                </div>
+
+                {/* Bloque Inferior Desplazable */}
+                <div className="transform translate-y-[140px] group-hover:translate-y-0 transition-transform duration-500 ease-out space-y-4 pointer-events-auto">
+                    {/* Título y Precio */}
+                    <div className="drop-shadow-md">
+                        <div className="flex items-baseline justify-between gap-2">
+                            <h3 className="font-anton text-lg uppercase tracking-wide leading-tight text-white group-hover:text-purple-200 transition-colors">
+                                {uniform.name}
+                            </h3>
+
+                            <span className="font-anton text-sm text-emerald-400 font-bold whitespace-nowrap">
+                                ${Number(uniform.price || 0).toLocaleString("es-CO", {
+                                    minimumFractionDigits: 0,
+                                })}
+                            </span>
+                        </div>
+                        <p className="text-xs text-purple-300 font-questrial font-medium uppercase tracking-wider">
+                            Categoría: {uniform.category}
+                        </p>
+                    </div>
+
+                    {/* CONTENIDO DESPLEGABLE EN HOVER */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75 pt-2 border-t border-white/10 space-y-4">
+                        {/* Tallas Entregadas/Asignadas */}
+                        <div>
+                            <p className="text-[9px] font-questrial font-bold text-purple-300 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                <Tag className="w-3 h-3" /> Tallas Entregadas
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {Object.keys(assignedSizesCount).length > 0 ? (
+                                    Object.entries(assignedSizesCount).map(
+                                        ([size, count], idx) => (
+                                            <div
+                                                key={idx}
+                                                className="font-questrial border px-2 py-1 text-center min-w-[42px] bg-white/10 border-white/20"
+                                            >
+                                                <p className="text-[9px] text-purple-200 font-bold">
+                                                    {size}
+                                                </p>
+                                                <p className="text-xs font-black">{count}u</p>
+                                            </div>
+                                        )
+                                    )
+                                ) : (
+                                    <p className="text-[10px] text-purple-300/70 italic">
+                                        Sin entregas registradas
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Métrica de Asignaciones */}
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-[11px] font-questrial text-gray-300">
+                                <span className="flex items-center gap-1">
+                                    <UserCheck className="w-3 h-3 text-purple-300" />
+                                    Alumnos asignados:
+                                </span>
+                                <strong className="text-purple-300 font-bold">
+                                    {totalAssigned} alumno(s)
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Indicadores de carrusel (Dots) */}
+                    {images.length > 1 && (
+                        <div className="flex justify-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            {images.map((_, idx) => (
+                                <span
+                                    key={idx}
+                                    className={`h-1 rounded-full transition-all duration-300 ${idx === currentImageIndex
+                                            ? "w-3 bg-white"
+                                            : "w-1 bg-white/30"
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
