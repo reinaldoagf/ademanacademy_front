@@ -22,6 +22,7 @@ import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { getAllCostumesAction } from "@/app/actions/costume";
 import { getAllEmployeesAction } from "@/app/actions/employee";
+import { getAllUniformsAction } from "@/app/actions/uniform";
 import {
   ChartPie,
   HeartPulse,
@@ -410,6 +411,41 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchUniformsBadgeCount = async () => {
+    try {
+      const res = await getAllUniformsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalUniforms = res.meta.totalItems;
+
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) => {
+            if (item.key === "wardrobe") {
+              // Actualizamos el badge en el hijo "wardrobe-uniforms"
+              const updatedChildren = item.children?.map((child) =>
+                child.key === "wardrobe-uniforms"
+                  ? { ...child, badge: totalUniforms }
+                  : child
+              );
+
+              return {
+                ...item,
+                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
+                badge: totalUniforms,
+                children: updatedChildren,
+              };
+            }
+            return item;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   const fetchEmployeesBadgeCount = async () => {
     try {
       const res = await getAllEmployeesAction({
@@ -440,6 +476,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchPaymentsBadgeCount();
       fetchPaymentOrdersBadgeCount();
       fetchCostumesBadgeCount();
+      fetchUniformsBadgeCount();
       fetchEmployeesBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
@@ -448,6 +485,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.addEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
       window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
+      window.addEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
       window.addEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
     }
 
@@ -458,6 +496,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
       window.removeEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
       window.removeEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
+      window.removeEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
       window.removeEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
     };
   }, [isAdminView]);

@@ -1,5 +1,7 @@
 // /types/uniform.ts
-
+import {
+    LucideIcon
+} from "lucide-react";
 // Enums del esquema (puedes importarlos de @prisma/client si los usas en Node.js,
 // o mantenerlos aquí si es para el Frontend)
 export type UniformCategory = 'baby' | string; // Ajusta con tus valores del Enum real
@@ -23,6 +25,15 @@ export interface StudentUniform {
     costumeId?: string | null;
 }
 
+export interface StatusCardConfig {
+    title: string;
+    subtitle: string;
+    icon: LucideIcon;
+    iconBgClass: string;
+    iconTextClass: string;
+    unitLabel: string;
+}
+
 // Interface principal para el modelo Uniform
 export interface Uniform {
     id: string;
@@ -32,6 +43,7 @@ export interface Uniform {
     price: number; // Decimal se serializa a number/string en la API
     images: string[]; // Representación del campo Json ("[]") en la app
     assignments?: StudentUniform[];
+    availableSizes: any[];
     createdAt: Date | string;
     updatedAt: Date | string;
 }

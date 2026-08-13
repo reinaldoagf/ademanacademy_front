@@ -4,21 +4,72 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import HeroSection from "@/components/layout/HeroSection";
 import { UniformCard } from "@/components/UniformCard";
+import { WardrobeCard } from "@/components/WardrobeCard";
 import {
     Plus,
     ChevronLeft,
     ChevronRight,
     ImagePlus,
-    X
+    Search,
+    X,
+    CheckCircle2,
+    Shirt,
+    Wrench,
+    ArchiveX
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
-import { Uniform, UniformCategory, UniformStatus, SizeStock } from "@/types/uniform";
-import { getAllUniformsAction, saveUniformAction } from "@/app/actions/uniform";
+import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
+import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 
+// 2. Configuración visual estática fuera del componente
+const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
+    making: {
+        title: "Confeccionando",
+        subtitle: "Listos para asignación e inventario activo.",
+        icon: CheckCircle2,
+        iconBgClass: "bg-emerald-100",
+        iconTextClass: "text-emerald-600",
+        unitLabel: "Piezas",
+    },
+    payment_pending: {
+        title: "Pendiente por pago",
+        subtitle: "Prendas en etapa de preparación o taller.",
+        icon: Shirt,
+        iconBgClass: "bg-purple-100",
+        iconTextClass: "text-[#5e0472]",
+        unitLabel: "Modelos",
+    },
+    available: {
+        title: "Disponibles / En Stock",
+        subtitle: "Retenidos para mantenimiento y ajustes.",
+        icon: Wrench,
+        iconBgClass: "bg-amber-100",
+        iconTextClass: "text-amber-600",
+        unitLabel: "Prendas",
+    },
+    retired: {
+        title: "Retirado",
+        subtitle: "Inactivos, dados de baja o en desecho.",
+        icon: ArchiveX,
+        iconBgClass: "bg-rose-100",
+        iconTextClass: "text-rose-600",
+        unitLabel: "Unidades",
+    },
+};
 export default function UniformsPage() {
+    const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
     const uniformFormReference = useRef<HTMLFormElement>(null);
+
+    // 3. Estado enfocado puramente en los totales numéricos
+    const [statusCounts, setStatusCounts] = useState<Record<UniformStatus, number>>({
+        payment_pending: 0,
+        making: 0,
+        available: 0,
+        retired: 0,
+    });
+
     const [uniforms, setUniforms] = useState<Uniform[]>([]);
     const {
         isOpen: isModalFormOpen,
@@ -51,7 +102,6 @@ export default function UniformsPage() {
     const [uniformFormData, setUniformFormData] = useState({
         name: '',
         price: 0, // 👈 Nuevo campo de precio
-        beat: '',
         category: 'childrens' as UniformCategory, // O el valor que prefieras por defecto
         status: 'payment_pending' as UniformStatus,
         availableSizes: [...DEFAULT_SIZES] as SizeStock[]
@@ -61,8 +111,46 @@ export default function UniformsPage() {
     const [previews, setPreviews] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>([]);
     // 1. Definimos las funciones que recibirán el elemento capturado
-    const handleEdit = (uniform: any) => {
-        console.log('handleEdit')
+    const handleEdit = (uniform: Uniform) => {
+
+        openModalForm();
+        setEditingId(uniform.id);
+        setUniformFormData({
+            name: uniform.name ?? '',
+            price: Number(uniform.price) || 0,
+            category: uniform.category as UniformCategory, // O el valor que prefieras por defecto
+            status: uniform.status as UniformStatus,
+            availableSizes: uniform.availableSizes as SizeStock[]
+        })
+        // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
+        let imagesParsed: string[] = [];
+        try {
+            if (typeof uniform.images === "string") {
+                imagesParsed = JSON.parse(uniform.images);
+            } else if (Array.isArray(uniform.images)) {
+                imagesParsed = uniform.images;
+            }
+
+            const formattedImages = imagesParsed.map((img: any) => {
+                const path = typeof img === 'object' ? img.url || img.path : img;
+                if (path.startsWith('http://') || path.startsWith('https://')) {
+                    return path;
+                }
+                const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+                const cleanPath = path.startsWith('/') ? path : `/${path}`;
+                return `${cleanBackendUrl}${cleanPath}`;
+            });
+
+            // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
+            setExistingImages(formattedImages);
+        } catch (e) {
+            console.error("Error al procesar imágenes existentes para edición", e);
+            setExistingImages([]);
+        }
+
+        // Limpiamos los archivos nuevos que estuviesen cargados de antes
+        setSelectedFiles([]);
+        setPreviews([]);
     };
     const handleDelete = (uniform: any) => {
         console.log('handleDelete')
@@ -122,7 +210,6 @@ export default function UniformsPage() {
             // 2. Construir el payload definitivo
             const payload = {
                 name: uniformFormData.name,
-                beat: uniformFormData.beat || '',
                 category: uniformFormData.category,
                 status: uniformFormData.status || '',
                 price: uniformFormData.price || 0,
@@ -151,7 +238,6 @@ export default function UniformsPage() {
                     setUniformFormData({
                         name: '',
                         price: 0,
-                        beat: '',
                         category: 'childrens' as UniformCategory,
                         status: 'payment_pending' as UniformStatus,
                         availableSizes: [...DEFAULT_SIZES]
@@ -181,8 +267,14 @@ export default function UniformsPage() {
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
 
+            // Petición del resumen por estado
+            const res1 = await getUniformCountByStatus();
+            if (res1.data?.byStatus) {
+                setStatusCounts(res1.data.byStatus);
+            }
+
             // Petición de la lista paginada
-            const res1 = await getAllUniformsAction({
+            const res2 = await getAllUniformsAction({
                 page: pageToFetch,
                 limit: limitToFetch,
                 ...(searchTerm ? { search: searchTerm } : {}),
@@ -190,11 +282,9 @@ export default function UniformsPage() {
                 ...(categoryFilter !== "all" ? { category: categoryFilter } : {}),
             });
 
-            console.log({ res1 })
-
-            if (res1?.success && res1.data) {
-                setUniforms(res1.data);
-                setMeta(res1.meta);
+            if (res2?.success && res2.data) {
+                setUniforms(res2.data);
+                setMeta(res2.meta);
             }
         });
     };
@@ -218,7 +308,6 @@ export default function UniformsPage() {
                             setUniformFormData({
                                 name: '',
                                 price: 0,
-                                beat: '',
                                 category: 'childrens' as UniformCategory, // O el valor que prefieras por defecto
                                 status: 'payment_pending' as UniformStatus,
                                 availableSizes: [...DEFAULT_SIZES] as SizeStock[]
@@ -235,20 +324,94 @@ export default function UniformsPage() {
                     },
                 ]}
             />
-            <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">{/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
+
+            <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
+                {/* TARJETAS DE INDICADORES RÁPIDOS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {(Object.keys(STATUS_CONFIG) as UniformStatus[]).map((statusKey) => {
+                        const config = STATUS_CONFIG[statusKey];
+                        const count = statusCounts[statusKey] || 0;
+                        const Icon = config.icon;
+
+                        return (
+                            <div
+                                key={statusKey}
+                                className="glass-card shadow-sm p-4 flex items-center gap-4 border border-purple-50/50 bg-white/70"
+                            >
+                                <div className={`w-10 h-10 shrink-0 flex items-center justify-center ${config.iconBgClass} ${config.iconTextClass}`}>
+                                    <Icon className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider truncate">
+                                        {config.title}
+                                    </p>
+                                    <h4 className="text-xl font-anton text-gray-800">
+                                        {count} {config.unitLabel}
+                                    </h4>
+                                    <p className="font-questrial text-xs text-gray-500 line-clamp-1">
+                                        {config.subtitle}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* FILTROS */}
+                <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div className="relative w-full sm:w-80">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Buscar traje o género de danza..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+                        />
+                    </div>
+
+
+                    <div className="flex gap-2">
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                        >
+                            <option value="all">Todas las categorías</option>
+                            <option value="baby">Baby</option>
+                            <option value="childrens">Infantil</option>
+                            <option value="youth">Juvenil</option>
+                            <option value="adult">Adulto</option>
+                        </select>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                        >
+                            <option value="all">Todos los estados</option>
+                            <option value="payment_pending">Pendiente por pago</option>
+                            <option value="making">Confeccionando</option>
+                            <option value="available">Disponible</option>
+                            <option value="retired">Retirado</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {uniforms.length > 0 ? (
                         uniforms.map((uniform) => {
-                            return <UniformCard
+                            return <WardrobeCard
                                 key={uniform.id}
-                                uniform={uniform}
+                                costume={uniform}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                             />
                         })
                     ) : (
                         <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                            No se encontraron registros de uniformes en base a los filtros.
+                            No se encontraron registros de vestuarios en base a los filtros.
                         </div>
                     )}
                 </div>
@@ -329,7 +492,7 @@ export default function UniformsPage() {
                         </p>
                     )}
 
-                    {/* Nombre y Beat - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
+                    {/* Nombre - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-gray-500 font-bold mb-1">
@@ -344,35 +507,22 @@ export default function UniformsPage() {
                                 className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
                             />
                         </div>
-
                         <div>
                             <label className="block text-gray-500 font-bold mb-1">
-                                Ritmo / Coreografía (Beat)
+                                Precio / Tarifa ($)
                             </label>
                             <input
-                                type="text"
-                                value={uniformFormData.beat}
-                                onChange={(e) => setUniformFormData({ ...uniformFormData, beat: e.target.value })}
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                placeholder="0.00"
+                                value={uniformFormData.price || ''}
+                                onChange={(e) => setUniformFormData({ ...uniformFormData, price: parseFloat(e.target.value) || 0 })}
                                 className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                                placeholder="Ej. Salsa, Urbana..."
                             />
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-gray-500 font-bold mb-1">
-                            Precio / Tarifa ($)
-                        </label>
-                        <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0.00"
-                            value={uniformFormData.price || ''}
-                            onChange={(e) => setUniformFormData({ ...uniformFormData, price: parseFloat(e.target.value) || 0 })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                        />
-                    </div>
 
                     {/* Categoría y Estado - Grid responsivo */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

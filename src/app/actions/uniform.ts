@@ -37,7 +37,7 @@ export async function saveUniformAction(payload: SaveUniformPayload, id?: string
         apiFormData.append('category', payload.category);
         apiFormData.append('status', payload.status);
         apiFormData.append('price', `${payload.price || 0}`);
-        /* apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || [])); */
+        apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || []));
 
         // 3. Procesamos y limpiamos las imágenes existentes si estamos editando
         if (id && payload.existingImages) {
@@ -108,6 +108,24 @@ export async function saveUniformAction(payload: SaveUniformPayload, id?: string
         }
 
         return { success: false, error: "Error crítico de red en el servidor." };
+    }
+
+}
+
+export async function getUniformCountByStatus() {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/uniforms/count-by-status`, {
+            params: {},
+            headers: headers
+        });
+
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
     }
 
 }
