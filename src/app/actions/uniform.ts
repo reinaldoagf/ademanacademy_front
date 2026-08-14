@@ -33,7 +33,6 @@ export async function saveUniformAction(payload: SaveUniformPayload, id?: string
 
         // 2. Adjuntamos los datos planos
         apiFormData.append('name', payload.name);
-        apiFormData.append('beat', payload.beat || '');
         apiFormData.append('category', payload.category);
         apiFormData.append('status', payload.status);
         apiFormData.append('price', `${payload.price || 0}`);
@@ -128,4 +127,23 @@ export async function getUniformCountByStatus() {
         };
     }
 
+}
+
+export async function deleteUniformAction(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        await axios.delete(`${BACKEND_URL}/uniforms/${id}`, { headers });
+
+        return { success: true };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el elemento."
+            };
+        }
+        return { success: false, error: "Error al comunicar la baja al servidor." };
+    }
 }

@@ -11,11 +11,11 @@ import {
 import Badge from "@/components/common/Badge";
 // Props tipadas (puedes cambiar 'any' por tu interfaz si lo prefieres)
 interface WardrobeCardProps {
-    costume: any;
-    onEdit?: (costume: any) => void;
-    onDelete?: (costume: any) => void;
+    element: any;
+    onEdit?: (element: any) => void;
+    onDelete?: (element: any) => void;
 }
-export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
+export function WardrobeCard({ element, onEdit, onDelete }: WardrobeCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
 
@@ -26,10 +26,10 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
     try {
         let rawImages: any[] = [];
 
-        if (typeof costume.images === "string") {
-            rawImages = JSON.parse(costume.images);
-        } else if (Array.isArray(costume.images)) {
-            rawImages = costume.images;
+        if (typeof element.images === "string") {
+            rawImages = JSON.parse(element.images);
+        } else if (Array.isArray(element.images)) {
+            rawImages = element.images;
         }
 
         if (rawImages && rawImages.length > 0) {
@@ -51,7 +51,7 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
             images = ["/img/default.png"];
         }
     } catch (e) {
-        console.error("Error procesando imágenes de costume", e);
+        console.error("Error procesando imágenes de element", e);
         images = ["/img/default.png"];
     }
 
@@ -71,8 +71,8 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
         return () => clearInterval(interval); // Limpieza al desmontar el componente
     }, [images.length, isHovered]);
 
-    const stockReal: number = costume.availableSizes?.reduce((acum: number, current: any) => acum + current.quantity, 0) ?? 0;
-    const assigned: number = costume.assignments?.filter((e: any) => e.status == "assigned").length ?? 0;
+    const stockReal: number = element.availableSizes?.reduce((acum: number, current: any) => acum + current.quantity, 0) ?? 0;
+    const assigned: number = element.assignments?.filter((e: any) => e.status == "assigned").length ?? 0;
     const percentageAssigned = assigned && stockReal ? Math.round((assigned / stockReal) * 100) : 0;
 
     const nextImage = (e: React.MouseEvent) => {
@@ -91,13 +91,13 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
     const handleEdit = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        if (onEdit) onEdit(costume);
+        if (onEdit) onEdit(element);
     };
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        if (onDelete) onDelete(costume);
+        if (onDelete) onDelete(element);
     };
 
     return (
@@ -110,7 +110,7 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
             <div className="absolute inset-0 w-full h-full z-0">
                 <img
                     src={images[currentImageIndex]}
-                    alt={costume.name}
+                    alt={element.name}
                     className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-105"
                     onError={(e) => {
                         // Fallback por si la imagen física no existe en el servidor
@@ -170,10 +170,10 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                 {/* Cabecera Superior (Se añade pr-20 para evitar solapamiento visual con los botones de acción) */}
                 <div className="flex flex-col gap-2 relative drop-shadow-md pointer-events-auto">
                     <div>
-                        <Badge variant={costume.status} theme={'dark'} />
+                        <Badge variant={element.status} theme={'dark'} />
                     </div>
                     <div>
-                        <Badge variant={costume.category} theme={'dark'} />
+                        <Badge variant={element.category} theme={'dark'} />
                     </div>
                 </div>
 
@@ -184,16 +184,16 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                     <div className="drop-shadow-md">
                         <div className="flex items-baseline justify-between gap-2">
                             <h3 className="font-anton text-lg uppercase tracking-wide leading-tight text-white group-hover:text-purple-200 transition-colors">
-                                {costume.name}
+                                {element.name}
                             </h3>
 
                             {/* Visualización del precio */}
                             <span className="font-anton text-sm text-emerald-400 font-bold whitespace-nowrap">
-                                ${Number(costume.price || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 })}
+                                ${Number(element.price || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 })}
                             </span>
                         </div>
                         <p className="text-xs text-purple-300 font-questrial font-medium">
-                            {costume.beat || "Sin ritmo asignado"}
+                            {element.beat || "Sin ritmo asignado"}
                         </p>
                     </div>
 
@@ -206,7 +206,7 @@ export function WardrobeCard({ costume, onEdit, onDelete }: WardrobeCardProps) {
                                 <Tag className="w-3 h-3" /> Tallas Disponibles
                             </p>
                             <div className="flex flex-wrap gap-1.5">
-                                {costume.availableSizes?.map((t: any, index: number) => (
+                                {element.availableSizes?.map((t: any, index: number) => (
                                     <div
                                         key={index}
                                         className={`font-questrial border px-2 py-1 text-center min-w-[42px] transition-colors ${t.quantity > 0

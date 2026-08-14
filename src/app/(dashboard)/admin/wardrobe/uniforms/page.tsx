@@ -3,7 +3,7 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import HeroSection from "@/components/layout/HeroSection";
-import { UniformCard } from "@/components/UniformCard";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import {
     Plus,
@@ -20,7 +20,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
 import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
-import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction } from "@/app/actions/uniform";
+import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 
 // 2. Configuración visual estática fuera del componente
@@ -80,6 +80,36 @@ export default function UniformsPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: "simple" | "word" | "email";
+        title: string;
+        description: string;
+        requiredWord?: string;
+        userEmail?: string;
+        id?: string;
+    }>({
+        isOpen: false,
+        type: "word",
+        title: "",
+        description: "",
+    });
+    const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));// Acción definitiva que se ejecuta al pasar el filtro del Modal
+    const handleConfirmAction = async () => {
+        if (modalConfig?.id) {
+            startTransition(async () => {
+                if (modalConfig?.id) {
+                    const res = await deleteUniformAction(modalConfig.id);
+                    if (res.success) {
+                        toast.success("Operación exitosa");
+                        fetchData(currentPage, itemsPerPage);
+                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+                        window.dispatchEvent(new Event('refresh-uniforms-count'));
+                    }
+                }
+            });
+        }
+    };
     const [meta, setMeta] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -153,7 +183,14 @@ export default function UniformsPage() {
         setPreviews([]);
     };
     const handleDelete = (uniform: any) => {
-        console.log('handleDelete')
+        setModalConfig({
+            isOpen: true,
+            type: "word",
+            title: "Confirmar operación",
+            description: "¿Quieres eliminar el registro del uniforme?",
+            id: uniform.id,
+        });
+
     };
 
     // 2. Manejador de selección de imágenes
@@ -404,7 +441,7 @@ export default function UniformsPage() {
                         uniforms.map((uniform) => {
                             return <WardrobeCard
                                 key={uniform.id}
-                                costume={uniform}
+                                element={uniform}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                             />
@@ -707,6 +744,19 @@ export default function UniformsPage() {
                     </button>
                 </div>
             </MacDockModal>
+            {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={closeConfirmModal}
+                onConfirm={handleConfirmAction}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                description={modalConfig.description}
+                requiredWord={modalConfig.requiredWord}
+                userEmail={modalConfig.userEmail}
+                variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+                confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+            />
         </>
     );
 }

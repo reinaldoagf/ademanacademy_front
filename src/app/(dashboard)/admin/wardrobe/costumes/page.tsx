@@ -499,7 +499,7 @@ export default function CostumesPage() {
             costumes.map((costume) => {
               return <WardrobeCard
                 key={costume.id}
-                costume={costume}
+                element={costume}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
