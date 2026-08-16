@@ -14,9 +14,11 @@ import {
     Users
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import TimeRangeSlider from "@/components/common/TimeRangeSlider";
+import { MacDockModal } from "@/components/ui/MacDockModal";
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
@@ -48,7 +50,7 @@ type GroupFormData = {
 };
 // 2. Estado inicial limpio del formulario
 const initialFormState: GroupFormData = {
-    id: "", groupId: "", day: "lunes" as WeekDay, startTime: "", endTime: "", label: ""
+    id: "", groupId: "", day: "lunes" as WeekDay, startTime: "8:00", endTime: "8:30", label: ""
 };
 export default function SchedulePage() {
     const [activeClassroom, setActiveClassroom] = useState<Classroom | null>(null);
@@ -79,7 +81,8 @@ export default function SchedulePage() {
     const [activeGroupFilter, setActiveGroupFilter] = useState<string>("all");
 
     // Estados para modales
-    const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+    const { isOpen, openModal, closeModal } = useModal();
+    /* const [isBlockModalOpen, setIsBlockModalOpen] = useState(false); */
 
     // Estado del formulario tipado correctamente
     const [formData, setFormData] = useState<GroupFormData>(initialFormState);
@@ -369,8 +372,8 @@ export default function SchedulePage() {
         });
 
         // 7. Limpieza y cierre del modal
-        setIsBlockModalOpen(false);
-        setFormData({ id: "", groupId: "", day: "lunes", startTime: "", endTime: "", label: "" });
+        closeModal();
+        setFormData(initialFormState);
     };
     const guideHours = Array.from({ length: GRID_END_TIME - GRID_START_TIME + 1 }, (_, i) => GRID_START_TIME + i);
 
@@ -396,7 +399,7 @@ export default function SchedulePage() {
     };
 
     // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
-    const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
     const handleConfirmAction = async () => {
         if (modalConfig?.id && activeClassroom) {
@@ -512,7 +515,7 @@ export default function SchedulePage() {
                                 setErrorMsg("Debes crear al menos un grupo en este salón primero.");
                                 return;
                             }
-                            setIsBlockModalOpen(true);
+                            openModal();
                         },
                         icon: <Clock className="w-4 h-4" />,
                     }
@@ -749,82 +752,74 @@ export default function SchedulePage() {
                 }
             </div>
             {/* ================= 🎯 NUEVO MODAL: CREAR BLOQUE DE HORARIO ================= */}
-            {isBlockModalOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white border border-purple-100 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                        <div className="p-4 bg-purple-50/60 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-purple-600" /> {
-                                    selectedElement?.id ? 'Actualizar Bloque de Horario' : 'Añadir Bloque de Horario'
-                                }
-
-                            </h3>
-                            <button onClick={() => setIsBlockModalOpen(false)} className="cursor-pointer p-1 hover:bg-gray-100 rounded text-gray-400"><X className="w-4 h-4" /></button>
+            <MacDockModal
+                isOpen={isOpen}
+                onClose={closeModal}
+                title={selectedElement?.id ? "Actualizar Bloque de Horario" : "Añadir Bloque de Horario"}
+                size={"lg"}
+            >
+                <form onSubmit={handleSaveBlock} className=" space-y-4 font-questrial text-xs">
+                    {errorMsg && (
+                        <div className="text-red-700 text-xs bg-red-50 p-3 border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            <span className="font-semibold">{errorMsg}</span>
                         </div>
-                        <form onSubmit={handleSaveBlock} className="p-5 space-y-4 font-questrial text-xs">
-                            {errorMsg && (
-                                <div className="text-red-700 text-xs bg-red-50 p-3 border border-red-100 flex items-center gap-2 font-questrial animate-pulse">
-                                    <AlertCircle className="w-4 h-4 shrink-0" />
-                                    <span className="font-semibold">{errorMsg}</span>
-                                </div>
-                            )}
+                    )}
 
-                            <div>
-                                <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
-                                <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
-                                    <option value="">-- Elige un grupo --</option>
-                                    {activeClassroom?.groups.map((g, index) => (
-                                        <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
-                                    <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
-                                        {DAYS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">Contenido / Nota</label>
-                                    <input type="text" placeholder="Ej: Técnica" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
-                                </div>
-                            </div>
-                            <div className="w-full">
-                                <TimeRangeSlider
-                                    startTime={formData.startTime}
-                                    endTime={formData.endTime}
-                                    onChange={({ startTime, endTime }) => {
-                                        setFormData({
-                                            ...formData,
-                                            startTime,
-                                            endTime
-                                        });
-                                    }}
-                                />
-                            </div>
-
-                            {/* Botonera */}
-                            <div className="pt-2 flex justify-between">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsBlockModalOpen(false)}
-                                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isPending}
-                                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-                                >
-                                    Guardar Bloque
-                                </button>
-                            </div>
-                        </form>
+                    <div>
+                        <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
+                        <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
+                            <option value="">-- Elige un grupo --</option>
+                            {activeClassroom?.groups.map((g, index) => (
+                                <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
+                            ))}
+                        </select>
                     </div>
-                </div>
-            )}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
+                            <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
+                                {DAYS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-gray-500 font-bold mb-1">Contenido / Nota</label>
+                            <input type="text" placeholder="Ej: Técnica" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
+                        </div>
+                    </div>
+                    <div className="w-full">
+                        <TimeRangeSlider
+                            startTime={formData.startTime}
+                            endTime={formData.endTime}
+                            onChange={({ startTime, endTime }) => {
+                                setFormData({
+                                    ...formData,
+                                    startTime,
+                                    endTime
+                                });
+                            }}
+                        />
+                    </div>
+
+                    {/* Botonera */}
+                    <div className="pt-2 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={() => closeModal()}
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                        >
+                            Guardar Bloque
+                        </button>
+                    </div>
+                </form>
+            </MacDockModal>
             {/* ================= INSPECTOR LATERAL (DRAWER) ================= */}
             {selectedElement && (
                 <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl border-l border-purple-100 z-50 flex flex-col font-questrial text-xs animate-in slide-in-from-right duration-150 h-full">
@@ -841,17 +836,14 @@ export default function SchedulePage() {
 
                     {/* Cuerpo Principal (Scrolleable para los datos del bloque) */}
                     <div className="p-5 space-y-4 shrink-0 border-b border-gray-100">
-                        {selectedElement.group && (
+                        {selectedElement && selectedElement.group && (
                             <div>
                                 <span className="text-[9px] font-bold bg-pink-100 text-pink-700 px-1.5 py-0.5 capitalize">
-                                    {selectedElement.group.category}
+                                    {selectedElement.group.category?.name || "Sin Categoría"}
                                 </span>
                                 <h4 className="font-anton text-gray-800 text-base mt-2 uppercase tracking-wide leading-tight">
                                     {selectedElement.group.name}
                                 </h4>
-                                <p className="text-[#5e0472] font-semibold text-xs mt-0.5">
-                                    {selectedElement.group.style || "Estilo Libre"}
-                                </p>
                             </div>
                         )}
 
@@ -876,7 +868,7 @@ export default function SchedulePage() {
                                 <User className="w-4 h-4 text-gray-400" />
                                 <div>
                                     <p className="text-[9px] text-gray-400 font-bold">Profesor</p>
-                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor || "Sin asignar"}</p>
+                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor?.name || "Sin asignar"}</p>
                                 </div>
                             </div>
                         </div>
@@ -896,7 +888,7 @@ export default function SchedulePage() {
                                             endTime: selectedElement.block.endTime,
                                             label: selectedElement.block.label?.trim() || ''
                                         });
-                                        setIsBlockModalOpen(true);
+                                        openModal();
                                     }}
                                     className="w-full py-1.5 bg-green-50 text-green-600 hover:bg-green-100 font-bold border border-green-200 text-center cursor-pointer transition-colors"
                                 >
@@ -977,7 +969,7 @@ export default function SchedulePage() {
             {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
             <ConfirmationModal
                 isOpen={modalConfig.isOpen}
-                onClose={closeModal}
+                onClose={closeConfirmModal}
                 onConfirm={handleConfirmAction}
                 type={modalConfig.type}
                 title={modalConfig.title}
