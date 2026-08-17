@@ -42,7 +42,7 @@ export default function ProductsPage() {
   const productFormReference = useRef<HTMLFormElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [catFilter, setCatFilter] = useState("all");
+  const [isActiveFilter, setIsActiveFilter] = useState("all");
   const { isOpen, openModal, closeModal } = useModal();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -249,7 +249,8 @@ export default function ProductsPage() {
       const res = await getAllProductsAction({
         page: pageToFetch,
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
-        search: searchTerm || undefined
+        search: searchTerm || undefined,
+        ...(isActiveFilter !== "all" ? { isActive: isActiveFilter } : {}),
       });
 
       if (res.success && res.data) {
@@ -264,7 +265,7 @@ export default function ProductsPage() {
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchTerm, currentPage, itemsPerPage]);
+  }, [searchTerm, isActiveFilter, currentPage, itemsPerPage]);
   return (
     <>
       {/* HERO SECTION DE LA SECCIÓN */}
@@ -334,32 +335,29 @@ export default function ProductsPage() {
 
         {/* FILTROS DE CATEGORÍAS */}
 
-        <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">          <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Buscar por código o descripción de producto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
-          />
-        </div>
+        <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar por código o descripción de producto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+            />
+          </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 justify-end">
-            {["Todos", "Calzado", "Ropa de Práctica", "Accesorios"].map(
-              (cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCatFilter(cat)}
-                  className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${catFilter === cat
-                    ? "bg-purple-600 text-white shadow-sm"
-                    : "bg-white border border-purple-50 text-gray-400 hover:text-purple-600"
-                    }`}
-                >
-                  {cat}
-                </button>
-              ),
-            )}
+          <div className="flex gap-2">
+            <select
+              value={isActiveFilter}
+              onChange={(e) => setIsActiveFilter(e.target.value)}
+              className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+            >
+              <option value="all">Todos los productos</option>
+              <option value="true">Activos</option>
+              <option value="false">No activos</option>
+            </select>
+
           </div>
         </div>
 

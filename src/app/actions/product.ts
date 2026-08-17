@@ -58,7 +58,6 @@ export async function saveProductAction(payload: SaveProductPayload, id?: string
 
         const requestHeaders = { ...headers };
         delete requestHeaders['Content-Type']; // Permite a Axios / FormData establecer el boundary automáticamente
-
         const response = id
             ? await axios.patch(url, apiFormData, { headers: requestHeaders })
             : await axios.post(url, apiFormData, { headers: requestHeaders });
