@@ -89,7 +89,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
         { key: 'wardrobe-uniforms', name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
       ]
     },
-    { key: '', name: 'Tienda e Inventario', href: '/admin/tienda', icon: ShoppingBag },
+    {
+      key: 'store', name: 'Tienda e Inventario', href: '/admin/store', icon: ShoppingBag,
+      // 🎯 Submenú añadido
+      children: [
+        { key: 'store-categories', name: 'Categorías', href: '/admin/store/categories', badge: 0 },
+        { key: 'store-products', name: 'Productos', href: '/admin/store/products', badge: 0 },
+      ]
+    },
   ]);
 
   const marketingEventos = [
