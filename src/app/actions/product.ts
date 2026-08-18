@@ -113,6 +113,22 @@ export async function getAllProductsAction(params: FetchProductsParams) {
         };
     }
 }
+export async function getProductMetrics() {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/products/metrics`, {
+            headers: headers
+        });
+
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
 
 export async function deleteProductAction(id: string): Promise<{ success: boolean; error?: string }> {
     try {

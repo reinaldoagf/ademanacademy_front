@@ -5,14 +5,13 @@ import { useState, useEffect, useRef, useTransition } from "react";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { ProductCard } from "@/components/ProductCard";
 import {
-  Pencil, Trash2,
   Search,
   ImagePlus,
   Plus,
   PackageCheck,
   AlertCircle,
-  TrendingUp,
   ShoppingCart,
   Layers,
   ChevronLeft,
@@ -22,7 +21,12 @@ import {
 import { toast } from "react-hot-toast";
 import { Product, SaveProductPayload } from "@/types/product";
 import { useModal } from "@/hooks/useModal";
-import { saveProductAction, getAllProductsAction, deleteProductAction } from "@/app/actions/product";
+import {
+  saveProductAction,
+  getProductMetrics,
+  getAllProductsAction,
+  deleteProductAction
+} from "@/app/actions/product";
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: SaveProductPayload = {
@@ -88,6 +92,11 @@ export default function ProductsPage() {
     itemsPerPage: 6,
     itemCount: 6,
   });
+  const [metrics, setMetrics] = useState({
+    inventoryValue: 0,
+    lowStockProducts: 0,
+    outOfStockProducts: 0,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [isPending, startTransition] = useTransition();
@@ -113,10 +122,6 @@ export default function ProductsPage() {
   ];
 
 
-  // Cálculos financieros y de almacén exprés
-  const valorInventario = 0;
-  const productosAgotados = 0;
-  const productosBajoStock = 0;
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (product: Product) => {
     openModal();
@@ -246,16 +251,19 @@ export default function ProductsPage() {
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
-      const res = await getAllProductsAction({
+      const res1 = await getAllProductsAction({
         page: pageToFetch,
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
         search: searchTerm || undefined,
         ...(isActiveFilter !== "all" ? { isActive: isActiveFilter } : {}),
       });
-
-      if (res.success && res.data) {
-        setProducts(res.data);
-        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      if (res1.success && res1.data) {
+        setProducts(res1.data);
+        setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      }
+      const res2 = await getProductMetrics()
+      if (res2.success && res2.data) {
+        setMetrics(res2.data);
       }
     });
   };
@@ -288,10 +296,10 @@ export default function ProductsPage() {
                 Capital en Almacén
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                ${valorInventario.toLocaleString()}
+                ${metrics.inventoryValue || 0}
               </h4>
               <p className="font-questrial text-xs text-gray-500">
-                Costo total acumulado de las existencias.
+                Costo total acumulado de los productos existentes.
               </p>
             </div>
           </div>
@@ -306,10 +314,10 @@ export default function ProductsPage() {
                 Por Agotarse (Bajo Mínimo)
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                {productosBajoStock} Artículos
+                {metrics.lowStockProducts || 0} Artículos
               </h4>
               <p className="font-questrial text-xs text-gray-500">
-                Requieren reordenar con el proveedor.
+                Artículos activos por agotarse.
               </p>
             </div>
           </div>
@@ -323,7 +331,7 @@ export default function ProductsPage() {
                 Agotados Totalmente
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                {productosAgotados} Variantes
+                {metrics.outOfStockProducts || 0} Variantes
               </h4>
               <span className="text-[10px] bg-pink-50 text-pink-600 font-bold px-2 py-0.5 inline-flex items-center gap-0.5">
                 Quiebre de currentStock activo
@@ -364,153 +372,15 @@ export default function ProductsPage() {
         {/* GRILLA DE CATÁLOGO / PRODUCTOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.length > 0 ? (
-            products.map((product) => {
-              // Conversión segura de valores numéricos
-              const currentStock = Number(product.currentStock || 0);
-              const minimumStockAlert = Number(product.minimumStockAlert || 0);
-              const salePrice = Number(product.salePrice || 0);
-              const cost = Number(product.cost || 0);
-
-              // Estados de currentStock
-              const isOut = currentStock === 0;
-              const isLow = !isOut && currentStock <= minimumStockAlert;
-
-              // Cálculo del margen de ganancia
-              const margenGanancia = salePrice > 0
-                ? Math.round(((salePrice - cost) / salePrice) * 100)
-                : 0;
-
-              // Imagen principal del producto
-              const rawImage = product.images?.[0];
-              const mainImage = rawImage
-                ? rawImage.startsWith("http")
-                  ? rawImage
-                  : `${backendUrl.replace(/\/$/, '')}/${rawImage.replace(/^\//, '')}`
-                : null;
-
-              return (
-                <div
-                  key={product.id}
-                  className="glass-card p-5 shadow-sm border border-purple-50/60 flex flex-col justify-between hover:shadow-md transition bg-white group"
-                >
-                  <div>
-                    {/* Categoría e ID */}
-                    <div className="flex justify-between items-center text-[10px] text-gray-400 font-medium mb-2">
-                      <span className="font-questrial font-mono text-[9px] truncate max-w-[120px]" title={product.id}>
-                        #{product.id.slice(-6)}
-                      </span>
-                      <span className="bg-purple-50 text-purple-700 px-2 py-0.5 font-questrial font-semibold rounded-full">
-                        {product.category?.name || "Sin categoría"}
-                      </span>
-                    </div>
-
-                    {/* Imagen opcional / Thumbnail */}
-                    {mainImage && (
-                      <div className="w-full h-32 mb-3 overflow-hidden rounded-xl bg-purple-50/30 flex items-center justify-center">
-                        <img
-                          src={mainImage}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-
-                    {/* Nombre y Margen */}
-                    <div className="space-y-1">
-                      <h3 className="font-anton text-gray-800 text-base line-clamp-2 min-h-[40px] uppercase tracking-wide">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-questrial font-bold bg-emerald-50/50 px-2 py-0.5 w-fit rounded-md">
-                        <TrendingUp className="w-3 h-3" /> Margen: {margenGanancia}%
-                      </div>
-                    </div>
-
-                    {/* Precios Financieros Formateados */}
-                    <div className="flex justify-between items-center bg-gray-50 p-3 rounded-2xl my-4 text-xs">
-                      <div>
-                        <p className="text-gray-400 text-[9px] font-questrial font-bold uppercase tracking-wider">
-                          Costo Base
-                        </p>
-                        <p className="font-questrial font-semibold text-gray-600">
-                          ${cost.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-purple-400 text-[9px] font-questrial font-bold uppercase tracking-wider">
-                          Precio Venta
-                        </p>
-                        <p className="font-questrial font-extrabold text-purple-700 text-sm">
-                          ${salePrice.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status de Almacén e Indicador */}
-                  <div className="space-y-2 border-t border-purple-50/50 pt-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-400 font-questrial font-medium">
-                        Existencia disponible
-                      </span>
-                      <span
-                        className={`font-questrial font-bold ${isOut ? "text-pink-600" : isLow ? "text-amber-500" : "text-gray-700"
-                          }`}
-                      >
-                        {currentStock} Unidades
-                      </span>
-                    </div>
-
-                    {/* Barra de progreso visual */}
-                    <div className="w-full bg-gray-100 h-1.5 overflow-hidden rounded-full">
-                      <div
-                        className={`h-full transition-all duration-300 ${isOut
-                          ? "w-0"
-                          : isLow
-                            ? "bg-amber-400 w-1/4"
-                            : "gradient-purple w-full"
-                          }`}
-                      ></div>
-                    </div>
-
-                    {/* Alertas semánticas breves */}
-                    {isOut ? (
-                      <p className="text-[10px] text-pink-600 font-questrial font-semibold flex items-center gap-1">
-                        ⚠️ Agotado. Detener ventas en taquilla.
-                      </p>
-                    ) : isLow ? (
-                      <p className="text-[10px] text-amber-600 font-questrial font-semibold flex items-center gap-1">
-                        ⚠️ Alerta. Reposición necesaria (mínimo: {minimumStockAlert}).
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-emerald-600 font-questrial font-semibold flex items-center gap-1">
-                        ✓ Stock en rango seguro de distribución.
-                      </p>
-                    )}
-
-                    {/* Botones de acción: Editar y Eliminar */}
-                    <div className="flex gap-2 pt-3 border-t border-purple-50/50 mt-3">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(product)}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        Editar
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(product)}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                backendUrl={backendUrl}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))
           ) : (
             <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
               Ningún ítem coincide con los criterios de búsqueda comerciales.
@@ -633,7 +503,7 @@ export default function ProductsPage() {
           {/* Categoría y Precios en Grid de 3 Columnas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Categoría */}
-            {/* <div>
+            <div>
               <label className="block text-gray-700 font-bold mb-1">
                 Categoría
               </label>
@@ -645,13 +515,13 @@ export default function ProductsPage() {
                 className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
                 <option value="">Seleccionar Categoría</option>
-                {[].map((cat) => (
+                {[{ id: 1, name: 'test1' }, { id: 2, name: 'test2' }].map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
               </select>
-            </div> */}
+            </div>
 
             {/* Precio de Venta */}
             <div>

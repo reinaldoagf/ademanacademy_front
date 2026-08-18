@@ -68,7 +68,7 @@ export default function StudentsPage() {
     totalPages: 1,
     totalItems: 0,
     itemsPerPage: 10,
-    itemCount: 10,
+    itemCount: 0,
   });
 
   // Estados de Filtros
