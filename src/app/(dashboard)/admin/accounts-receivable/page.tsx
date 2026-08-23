@@ -6,7 +6,7 @@ import {
     Plus,
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
-export default function OrdersPage() {
+export default function AccountsReceivablePage() {
 
     const handleNewElement = () => {
         console.log('handleNewElement');

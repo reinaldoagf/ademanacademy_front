@@ -130,6 +130,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'orders', name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
     { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
     { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
+    { key: 'accounts-payable', name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote, badge: 0 },
     { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
     { key: 'employees', name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
     {
