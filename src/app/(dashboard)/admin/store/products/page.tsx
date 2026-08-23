@@ -238,13 +238,10 @@ export default function ProductsPage() {
       }
       toast.success("Operación exitosa");
       // Sincronizar estado local
-      if (editingId) {
-        setProducts(products.map((item) => (item.id === editingId ? res.data! : item)));
-      } else {
-        setProducts([res.data!, ...products]);
-        // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+      if (!editingId) {
         window.dispatchEvent(new Event('refresh-products-count'));
       }
+      fetchData(currentPage, itemsPerPage);
       // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
       closeModal();
     });

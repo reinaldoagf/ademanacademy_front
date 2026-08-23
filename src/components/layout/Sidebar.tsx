@@ -27,6 +27,10 @@ import {
   getAllProductCategoriesAction,
 } from "@/app/actions/product-category";
 import {
+  getAllProductsAction,
+} from "@/app/actions/product";
+
+import {
   ChartPie,
   HeartPulse,
   ChevronDown,
@@ -475,7 +479,40 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+  const fetchProductsBadgeCount = async () => {
+    try {
+      const res = await getAllProductsAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalProducts = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) => {
+            if (item.key === "store") {
+              // Actualizamos el badge en el hijo "wardrobe-costumes"
+              const updatedChildren = item.children?.map((child) =>
+                child.key === "store-products"
+                  ? { ...child, badge: totalProducts }
+                  : child
+              );
 
+              return {
+                ...item,
+                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
+                badge: totalProducts,
+                children: updatedChildren,
+              };
+            }
+            return item;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   const fetchProductCategoriesBadgeCount = async () => {
     try {
       const res = await getAllProductCategoriesAction({
@@ -523,6 +560,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchCostumesBadgeCount();
       fetchUniformsBadgeCount();
       fetchEmployeesBadgeCount();
+      fetchProductsBadgeCount();
       fetchProductCategoriesBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
@@ -533,6 +571,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
       window.addEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
       window.addEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
+      window.addEventListener('refresh-products-count', fetchProductsBadgeCount);
       window.addEventListener('refresh-product-categories-count', fetchProductCategoriesBadgeCount);
     }
 
@@ -545,6 +584,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.removeEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
       window.removeEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
       window.removeEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
+      window.removeEventListener('refresh-products-count', fetchUniformsBadgeCount);
+      window.removeEventListener('refresh-product-categories-count', fetchEmployeesBadgeCount);
     };
   }, [isAdminView]);
   // useEffect para cargar la data real al montar el Sidebar por primera vez
