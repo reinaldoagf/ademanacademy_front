@@ -278,7 +278,7 @@ export default function ProductsPage() {
     <>
       {/* HERO SECTION DE LA SECCIÓN */}
       <HeroSection
-        htmlTitle={`Tienda de la Academia e <em class="text-[#5e0472]">Inventario</em>`}
+        htmlTitle={`<em class="text-[#5e0472]">Productos</em> de la tienda`}
         htmlSubTitle="Administra los productos en exhibición, calcula el valor de tus activos en almacén y registra ventas de uniforme rápido."
         actions={actions}
       />

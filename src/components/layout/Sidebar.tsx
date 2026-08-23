@@ -24,6 +24,9 @@ import { getAllCostumesAction } from "@/app/actions/costume";
 import { getAllEmployeesAction } from "@/app/actions/employee";
 import { getAllUniformsAction } from "@/app/actions/uniform";
 import {
+  getAllProductCategoriesAction,
+} from "@/app/actions/product-category";
+import {
   ChartPie,
   HeartPulse,
   ChevronDown,
@@ -472,6 +475,41 @@ export function Sidebar({ isOpen }: SidebarProps) {
       console.error("Error al actualizar badge:", error);
     }
   };
+
+  const fetchProductCategoriesBadgeCount = async () => {
+    try {
+      const res = await getAllProductCategoriesAction({
+        page: 1,
+        limit: 1,
+        search: undefined,
+      });
+      if (res.success && res.data) {
+        const totalProductCategories = res.meta.totalItems;
+        setOperationalManagement((currentItems) =>
+          currentItems.map((item) => {
+            if (item.key === "store") {
+              // Actualizamos el badge en el hijo "wardrobe-costumes"
+              const updatedChildren = item.children?.map((child) =>
+                child.key === "store-categories"
+                  ? { ...child, badge: totalProductCategories }
+                  : child
+              );
+
+              return {
+                ...item,
+                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
+                badge: totalProductCategories,
+                children: updatedChildren,
+              };
+            }
+            return item;
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar badge:", error);
+    }
+  };
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
     if (isAdminView) {
@@ -485,6 +523,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       fetchCostumesBadgeCount();
       fetchUniformsBadgeCount();
       fetchEmployeesBadgeCount();
+      fetchProductCategoriesBadgeCount();
 
       // 2️⃣ Escuchamos el evento global de actualización
       window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
@@ -494,6 +533,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
       window.addEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
       window.addEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
+      window.addEventListener('refresh-product-categories-count', fetchProductCategoriesBadgeCount);
     }
 
     // Limpieza al desmontar el componente para evitar fugas de memoria
