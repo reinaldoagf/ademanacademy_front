@@ -106,11 +106,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   // Secciones modulares del software (Administrador)
-  const [systemAdministration, setSystemAdministration] = useState([
+  const [systemAdministration, setSystemAdministration] = useState<SidebarMenuItem[]>([
     { key: 'users', name: 'Usuarios', href: '/admin/users', icon: UsersIcon, badge: 0 },
   ]);
 
-  const [academicManagement, setAcademicManagement] = useState([
+  const [academicManagement, setAcademicManagement] = useState<SidebarMenuItem[]>([
     { key: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
@@ -173,8 +173,18 @@ export function Sidebar({ isOpen }: SidebarProps) {
     ) => {
       try {
         const res = await actionFn({ page: 1, limit: 1 });
+        console.log({
+          targetKey,
+          res
+        })
         if (res?.success && res?.meta?.totalItems !== undefined) {
           const total = res.meta.totalItems;
+          setSystemAdministration((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
+          setAcademicManagement((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
           setOperationalManagement((prev: any) =>
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
@@ -190,12 +200,12 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const badgeConfigs = [
     { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
     { event: "refresh-students-count", action: getAllStudentsAction, key: "students" },
-    { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups" },
     { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
     { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
     // Submódulos (hijos)
+    { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups-list", parentKey: "groups" },
     { event: "refresh-costumes-count", action: getAllCostumesAction, key: "wardrobe-costumes", parentKey: "wardrobe" },
     { event: "refresh-uniforms-count", action: getAllUniformsAction, key: "wardrobe-uniforms", parentKey: "wardrobe" },
     { event: "refresh-products-count", action: getAllProductsAction, key: "store-products", parentKey: "store" },
