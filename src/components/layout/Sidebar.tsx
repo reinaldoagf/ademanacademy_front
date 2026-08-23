@@ -156,7 +156,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 
-  const [personalManagement, setPersonalManagement] = useState([
+  const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([
     { key: '', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
     { key: 'represented', name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
     { key: '', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
@@ -186,6 +186,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
           setOperationalManagement((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
+          setPersonalManagement((prev: any) =>
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
         }
