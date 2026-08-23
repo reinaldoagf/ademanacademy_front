@@ -1,7 +1,7 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, ForwardRefExoticComponent, RefAttributes } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
@@ -49,13 +49,57 @@ import {
   UsersIcon,
   Calendar,
   House,
-  UserPlus2
+  UserPlus2,
+  LucideProps
 } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
+// 1. Definición explícita de la estructura de ítems del Sidebar
+export interface SidebarMenuItem {
+  key: string;
+  name: string;
+  href: string;
+  icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+  badge?: number;
+  children?: SidebarMenuItem[];
+}
+const updateBadgeInItems = (
+  items: SidebarMenuItem[],
+  targetKey: string,
+  badgeValue: number,
+  parentKey?: string
+): SidebarMenuItem[] => {
+  return items.map((item) => {
+    // Si buscamos actualizar un item raíz
+    if (!parentKey && item.key === targetKey) {
+      return { ...item, badge: badgeValue };
+    }
+
+    // Si buscamos actualizar un hijo dentro de un padre específico
+    if (parentKey && item.key === parentKey) {
+      const updatedChildren = item.children?.map((child) =>
+        child.key === targetKey ? { ...child, badge: badgeValue } : child
+      );
+
+      // Recalcular el badge del padre sumando los de sus hijos
+      const totalParentBadge = updatedChildren?.reduce(
+        (acc, curr) => acc + (Number(curr.badge) || 0),
+        0
+      );
+
+      return {
+        ...item,
+        badge: totalParentBadge ?? badgeValue,
+        children: updatedChildren,
+      };
+    }
+
+    return item;
+  });
+};
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
@@ -82,7 +126,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'registrations', name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
   ]);
 
-  const [operationalManagement, setOperationalManagement] = useState([
+  const [operationalManagement, setOperationalManagement] = useState<SidebarMenuItem[]>([
     { key: 'orders', name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
     { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
     { key: 'accounts-receivable', name: 'Cuentas por Cobrar', href: '/admin/accounts-receivable', icon: Banknote, badge: 0 },
@@ -120,6 +164,43 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: '', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
     { key: '', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
   ]);
+
+  const fetchBadge = useCallback(
+    async (
+      actionFn: (params: any) => Promise<any>,
+      targetKey: string,
+      parentKey?: string
+    ) => {
+      try {
+        const res = await actionFn({ page: 1, limit: 1 });
+        if (res?.success && res?.meta?.totalItems !== undefined) {
+          const total = res.meta.totalItems;
+          setOperationalManagement((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
+        }
+      } catch (error) {
+        console.error(`Error al actualizar badge para [${targetKey}]:`, error);
+      }
+    },
+    []
+  );
+
+  // 3. Configuración centralizada de badges y sus eventos
+  const badgeConfigs = [
+    { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
+    { event: "refresh-students-count", action: getAllStudentsAction, key: "students" },
+    { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups" },
+    { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
+    { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
+    { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
+    { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
+    // Submódulos (hijos)
+    { event: "refresh-costumes-count", action: getAllCostumesAction, key: "wardrobe-costumes", parentKey: "wardrobe" },
+    { event: "refresh-uniforms-count", action: getAllUniformsAction, key: "wardrobe-uniforms", parentKey: "wardrobe" },
+    { event: "refresh-products-count", action: getAllProductsAction, key: "store-products", parentKey: "store" },
+    { event: "refresh-product-categories-count", action: getAllProductCategoriesAction, key: "store-categories", parentKey: "store" },
+  ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
   // Función auxiliar para renderizar enlaces simples o padres con submenús
@@ -244,352 +325,35 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
   const isClientView = pathname.startsWith('/client');
 
-  // 1️⃣ Aislamos la función de carga para poder reutilizarla
-  const fetchUsersBadgeCount = async () => {
-    try {
-      const res = await getAllUsersAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.meta) {
-        const totalUsers = res.meta.totalItems;
-        setSystemAdministration((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "users" ? { ...item, badge: totalUsers } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchStudentsBadgeCount = async () => {
-    try {
-      const res = await getAllStudentsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-        kinship: undefined,
-      });
-      if (res.meta) {
-        const totalStudents = res.meta.totalItems;
-        setAcademicManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "students" ? { ...item, badge: totalStudents } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchGroupsBadgeCount = async () => {
-    try {
-      const res = await getAllGroupsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.meta) {
-        const totalGroups = res.meta.totalItems;
-        setAcademicManagement((currentItems) =>
-          currentItems.map((item) => {
-            if (item.key === "groups") {
-              // Actualizamos el badge en el hijo "groups-list"
-              const updatedChildren = item.children?.map((child) =>
-                child.key === "groups-list"
-                  ? { ...child, badge: totalGroups }
-                  : child
-              );
-
-              return {
-                ...item,
-                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
-                badge: totalGroups,
-                children: updatedChildren,
-              };
-            }
-            return item;
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchClassroomsBadgeCount = async () => {
-    try {
-      const res = await getAllClassroomsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.meta) {
-        const totalClassrooms = res.meta.totalItems;
-        setAcademicManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "classrooms" ? { ...item, badge: totalClassrooms } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchRepresentedBadgeCount = async () => {
-    try {
-      const res = await getMyRepresentedAction();
-      if (res.success && res.data) {
-        const totalRepresentados = res.data.length;
-        setPersonalManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "represented" ? { ...item, badge: totalRepresentados } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchPaymentsBadgeCount = async () => {
-    try {
-      const res = await getAllTransactionsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalPayments = res.meta.totalItems;
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "payments" ? { ...item, badge: totalPayments } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchPaymentOrdersBadgeCount = async () => {
-    try {
-      const res = await getAllPaymentOrdersAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalPaymentOrders = res.meta.totalItems;
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "payment-orders" ? { ...item, badge: totalPaymentOrders } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchCostumesBadgeCount = async () => {
-    try {
-      const res = await getAllCostumesAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalCostumes = res.meta.totalItems;
-
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) => {
-            if (item.key === "wardrobe") {
-              // Actualizamos el badge en el hijo "wardrobe-costumes"
-              const updatedChildren = item.children?.map((child) =>
-                child.key === "wardrobe-costumes"
-                  ? { ...child, badge: totalCostumes }
-                  : child
-              );
-
-              return {
-                ...item,
-                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
-                badge: totalCostumes,
-                children: updatedChildren,
-              };
-            }
-            return item;
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchUniformsBadgeCount = async () => {
-    try {
-      const res = await getAllUniformsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalUniforms = res.meta.totalItems;
-
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) => {
-            if (item.key === "wardrobe") {
-              // Actualizamos el badge en el hijo "wardrobe-uniforms"
-              const updatedChildren = item.children?.map((child) =>
-                child.key === "wardrobe-uniforms"
-                  ? { ...child, badge: totalUniforms }
-                  : child
-              );
-
-              return {
-                ...item,
-                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
-                badge: totalUniforms,
-                children: updatedChildren,
-              };
-            }
-            return item;
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchEmployeesBadgeCount = async () => {
-    try {
-      const res = await getAllEmployeesAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalEmployees = res.meta.totalItems;
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) =>
-            item.key === "employees" ? { ...item, badge: totalEmployees } : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchProductsBadgeCount = async () => {
-    try {
-      const res = await getAllProductsAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalProducts = res.meta.totalItems;
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) => {
-            if (item.key === "store") {
-              // Actualizamos el badge en el hijo "wardrobe-costumes"
-              const updatedChildren = item.children?.map((child) =>
-                child.key === "store-products"
-                  ? { ...child, badge: totalProducts }
-                  : child
-              );
-
-              return {
-                ...item,
-                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
-                badge: totalProducts,
-                children: updatedChildren,
-              };
-            }
-            return item;
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  const fetchProductCategoriesBadgeCount = async () => {
-    try {
-      const res = await getAllProductCategoriesAction({
-        page: 1,
-        limit: 1,
-        search: undefined,
-      });
-      if (res.success && res.data) {
-        const totalProductCategories = res.meta.totalItems;
-        setOperationalManagement((currentItems) =>
-          currentItems.map((item) => {
-            if (item.key === "store") {
-              // Actualizamos el badge en el hijo "wardrobe-costumes"
-              const updatedChildren = item.children?.map((child) =>
-                child.key === "store-categories"
-                  ? { ...child, badge: totalProductCategories }
-                  : child
-              );
-
-              return {
-                ...item,
-                // Opcional: También asignamos totalGroups al badge del padre 'groups' si deseas mostrar la suma total arriba
-                badge: totalProductCategories,
-                children: updatedChildren,
-              };
-            }
-            return item;
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar badge:", error);
-    }
-  };
-  // useEffect para cargar la data real al montar el Sidebar por primera vez
   useEffect(() => {
-    if (isAdminView) {
-      // Cargamos al inicio
-      fetchUsersBadgeCount();
-      fetchStudentsBadgeCount();
-      fetchGroupsBadgeCount();
-      fetchClassroomsBadgeCount();
-      fetchPaymentsBadgeCount();
-      fetchPaymentOrdersBadgeCount();
-      fetchCostumesBadgeCount();
-      fetchUniformsBadgeCount();
-      fetchEmployeesBadgeCount();
-      fetchProductsBadgeCount();
-      fetchProductCategoriesBadgeCount();
+    if (!isAdminView) return;
 
-      // 2️⃣ Escuchamos el evento global de actualización
-      window.addEventListener('refresh-groups-count', fetchGroupsBadgeCount);
-      window.addEventListener('refresh-students-count', fetchStudentsBadgeCount);
-      window.addEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
-      window.addEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
-      window.addEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
-      window.addEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
-      window.addEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
-      window.addEventListener('refresh-products-count', fetchProductsBadgeCount);
-      window.addEventListener('refresh-product-categories-count', fetchProductCategoriesBadgeCount);
-    }
-
-    // Limpieza al desmontar el componente para evitar fugas de memoria
-    return () => {
-      window.removeEventListener('refresh-groups-count', fetchGroupsBadgeCount);
-      window.removeEventListener('refresh-students-count', fetchStudentsBadgeCount);
-      window.removeEventListener('refresh-classrooms-count', fetchClassroomsBadgeCount);
-      window.removeEventListener('refresh-payments-count', fetchPaymentsBadgeCount);
-      window.removeEventListener('refresh-costumes-count', fetchCostumesBadgeCount);
-      window.removeEventListener('refresh-uniforms-count', fetchUniformsBadgeCount);
-      window.removeEventListener('refresh-employees-count', fetchEmployeesBadgeCount);
-      window.removeEventListener('refresh-products-count', fetchUniformsBadgeCount);
-      window.removeEventListener('refresh-product-categories-count', fetchEmployeesBadgeCount);
+    // A. Función para refrescar todos los badges en paralelo al inicio
+    const fetchAllBadges = () => {
+      Promise.all(
+        badgeConfigs.map((cfg) => fetchBadge(cfg.action, cfg.key, cfg.parentKey))
+      );
     };
-  }, [isAdminView]);
+
+    fetchAllBadges();
+
+    // B. Mapeo dinámico de Listeners para Custom Events
+    const handlers = badgeConfigs.map((cfg) => {
+      const handler = () => fetchBadge(cfg.action, cfg.key, cfg.parentKey);
+      window.addEventListener(cfg.event, handler);
+      return { event: cfg.event, handler };
+    });
+
+    // C. Limpieza automática y libre de bugs
+    return () => {
+      handlers.forEach(({ event, handler }) => {
+        window.removeEventListener(event, handler);
+      });
+    };
+  }, [isAdminView, fetchBadge]);
+
   // useEffect para cargar la data real al montar el Sidebar por primera vez
-  useEffect(() => {
+  /* useEffect(() => {
     if (isClientView) {
       // Cargamos al inicio
       fetchRepresentedBadgeCount();
@@ -602,7 +366,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     return () => {
       window.removeEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
     };
-  }, [isClientView]);
+  }, [isClientView]); */
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
