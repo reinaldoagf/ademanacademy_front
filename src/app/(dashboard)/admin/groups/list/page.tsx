@@ -15,7 +15,11 @@ import {
   Flame,
   UserCheck2,
   Filter,
-  X
+  X,
+  Calendar,
+  Users2,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -489,9 +493,9 @@ export default function GroupsListPage() {
                           alert("Este grupo aún no tiene un horario asignado.");
                         }
                       }}
-                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
                     >
-                      Ver horario
+                      <Calendar className="w-3.5 h-3.5" /> Ver horario
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
                       Ver horario
@@ -503,9 +507,9 @@ export default function GroupsListPage() {
                         setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
                         setIsStudentsModalOpen(true);
                       }}
-                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors active:scale-95"
                     >
-                      Ver Alumnos
+                      <Users2 className="w-3.5 h-3.5" />  Ver Alumnos
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
                       Ver Alumnos
@@ -514,9 +518,9 @@ export default function GroupsListPage() {
                   <div className="relative inline-block group">
                     <button
                       onClick={() => handleEditModal(group)}
-                      className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-green-700 bg-green-50 hover:bg-green-100 rounded-xl transition-colors active:scale-95"
                     >
-                      Editar
+                      <Pencil className="w-3.5 h-3.5" />  Editar
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
                       Editar Parámetros
@@ -531,8 +535,8 @@ export default function GroupsListPage() {
                         description: "¿Quieres eliminar el registro del grupo?",
                         id: group.id,
                       });
-                    }} className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer">
-                      Eliminar
+                    }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100">
+                      <Trash2 className="w-3.5 h-3.5" /> Eliminar
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
                       Eliminar

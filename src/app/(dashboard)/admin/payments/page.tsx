@@ -8,7 +8,8 @@ import {
     Plus,
     Search,
     TrendingUp,
-    AlertCircle
+    AlertCircle,
+    Eye
 } from "lucide-react";
 import HeroSection from '@/components/layout/HeroSection';
 import DataTable, { Column } from "@/components/common/DataTable";
@@ -166,16 +167,22 @@ export default function PaymentsPage() {
         {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
-            render: (transaction) => (
-                <button
-                    onClick={() => {
-                        setSelectedPayment(transaction); // Seteamos el objeto de la consola
-                        setIsModalOpen(true);        // Abrimos el modal
-                    }}
-                    className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
-                >
-                    Ver detalles
-                </button>
+            render: (transaction) => (<div className="flex gap-2 justify-end">
+                <div className="relative inline-block group">
+                    <button
+                        onClick={() => {
+                            setSelectedPayment(transaction); // Seteamos el objeto de la consola
+                            setIsModalOpen(true);        // Abrimos el modal
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl cursor-pointer bg-emerald-200 hover:bg-emerald-500 hover:text-white"
+                    >
+                        <Eye className="w-3.5 h-3.5" /> Ver detalles
+                    </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                        Ver detalles
+                    </div>
+                </div>
+
+            </div >
             ),
         },
     ];

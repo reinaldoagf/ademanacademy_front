@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect, useTransition, useRef } from "react";
 import {
-  Sparkles,
-  X,
+  Trash2,
+  Pencil,
   Users,
   Search,
   Filter,
@@ -389,8 +389,9 @@ export default function StudentsPage() {
               setShowUserDropdown(false);
               openModal();
             }}
-            className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer"
+            className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
           >
+            <Pencil className="w-3.5 h-3.5" />
             Editar
           </button>
           <button onClick={() => {
@@ -403,9 +404,11 @@ export default function StudentsPage() {
             });
           }}
             disabled={!!student.user}
-            className={`text-xs  border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold  transition shadow-sm ${!student.user ? "cursor-pointer bg-white hover:bg-[#5e0472] hover:text-white" : "bg-gray-200"}`}
+
+            className={`
+               flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 ${!student.user ? "cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100" : "bg-gray-200"}`}
           >
-            Eliminar
+            <Trash2 className="w-3.5 h-3.5" /> Eliminar
           </button>
         </div>
       ),

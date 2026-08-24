@@ -253,29 +253,36 @@ export default function AccountsPayablePage() {
         {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
-            render: (element) => (<div className="flex gap-2">
-
-                <button disabled={element.status == "paid" || element.status == "cancelled"}
-                    onClick={() => {
-                        setSelectedPayable(element);
-                        setPaymentForm({
-                            ...paymentForm,
-                            amount: element.amountRemaining.toString(),
-                        });
-                        openPaymentModal();
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl ${element.status == "paid" || element.status == "cancelled" ? "bg-gray-200" : "cursor-pointer bg-emerald-400 hover:bg-emerald-500 hover:text-white"}`}
-                >
-                    <CreditCard className="w-3.5 h-3.5" /> Abonar
-                </button>
-
-                <button
-                    onClick={() => handleOpenHistory(element)}
-                    className="
-                    cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-[#5e0472] bg-white hover:bg-[#5e0472] hover:text-white rounded-xl transition-colors active:scale-95"
-                >
-                    <History className="w-3.5 h-3.5" /> Historial
-                </button></div>
+            render: (element) => (<div className="flex gap-2 justify-end">
+                <div className="relative inline-block group">
+                    <button disabled={element.status == "paid" || element.status == "cancelled"}
+                        onClick={() => {
+                            setSelectedPayable(element);
+                            setPaymentForm({
+                                ...paymentForm,
+                                amount: element.amountRemaining.toString(),
+                            });
+                            openPaymentModal();
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl ${element.status == "paid" || element.status == "cancelled" ? "bg-gray-200" : "cursor-pointer bg-emerald-400 hover:bg-emerald-500 hover:text-white"}`}
+                    >
+                        <CreditCard className="w-3.5 h-3.5" /> Abonar
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                        Abonar
+                    </div>
+                </div>
+                <div className="relative inline-block group">
+                    <button
+                        onClick={() => handleOpenHistory(element)}
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-[#5e0472] bg-purple-200 hover:bg-[#5e0472] hover:text-white rounded-xl transition-colors active:scale-95"
+                    >
+                        <History className="w-3.5 h-3.5" /> Historial
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                        Ver Historial
+                    </div>
+                </div></div>
             ),
         },
     ];

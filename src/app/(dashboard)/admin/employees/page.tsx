@@ -7,6 +7,8 @@ import {
   Search,
   CircleCheck,
   Briefcase,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -163,6 +165,7 @@ export default function EmployeesPage() {
     })
     setEditingId(employee.id);
     setErrorMsg(null);
+    setUserSearch(employee.user ? `${employee.user.name} (${employee.user.email || 'Usuario'})` : '');
     openModal();
   };
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -318,25 +321,31 @@ export default function EmployeesPage() {
       render: (employee) => (
         <div className="flex gap-2 justify-end">
 
-          <button
-            onClick={() => handleEditModal(employee)}
-            className="text-xs bg-white border border-purple-100 text-[#5e0472] px-3 py-1 font-semibold hover:bg-[#5e0472] hover:text-white transition shadow-sm cursor-pointer rounded-sm"
-          >
-            Editar
-          </button>
-          <button onClick={() => {
-            setModalConfig({
-              isOpen: true,
-              type: "word",
-              title: "Confirmar operación",
-              description: "¿Quieres eliminar el registro del empleado?",
-              id: employee.id,
-            });
-          }}
-            className={`text-xs border border-purple-100 text-[#5e0472] px-3 py-1.5 font-semibold transition shadow-sm cursor-pointer bg-white hover:bg-[#5e0472] hover:text-white`}
-          >
-            Eliminar
-          </button>
+          <div className="relative inline-block group">
+            <button
+              onClick={() => handleEditModal(employee)}
+              className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Editar
+            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+              Editar
+            </div></div>
+          <div className="relative inline-block group">
+            <button onClick={() => {
+              setModalConfig({
+                isOpen: true,
+                type: "word",
+                title: "Confirmar operación",
+                description: "¿Quieres eliminar el registro del empleado?",
+                id: employee.id,
+              });
+            }}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Eliminar
+            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+              Eliminar
+            </div></div>
         </div>
 
 
@@ -488,10 +497,10 @@ export default function EmployeesPage() {
                 onChange={(e) => {
                   setUserSearch(e.target.value);
                   setShowUserDropdown(true);
-                  setFormData({
+                  /* setFormData({
                     ...formData,
                     userId: e.target.value as any,
-                  })
+                  }) */
                   // setError(null);
                 }}
                 className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
@@ -514,10 +523,6 @@ export default function EmployeesPage() {
                     <li
                       key={c.id}
                       onClick={() => {
-                        setFormData({
-                          ...formData,
-                          userId: c.id as any,
-                        })
                         setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
                         setShowUserDropdown(false);
                         if (c.dni) {
@@ -530,6 +535,12 @@ export default function EmployeesPage() {
                           setFormData({
                             ...formData,
                             firstName: c.name,
+                          })
+                        }
+                        if (c.id) {
+                          setFormData({
+                            ...formData,
+                            userId: c.id as any,
                           })
                         }
                       }}

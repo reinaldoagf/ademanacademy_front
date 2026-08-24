@@ -173,10 +173,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
     ) => {
       try {
         const res = await actionFn({ page: 1, limit: 1 });
-        console.log({
-          targetKey,
-          res
-        })
         if (res?.success && res?.meta?.totalItems !== undefined) {
           const total = res.meta.totalItems;
           setSystemAdministration((prev: any) =>

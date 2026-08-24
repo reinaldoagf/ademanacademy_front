@@ -7,6 +7,7 @@ import { getAuthHeaders } from "@/helpers/auth-headers";
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
 export async function saveEmployeeAction(formData: EmployeeFormData, id?: string | null) {
+    console.log({ formData, id })
     try {
         const url = id ? `${BACKEND_URL}/employees/${id}` : `${BACKEND_URL}/employees`;
         const headers = await getAuthHeaders();
