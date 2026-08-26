@@ -1,12 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { OnboardingWizard } from "@/components/layout/OnboardingWizard";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
-import { ShoppingBag, X, Trash2, ArrowRight, Minus, Plus } from "lucide-react";
+import { getAllUsersAction } from "@/app/actions/user";
+import { ShoppingBag, X, Trash2, ArrowRight, Minus, Plus, Search, UserCheck } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
@@ -16,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const {
     items,
     isOpen,
+    userId,
     openCart,
     closeCart,
     setUserId,
@@ -66,6 +68,102 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Total de elementos en el carrito
   const totalCount = getTotalItemsCount();
   const totalAmount = getTotalAmount();
+
+  // --- ESTADOS PARA BÚSQUEDA DE USUARIO ---
+  const [userSearch, setUserSearch] = useState("");
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [selectedUserName, setSelectedUserName] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  const userRef = useRef<HTMLDivElement>(null);
+
+  // Cargar usuarios desde la API o Server Action (ajusta la URL según tu backend)
+  useEffect(() => {
+    // Si la barra lateral del carrito no está abierta, se omite la consulta
+    if (!isOpen) return;
+
+    const fetchUsers = async () => {
+      setIsLoadingUsers(true);
+      try {
+        // 2. Invocar el Server Action pasando los parámetros requeridos (ej. paginación o búsqueda limpia)
+        const response = await getAllUsersAction({
+          // Pasa los parámetros que acepte tu FetchUsersParams si es necesario
+          limit: 50, page: 1
+        });
+
+        if (response.success && response.data) {
+          setUsersList(response.data);
+          setFilteredUsers(response.data);
+        } else {
+          console.error("Error devuelto por la Server Action:", response.error);
+          setUsersList([]);
+          setFilteredUsers([]);
+        }
+      } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+        setUsersList([]);
+        setFilteredUsers([]);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, [isOpen]);
+
+  // Cerrar dropdown al hacer clic fuera del control
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userRef.current && !userRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filtrado reactivo según el input del usuario
+  const handleSearchChange = (value: string) => {
+    setUserSearch(value);
+    setShowUserDropdown(true);
+
+    if (userId) {
+      setUserId(null); // Si edita la búsqueda, limpia la selección anterior
+      setSelectedUserName("");
+    }
+
+    const query = value.toLowerCase().trim();
+    if (!query) {
+      setFilteredUsers(usersList);
+      return;
+    }
+
+    const filtered = usersList.filter((u) => {
+      const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase();
+      const email = u.email?.toLowerCase() ?? "";
+      const dni = u.dni?.toLowerCase() ?? u.identification ?? "";
+      return fullName.includes(query) || email.includes(query) || dni.includes(query);
+    });
+
+    setFilteredUsers(filtered);
+  };
+
+  const handleSelectUser = (user: any) => {
+    const displayName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+    setUserId(user.id);
+    setSelectedUserName(displayName);
+    setUserSearch(displayName);
+    setShowUserDropdown(false);
+  };
+
+  const handleClearUserSelection = () => {
+    setUserId(null);
+    setSelectedUserName("");
+    setUserSearch("");
+    setFilteredUsers(usersList);
+  };
   // 1️⃣ INTERCEPCIÓN 1: Onboarding de perfil del usuario
   if (user && !user.profileOnboarding) {
     return <OnboardingWizard userEmail={user.email} stepType="PROFILE" />;
@@ -94,7 +192,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
     );
   }
-
   // 4️⃣ UI TRADICIONAL
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-pink-50 to-white">
@@ -157,7 +254,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <X className="w-5 h-5" />
           </button>
         </div>
-
         {/* Lista de Ítems */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 font-questrial text-xs">
           {items.length === 0 ? (
@@ -214,6 +310,84 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Footer con el Checkout */}
         {items.length > 0 && (
           <div className="p-4 border-t border-purple-100 bg-purple-50/20 space-y-3 font-questrial">
+
+            {/* 🔍 Buscador de Usuario (Ubicado al final) */}
+            <div className="relative" ref={userRef}>
+              <label className="block text-gray-600 font-bold mb-1 text-xs">
+                Asignar Cliente / Usuario *
+              </label>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar usuario por nombre, email o DNI..."
+                  value={userSearch}
+                  onFocus={() => setShowUserDropdown(true)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className={`w-full p-2 pl-8 pr-7 border rounded-lg bg-white text-xs focus:outline-none transition ${userId
+                      ? "border-emerald-400 bg-emerald-50/20 text-emerald-900 font-medium"
+                      : "border-purple-200 focus:border-purple-400"
+                    }`}
+                />
+                <Search className="w-3.5 h-3.5 text-purple-400 absolute left-2.5 top-2.5" />
+
+                {isLoadingUsers && (
+                  <div className="absolute right-2.5 top-2.5 w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                )}
+
+                {userId && (
+                  <button
+                    type="button"
+                    onClick={handleClearUserSelection}
+                    className="absolute right-2 top-2 p-0.5 text-gray-400 hover:text-rose-600 transition"
+                    title="Cambiar usuario"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Dropdown desplegable hacia arriba (bottom-full) para evitar scroll innecesario */}
+              {showUserDropdown && !userId && (
+                <ul className="absolute z-50 left-0 right-0 bottom-full mb-1 max-h-44 overflow-y-auto bg-white border border-purple-100 shadow-xl rounded-lg divide-y divide-gray-50 text-xs">
+                  {isLoadingUsers ? (
+                    <li className="p-2.5 text-gray-400 italic">Cargando usuarios...</li>
+                  ) : filteredUsers.length === 0 ? (
+                    <li className="p-2.5 text-rose-500 bg-rose-50/40">
+                      No se encontraron usuarios coincidentes
+                    </li>
+                  ) : (
+                    filteredUsers.map((u: any) => (
+                      <li
+                        key={u.id}
+                        onClick={() => handleSelectUser(u)}
+                        className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-800">
+                            {u.firstName} {u.lastName}
+                          </span>
+                          <span className="text-[10px] text-gray-400">{u.email}</span>
+                        </div>
+                        {u.dni && (
+                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-sans">
+                            {u.dni}
+                          </span>
+                        )}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+
+              {/* Badge de Confirmación */}
+              {userId && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                  <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Cliente: <strong>{selectedUserName}</strong></span>
+                </div>
+              )}
+            </div>
             <div className="flex justify-between items-center text-sm font-bold text-gray-800">
               <span>Total Estimado:</span>
               <span className="text-[#5e0472] text-base">${(totalAmount ?? 0).toFixed(2)}</span>
