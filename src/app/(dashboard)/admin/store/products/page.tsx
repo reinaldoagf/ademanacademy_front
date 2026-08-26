@@ -20,13 +20,18 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Product, SaveProductPayload } from "@/types/product";
+import { ProductCategory } from "@/types/product-category";
 import { useModal } from "@/hooks/useModal";
+import {
+  getAllProductCategoriesAction,
+} from "@/app/actions/product-category";
 import {
   saveProductAction,
   getProductMetrics,
   getAllProductsAction,
   deleteProductAction
 } from "@/app/actions/product";
+
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: SaveProductPayload = {
@@ -67,6 +72,7 @@ export default function ProductsPage() {
     title: "",
     description: "",
   });
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
@@ -258,9 +264,17 @@ export default function ProductsPage() {
         setProducts(res1.data);
         setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }
-      const res2 = await getProductMetrics()
+      const res2 = await getAllProductCategoriesAction({
+        page: 1,
+        limit: 100, // 🎯 Enviamos el límite dinámico
+        search: undefined,
+      });
       if (res2.success && res2.data) {
-        setMetrics(res2.data);
+        setCategories(res2.data);
+      }
+      const res3 = await getProductMetrics()
+      if (res3.success && res3.data) {
+        setMetrics(res3.data);
       }
     });
   };
@@ -512,9 +526,9 @@ export default function ProductsPage() {
                 className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
                 <option value="">Seleccionar Categoría</option>
-                {[{ id: 1, name: 'test1' }, { id: 2, name: 'test2' }].map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                {categories.map((category: ProductCategory) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>

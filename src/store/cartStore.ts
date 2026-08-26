@@ -7,6 +7,7 @@ export type OrderItemConceptType =
     | "costume"
     | "ticket"
     | "merchandise"
+    | "product"
     | "other"; // Ajusta a los valores de tu Enum en Prisma
 
 export interface CartStudent {
@@ -16,6 +17,7 @@ export interface CartStudent {
 }
 
 export interface CartItem {
+    id: string; // ID para identificar el ítem en el estado local
     tempId: string; // ID temporal para identificar el ítem en el estado local
     concept: OrderItemConceptType;
     conceptLabel?: string; // Nombre amigable para mostrar en UI (ej: "Vestuario de Gala")
@@ -70,6 +72,7 @@ export const useCartStore = create<CartState>()(
                 // Buscar si existe un ítem idéntico (mismo concepto, precio y estudiante)
                 const existingIndex = items.findIndex(
                     (i) =>
+                        i.id === newItem.id &&
                         i.concept === newItem.concept &&
                         i.price === newItem.price &&
                         i.studentId === newItem.studentId

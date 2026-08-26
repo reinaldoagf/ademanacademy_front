@@ -33,7 +33,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     // Margen de ganancia
     const margenGanancia =
         salePrice > 0 ? Math.round(((salePrice - cost) / salePrice) * 100) : 0;
+    // 1. Obtener la cantidad agregada actualmente en el carrito para este producto
+    const itemsInCart = useCartStore((state) => state.items);
+    const currentInCart = itemsInCart
+        .filter((item) => item.id === product.id) // Requiere guardar el productId en el cartItem
+        .reduce((acc, item) => acc + item.quantity, 0);
 
+    // 2. Determinar si el producto se puede agregar
+    const availableStock = (product.currentStock ?? 0) - currentInCart;
+    const isOutOfStock = availableStock <= 0;
     // Procesamiento de URLs de imágenes
     const formattedImages = (product.images || [])
         .map((img) => {
@@ -59,13 +67,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     };
     const handleAddToCart = () => {
         addItem({
-            concept: "costume",
+            id: product.id,
+            concept: "product",
             conceptLabel: product.name,
             price: product.salePrice,
             quantity: 1,
             // studentId: "id-opcional"
         });
-
         openCart(); // Despliega la barra automáticamente al añadir
     };
     return (
@@ -227,6 +235,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <div className="flex gap-2 pt-3 border-t border-purple-50/50 mt-3">
                     <button
                         type="button"
+                        onClick={() => onDelete(product)}
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Eliminar
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => onEdit(product)}
                         className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
                     >
@@ -236,19 +252,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
                     <button
                         onClick={handleAddToCart}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors active:scale-95"
+                        disabled={isOutOfStock}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl transition-all ${!isOutOfStock
+                            ? "cursor-pointer text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:scale-95"
+                            : "cursor-not-allowed text-gray-400 bg-gray-100 opacity-70"
+                            }`}
                     >
                         <Plus className="w-3.5 h-3.5" /> Agregar al Carrito
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={() => onDelete(product)}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Eliminar
-                    </button>
                 </div>
             </div>
         </div>
