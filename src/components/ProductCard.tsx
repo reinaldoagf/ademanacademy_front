@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TrendingUp, Pencil, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { TrendingUp, Pencil, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon, Plus } from 'lucide-react';
 import { Product } from "@/types/product";
+import { useCartStore } from "@/store/cartStore";
 
 interface ProductCardProps {
     product: Product;
@@ -15,6 +16,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onEdit,
     onDelete,
 }) => {
+    const addItem = useCartStore((state) => state.addItem);
+    const openCart = useCartStore((state) => state.openCart);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     // Conversión segura de valores numéricos
@@ -54,7 +57,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             prev === 0 ? formattedImages.length - 1 : prev - 1
         );
     };
+    const handleAddToCart = () => {
+        addItem({
+            concept: "costume",
+            conceptLabel: product.name,
+            price: product.salePrice,
+            quantity: 1,
+            // studentId: "id-opcional"
+        });
 
+        openCart(); // Despliega la barra automáticamente al añadir
+    };
     return (
         <div className="glass-card p-5 shadow-sm border border-purple-50/60 flex flex-col justify-between hover:shadow-md transition bg-white group rounded-2xl">
             <div>
@@ -219,6 +232,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     >
                         <Pencil className="w-3.5 h-3.5" />
                         Editar
+                    </button>
+
+                    <button
+                        onClick={handleAddToCart}
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors active:scale-95"
+                    >
+                        <Plus className="w-3.5 h-3.5" /> Agregar al Carrito
                     </button>
 
                     <button
