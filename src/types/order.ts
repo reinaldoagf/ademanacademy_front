@@ -1,8 +1,22 @@
+import { CartItem } from "@/store/cartStore";
 import { User } from "./user";
+// Tipos para la petición que va hacia el backend
+export interface CleanOrderItem {
+    concept: string;      // Enum o valor en mayúsculas según backend (ej: "UNIFORM", "MERCHANDISE")
+    price: number;        // Número decimal válido
+    quantity: number;     // Entero positivo
+    studentId?: string;   // Opcional: solo se incluye si existe
+}
 
-export interface OrderFormData {
-    status: string;
+export interface OrderPayload {
     userId: string;
+    status?: string;
+    items: CleanOrderItem[];
+}
+export interface OrderFormData {
+    status?: string;
+    userId: string;
+    items?: CartItem[];
 }
 export interface FetchOrdersParams {
     page?: number;
@@ -40,4 +54,42 @@ export interface StudentOption {
     firstName: string;
     lastName: string;
     dni?: string;
+}
+export interface OrderItem {
+    id: string;
+    orderId: string;
+    studentId?: string | null;
+    concept: string;
+    quantity: number;
+    description?: string | null;
+    price: string | number;
+    student?: {
+        id: string;
+        firstName?: string;
+        lastName?: string;
+        name?: string;
+    } | null;
+}
+export interface OrderDetails {
+    id: string;
+    userId: string;
+    totalAmount: string | number;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    user?: {
+        id: string;
+        dni?: string;
+        name?: string;
+        email?: string;
+        phone?: string;
+    } | null;
+    items?: OrderItem[];
+    paymentOrder?: {
+        id: string;
+        concept: string;
+        amount: string | number;
+        status: string;
+        createdAt: string;
+    } | null;
 }

@@ -36,7 +36,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     // 1. Obtener la cantidad agregada actualmente en el carrito para este producto
     const itemsInCart = useCartStore((state) => state.items);
     const currentInCart = itemsInCart
-        .filter((item) => item.id === product.id) // Requiere guardar el productId en el cartItem
+        .filter((item) => item.elementId === product.id) // Requiere guardar el productId en el cartItem
         .reduce((acc, item) => acc + item.quantity, 0);
 
     // 2. Determinar si el producto se puede agregar
@@ -67,11 +67,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     };
     const handleAddToCart = () => {
         addItem({
-            id: product.id,
+            elementId: product.id,
             concept: "product",
             conceptLabel: product.name,
+            description: product.name,
             price: product.salePrice,
             quantity: 1,
+            currentStock: product.currentStock,
             // studentId: "id-opcional"
         });
         openCart(); // Despliega la barra automáticamente al añadir

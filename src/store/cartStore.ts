@@ -17,20 +17,31 @@ export interface CartStudent {
 }
 
 export interface CartItem {
-    id: string; // ID para identificar el ítem en el estado local
+    elementId: string; // ID para identificar el ítem en el estado local
     tempId: string; // ID temporal para identificar el ítem en el estado local
     concept: OrderItemConceptType;
     conceptLabel?: string; // Nombre amigable para mostrar en UI (ej: "Vestuario de Gala")
+    description?: string; // Nombre amigable para mostrar en UI (ej: "Vestuario de Gala")
     price: number;
     quantity: number;
+    currentStock: number;
     studentId?: string;
     student?: CartStudent;
+}
+// Estructura opcional de la orden registrada para notificaciones
+export interface CreatedOrderNotification {
+    id: string;
+    totalAmount?: number;
+    createdAt?: string;
 }
 
 interface CartState {
     items: CartItem[];
     userId: string | null;
     isOpen: boolean;
+    // Estado de notificación de orden registrada
+    lastOrderCreated: CreatedOrderNotification | null;
+    orderCreatedFlag: number; // Incrementador o timestamp para detectar nuevos eventos
 
     // Acciones de la barra lateral
     openCart: () => void;
@@ -45,6 +56,10 @@ interface CartState {
     updateStudent: (tempId: string, student?: CartStudent) => void;
     clearCart: () => void;
 
+    // Notificación de orden
+    notifyOrderCreated: (orderData: CreatedOrderNotification) => void;
+    clearOrderNotification: () => void;
+
     // Calculados / Selectores
     getTotalAmount: () => number;
     getTotalItemsCount: () => number;
@@ -56,6 +71,9 @@ export const useCartStore = create<CartState>()(
             items: [],
             userId: null,
             isOpen: false,
+            // Estado inicial de notificación
+            lastOrderCreated: null,
+            orderCreatedFlag: 0,
 
             // Control del Drawer
             openCart: () => set({ isOpen: true }),
@@ -72,7 +90,7 @@ export const useCartStore = create<CartState>()(
                 // Buscar si existe un ítem idéntico (mismo concepto, precio y estudiante)
                 const existingIndex = items.findIndex(
                     (i) =>
-                        i.id === newItem.id &&
+                        i.elementId === newItem.elementId &&
                         i.concept === newItem.concept &&
                         i.price === newItem.price &&
                         i.studentId === newItem.studentId
@@ -133,7 +151,18 @@ export const useCartStore = create<CartState>()(
 
             // Vaciar carrito
             clearCart: () => set({ items: [] }),
+            // Notificar que se registró una orden y limpiar el carrito
+            notifyOrderCreated: (orderData) => {
+                set({
+                    lastOrderCreated: orderData,
+                    orderCreatedFlag: Date.now(),
+                    items: [], // Vacía el carrito automáticamente tras completar el pedido
+                    isOpen: false, // Cierra el drawer
+                });
+            },
 
+            // Limpiar el estado de notificación
+            clearOrderNotification: () => set({ lastOrderCreated: null }),
             // Cálculo del monto total
             getTotalAmount: () => {
                 return get().items.reduce(

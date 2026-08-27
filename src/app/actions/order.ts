@@ -6,30 +6,49 @@ import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
-export async function saveOrderAction(formData: OrderFormData, id?: string | null) {
+export async function createOrderAction(formData: OrderFormData) {
     try {
-        const url = id ? `${BACKEND_URL}/orders/${id}` : `${BACKEND_URL}/orders`;
-        const headers = await getAuthHeaders();
+        const { userId, items, status } = formData;
 
-        // 🎯 Ejecutamos la petición de Axios dinámicamente según la existencia del ID
-        const response = id
-            ? await axios.patch(url, formData, { headers })
-            : await axios.post(url, formData, { headers });
-
-        // 💡 Axios parsea automáticamente a JSON y lo guarda en la propiedad '.data'
-        return { success: true, data: response.data };
-
-    } catch (error: any) {
-        // 🔍 Capturamos los errores devueltos estructuradamente por NestJS (400, 401, 409, 500, etc.)
-        if (error.response) {
-            return {
-                success: false,
-                error: error.response.data?.message || "Error al procesar el empleado."
-            };
+        if (!userId) {
+            return { success: false, error: "Debe seleccionar un cliente." };
         }
 
-        // Error en caso de que el servidor de NestJS esté apagado o no haya internet
-        return { success: false, error: "Error crítico de red en el servidor." };
+        if (!items || items.length === 0) {
+            return { success: false, error: "El carrito está vacío." };
+        }
+
+        // 🧹 SANITIZACIÓN: Limpiamos los ítems AQUÍ dentro de la Server Action
+        // antes de enviarlos al backend o la base de datos.
+        const cleanItems = items.map((item) => ({
+            elementId: item.elementId,
+            concept: item.concept,
+            conceptLabel: item.conceptLabel,
+            description: item.description,
+            price: Number(item.price) || 0,
+            quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+            ...(item.studentId ? { studentId: item.studentId } : {}),
+        }));
+
+        const body = {
+            userId,
+            ...(status ? { status } : {}),
+            items: cleanItems, // Payload limpio hacia la API
+        }
+
+        // Enviar a Axios / Backend
+        const response = await axios.post(
+            `${BACKEND_URL}/orders`,
+            body,
+            { headers: await getAuthHeaders() }
+        );
+
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al registrar el pedido.",
+        };
     }
 }
 
@@ -41,8 +60,6 @@ export async function getAllOrdersAction(params: FetchOrdersParams) {
             params,
             headers: headers
         });
-
-        console.log({ response })
 
         return { success: true, data: response.data.data, meta: response.data.meta };
     } catch (error: any) {

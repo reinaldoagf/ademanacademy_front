@@ -10,18 +10,24 @@ import {
     ArrowRight,
     UserCheck,
     Search,
+    Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
 import { getAllUsersAction } from "@/app/actions/user"; // Ajusta la ruta a tu action
+import { createOrderAction } from "@/app/actions/order"; // Ajusta la ruta a tu action
+import toast from "react-hot-toast";
+import { CleanOrderItem, OrderPayload } from "@/types/order";
 
 export function CartDrawer() {
     const {
         items,
         isOpen,
         closeCart,
+        clearCart,
         removeItem,
         updateQuantity,
         getTotalAmount,
+        notifyOrderCreated,
         userId,
         setUserId,
     } = useCartStore();
@@ -39,6 +45,8 @@ export function CartDrawer() {
 
     const userRef = useRef<HTMLDivElement>(null);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     // Cargar usuarios al abrir la barra lateral
     useEffect(() => {
         if (!isOpen) return;
@@ -120,7 +128,43 @@ export function CartDrawer() {
         setUserSearch("");
         setFilteredUsers(usersList);
     };
+    const handleRegisterOrder = async () => {
+        if (!userId || items.length === 0) return;
 
+        setIsSubmitting(true);
+        setErrorMessage(null);
+
+        try {
+            // Le pasamos la estructura exacta que pide OrderFormData
+            const res = await createOrderAction({
+                userId,
+                items, // Transmite CartItem[] directamente
+            });
+
+            if (res.success && res.data) {
+                clearCart();
+                closeCart();
+                const newOrder = res.data
+                // Dispara la notificación y resetea el carrito en la app
+                notifyOrderCreated({
+                    id: newOrder.id,
+                    totalAmount: newOrder.totalAmount,
+                    createdAt: newOrder.createdAt,
+                });
+                toast.success("¡Pedido registrado exitosamente!");
+            } else {
+                const errorText = Array.isArray(res.error)
+                    ? res.error.join(" | ")
+                    : res.error;
+                setErrorMessage(errorText || "No se pudo registrar el pedido.");
+            }
+        } catch (error) {
+            console.error("Error al procesar el pedido:", error);
+            setErrorMessage("Error de conexión al procesar la solicitud.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
     return (
         <aside
             className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
@@ -176,9 +220,9 @@ export function CartDrawer() {
                                         onClick={() =>
                                             updateQuantity(item.tempId, item.quantity - 1)
                                         }
-                                        className="cursor-pointer p-1 border border-purple-200 rounded hover:bg-purple-100"
+                                        className="cursor-pointer bg-red-50 p-1 border border-red-200 rounded hover:bg-red-100"
                                     >
-                                        <Minus className="w-3 h-3 text-purple-700" />
+                                        <Minus className="w-3 h-3 text-red-700" />
                                     </button>
                                     <span className="font-bold text-xs px-1">
                                         {item.quantity}
@@ -187,10 +231,18 @@ export function CartDrawer() {
                                         onClick={() =>
                                             updateQuantity(item.tempId, item.quantity + 1)
                                         }
-                                        className="cursor-pointer p-1 border border-purple-200 rounded hover:bg-purple-100"
+                                        disabled={item.currentStock !== undefined && item.quantity >= item.currentStock}
+                                        className={`p-1 border rounded ${item.currentStock !== undefined && item.quantity >= item.currentStock
+                                            ? "bg-gray-50 border-gray-200"
+                                            : "cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                                            }`}
                                     >
-                                        <Plus className="w-3 h-3 text-purple-700" />
+                                        <Plus className={`w-3 h-3 ${item.currentStock !== undefined && item.quantity >= item.currentStock
+                                            ? "text-gray-700"
+                                            : "text-emerald-700"
+                                            }`} />
                                     </button>
+
                                 </div>
                             </div>
 
@@ -301,19 +353,24 @@ export function CartDrawer() {
                     </div>
 
                     {/* Botón de Checkout */}
-                    <button
-                        disabled={!userId}
-                        onClick={() => {
-                            if (!userId) return;
-                            closeCart();
-                        }}
-                        className={`w-full py-2.5 px-4 font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-xs ${userId
+                    <button type="button" disabled={!userId || isSubmitting}
+                        onClick={handleRegisterOrder}
+                        className={`w-full py-2.5 px-4 font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-xs ${userId && !isSubmitting
                             ? "bg-[#5e0472] hover:bg-[#4a0359] text-white cursor-pointer"
                             : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
                             }`}
                     >
-                        <span>{userId ? "Registrar Pedido" : "Selecciona un cliente"}</span>
-                        <ArrowRight className="w-4 h-4" />
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                <span>Procesando pedido...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>{userId ? "Registrar Pedido" : "Selecciona un cliente"}</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
                     </button>
                 </div>
             )}

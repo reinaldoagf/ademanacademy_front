@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useCartStore } from "@/store/cartStore";
 import { Product, SaveProductPayload } from "@/types/product";
 import { ProductCategory } from "@/types/product-category";
 import { useModal } from "@/hooks/useModal";
@@ -53,6 +54,7 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState("all");
   const { isOpen, openModal, closeModal } = useModal();
+  const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -278,6 +280,13 @@ export default function ProductsPage() {
       }
     });
   };
+  useEffect(() => {
+    if (orderCreatedFlag > 0) {
+
+      // Aquí puedes volver a cargar la lista de pedidos de tu API o actualizar SWR/React Query
+      fetchData(currentPage, itemsPerPage);
+    }
+  }, [orderCreatedFlag]);
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchData(currentPage, itemsPerPage);
