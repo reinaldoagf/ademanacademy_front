@@ -1,0 +1,827 @@
+// src/app/(dashboard)/events/page.tsx
+"use client";
+
+import { useState, useTransition, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import {
+  Sparkles,
+  Calendar,
+  MapPin,
+  Ticket,
+  Search,
+  Plus,
+  Music,
+  TrendingUp,
+  Users,
+  X
+} from "lucide-react";
+import HeroSection from "@/components/layout/HeroSection";
+import { MacDockModal } from "@/components/ui/MacDockModal";
+import { useModal } from "@/hooks/useModal";
+import { getAllEventsAction } from "@/app/actions/event";
+// Importar el mapa asegurando que solo se cargue en el cliente
+const CanvasSeatingMap = dynamic(
+  () => import("@/components/CanvasSeatingMap").then((mod) => mod.CanvasSeatingMap),
+  { ssr: false } // 👈 Adiós problemas de hidratación
+);
+import { Event } from "@/types/event";
+
+export interface ElementoMapa {
+  itemID: string;
+  tipo: "tarima_pista" | "silla_vip" | string; // expandible a otros tipos
+  nombre: string;
+  numeroSilla?: string;
+  grupoId?: string;
+  rotacion: number;
+  precio: number;
+  xMetros: number;
+  yMetros: number;
+  anchoMetros: number;
+  altoMetros: number;
+}
+
+export interface PayloadMapa {
+  anchoTotalSalón: number;
+  altoTotalSalón: number;
+  elementos: ElementoMapa[];
+}
+
+export default function AdminEventsPage() {
+  const { isOpen, openModal, closeModal } = useModal();
+  const [typeFilter, setTypeFilter] = useState("all");
+  // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  // 1. Cambia tu estado inicial en el componente padre para aceptar objetos ElementoMapa
+  const [selectedChairs, setSelectedChairs] = useState<ElementoMapa[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [meta, setMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 6,
+    itemCount: 6,
+  });
+
+  const [isPending, startTransition] = useTransition();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+  // 2. Simulación de los datos del plano que vienen de tu backend
+  const configuredPlan = {
+
+    "anchoTotalSalón": 30,
+
+    "altoTotalSalón": 20,
+
+    "elementos": [
+
+      {
+
+        "itemID": "stage-1",
+
+        "tipo": "tarima_pista",
+
+        "nombre": "Pista Principal",
+
+        "rotacion": 0,
+
+        "precio": 0,
+
+        "xMetros": 5.944763054633262,
+
+        "yMetros": 1.2677331723513432,
+
+        "anchoMetros": 18.110473890733473,
+
+        "altoMetros": 5.070932689405373
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-0-0",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-1",
+
+        "numeroSilla": "A-1",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 12.375,
+
+        "yMetros": 7.393371566555994,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-0-1",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-2",
+
+        "numeroSilla": "A-2",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 13.475,
+
+        "yMetros": 7.393371566555994,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-0-2",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-3",
+
+        "numeroSilla": "A-3",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 14.575,
+
+        "yMetros": 7.393371566555994,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-0-3",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-4",
+
+        "numeroSilla": "A-4",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 15.674999999999999,
+
+        "yMetros": 7.393371566555994,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-0-4",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-5",
+
+        "numeroSilla": "A-5",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 16.775,
+
+        "yMetros": 7.393371566555994,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-1-0",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-6",
+
+        "numeroSilla": "A-6",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 12.375,
+
+        "yMetros": 8.493371566555991,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-1-1",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-7",
+
+        "numeroSilla": "A-7",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 13.475,
+
+        "yMetros": 8.493371566555991,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-1-2",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-8",
+
+        "numeroSilla": "A-8",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 14.575,
+
+        "yMetros": 8.493371566555991,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-1-3",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-9",
+
+        "numeroSilla": "A-9",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 15.674999999999999,
+
+        "yMetros": 8.493371566555991,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-1-4",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-10",
+
+        "numeroSilla": "A-10",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 16.775,
+
+        "yMetros": 8.493371566555991,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-2-0",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-11",
+
+        "numeroSilla": "A-11",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 12.375,
+
+        "yMetros": 9.59337156655599,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-2-1",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-12",
+
+        "numeroSilla": "A-12",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 13.475,
+
+        "yMetros": 9.59337156655599,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-2-2",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-13",
+
+        "numeroSilla": "A-13",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 14.575,
+
+        "yMetros": 9.59337156655599,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-2-3",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-14",
+
+        "numeroSilla": "A-14",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 15.674999999999999,
+
+        "yMetros": 9.59337156655599,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      },
+
+      {
+
+        "itemID": "silla-1779563256195-2-4",
+
+        "tipo": "silla_vip",
+
+        "nombre": "Asiento A-15",
+
+        "numeroSilla": "A-15",
+
+        "grupoId": "grupo-1779563256195",
+
+        "rotacion": 0,
+
+        "rotacionGrupo": 0,
+
+        "precio": 10,
+
+        "xMetros": 16.775,
+
+        "yMetros": 9.59337156655599,
+
+        "anchoMetros": 0.85,
+
+        "altoMetros": 0.85
+
+      }
+
+    ]
+
+
+
+  }; // Aquí pasas el objeto JSON del editor
+
+  // 3. Simulación de los IDs ya vendidos que vienen de la base de datos
+  const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"];
+
+  // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
+  const totalCashAmount = selectedChairs.reduce((total, silla) => total + silla.precio, 0);
+  const openTicketOfficeMap = (event: Event) => {
+    setSelectedEvent(event);
+    setSelectedChairs([]);
+    openModal();
+  };
+  // Configuración de acciones del HeroSection
+  const actions = [
+    {
+      label: "Nuevo Evento",
+      onClick: () => console.log("Creando evento nuevo..."),
+      icon: <Plus className="w-4 h-4" />,
+      variant: "secondary" as const
+    },
+    {
+      label: "Vender Entradas →",
+      onClick: () => console.log("Abriendo pasarela de tickets..."),
+      icon: <Ticket className="w-4 h-4" />,
+      variant: "primary" as const
+    },
+  ];
+
+
+  // Métricas financieras y logísticas globales (Basadas exclusivamente en las ventas actuales)
+  const totalRecaudadoTickets = 0;
+  const totalBailarinesEnEscena = 0;
+  const eventosProximos = 0;
+
+  const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    startTransition(async () => {
+      const res = await getAllEventsAction({
+        page: pageToFetch,
+        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+        search: searchTerm || undefined,
+        type: typeFilter == 'all' ? undefined : typeFilter
+      });
+
+      if (res.success && res.data) {
+        setEvents(res.data);
+        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      }
+    });
+  };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchData(currentPage, itemsPerPage);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, currentPage, itemsPerPage, typeFilter]);
+  return (
+    <>
+      {/* HERO SECTION DE EVENTOS */}
+      <HeroSection
+        htmlTitle={`Producción de <em class="text-[#5e0472]">Eventos y Taquilla</em>`}
+        htmlSubTitle="Planifica los espectáculos de la academia, controla el aforo de los teatros y monitorea los ingresos por venta de entradas."
+        actions={actions}
+      />
+
+      {/* Capa de Carga Asíncrona */}
+      <div className="relative w-full">
+        {isPending && (
+          <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
+            <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
+          {/* REPORTE DE PRODUCCIÓN EXPRESS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Recaudación de Taquilla */}
+            <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-purple-100 flex items-center justify-center text-purple-600">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
+                  Taquilla Proyectada
+                </p>
+                <h4 className="text-xl font-anton text-gray-800">
+                  ${totalRecaudadoTickets.toLocaleString("en-US")}
+                </h4>
+                <p className="font-questrial text-xs text-gray-500">
+                  Ingresos brutos por boletas vendidas.
+                </p>
+              </div>
+            </div>
+
+            {/* Artistas en escena */}
+            <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
+                  Bailarines Convocados
+                </p>
+                <h4 className="text-xl font-anton text-gray-800">
+                  {totalBailarinesEnEscena} Alumnos
+                </h4>
+                <p className="font-questrial text-xs text-gray-500">
+                  Participantes activos en coreografías.
+                </p>
+              </div>
+            </div>
+
+
+            {/* Producciones Activas */}
+            <div className="glass-card shadow-sm p-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-pink-100 flex items-center justify-center text-pink-600">
+                <Music className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider">
+                  Fechas en Agenda
+                </p>
+                <h4 className="text-xl font-anton text-gray-800">
+                  {eventosProximos} Activos
+                </h4>
+                <p className="font-questrial text-xs text-gray-500">
+                  Espectáculos y talleres en desarrollo.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* FILTROS DE AGENDA */}
+          <div className="glass-card shadow-sm p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre de gala o teatro..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+              />
+            </div>
+
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="p-2 w-full sm:w-auto font-questrial border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
+            >
+              <option value="all">Todos los formatos</option>
+              <option value="annual_gala">Galas Anuales</option>
+              <option value="competence">Competencias</option>
+              <option value="masterclass">Masterclasses / Talleres</option>
+              <option value="sample">Muestras de Aula</option>
+              <option value="other">Otro</option>
+
+            </select>
+          </div>
+
+          {/* LISTADO DE EVENTOS */}
+          <div className="space-y-4">
+            {events.length > 0 ? (
+              events.map((event) => {
+                const porcentajeVendido = Math.round((event.ticketsSold / event.totalTickets) * 100);
+                const recaudacionIndividual = event.ticketsSold * event.ticketPrice;
+                const isSoldOut = event.ticketsSold === event.totalTickets;
+
+                return (
+                  <div key={event.id} className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition bg-white">
+
+                    {/* Detalles del Evento */}
+                    <div className="flex items-start gap-4 lg:w-1/3">
+                      <div className={`w-12 h-12 flex items-center justify-center shrink-0 ${event.type === "annual_gala" ? "bg-purple-100 text-purple-700" :
+                        event.type === "Masterclass" ? "bg-pink-100 text-pink-700" :
+                          "bg-indigo-100 text-indigo-700"
+                        }`}>
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-questrial font-bold tracking-wider text-gray-400 font-mono">{event.id}</span>
+                        <h3 className="font-anton text-gray-800 text-base leading-tight mt-0.5">{event.name}</h3>
+                        <span className="text-[10px] bg-purple-50 text-purple-700 font-questrial font-semibold px-2 py-0.5 mt-1 inline-block">
+                          {event.type}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Logística Física y Fecha */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-500 lg:w-1/4 font-medium">
+                      <div className="flex items-center gap-2 font-questrial">
+                        <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
+                        <span>{event.startDate}</span>
+                      </div>
+                      <div className="flex items-center gap-2 font-questrial">
+                        <MapPin className="w-4 h-4 text-pink-400 shrink-0" />
+                        <span className="line-clamp-1">{event.location}</span>
+                      </div>
+                    </div>
+
+                    {/* Control de Aforo y Taquilla */}
+                    <div className="space-y-1.5 flex-1 lg:max-w-xs">
+                      <div className="flex justify-between text-xs font-questrial font-semibold">
+                        <span className="text-gray-400">Entradas vendidas</span>
+                        <span className={isSoldOut ? "text-pink-600 font-black animate-pulse" : "text-purple-700"}>
+                          {event.ticketsSold} / {event.totalTickets} ({porcentajeVendido}%)
+                        </span>
+                      </div>
+
+                      {/* Barra de Progreso de Aforo */}
+                      <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${isSoldOut ? "bg-pink-500" : "gradient-purple"
+                            }`}
+                          style={{ width: `${porcentajeVendido}%` }}
+                        ></div>
+                      </div>
+
+                      <p className="font-questrial text-[10px] text-gray-400">
+                        Recaudado: <strong className="text-gray-700">${recaudacionIndividual.toLocaleString("en-US")}</strong> (${event.ticketPrice} c/u)
+                      </p>
+                    </div>
+
+                    {/* Estatus y Botón Acciones */}
+                    <div className="flex items-center justify-between lg:justify-end gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-purple-50/50 shrink-0">
+                      <span className={`text-[10px] font-questrial font-semibold uppercase tracking-wider px-3 py-1 ${event.productionStatus === "Sold Out" ? "bg-pink-100 text-pink-700" :
+                        event.productionStatus === "essays" ? "bg-purple-100 text-purple-700" :
+                          "bg-gray-100 text-gray-500"
+                        }`}>
+                        {event.productionStatus}
+                      </span>
+
+                      {/* Botón de Activación de Mapa */}
+                      <button
+                        onClick={() => openTicketOfficeMap(event)}
+                        disabled={event.productionStatus === "Sold Out"}
+                        className="text-xs gradient-purple text-white px-4 py-2 font-questrial font-semibold hover:opacity-90 transition shadow-sm disabled:bg-gray-200 disabled:text-gray-400 cursor-pointer"
+                      >
+                        {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
+                No se encontraron eventos activos o planificados que coincidan con los filtros establecidos.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* MODAL DETALLE DE SILLAS CON CANVAS */}
+      <MacDockModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={"Taquilla en Vivo con Mapa Dinámico"}
+        size={"5xl"}
+      ><>
+          {/* Inyección del mapa interactivo con la data del Payload JSON */}
+          {configuredPlan && (
+            <CanvasSeatingMap
+              mapaConfig={configuredPlan}
+              seatsOccupied={seatsOccupiedBD}
+              onSeleccionChange={(chairs) => setSelectedChairs(chairs)}
+            />
+          )}
+
+          {/* Cierre de Compra */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-50">
+            <div className="text-center sm:text-left font-questrial">
+              <p className="text-xs text-gray-400 font-medium">Monto Total Liquidado en Caja</p>
+
+              <h4 className="text-2xl font-black text-gray-800">
+                {/* 2. CLAVAMOS UN LOCALE FIJO (US) PARA QUE SERVIDOR Y CLIENTE COINCIDAN EN LA COMA ',' */}
+                ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}{" "}
+                <span className="text-xs text-gray-400 font-normal">USD</span>
+              </h4>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => closeModal()}
+                className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={selectedChairs.length === 0}
+                onClick={() => {
+                  const nombresAsientos = selectedChairs.map(s => s.numeroSilla).join(", ");
+                  alert(`Venta registrada. IDs reservados: ${selectedChairs.map(s => s.itemID).join(", ")}`);
+                  closeModal();
+                }}
+                className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+              >
+                Confirmar Asignación ({selectedChairs.length})
+              </button>
+            </div>
+          </div>
+        </>
+      </MacDockModal>
+    </>
+  );
+}

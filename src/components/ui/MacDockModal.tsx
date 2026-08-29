@@ -9,7 +9,7 @@ interface MacDockModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
-    size: "lg" | "md" | "sm";
+    size: "5xl" | "4xl" | "3xl" | "2xl" | "xl" | "lg" | "md" | "sm";
     children: ReactNode;
 }
 

@@ -142,8 +142,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         { key: 'wardrobe-costumes', name: 'Vestuarios', href: '/admin/wardrobe/costumes', badge: 0 },
         { key: 'wardrobe-uniforms', name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
       ]
-    },
-    {
+    }, {
       key: 'store', name: 'Tienda e Inventario', href: '/admin/store', icon: ShoppingBag,
       // 🎯 Submenú añadido
       children: [
@@ -155,7 +154,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   const marketingEventos = [
     { key: '', name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair, badge: 3 },
-    { key: '', name: 'Eventos Especiales', href: '/admin/eventos', icon: Star, badge: 4 },
+    { key: 'events', name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
     { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ];
 

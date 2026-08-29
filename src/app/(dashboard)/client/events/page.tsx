@@ -18,8 +18,8 @@ import {
 import HeroSection from "@/components/layout/HeroSection";
 
 // Importar el mapa asegurando que solo se cargue en el cliente para evitar problemas de hidratación
-const MapaAsientosCanvas = dynamic(
-  () => import("@/components/MapaAsientosCanvas").then((mod) => mod.MapaAsientosCanvas),
+const CanvasSeatingMap = dynamic(
+  () => import("@/components/CanvasSeatingMap").then((mod) => mod.CanvasSeatingMap),
   { ssr: false }
 );
 
@@ -102,8 +102,8 @@ export default function ClientEventsPage() {
 
   // Estados para la selección de asientos
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [eventoSeleccionado, setEventoSeleccionado] = useState<EventoAcademia | null>(null);
-  const [sillasElegidas, setSillasElegidas] = useState<ElementoMapa[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<EventoAcademia | null>(null);
+  const [selectedChairs, setSelectedChairs] = useState<ElementoMapa[]>([]);
 
   // Datos simulados del plano de la sala
   const planoConfigurado = {
@@ -125,14 +125,14 @@ export default function ClientEventsPage() {
   };
 
   // Simulación de los IDs ocupados por otros usuarios
-  const asientosOcupadosBD = ["silla-1779563256195-1-2", "silla-1779563256195-0-1"];
+  const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-0-1"];
 
   // Cálculo del monto dinámico (Suma de la base de la entrada del evento + el extra de la silla vip si aplica)
-  const montoTotalCompra = sillasElegidas.reduce((total, silla) => total + (eventoSeleccionado?.precioEntrada || 0) + (silla.precio - 10), 0);
+  const montoTotalCompra = selectedChairs.reduce((total, silla) => total + (selectedEvent?.precioEntrada || 0) + (silla.precio - 10), 0);
 
   const abrirReservaEntradas = (event: EventoAcademia) => {
-    setEventoSeleccionado(event);
-    setSillasElegidas([]);
+    setSelectedEvent(event);
+    setSelectedChairs([]);
     setIsModalOpen(true);
   };
 
@@ -331,7 +331,7 @@ export default function ClientEventsPage() {
       </div>
 
       {/* MODAL DE RESERVA ADAPTADO AL CLIENTE (PASARELA INTERACTIVA) */}
-      {isModalOpen && eventoSeleccionado && (
+      {isModalOpen && selectedEvent && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
             {/* Encabezado del modal */}
@@ -340,7 +340,7 @@ export default function ClientEventsPage() {
                 <span className="text-[10px] font-questrial text-purple-600 uppercase tracking-wider flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> Selección de ubicación en tiempo real
                 </span>
-                <h3 className="text-xl font-anton text-gray-800">{eventoSeleccionado.nombre}</h3>
+                <h3 className="text-xl font-anton text-gray-800">{selectedEvent.nombre}</h3>
                 <p className="font-questrial text-xs text-gray-400">Haz clic sobre las butacas libres habilitadas en el mapa interactivo.</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="cursor-pointer text-gray-400 hover:bg-gray-100 p-1 rounded">
@@ -351,10 +351,10 @@ export default function ClientEventsPage() {
             {/* Inyección del Canvas */}
             {planoConfigurado && (
               <div className="border border-purple-50 overflow-hidden bg-gray-50/50">
-                <MapaAsientosCanvas
+                <CanvasSeatingMap
                   mapaConfig={planoConfigurado}
-                  asientosOcupados={asientosOcupadosBD}
-                  onSeleccionChange={(sillas) => setSillasElegidas(sillas)}
+                  seatsOccupied={seatsOccupiedBD}
+                  onSeleccionChange={(sillas) => setSelectedChairs(sillas)}
                 />
               </div>
             )}
@@ -363,9 +363,9 @@ export default function ClientEventsPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-purple-50">
               <div className="text-center sm:text-left font-questrial">
                 <p className="text-xs text-gray-400 font-medium">
-                  {sillasElegidas.length === 0
+                  {selectedChairs.length === 0
                     ? "Ningún asiento seleccionado"
-                    : `${sillasElegidas.length} Asiento(s) escogido(s)`}
+                    : `${selectedChairs.length} Asiento(s) escogido(s)`}
                 </p>
                 <h4 className="text-2xl font-black text-gray-800">
                   ${montoTotalCompra.toLocaleString("en-US", { minimumFractionDigits: 0 })}{" "}
@@ -381,9 +381,9 @@ export default function ClientEventsPage() {
                   Regresar
                 </button>
                 <button
-                  disabled={sillasElegidas.length === 0}
+                  disabled={selectedChairs.length === 0}
                   onClick={() => {
-                    const butacas = sillasElegidas.map(s => s.numeroSilla).join(", ");
+                    const butacas = selectedChairs.map(s => s.numeroSilla).join(", ");
                     alert(`¡Pedido Procesado Exitosamente!\nAsientos reservados: ${butacas}\nTotal debitado: $${montoTotalCompra} USD.`);
                     setIsModalOpen(false);
                   }}

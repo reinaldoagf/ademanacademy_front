@@ -1,4 +1,4 @@
-// /components/MapaAsientosCanvas.tsx
+// /components/CanvasSeatingMap.tsx
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
@@ -27,13 +27,13 @@ export interface PayloadMapa {
 
 interface MapaAsientosProps {
   mapaConfig: PayloadMapa;
-  asientosOcupados?: string[]; // IDs de asientos vendidos ej: ["silla-1234"]
+  seatsOccupied?: string[]; // IDs de asientos vendidos ej: ["silla-1234"]
   onSeleccionChange: (asientosSeleccionados: ElementoMapa[]) => void;
 }
 
-export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
+export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
   mapaConfig,
-  asientosOcupados = [],
+  seatsOccupied = [],
   onSeleccionChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -137,7 +137,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
         ctx.fillText(el.nombre, 0, 0);
       } else {
         // --- DISEÑO DE SILLAS CON ESTADOS DE SELECCIÓN ---
-        const esOcupado = asientosOcupados.includes(el.itemID);
+        const esOcupado = seatsOccupied.includes(el.itemID);
         const esSeleccionado = seleccionados.some((s) => s.itemID === el.itemID);
 
         let colorCojin = "#6e0372";
@@ -203,7 +203,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
       }
       ctx.restore();
     });
-  }, [seleccionados, mapaConfig, asientosOcupados]);
+  }, [seleccionados, mapaConfig, seatsOccupied]);
 
   // Función matemática idéntica al editor para descifrar clics con rotación matricial
   const comprobarInterseccion = (mX: number, mY: number, obj: ElementoMapa) => {
@@ -256,7 +256,7 @@ export const MapaAsientosCanvas: React.FC<MapaAsientosProps> = ({
     for (let i = mapaConfig.elementos.length - 1; i >= 0; i--) {
       const el = mapaConfig.elementos[i];
       if (el.tipo === "tarima_pista") continue;
-      if (asientosOcupados.includes(el.itemID)) continue;
+      if (seatsOccupied.includes(el.itemID)) continue;
 
       if (comprobarInterseccion(clickX, clickY, el)) {
         elementoClickeado = el;
