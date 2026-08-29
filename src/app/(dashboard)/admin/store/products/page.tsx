@@ -518,7 +518,7 @@ export default function ProductsPage() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
             />
           </div>
 
@@ -534,7 +534,7 @@ export default function ProductsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, categoryId: e.target.value })
                 }
-                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
                 <option value="">Seleccionar Categoría</option>
                 {categories.map((category: ProductCategory) => (
@@ -563,7 +563,7 @@ export default function ProductsPage() {
                     salePrice: parseFloat(e.target.value) || 0,
                   })
                 }
-                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
               />
             </div>
 
@@ -585,7 +585,7 @@ export default function ProductsPage() {
                     cost: parseFloat(e.target.value) || 0,
                   })
                 }
-                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-gray-600"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-gray-600"
               />
             </div>
           </div>
@@ -641,7 +641,7 @@ export default function ProductsPage() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
             ></textarea>
           </div>
 

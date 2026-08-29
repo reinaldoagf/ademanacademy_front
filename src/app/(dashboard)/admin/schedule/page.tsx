@@ -768,7 +768,7 @@ export default function SchedulePage() {
 
                     <div>
                         <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
-                        <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400">
+                        <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors">
                             <option value="">-- Elige un grupo --</option>
                             {activeClassroom?.groups.map((g, index) => (
                                 <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
@@ -778,7 +778,7 @@ export default function SchedulePage() {
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
-                            <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize">
+                            <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors">
                                 {DAYS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
                             </select>
                         </div>
@@ -806,14 +806,14 @@ export default function SchedulePage() {
                         <button
                             type="button"
                             onClick={() => closeModal()}
-                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
                             Guardar Bloque
                         </button>

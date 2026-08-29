@@ -376,7 +376,7 @@ export default function AccountsPayablePage() {
                             value={createForm.supplierName}
                             onChange={(e) => setCreateForm({ ...createForm, supplierName: e.target.value })}
                             placeholder="Ej: Imprenta Rápida C.A."
-                            className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                         />
                     </div>
 
@@ -389,7 +389,7 @@ export default function AccountsPayablePage() {
                                 type="text"
                                 value={createForm.supplierDni}
                                 onChange={(e) => setCreateForm({ ...createForm, supplierDni: e.target.value })}
-                                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                                 placeholder="J-12345678-9"
                             />
                         </div>
@@ -403,7 +403,7 @@ export default function AccountsPayablePage() {
                                 onChange={(e) =>
                                     setCreateForm({ ...createForm, invoiceNumber: e.target.value })
                                 }
-                                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                                 placeholder="FACT-00123"
                             />
                         </div>
@@ -416,7 +416,7 @@ export default function AccountsPayablePage() {
                             required
                             value={createForm.concept}
                             onChange={(e) => setCreateForm({ ...createForm, concept: e.target.value })}
-                            className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                             placeholder="Ej: Impresión de diplomas y certificados"
                         />
                     </div>
@@ -432,7 +432,7 @@ export default function AccountsPayablePage() {
                                 required
                                 value={createForm.amountTotal}
                                 onChange={(e) => setCreateForm({ ...createForm, amountTotal: e.target.value })}
-                                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                                 placeholder="0.00"
                             />
                         </div>
@@ -445,7 +445,7 @@ export default function AccountsPayablePage() {
                                 required
                                 value={createForm.dueDate}
                                 onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
-                                className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
 
                             />
                         </div>
