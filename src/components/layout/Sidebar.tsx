@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, ForwardRefExoticComponent, RefAttribu
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 import {
   getAllUsersAction,
 } from "@/app/actions/user";
@@ -20,6 +21,7 @@ import {
 } from "@/app/actions/group";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
+import { getAllOrdersAction } from "@/app/actions/order";
 import { getAllCostumesAction } from "@/app/actions/costume";
 import { getAllEmployeesAction } from "@/app/actions/employee";
 import { getAllUniformsAction } from "@/app/actions/uniform";
@@ -103,6 +105,7 @@ const updateBadgeInItems = (
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
+  const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   // Secciones modulares del software (Administrador)
@@ -203,6 +206,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
     { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
+    { event: "refresh-orders-count", action: getAllOrdersAction, key: "orders" },
+
     // Submódulos (hijos)
     { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups-list", parentKey: "groups" },
     { event: "refresh-costumes-count", action: getAllCostumesAction, key: "wardrobe-costumes", parentKey: "wardrobe" },
@@ -359,7 +364,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         window.removeEventListener(event, handler);
       });
     };
-  }, [isAdminView, fetchBadge]);
+  }, [isAdminView, orderCreatedFlag, fetchBadge]);
 
   // useEffect para cargar la data real al montar el Sidebar por primera vez
   /* useEffect(() => {

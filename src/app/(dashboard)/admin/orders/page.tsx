@@ -102,7 +102,7 @@ export default function OrdersPage() {
             render: (element) => (<div className="flex gap-2 justify-end">
                 <div className="relative inline-block group">
                     <button onClick={() => handleOpenDetails(element)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl cursor-pointer bg-emerald-400 hover:bg-emerald-500 hover:text-white`}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl cursor-pointer text-emerald-700 bg-emerald-50 hover:bg-emerald-100`}
                     >
                         <Eye className="w-3.5 h-3.5" /> Ver detalles
                     </button>
@@ -307,7 +307,7 @@ export default function OrdersPage() {
                     )}
 
                     {/* Monto Total */}
-                    <div className="font-questrial flex justify-between items-center p-4 bg-gray-900 text-white rounded-xl font-bold">
+                    <div className="font-questrial flex justify-between items-center p-4 gradient-purple text-white shadow-lg shadow-purple-200  rounded-xl font-bold">
                         <span className="text-sm">Monto Total del Pedido:</span>
                         <span className="text-lg text-emerald-400">
                             ${Number(selectedOrder?.totalAmount || 0).toFixed(2)}
