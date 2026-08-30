@@ -555,7 +555,7 @@ export default function GroupsListPage() {
 
         {/* Seccion de Paginación */}
         {meta.totalPages > 1 && (
-          <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-purple-50/60 shadow-xs">
+          <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-center gap-6 border border-purple-50/60 shadow-xs">
             <div className="text-xs font-questrial text-gray-500">
               Mostrando <span className="font-semibold text-gray-700">{groups.length}</span> de{" "}
               <span className="font-semibold text-gray-700">{meta.totalItems}</span> grupos

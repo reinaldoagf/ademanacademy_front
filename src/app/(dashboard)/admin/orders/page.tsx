@@ -122,8 +122,6 @@ export default function OrdersPage() {
                 search: searchTerm || undefined,
             });
 
-            console.log({ res })
-
             if (res.success && res.data) {
                 setOrders(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta

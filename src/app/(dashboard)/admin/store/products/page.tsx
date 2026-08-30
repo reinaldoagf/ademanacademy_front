@@ -411,7 +411,7 @@ export default function ProductsPage() {
 
           {/* Seccion de Paginación */}
           {meta.totalPages > 1 && (
-            <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-purple-50/60 shadow-xs">
+            <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-center gap-6 border border-purple-50/60 shadow-xs">
               <div className="text-xs font-questrial text-gray-500">
                 Mostrando <span className="font-semibold text-gray-700">{products.length}</span> de{" "}
                 <span className="font-semibold text-gray-700">{meta.totalItems}</span> salones
@@ -473,7 +473,7 @@ export default function ProductsPage() {
           ref={productFormReference}
           id="product-form"
           onSubmit={handleSave}
-          className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin pr-1"
+          className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin"
         >
           {errorMsg && (
             <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4 border border-red-100">
@@ -606,7 +606,7 @@ export default function ProductsPage() {
                     currentStock: parseInt(e.target.value, 10) || 0,
                   })
                 }
-                className="w-full p-2.5 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
 
@@ -624,7 +624,7 @@ export default function ProductsPage() {
                     minimumStockAlert: parseInt(e.target.value, 10) || 0,
                   })
                 }
-                className="w-full p-2.5 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
+                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
           </div>
