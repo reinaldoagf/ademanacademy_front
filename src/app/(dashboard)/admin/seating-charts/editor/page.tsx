@@ -192,7 +192,7 @@ export default function SeatingMapBuilderPage() {
       anchoMetros: obj.ancho / pxPorMetro,
       altoMetros: obj.alto / pxPorMetro,
     }));
-    console.log({ payload: { anchoTotalSalón: anchoMetros, altoTotalSalón: altoMetros, elementos: datosNormalizados } });
+    console.log({ payload: { totalWidth: anchoMetros, totalHigh: altoMetros, elementos: datosNormalizados } });
     setGuardando(false);
   };
 

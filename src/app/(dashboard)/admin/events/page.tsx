@@ -21,6 +21,7 @@ import {
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 // Importar el mapa asegurando que solo se cargue en el cliente
 const CanvasSeatingMap = dynamic(
@@ -31,7 +32,7 @@ const CanvasSeatingMap = dynamic(
 import { useModal } from "@/hooks/useModal";
 import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/actions/event";
 import { EventData, EventFormData } from "@/types/event";
-import { PayloadMap, SeatingMapElement } from "@/types/seating-map";
+import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
@@ -114,31 +115,33 @@ export default function AdminEventsPage() {
   // 2. Simulación de los datos del plano que vienen de tu backend
   const configuredPlan = {
 
-    "anchoTotalSalón": 30,
+    "totalWidth": 30,
 
-    "altoTotalSalón": 20,
+    "totalHigh": 20,
 
-    "elementos": [
+    "elements": [
 
       {
 
         "itemID": "stage-1",
 
-        "tipo": "tarima_pista",
+        "type": "tarima_pista",
 
-        "nombre": "Pista Principal",
+        "name": "Pista Principal",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "precio": 0,
+        "groupRotation": 0,
 
-        "xMetros": 5.944763054633262,
+        "price": 0,
 
-        "yMetros": 1.2677331723513432,
+        "xMeters": 5.944763054633262,
 
-        "anchoMetros": 18.110473890733473,
+        "yMeters": 1.2677331723513432,
 
-        "altoMetros": 5.070932689405373
+        "widthMeters": 18.110473890733473,
+
+        "tallMeters": 5.070932689405373,
 
       },
 
@@ -146,27 +149,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-0-0",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-1",
+        "name": "Asiento A-1",
 
-        "numeroSilla": "A-1",
+        "chairNumber": "A-1",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 12.375,
+        "xMeters": 12.375,
 
-        "yMetros": 7.393371566555994,
+        "yMeters": 7.393371566555994,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -174,27 +177,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-0-1",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-2",
+        "name": "Asiento A-2",
 
-        "numeroSilla": "A-2",
+        "chairNumber": "A-2",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 13.475,
+        "xMeters": 13.475,
 
-        "yMetros": 7.393371566555994,
+        "yMeters": 7.393371566555994,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -202,27 +205,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-0-2",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-3",
+        "name": "Asiento A-3",
 
-        "numeroSilla": "A-3",
+        "chairNumber": "A-3",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 14.575,
+        "xMeters": 14.575,
 
-        "yMetros": 7.393371566555994,
+        "yMeters": 7.393371566555994,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -230,27 +233,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-0-3",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-4",
+        "name": "Asiento A-4",
 
-        "numeroSilla": "A-4",
+        "chairNumber": "A-4",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 15.674999999999999,
+        "xMeters": 15.674999999999999,
 
-        "yMetros": 7.393371566555994,
+        "yMeters": 7.393371566555994,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -258,27 +261,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-0-4",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-5",
+        "name": "Asiento A-5",
 
-        "numeroSilla": "A-5",
+        "chairNumber": "A-5",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 16.775,
+        "xMeters": 16.775,
 
-        "yMetros": 7.393371566555994,
+        "yMeters": 7.393371566555994,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -286,27 +289,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-1-0",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-6",
+        "name": "Asiento A-6",
 
-        "numeroSilla": "A-6",
+        "chairNumber": "A-6",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 12.375,
+        "xMeters": 12.375,
 
-        "yMetros": 8.493371566555991,
+        "yMeters": 8.493371566555991,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -314,27 +317,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-1-1",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-7",
+        "name": "Asiento A-7",
 
-        "numeroSilla": "A-7",
+        "chairNumber": "A-7",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 13.475,
+        "xMeters": 13.475,
 
-        "yMetros": 8.493371566555991,
+        "yMeters": 8.493371566555991,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -342,27 +345,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-1-2",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-8",
+        "name": "Asiento A-8",
 
-        "numeroSilla": "A-8",
+        "chairNumber": "A-8",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 14.575,
+        "xMeters": 14.575,
 
-        "yMetros": 8.493371566555991,
+        "yMeters": 8.493371566555991,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -370,27 +373,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-1-3",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-9",
+        "name": "Asiento A-9",
 
-        "numeroSilla": "A-9",
+        "chairNumber": "A-9",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 15.674999999999999,
+        "xMeters": 15.674999999999999,
 
-        "yMetros": 8.493371566555991,
+        "yMeters": 8.493371566555991,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -398,27 +401,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-1-4",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-10",
+        "name": "Asiento A-10",
 
-        "numeroSilla": "A-10",
+        "chairNumber": "A-10",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 16.775,
+        "xMeters": 16.775,
 
-        "yMetros": 8.493371566555991,
+        "yMeters": 8.493371566555991,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -426,27 +429,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-2-0",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-11",
+        "name": "Asiento A-11",
 
-        "numeroSilla": "A-11",
+        "chairNumber": "A-11",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 12.375,
+        "xMeters": 12.375,
 
-        "yMetros": 9.59337156655599,
+        "yMeters": 9.59337156655599,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -454,27 +457,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-2-1",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-12",
+        "name": "Asiento A-12",
 
-        "numeroSilla": "A-12",
+        "chairNumber": "A-12",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 13.475,
+        "xMeters": 13.475,
 
-        "yMetros": 9.59337156655599,
+        "yMeters": 9.59337156655599,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -482,27 +485,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-2-2",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-13",
+        "name": "Asiento A-13",
 
-        "numeroSilla": "A-13",
+        "chairNumber": "A-13",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 14.575,
+        "xMeters": 14.575,
 
-        "yMetros": 9.59337156655599,
+        "yMeters": 9.59337156655599,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -510,27 +513,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-2-3",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-14",
+        "name": "Asiento A-14",
 
-        "numeroSilla": "A-14",
+        "chairNumber": "A-14",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 15.674999999999999,
+        "xMeters": 15.674999999999999,
 
-        "yMetros": 9.59337156655599,
+        "yMeters": 9.59337156655599,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       },
 
@@ -538,27 +541,27 @@ export default function AdminEventsPage() {
 
         "itemID": "silla-1779563256195-2-4",
 
-        "tipo": "silla_vip",
+        "type": "silla_vip",
 
-        "nombre": "Asiento A-15",
+        "name": "Asiento A-15",
 
-        "numeroSilla": "A-15",
+        "chairNumber": "A-15",
 
-        "grupoId": "grupo-1779563256195",
+        "groupId": "grupo-1779563256195",
 
-        "rotacion": 0,
+        "rotation": 0,
 
-        "rotacionGrupo": 0,
+        "groupRotation": 0,
 
-        "precio": 10,
+        "price": 10,
 
-        "xMetros": 16.775,
+        "xMeters": 16.775,
 
-        "yMetros": 9.59337156655599,
+        "yMeters": 9.59337156655599,
 
-        "anchoMetros": 0.85,
+        "widthMeters": 0.85,
 
-        "altoMetros": 0.85
+        "tallMeters": 0.85,
 
       }
 
@@ -572,7 +575,7 @@ export default function AdminEventsPage() {
   const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"];
 
   // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
-  const totalCashAmount = selectedChairs.reduce((total, silla) => total + silla.precio, 0);
+  const totalCashAmount = selectedChairs.reduce((total, silla) => total + silla.price, 0);
   const openTicketOfficeMap = (event: EventData) => {
     setSelectedEvent(event);
     setSelectedChairs([]);
@@ -870,7 +873,7 @@ export default function AdminEventsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-500 lg:w-1/4 font-medium">
                       <div className="flex items-center gap-2 font-questrial">
                         <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
-                        <span>{event.startDate}</span>
+                        <DatePipe value={event.startDate} format="short" />
                       </div>
                       <div className="flex items-center gap-2 font-questrial">
                         <MapPin className="w-4 h-4 text-pink-400 shrink-0" />
@@ -1051,7 +1054,7 @@ export default function AdminEventsPage() {
               <button
                 disabled={selectedChairs.length === 0}
                 onClick={() => {
-                  const nombresAsientos = selectedChairs.map(s => s.numeroSilla).join(", ");
+                  const nombresAsientos = selectedChairs.map(s => s.chairNumber).join(", ");
                   alert(`Venta registrada. IDs reservados: ${selectedChairs.map(s => s.itemID).join(", ")}`);
                   closeModalSeatingMap();
                 }}

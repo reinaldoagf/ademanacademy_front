@@ -6,32 +6,22 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
-import {
-  getAllUsersAction,
-} from "@/app/actions/user";
-import {
-  getAllClassroomsAction,
-} from "@/app/actions/classroom";
+import { getAllUsersAction } from "@/app/actions/user";
+import { getAllClassroomsAction } from "@/app/actions/classroom";
 import {
   getMyRepresentedAction,
   getAllStudentsAction
 } from "@/app/actions/student";
-import {
-  getAllGroupsAction,
-} from "@/app/actions/group";
+import { getAllGroupsAction } from "@/app/actions/group";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { getAllOrdersAction } from "@/app/actions/order";
+import { getAllEventsAction } from "@/app/actions/event";
 import { getAllCostumesAction } from "@/app/actions/costume";
 import { getAllEmployeesAction } from "@/app/actions/employee";
 import { getAllUniformsAction } from "@/app/actions/uniform";
-import {
-  getAllProductCategoriesAction,
-} from "@/app/actions/product-category";
-import {
-  getAllProductsAction,
-} from "@/app/actions/product";
-
+import { getAllProductCategoriesAction } from "@/app/actions/product-category";
+import { getAllProductsAction } from "@/app/actions/product";
 import {
   ChartPie,
   HeartPulse,
@@ -151,12 +141,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
       ]
     },
   ]);
-
-  const marketingEventos = [
-    { key: '', name: 'Mapas de asientos', href: '/admin/mapas-de-asientos', icon: Armchair, badge: 3 },
+  const [marketingEventManagement, setMarketingEventManagement] = useState<SidebarMenuItem[]>([
+    { key: '', name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 3 },
     { key: 'events', name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
     { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
-  ];
+  ]);
 
   const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([
     { key: '', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
@@ -189,6 +178,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
           setPersonalManagement((prev: any) =>
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
+          setMarketingEventManagement((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
         }
       } catch (error) {
         console.error(`Error al actualizar badge para [${targetKey}]:`, error);
@@ -206,6 +198,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
     { event: "refresh-orders-count", action: getAllOrdersAction, key: "orders" },
+    { event: "refresh-events-count", action: getAllEventsAction, key: "events" },
 
     // Submódulos (hijos)
     { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups-list", parentKey: "groups" },
@@ -433,7 +426,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Eventos y Leads
               </p>
-              {marketingEventos.map(renderLink)}
+              {marketingEventManagement.map(renderLink)}
             </div>
           </>
         )}

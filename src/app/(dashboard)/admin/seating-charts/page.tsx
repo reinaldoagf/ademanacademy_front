@@ -77,7 +77,7 @@ export default function ListaPlanosAsientosPage() {
     {
       label: "Nuevo Plano →",
       onClick: () => {
-        router.push("/admin/mapas-de-asientos/editor");
+        router.push("/admin/seating-charts/editor");
       }, // Ajusta tu ruta aquí
       icon: <Plus className="w-4 h-4" />,
       variant: "primary" as const,

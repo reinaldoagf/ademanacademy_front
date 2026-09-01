@@ -1,19 +1,20 @@
 export interface SeatingMapElement {
     itemID: string;
-    tipo: "tarima_pista" | "silla_vip" | string; // expandible a otros tipos
-    nombre: string;
-    numeroSilla?: string;
-    grupoId?: string;
-    rotacion: number;
-    precio: number;
-    xMetros: number;
-    yMetros: number;
-    anchoMetros: number;
-    altoMetros: number;
+    type: "tarima_pista" | "silla_vip" | string; // expandible a otros tipos
+    name: string;
+    chairNumber?: string;
+    groupId?: string;
+    rotation: number;
+    groupRotation: number;
+    price: number;
+    xMeters: number;
+    yMeters: number;
+    widthMeters: number;
+    tallMeters: number;
 }
 
-export interface PayloadMap {
-    anchoTotalSalón: number;
-    altoTotalSalón: number;
-    elementos: SeatingMapElement[];
+export interface SeatingMap {
+    totalWidth: number;
+    totalHigh: number;
+    elements: SeatingMapElement[];
 }
