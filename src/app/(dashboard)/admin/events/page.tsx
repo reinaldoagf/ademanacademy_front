@@ -81,7 +81,8 @@ export default function AdminEventsPage() {
   const [isPending, startTransition] = useTransition();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6); const [modalConfig, setModalConfig] = useState<{
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: "simple" | "word" | "email";
     title: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import HeroSection from "@/components/layout/HeroSection";
 import {
   Armchair,
@@ -22,6 +22,9 @@ import {
   Users,
   ShieldAlert
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { SeatingMapElement, SeatingMap } from "@/types/seating-map";
+import { saveSeatingMapAction } from "@/app/actions/seating-map";
 
 // --- ICONOS ADICIONALES REQUERIDOS ---
 const AlignCenterHorizontal = ({ className }: { className?: string }) => (
@@ -32,22 +35,7 @@ const AlignCenterVertical = ({ className }: { className?: string }) => (
 );
 
 // --- INTERFACES ---
-interface ObjetoEscenario {
-  itemID: string;
-  tipo: "tarima_pista" | "silla_vip" | "silla_general" | "silla_patrocinante" | "silla_preferencial";
-  nombre: string;
-  x: number;
-  y: number;
-  ancho: number;
-  alto: number;
-  rotacion: number;
-  numeroSilla?: string | number;
-  grupoId?: string;
-  rotacionGrupo?: number;
-  precio?: number;
-  macroGrupoId?: string;
-  limitePorRepresentante?: number;
-}
+
 
 const obtenerLetraPrefijo = (index: number): string => {
   let prefijo = "";
@@ -60,16 +48,17 @@ const obtenerLetraPrefijo = (index: number): string => {
 };
 
 export default function SeatingMapBuilderPage() {
+  const [isPending, startTransition] = useTransition();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contenedorCanvasRef = useRef<HTMLDivElement | null>(null);
 
-  const [anchoMetros, setAnchoMetros] = useState<number>(30);
-  const [altoMetros, setAltoMetros] = useState<number>(20);
+  const [widthMeters, setAnchoMetros] = useState<number>(30);
+  const [tallMeters, setAltoMetros] = useState<number>(20);
   const [mostrarGuias, setMostrarGuias] = useState<boolean>(true);
 
   const [canvasAnchoPx, setCanvasAnchoPx] = useState<number>(800);
   const canvasAltoPx = 500;
-  const pxPorMetro = canvasAnchoPx / anchoMetros;
+  const pxPorMetro = canvasAnchoPx / widthMeters;
 
   const [scale, setScale] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -83,21 +72,26 @@ export default function SeatingMapBuilderPage() {
   const [tipoSillaLote, setTipoSillaLote] = useState<"silla_vip" | "silla_general" | "silla_patrocinante" | "silla_preferencial">("silla_vip");
   const [precioUnitarioLote, setPrecioUnitarioLote] = useState<number>(0);
 
-  const [objetos, setObjetos] = useState<ObjetoEscenario[]>([
+  const [objetos, setObjetos] = useState<SeatingMapElement[]>([
     {
       itemID: "stage-1",
-      tipo: "tarima_pista",
-      nombre: "Pista Principal",
+      type: "tarima_pista",
+      name: "Pista Principal",
       x: 150,
       y: 35,
-      ancho: 500,
-      alto: 140,
-      rotacion: 0,
+      width: 500,
+      height: 140,
+      rotation: 0,
+      xMeters: 0,
+      yMeters: 0,
+      widthMeters: 0,
+      tallMeters: 0,
+      groupRotation: 0,
     },
   ]);
 
-  const [objetoSeleccionado, setObjetoSeleccionado] = useState<ObjetoEscenario | null>(null);
-  const [objetoBajoHover, setObjetoBajoHover] = useState<ObjetoEscenario | null>(null);
+  const [objetoSeleccionado, setObjetoSeleccionado] = useState<SeatingMapElement | null>(null);
+  const [objetoBajoHover, setObjetoBajoHover] = useState<SeatingMapElement | null>(null);
   const [posicionMouseCanvas, setPosicionMouseCanvas] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -106,26 +100,26 @@ export default function SeatingMapBuilderPage() {
   const [guardando, setGuardando] = useState<boolean>(false);
 
   // --- CONTROL EXCLUSIVO DE PRECIOS FIJADOS POR MAPA ---
-  // Verifica si el tipo de silla seleccionado actualmente ya tiene presencia activa en el mapa
-  const tipoYaEstablecidoEnMapa = objetos.some((o) => o.tipo === tipoSillaLote);
+  // Verifica si el type de silla seleccionado actualmente ya tiene presencia activa en el mapa
+  const tipoYaEstablecidoEnMapa = objetos.some((o) => o.type === tipoSillaLote);
 
-  // Sincroniza el precio mostrado en el panel si el usuario cambia el selector a un tipo existente
+  // Sincroniza el price mostrado en el panel si el usuario cambia el selector a un type existente
   useEffect(() => {
-    const sillaExistente = objetos.find((o) => o.tipo === tipoSillaLote);
-    if (sillaExistente && sillaExistente.precio !== undefined) {
-      setPrecioUnitarioLote(sillaExistente.precio);
+    const sillaExistente = objetos.find((o) => o.type === tipoSillaLote);
+    if (sillaExistente && sillaExistente.price !== undefined) {
+      setPrecioUnitarioLote(sillaExistente.price);
     }
   }, [tipoSillaLote, objetos]);
 
   const alinearHorizontal = () => {
     if (!objetoSeleccionado) return;
-    const centroSalonX = (anchoMetros * pxPorMetro) / 2;
-    const centroObjetoX = objetoSeleccionado.x + objetoSeleccionado.ancho / 2;
+    const centroSalonX = (widthMeters * pxPorMetro) / 2;
+    const centroObjetoX = objetoSeleccionado.x + objetoSeleccionado.width / 2;
     const deltaX = centroSalonX - centroObjetoX;
 
     setObjetos((prev) =>
       prev.map((o) => {
-        if (objetoSeleccionado.grupoId && o.grupoId === objetoSeleccionado.grupoId) {
+        if (objetoSeleccionado.groupId && o.groupId === objetoSeleccionado.groupId) {
           return { ...o, x: o.x + deltaX };
         } else if (o.itemID === objetoSeleccionado.itemID) {
           return { ...o, x: o.x + deltaX };
@@ -138,13 +132,13 @@ export default function SeatingMapBuilderPage() {
 
   const alinearVertical = () => {
     if (!objetoSeleccionado) return;
-    const centroSalonY = (altoMetros * pxPorMetro) / 2;
-    const centroObjetoY = objetoSeleccionado.y + objetoSeleccionado.alto / 2;
+    const centroSalonY = (tallMeters * pxPorMetro) / 2;
+    const centroObjetoY = objetoSeleccionado.y + objetoSeleccionado.height / 2;
     const deltaY = centroSalonY - centroObjetoY;
 
     setObjetos((prev) =>
       prev.map((o) => {
-        if (objetoSeleccionado.grupoId && o.grupoId === objetoSeleccionado.grupoId) {
+        if (objetoSeleccionado.groupId && o.groupId === objetoSeleccionado.groupId) {
           return { ...o, y: o.y + deltaY };
         } else if (o.itemID === objetoSeleccionado.itemID) {
           return { ...o, y: o.y + deltaY };
@@ -163,7 +157,7 @@ export default function SeatingMapBuilderPage() {
 
     setObjetos((prev) =>
       prev.map((o) => {
-        if (objetoSeleccionado.grupoId && o.grupoId === objetoSeleccionado.grupoId) {
+        if (objetoSeleccionado.groupId && o.groupId === objetoSeleccionado.groupId) {
           return { ...o, [eje]: o[eje] + deltaPx };
         } else if (o.itemID === objetoSeleccionado.itemID) {
           return { ...o, [eje]: nuevaPosPx };
@@ -178,22 +172,44 @@ export default function SeatingMapBuilderPage() {
     setGuardando(true);
     const datosNormalizados = objetos.map((obj) => ({
       itemID: obj.itemID,
-      tipo: obj.tipo,
-      nombre: obj.nombre,
-      limitePorRepresentante: obj.limitePorRepresentante,
-      macroGrupoId: obj.macroGrupoId,
-      numeroSilla: obj.numeroSilla,
-      grupoId: obj.grupoId,
-      rotacion: obj.rotacion,
-      rotacionGrupo: obj.rotacionGrupo,
-      precio: obj.precio || 0,
-      xMetros: obj.x / pxPorMetro,
-      yMetros: obj.y / pxPorMetro,
-      anchoMetros: obj.ancho / pxPorMetro,
-      altoMetros: obj.alto / pxPorMetro,
+      type: obj.type,
+      name: obj.name,
+      limitPerRepresentative: obj.limitPerRepresentative,
+      macroGroupId: obj.macroGroupId,
+      chairNumber: obj.chairNumber,
+      groupId: obj.groupId,
+      rotation: obj.rotation,
+      groupRotation: obj.groupRotation,
+      price: obj.price || 0,
+      x: obj.x,
+      y: obj.y,
+      width: 0,
+      height: 0,
+      xMeters: obj.x / pxPorMetro,
+      yMeters: obj.y / pxPorMetro,
+      widthMeters: obj.width / pxPorMetro,
+      tallMeters: obj.height / pxPorMetro,
     }));
-    console.log({ payload: { totalWidth: anchoMetros, totalHigh: altoMetros, elementos: datosNormalizados } });
+
+    const data: SeatingMap = {
+      totalWidth: widthMeters,
+      totalHigh: tallMeters,
+      elements: datosNormalizados
+    }
+    startTransition(async () => {
+      const res = await saveSeatingMapAction(data, null);
+      /* if (!res.success) {
+          setErrorMsg(res.error || "Ocurrió un error.");
+          return;
+      } */
+      toast.success("Operación exitosa");
+      // Sincronizar estado local
+      console.log({ res })
+    });
+    console.log({ data });
     setGuardando(false);
+
+
   };
 
   useEffect(() => {
@@ -214,18 +230,18 @@ export default function SeatingMapBuilderPage() {
     return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
   }, []);
 
-  const obtenerCentroDelLote = (elementosLote: ObjetoEscenario[]) => {
+  const obtenerCentroDelLote = (elementosLote: SeatingMapElement[]) => {
     if (elementosLote.length === 0) return { x: 0, y: 0 };
     const minX = Math.min(...elementosLote.map((o) => o.x));
-    const maxX = Math.max(...elementosLote.map((o) => o.x + o.ancho));
+    const maxX = Math.max(...elementosLote.map((o) => o.x + o.width));
     const minY = Math.min(...elementosLote.map((o) => o.y));
-    const maxY = Math.max(...elementosLote.map((o) => o.alto + o.y));
+    const maxY = Math.max(...elementosLote.map((o) => o.height + o.y));
     return { x: minX + (maxX - minX) / 2, y: minY + (maxY - minY) / 2 };
   };
 
-  const obtenerSiguienteIndiceGrupoSillas = (listaActual: ObjetoEscenario[]) => {
+  const obtenerSiguienteIndiceGrupoSillas = (listaActual: SeatingMapElement[]) => {
     const gruposExistentes = Array.from(
-      new Set(listaActual.filter((o) => o.tipo.startsWith("silla_") && o.grupoId).map((o) => o.grupoId))
+      new Set(listaActual.filter((o) => o.type.startsWith("silla_") && o.groupId).map((o) => o.groupId))
     );
     return gruposExistentes.length;
   };
@@ -243,11 +259,11 @@ export default function SeatingMapBuilderPage() {
 
     ctx.strokeStyle = "rgba(110, 3, 114, 0.05)";
     ctx.lineWidth = 1 / scale;
-    for (let mX = 0; mX <= anchoMetros; mX++) {
-      ctx.beginPath(); ctx.moveTo(mX * pxPorMetro, 0); ctx.lineTo(mX * pxPorMetro, altoMetros * pxPorMetro); ctx.stroke();
+    for (let mX = 0; mX <= widthMeters; mX++) {
+      ctx.beginPath(); ctx.moveTo(mX * pxPorMetro, 0); ctx.lineTo(mX * pxPorMetro, tallMeters * pxPorMetro); ctx.stroke();
     }
-    for (let mY = 0; mY <= altoMetros; mY++) {
-      ctx.beginPath(); ctx.moveTo(0, mY * pxPorMetro); ctx.lineTo(anchoMetros * pxPorMetro, mY * pxPorMetro); ctx.stroke();
+    for (let mY = 0; mY <= tallMeters; mY++) {
+      ctx.beginPath(); ctx.moveTo(0, mY * pxPorMetro); ctx.lineTo(widthMeters * pxPorMetro, mY * pxPorMetro); ctx.stroke();
     }
 
     if (mostrarGuias && objetoSeleccionado) {
@@ -255,10 +271,10 @@ export default function SeatingMapBuilderPage() {
       ctx.strokeStyle = "rgba(236, 72, 153, 0.4)";
       ctx.lineWidth = 1.2 / scale;
       ctx.setLineDash([6 / scale, 4 / scale]);
-      const cX = objetoSeleccionado.x + objetoSeleccionado.ancho / 2;
-      const cY = objetoSeleccionado.y + objetoSeleccionado.alto / 2;
-      ctx.beginPath(); ctx.moveTo(cX, 0); ctx.lineTo(cX, altoMetros * pxPorMetro); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, cY); ctx.lineTo(anchoMetros * pxPorMetro, cY); ctx.stroke();
+      const cX = objetoSeleccionado.x + objetoSeleccionado.width / 2;
+      const cY = objetoSeleccionado.y + objetoSeleccionado.height / 2;
+      ctx.beginPath(); ctx.moveTo(cX, 0); ctx.lineTo(cX, tallMeters * pxPorMetro); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, cY); ctx.lineTo(widthMeters * pxPorMetro, cY); ctx.stroke();
       ctx.fillStyle = "#ec4899";
       ctx.font = `${Math.max(10, 11 / scale)}px Questrial, sans-serif`;
       ctx.fillText(`X: ${(cX / pxPorMetro).toFixed(2)}m`, cX + 5 / scale, 15 / scale);
@@ -268,73 +284,73 @@ export default function SeatingMapBuilderPage() {
 
     ctx.strokeStyle = "#5e0472";
     ctx.lineWidth = 2 / scale;
-    ctx.strokeRect(0, 0, anchoMetros * pxPorMetro, altoMetros * pxPorMetro);
+    ctx.strokeRect(0, 0, widthMeters * pxPorMetro, tallMeters * pxPorMetro);
 
     objetos.forEach((obj) => {
       const esElSeleccionado = objetoSeleccionado?.itemID === obj.itemID;
-      const esMismoGrupo = objetoSeleccionado?.grupoId && obj.grupoId === objetoSeleccionado.grupoId;
+      const esMismoGrupo = objetoSeleccionado?.groupId && obj.groupId === objetoSeleccionado.groupId;
       const tieneHover = objetoBajoHover?.itemID === obj.itemID;
 
       ctx.save();
-      const centroX = obj.x + obj.ancho / 2;
-      const centroY = obj.y + obj.alto / 2;
+      const centroX = obj.x + obj.width / 2;
+      const centroY = obj.y + obj.height / 2;
 
       let rotacionDelGrupoRad = 0;
-      if (obj.grupoId && obj.rotacionGrupo) {
-        const grupoSillas = objetos.filter((o) => o.grupoId === obj.grupoId);
+      if (obj.groupId && obj.groupRotation) {
+        const grupoSillas = objetos.filter((o) => o.groupId === obj.groupId);
         const gCentro = obtenerCentroDelLote(grupoSillas);
-        rotacionDelGrupoRad = (obj.rotacionGrupo * Math.PI) / 180;
+        rotacionDelGrupoRad = (obj.groupRotation * Math.PI) / 180;
         ctx.translate(gCentro.x, gCentro.y);
         ctx.rotate(rotacionDelGrupoRad);
         ctx.translate(-gCentro.x, -gCentro.y);
       }
 
-      const rotacionLocalRad = (obj.rotacion * Math.PI) / 180;
+      const rotacionLocalRad = (obj.rotation * Math.PI) / 180;
       ctx.translate(centroX, centroY);
       ctx.rotate(rotacionLocalRad);
-      const localX = -obj.ancho / 2;
-      const localY = -obj.alto / 2;
+      const localX = -obj.width / 2;
+      const localY = -obj.height / 2;
 
       if (esElSeleccionado) {
-        ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 2.5 / scale; ctx.strokeRect(localX - 5, localY - 5, obj.ancho + 10, obj.alto + 10);
+        ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 2.5 / scale; ctx.strokeRect(localX - 5, localY - 5, obj.width + 10, obj.height + 10);
       } else if (tieneHover) {
-        ctx.strokeStyle = "#10b981"; ctx.lineWidth = 2 / scale; ctx.strokeRect(localX - 4, localY - 4, obj.ancho + 8, obj.alto + 8);
+        ctx.strokeStyle = "#10b981"; ctx.lineWidth = 2 / scale; ctx.strokeRect(localX - 4, localY - 4, obj.width + 8, obj.height + 8);
       } else if (esMismoGrupo) {
-        ctx.strokeStyle = "rgba(79, 70, 229, 0.4)"; ctx.lineWidth = 1.5 / scale; ctx.strokeRect(localX - 3, localY - 3, obj.ancho + 6, obj.alto + 6);
+        ctx.strokeStyle = "rgba(79, 70, 229, 0.4)"; ctx.lineWidth = 1.5 / scale; ctx.strokeRect(localX - 3, localY - 3, obj.width + 6, obj.height + 6);
       }
 
-      if (obj.tipo === "tarima_pista") {
+      if (obj.type === "tarima_pista") {
         ctx.fillStyle = "#334155"; ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 3 / scale;
-        ctx.beginPath(); ctx.roundRect(localX, localY, obj.ancho, obj.alto, 8); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(localX, localY, obj.width, obj.height, 8); ctx.fill(); ctx.stroke();
         ctx.strokeStyle = "rgba(255, 255, 255, 0.04)"; ctx.lineWidth = 1 / scale;
-        for (let step = localY + 15; step < localY + obj.alto; step += 15) { ctx.beginPath(); ctx.moveTo(localX, step); ctx.lineTo(localX + obj.ancho, step); ctx.stroke(); }
+        for (let step = localY + 15; step < localY + obj.height; step += 15) { ctx.beginPath(); ctx.moveTo(localX, step); ctx.lineTo(localX + obj.width, step); ctx.stroke(); }
       } else {
         let colorCojin = "#6e0372"; let colorEstructura = "#4a024d";
-        if (obj.tipo === "silla_general") { colorCojin = "#64748b"; colorEstructura = "#334155"; }
-        else if (obj.tipo === "silla_preferencial") { colorCojin = "#bf72f6"; colorEstructura = "#9810fa"; }
-        else if (obj.tipo === "silla_patrocinante") { colorCojin = "#eab308"; colorEstructura = "#ca8a04"; }
+        if (obj.type === "silla_general") { colorCojin = "#64748b"; colorEstructura = "#334155"; }
+        else if (obj.type === "silla_preferencial") { colorCojin = "#bf72f6"; colorEstructura = "#9810fa"; }
+        else if (obj.type === "silla_patrocinante") { colorCojin = "#eab308"; colorEstructura = "#ca8a04"; }
 
-        const rEsq = Math.min(obj.ancho, obj.alto) * 0.45;
+        const rEsq = Math.min(obj.width, obj.height) * 0.45;
         ctx.fillStyle = colorCojin; ctx.strokeStyle = colorEstructura; ctx.lineWidth = 2 / scale;
-        ctx.beginPath(); ctx.roundRect(localX + 3, localY + 3, obj.ancho - 6, obj.alto - 8, rEsq); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = colorEstructura; ctx.beginPath(); ctx.roundRect(localX + 2, localY + obj.alto - obj.alto * 0.22 - 2, obj.ancho - 4, obj.alto * 0.22, rEsq / 2); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(localX + 3, localY + 3, obj.width - 6, obj.height - 8, rEsq); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = colorEstructura; ctx.beginPath(); ctx.roundRect(localX + 2, localY + obj.height - obj.height * 0.22 - 2, obj.width - 4, obj.height * 0.22, rEsq / 2); ctx.fill();
         ctx.strokeStyle = colorEstructura; ctx.lineWidth = 3.5 / scale; ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(localX + 1.5, localY + 4); ctx.lineTo(localX + 1.5, localY + obj.alto - 4); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(localX + obj.ancho - 1.5, localY + 4); ctx.lineTo(localX + obj.ancho - 1.5, localY + obj.alto - 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(localX + 1.5, localY + 4); ctx.lineTo(localX + 1.5, localY + obj.height - 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(localX + obj.width - 1.5, localY + 4); ctx.lineTo(localX + obj.width - 1.5, localY + obj.height - 4); ctx.stroke();
 
-        if (obj.numeroSilla) {
+        if (obj.chairNumber) {
           ctx.save(); ctx.rotate(-(rotacionLocalRad + rotacionDelGrupoRad));
           ctx.fillStyle = "#ffffff";
-          const largoTexto = obj.numeroSilla.toString().length;
+          const largoTexto = obj.chairNumber.toString().length;
           const factorEscala = largoTexto > 3 ? 0.35 : 0.45;
-          ctx.font = `bold ${Math.max(10, obj.ancho * factorEscala)}px Questrial, sans-serif`;
+          ctx.font = `bold ${Math.max(10, obj.width * factorEscala)}px Questrial, sans-serif`;
           ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.shadowColor = "rgba(0, 0, 0, 0.5)"; ctx.shadowBlur = 3;
-          ctx.fillText(obj.numeroSilla.toString(), 0, -2); ctx.restore();
+          ctx.fillText(obj.chairNumber.toString(), 0, -2); ctx.restore();
         }
       }
-      if (obj.tipo === "tarima_pista") {
+      if (obj.type === "tarima_pista") {
         ctx.fillStyle = "#ffffff"; ctx.font = `bold ${Math.max(12, 13 / scale)}px Questrial, sans-serif`;
-        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(obj.nombre, 0, 0);
+        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(obj.name, 0, 0);
       }
       ctx.restore();
     });
@@ -343,14 +359,14 @@ export default function SeatingMapBuilderPage() {
       ctx.restore(); ctx.save();
       const tX = posicionMouseCanvas.x + 15; const tY = posicionMouseCanvas.y + 15;
       const lineasInfo = [];
-      if (objetoBajoHover.tipo === "tarima_pista") {
-        lineasInfo.push(`Estructura: ${objetoBajoHover.nombre}`);
-        lineasInfo.push(`Área: ${(objetoBajoHover.ancho / pxPorMetro).toFixed(1)}m x ${(objetoBajoHover.alto / pxPorMetro).toFixed(1)}m`);
+      if (objetoBajoHover.type === "tarima_pista") {
+        lineasInfo.push(`Estructura: ${objetoBajoHover.name}`);
+        lineasInfo.push(`Área: ${(objetoBajoHover.width / pxPorMetro).toFixed(1)}m x ${(objetoBajoHover.height / pxPorMetro).toFixed(1)}m`);
       } else {
         const col: Record<string, string> = { silla_vip: "VIP", silla_general: "General", silla_preferencial: "Preferencial", silla_patrocinante: "Patrocinante" };
-        lineasInfo.push(`Asiento: #${objetoBajoHover.numeroSilla}`);
-        lineasInfo.push(`Tipo: ${col[objetoBajoHover.tipo]}`);
-        lineasInfo.push(`Precio: $${(objetoBajoHover.precio || 0).toFixed(2)}`);
+        lineasInfo.push(`Asiento: #${objetoBajoHover.chairNumber}`);
+        lineasInfo.push(`Tipo: ${col[objetoBajoHover.type]}`);
+        lineasInfo.push(`Precio: $${(objetoBajoHover.price || 0).toFixed(2)}`);
       }
       ctx.font = "11px sans-serif"; let anchoMax = 120;
       lineasInfo.forEach((l) => { const m = ctx.measureText(l).width; if (m > anchoMax) anchoMax = m; });
@@ -361,25 +377,25 @@ export default function SeatingMapBuilderPage() {
       });
     }
     ctx.restore();
-  }, [objetos, objetoSeleccionado, objetoBajoHover, posicionMouseCanvas, anchoMetros, altoMetros, pxPorMetro, scale, pan, canvasAnchoPx, mostrarGuias]);
+  }, [objetos, objetoSeleccionado, objetoBajoHover, posicionMouseCanvas, widthMeters, tallMeters, pxPorMetro, scale, pan, canvasAnchoPx, mostrarGuias]);
 
   const obtenerCoordenadasMundo = (clientX: number, clientY: number) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     return { x: (clientX - rect.left - pan.x) / scale, y: (clientY - rect.top - pan.y) / scale };
   };
 
-  const comprobarInterseccion = (mX: number, mY: number, obj: ObjetoEscenario) => {
+  const comprobarInterseccion = (mX: number, mY: number, obj: SeatingMapElement) => {
     let tX = mX; let tY = mY;
-    if (obj.grupoId && obj.rotacionGrupo) {
-      const g = objetos.filter((o) => o.grupoId === obj.grupoId); const c = obtenerCentroDelLote(g);
-      const radG = (-obj.rotacionGrupo * Math.PI) / 180;
+    if (obj.groupId && obj.groupRotation) {
+      const g = objetos.filter((o) => o.groupId === obj.groupId); const c = obtenerCentroDelLote(g);
+      const radG = (-obj.groupRotation * Math.PI) / 180;
       tX = c.x + (mX - c.x) * Math.cos(radG) - (mY - c.y) * Math.sin(radG);
       tY = c.y + (mX - c.x) * Math.sin(radG) + (mY - c.y) * Math.cos(radG);
     }
-    const cX = obj.x + obj.ancho / 2; const cY = obj.y + obj.alto / 2; const radL = (-obj.rotacion * Math.PI) / 180;
+    const cX = obj.x + obj.width / 2; const cY = obj.y + obj.height / 2; const radL = (-obj.rotation * Math.PI) / 180;
     const fX = cX + (tX - cX) * Math.cos(radL) - (tY - cY) * Math.sin(radL);
     const fY = cY + (tX - cX) * Math.sin(radL) + (tY - cY) * Math.cos(radL);
-    return (fX >= obj.x && fX <= obj.x + obj.ancho && fY >= obj.y && fY <= obj.y + obj.alto);
+    return (fX >= obj.x && fX <= obj.x + obj.width && fY >= obj.y && fY <= obj.y + obj.height);
   };
 
   const agregarLoteSillasMapeadas = () => {
@@ -388,26 +404,30 @@ export default function SeatingMapBuilderPage() {
     const prefijoLetra = obtenerLetraPrefijo(indiceGrupo);
 
     const dim = 0.85 * pxPorMetro; const esp = 0.25 * pxPorMetro;
-    const inX = (anchoMetros * pxPorMetro) / 2 - (loteColumnas * (dim + esp)) / 2;
-    const inY = (altoMetros * pxPorMetro) / 2 - (loteFilas * (dim + esp)) / 2;
-    const newS: ObjetoEscenario[] = [];
+    const inX = (widthMeters * pxPorMetro) / 2 - (loteColumnas * (dim + esp)) / 2;
+    const inY = (tallMeters * pxPorMetro) / 2 - (loteFilas * (dim + esp)) / 2;
+    const newS: SeatingMapElement[] = [];
     let numAsiento = 1;
 
     for (let f = 0; f < loteFilas; f++) {
       for (let c = 0; c < loteColumnas; c++) {
         newS.push({
           itemID: `silla-${Date.now()}-${f}-${c}`,
-          tipo: tipoSillaLote,
-          nombre: `Asiento ${prefijoLetra}-${numAsiento}`,
-          numeroSilla: `${prefijoLetra}-${numAsiento}`,
-          grupoId: idG,
+          type: tipoSillaLote,
+          name: `Asiento ${prefijoLetra}-${numAsiento}`,
+          chairNumber: `${prefijoLetra}-${numAsiento}`,
+          groupId: idG,
           x: inX + c * (dim + esp),
           y: inY + f * (dim + esp),
-          ancho: dim,
-          alto: dim,
-          rotacion: 0,
-          rotacionGrupo: 0,
-          precio: precioUnitarioLote
+          width: dim,
+          height: dim,
+          rotation: 0,
+          groupRotation: 0,
+          price: precioUnitarioLote,
+          xMeters: 0,
+          yMeters: 0,
+          widthMeters: 0,
+          tallMeters: 0,
         });
         numAsiento++;
       }
@@ -417,39 +437,39 @@ export default function SeatingMapBuilderPage() {
 
   const mutarRotacionEstructural = (grados: number) => {
     setObjetos((prev) => prev.map((obj) => {
-      if (objetoSeleccionado?.grupoId && obj.grupoId === objetoSeleccionado.grupoId) return { ...obj, rotacionGrupo: grados };
-      else if (obj.itemID === objetoSeleccionado?.itemID) return { ...obj, rotacion: grados };
+      if (objetoSeleccionado?.groupId && obj.groupId === objetoSeleccionado.groupId) return { ...obj, groupRotation: grados };
+      else if (obj.itemID === objetoSeleccionado?.itemID) return { ...obj, rotation: grados };
       return obj;
     }));
-    setObjetoSeleccionado((p) => p ? (p.grupoId ? { ...p, rotacionGrupo: grados } : { ...p, rotacion: grados }) : null);
+    setObjetoSeleccionado((p) => p ? (p.groupId ? { ...p, groupRotation: grados } : { ...p, rotation: grados }) : null);
   };
 
   const ejecutarDuplicacionElemento = () => {
     if (!objetoSeleccionado) return;
     const off = 25;
-    if (objetoSeleccionado.grupoId) {
-      const idN = `grupo-clon-${Date.now()}`; const orig = objetos.filter((o) => o.grupoId === objetoSeleccionado.grupoId);
+    if (objetoSeleccionado.groupId) {
+      const idN = `grupo-clon-${Date.now()}`; const orig = objetos.filter((o) => o.groupId === objetoSeleccionado.groupId);
       const indiceGrupo = obtenerSiguienteIndiceGrupoSillas(objetos);
       const prefijoLetra = obtenerLetraPrefijo(indiceGrupo);
       let numAsiento = 1;
 
       const clons = orig.map((obj, i) => {
-        const esSilla = obj.tipo.startsWith("silla_");
-        const c: ObjetoEscenario = {
+        const esSilla = obj.type.startsWith("silla_");
+        const c: SeatingMapElement = {
           ...obj,
           itemID: `clon-${Date.now()}-${i}`,
           x: obj.x + off,
           y: obj.y + off,
-          grupoId: idN,
-          nombre: esSilla ? `Asiento ${prefijoLetra}-${numAsiento}` : `${obj.nombre} (Copia)`,
-          numeroSilla: esSilla ? `${prefijoLetra}-${numAsiento}` : undefined,
-          precio: obj.precio
+          groupId: idN,
+          name: esSilla ? `Asiento ${prefijoLetra}-${numAsiento}` : `${obj.name} (Copia)`,
+          chairNumber: esSilla ? `${prefijoLetra}-${numAsiento}` : undefined,
+          price: obj.price
         };
         if (esSilla) numAsiento++; return c;
       });
       setObjetos([...objetos, ...clons]); setObjetoSeleccionado(clons[0]);
     } else {
-      const clon: ObjetoEscenario = { ...objetoSeleccionado, itemID: `clon-${Date.now()}`, x: objetoSeleccionado.x + off, y: objetoSeleccionado.y + off, nombre: `${objetoSeleccionado.nombre} (Copia)`, grupoId: undefined };
+      const clon: SeatingMapElement = { ...objetoSeleccionado, itemID: `clon-${Date.now()}`, x: objetoSeleccionado.x + off, y: objetoSeleccionado.y + off, name: `${objetoSeleccionado.name} (Copia)`, groupId: undefined };
       setObjetos([...objetos, clon]); setObjetoSeleccionado(clon);
     }
   };
@@ -457,27 +477,27 @@ export default function SeatingMapBuilderPage() {
   const ejecutarEliminacionElemento = () => {
     if (!objetoSeleccionado) return;
     let objetosRestantes = [];
-    if (objetoSeleccionado.grupoId) {
-      objetosRestantes = objetos.filter((o) => o.grupoId !== objetoSeleccionado.grupoId);
+    if (objetoSeleccionado.groupId) {
+      objetosRestantes = objetos.filter((o) => o.groupId !== objetoSeleccionado.groupId);
     } else {
       objetosRestantes = objetos.filter((o) => o.itemID !== objetoSeleccionado.itemID);
     }
 
     const gruposUnicos = Array.from(
-      new Set(objetosRestantes.filter((o) => o.tipo.startsWith("silla_") && o.grupoId).map((o) => o.grupoId))
+      new Set(objetosRestantes.filter((o) => o.type.startsWith("silla_") && o.groupId).map((o) => o.groupId))
     );
 
     const objetosNormalizados = objetosRestantes.map((obj) => {
-      if (obj.tipo.startsWith("silla_") && obj.grupoId) {
-        const nuevoIndiceGrupo = gruposUnicos.indexOf(obj.grupoId);
+      if (obj.type.startsWith("silla_") && obj.groupId) {
+        const nuevoIndiceGrupo = gruposUnicos.indexOf(obj.groupId);
         const nuevoPrefijo = obtenerLetraPrefijo(nuevoIndiceGrupo);
-        const hermanosGrupo = objetosRestantes.filter(o => o.grupoId === obj.grupoId);
+        const hermanosGrupo = objetosRestantes.filter(o => o.groupId === obj.groupId);
         const posicionEnGrupo = hermanosGrupo.findIndex(o => o.itemID === obj.itemID) + 1;
 
         return {
           ...obj,
-          nombre: `Asiento ${nuevoPrefijo}-${posicionEnGrupo}`,
-          numeroSilla: `${nuevoPrefijo}-${posicionEnGrupo}`
+          name: `Asiento ${nuevoPrefijo}-${posicionEnGrupo}`,
+          chairNumber: `${nuevoPrefijo}-${posicionEnGrupo}`
         };
       }
       return obj;
@@ -512,7 +532,7 @@ export default function SeatingMapBuilderPage() {
     if (!isDragging || !objetoSeleccionado) return;
     const dX = mX - dragOffset.x - objetoSeleccionado.x; const dY = mY - dragOffset.y - objetoSeleccionado.y;
     setObjetos((prev) => prev.map((obj) => {
-      if (objetoSeleccionado.grupoId && obj.grupoId === objetoSeleccionado.grupoId) return { ...obj, x: obj.x + dX, y: obj.y + dY };
+      if (objetoSeleccionado.groupId && obj.groupId === objetoSeleccionado.groupId) return { ...obj, x: obj.x + dX, y: obj.y + dY };
       else if (obj.itemID === objetoSeleccionado.itemID) return { ...obj, x: mX - dragOffset.x, y: mY - dragOffset.y };
       return obj;
     }));
@@ -527,20 +547,20 @@ export default function SeatingMapBuilderPage() {
     return "cursor-default";
   };
 
-  const anguloActualEfectivo = objetoSeleccionado ? (objetoSeleccionado.grupoId ? objetoSeleccionado.rotacionGrupo || 0 : objetoSeleccionado.rotacion) : 0;
+  const anguloActualEfectivo = objetoSeleccionado ? (objetoSeleccionado.groupId ? objetoSeleccionado.groupRotation || 0 : objetoSeleccionado.rotation) : 0;
 
   // --- MÉTODOS DE ANALÍTICAS ---
-  const sillasActuales = objetos.filter(o => o.tipo.startsWith("silla_"));
+  const sillasActuales = objetos.filter(o => o.type.startsWith("silla_"));
   const totalSillasCount = sillasActuales.length;
-  const ingresoTotalProyectado = sillasActuales.reduce((acc, s) => acc + (s.precio || 0), 0);
+  const ingresoTotalProyectado = sillasActuales.reduce((acc, s) => acc + (s.price || 0), 0);
 
   // --- 💡 NUEVA LÓGICA: ESTADOS PARA AGRUPACIÓN POSTERIOR ---
   const [lotesSeleccionadosParaMacro, setLotesSeleccionadosParaMacro] = useState<string[]>([]);
   const [limiteVentaMacroGrupo, setLimiteVentaMacroGrupo] = useState<number>(5);
-  const [macroGruposConfig, setMacroGruposConfig] = useState<Record<string, { limitePorRepresentante: number; lotes: string[] }>>({});
+  const [macroGruposConfig, setMacroGruposConfig] = useState<Record<string, { limitPerRepresentative: number; lotes: string[] }>>({});
 
   const desglosePorTipo = sillasActuales.reduce((acc, s) => {
-    acc[s.tipo] = (acc[s.tipo] || 0) + 1;
+    acc[s.type] = (acc[s.type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -555,7 +575,7 @@ export default function SeatingMapBuilderPage() {
     setMacroGruposConfig(prev => ({
       ...prev,
       [nuevoMacroGrupoId]: {
-        limitePorRepresentante: limiteAsignado,
+        limitPerRepresentative: limiteAsignado,
         lotes: [...lotesSeleccionadosParaMacro]
       }
     }));
@@ -563,11 +583,11 @@ export default function SeatingMapBuilderPage() {
     // Inyectar transversalmente la metadata de venta a los lotes elegidos
     setObjetos(prevObjetos =>
       prevObjetos.map(silla => {
-        if (silla.grupoId && lotesSeleccionadosParaMacro.includes(silla.grupoId)) {
+        if (silla.groupId && lotesSeleccionadosParaMacro.includes(silla.groupId)) {
           return {
             ...silla,
-            macroGrupoId: nuevoMacroGrupoId,
-            limitePorRepresentante: limiteAsignado
+            macroGroupId: nuevoMacroGrupoId,
+            limitPerRepresentative: limiteAsignado
           };
         }
         return silla;
@@ -579,7 +599,7 @@ export default function SeatingMapBuilderPage() {
     alert(`¡Éxito! Lotes agrupados correctamente con un límite de ${limiteAsignado} sillas por representante.`);
   };
   // Extrae todos los loteIds únicos presentes en el lienzo actual
-  const listaDeLotesDisponibles = Array.from(new Set(objetos.map(o => o.grupoId).filter(Boolean))) as string[];
+  const listaDeLotesDisponibles = Array.from(new Set(objetos.map(o => o.groupId).filter(Boolean))) as string[];
   return (
     <>
       <HeroSection
@@ -613,8 +633,8 @@ export default function SeatingMapBuilderPage() {
             <div className="glass-card p-4 bg-white space-y-3 border border-purple-100 shadow-sm">
               <h3 className="text-xs font-anton uppercase tracking-wider flex items-center gap-1"><Settings className="w-3.5 h-3.5" /> Entorno del Salón</h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><label className="block text-gray-400 font-questrial font-medium mb-1">Ancho (m)</label><input type="number" min="5" max="200" value={anchoMetros} onChange={(e) => setAnchoMetros(Math.max(5, parseInt(e.target.value) || 5))} className="w-full p-2 border border-purple-100 text-center font-questrial font-bold text-gray-700" /></div>
-                <div><label className="block text-gray-400 font-questrial font-medium mb-1">Alto (m)</label><input type="number" min="5" max="200" value={altoMetros} onChange={(e) => setAltoMetros(Math.max(5, parseInt(e.target.value) || 5))} className="w-full p-2 border border-purple-100 text-center font-questrial font-bold text-gray-700" /></div>
+                <div><label className="block text-gray-400 font-questrial font-medium mb-1">Ancho (m)</label><input type="number" min="5" max="200" value={widthMeters} onChange={(e) => setAnchoMetros(Math.max(5, parseInt(e.target.value) || 5))} className="w-full p-2 border border-purple-100 text-center font-questrial font-bold text-gray-700" /></div>
+                <div><label className="block text-gray-400 font-questrial font-medium mb-1">Alto (m)</label><input type="number" min="5" max="200" value={tallMeters} onChange={(e) => setAltoMetros(Math.max(5, parseInt(e.target.value) || 5))} className="w-full p-2 border border-purple-100 text-center font-questrial font-bold text-gray-700" /></div>
               </div>
               <div className="pt-2 border-t border-gray-100">
                 <button type="button" onClick={() => setMostrarGuias(!mostrarGuias)} className={`w-full flex items-center justify-between p-2 rounded text-xs font-questrial transition ${mostrarGuias ? "bg-purple-50 border-purple-200 text-[#6e0372]" : "bg-gray-50 border-gray-200 text-gray-500"}`}><div className="flex items-center gap-2"><Grid className="w-3.5 h-3.5" /><span>Líneas Guía</span></div>{mostrarGuias ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
@@ -687,7 +707,7 @@ export default function SeatingMapBuilderPage() {
               {objetoSeleccionado ? (
                 <div className="space-y-3 text-xs">
                   <div>
-                    <div className="flex justify-between items-center mb-1.5"><label className="block text-gray-400 font-questrial">Giro {objetoSeleccionado.grupoId ? "del Lote" : "Individual"}</label><div className="flex items-center gap-1 bg-purple-50 px-2 py-0.5 border border-purple-100"><input type="number" min="-360" max="360" value={anguloActualEfectivo} onChange={(e) => mutarRotacionEstructural(parseInt(e.target.value) || 0)} className="w-12 bg-transparent font-questrial text-[#6e0372] text-right focus:outline-none" /><span className="text-[#6e0372] font-bold">°</span></div></div>
+                    <div className="flex justify-between items-center mb-1.5"><label className="block text-gray-400 font-questrial">Giro {objetoSeleccionado.groupId ? "del Lote" : "Individual"}</label><div className="flex items-center gap-1 bg-purple-50 px-2 py-0.5 border border-purple-100"><input type="number" min="-360" max="360" value={anguloActualEfectivo} onChange={(e) => mutarRotacionEstructural(parseInt(e.target.value) || 0)} className="w-12 bg-transparent font-questrial text-[#6e0372] text-right focus:outline-none" /><span className="text-[#6e0372] font-bold">°</span></div></div>
                     <input type="range" min="-360" max="360" value={anguloActualEfectivo} onChange={(e) => mutarRotacionEstructural(parseInt(e.target.value))} className="w-full h-1.5 accent-[#5e0472] bg-purple-100" />
                   </div>
                   <div className="grid grid-cols-2 gap-2 pt-1 border-t border-dashed border-purple-100">
@@ -701,8 +721,8 @@ export default function SeatingMapBuilderPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="block text-gray-400 font-questrial mb-0.5">Ancho (m)</label><input type="number" step="0.05" value={(objetoSeleccionado.ancho / pxPorMetro).toFixed(2)} onChange={(e) => { const v = Math.max(0.1, parseFloat(e.target.value) || 0.1) * pxPorMetro; setObjetos(prev => prev.map(o => (o.itemID === objetoSeleccionado.itemID ? { ...o, ancho: v } : o))); setObjetoSeleccionado(p => (p ? { ...p, ancho: v } : null)); }} className="w-full p-2 border border-purple-100 font-questrial text-center" /></div>
-                    <div><label className="block text-gray-400 font-questrial mb-0.5">Alto (m)</label><input type="number" step="0.05" value={(objetoSeleccionado.alto / pxPorMetro).toFixed(2)} onChange={(e) => { const v = Math.max(0.1, parseFloat(e.target.value) || 0.1) * pxPorMetro; setObjetos(prev => prev.map(o => (o.itemID === objetoSeleccionado.itemID ? { ...o, alto: v } : o))); setObjetoSeleccionado(p => (p ? { ...p, alto: v } : null)); }} className="w-full p-2 border border-purple-100 font-questrial text-center" /></div>
+                    <div><label className="block text-gray-400 font-questrial mb-0.5">Ancho (m)</label><input type="number" step="0.05" value={(objetoSeleccionado.width / pxPorMetro).toFixed(2)} onChange={(e) => { const v = Math.max(0.1, parseFloat(e.target.value) || 0.1) * pxPorMetro; setObjetos(prev => prev.map(o => (o.itemID === objetoSeleccionado.itemID ? { ...o, width: v } : o))); setObjetoSeleccionado(p => (p ? { ...p, width: v } : null)); }} className="w-full p-2 border border-purple-100 font-questrial text-center" /></div>
+                    <div><label className="block text-gray-400 font-questrial mb-0.5">Alto (m)</label><input type="number" step="0.05" value={(objetoSeleccionado.height / pxPorMetro).toFixed(2)} onChange={(e) => { const v = Math.max(0.1, parseFloat(e.target.value) || 0.1) * pxPorMetro; setObjetos(prev => prev.map(o => (o.itemID === objetoSeleccionado.itemID ? { ...o, height: v } : o))); setObjetoSeleccionado(p => (p ? { ...p, height: v } : null)); }} className="w-full p-2 border border-purple-100 font-questrial text-center" /></div>
                   </div>
                 </div>
               ) : <p className="text-xs font-questrial text-gray-400 italic text-center py-2">Selecciona un elemento.</p>}
@@ -721,27 +741,27 @@ export default function SeatingMapBuilderPage() {
                 {listaDeLotesDisponibles.length > 0 ? (
                   <div className="space-y-3 text-xs pt-1">
                     <div className="space-y-1 max-h-36 overflow-y-auto border border-purple-50 p-2 bg-slate-50/50">
-                      {listaDeLotesDisponibles.map((grupoId) => {
-                        const count = objetos.filter(o => o.grupoId === grupoId).length;
-                        const tSilla = objetos.find(o => o.grupoId === grupoId)?.tipo || "silla_general";
-                        const estaChequeado = lotesSeleccionadosParaMacro.includes(grupoId);
+                      {listaDeLotesDisponibles.map((groupId) => {
+                        const count = objetos.filter(o => o.groupId === groupId).length;
+                        const tSilla = objetos.find(o => o.groupId === groupId)?.type || "silla_general";
+                        const estaChequeado = lotesSeleccionadosParaMacro.includes(groupId);
 
                         return (
-                          <label key={grupoId} className="flex items-center gap-2 p-1.5 hover:bg-purple-50/60 cursor-pointer transition text-gray-700 font-questrial border-b border-gray-100/70 last:border-0">
+                          <label key={groupId} className="flex items-center gap-2 p-1.5 hover:bg-purple-50/60 cursor-pointer transition text-gray-700 font-questrial border-b border-gray-100/70 last:border-0">
                             <input
                               type="checkbox"
                               checked={estaChequeado}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setLotesSeleccionadosParaMacro(prev => [...prev, grupoId]);
+                                  setLotesSeleccionadosParaMacro(prev => [...prev, groupId]);
                                 } else {
-                                  setLotesSeleccionadosParaMacro(prev => prev.filter(id => id !== grupoId));
+                                  setLotesSeleccionadosParaMacro(prev => prev.filter(id => id !== groupId));
                                 }
                               }}
                               className="accent-[#5e0472]"
                             />
                             <div className="flex justify-between w-full text-[11px]">
-                              <span className="font-mono font-bold truncate max-w-[110px]">{grupoId}</span>
+                              <span className="font-mono font-bold truncate max-w-[110px]">{groupId}</span>
                               <span className="text-[10px] bg-slate-200/70 px-1 text-gray-600 font-sans font-medium uppercase">{tSilla.split("_")[1]} ({count})</span>
                             </div>
                           </label>
@@ -830,7 +850,7 @@ export default function SeatingMapBuilderPage() {
                   {/* Encabezado e ID */}
                   <div className="flex justify-between items-center border-b border-slate-700 pb-1">
                     <span className="font-anton uppercase tracking-wider text-purple-400">
-                      {objetoBajoHover.tipo.replace("silla_", "").toUpperCase()}
+                      {objetoBajoHover.type.replace("silla_", "").toUpperCase()}
                     </span>
                     <span className="font-mono text-[9px] text-gray-400">
                       {objetoBajoHover.itemID.split("_")[1] || "ID"}
@@ -839,16 +859,16 @@ export default function SeatingMapBuilderPage() {
 
                   {/* Identificadores de Lote */}
                   <div className="space-y-0.5">
-                    {objetoBajoHover.grupoId && (
+                    {objetoBajoHover.groupId && (
                       <div className="text-gray-300">
-                        Lote Origen: <span className="font-mono font-bold text-gray-100">{objetoBajoHover.grupoId}</span>
+                        Lote Origen: <span className="font-mono font-bold text-gray-100">{objetoBajoHover.groupId}</span>
                       </div>
                     )}
 
-                    {objetoBajoHover.macroGrupoId ? (
+                    {objetoBajoHover.macroGroupId ? (
                       <div className="text-purple-300 font-medium flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block"></span>
-                        Agrupación: <span className="font-mono font-bold text-white">{objetoBajoHover.macroGrupoId.substring(0, 15)}...</span>
+                        Agrupación: <span className="font-mono font-bold text-white">{objetoBajoHover.macroGroupId.substring(0, 15)}...</span>
                       </div>
                     ) : (
                       <div className="text-gray-500 italic">Sin macro-agrupación</div>
@@ -857,7 +877,7 @@ export default function SeatingMapBuilderPage() {
 
                   {/* Condiciones de Venta */}
                   <div className="pt-1 border-t border-slate-800 space-y-1">
-                    {objetoBajoHover.tipo === "silla_patrocinante" ? (
+                    {objetoBajoHover.type === "silla_patrocinante" ? (
                       <div className="text-amber-400 font-bold flex items-center gap-1 bg-amber-950/40 p-1 rounded border border-amber-900/50 text-[10px]">
                         <ShieldAlert className="w-3 h-3 text-amber-500 flex-shrink-0" />
                         RESTRICCIÓN: Solo Organizador
@@ -866,7 +886,7 @@ export default function SeatingMapBuilderPage() {
                       <div className="flex justify-between items-center bg-slate-800/60 p-1 rounded">
                         <span className="text-gray-400">Máx por persona:</span>
                         <span className="font-bold text-emerald-400">
-                          {objetoBajoHover.limitePorRepresentante || 5} uds.
+                          {objetoBajoHover.limitPerRepresentative || 5} uds.
                         </span>
                       </div>
                     )}

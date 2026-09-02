@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeroSection from "@/components/layout/HeroSection";
 import {
@@ -16,6 +16,8 @@ import {
   Copy,
   Eye,
 } from "lucide-react";
+import { SeatingMap } from "@/types/seating-map";
+import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 
 // Estructura de datos simulada para los mapas de asientos guardados
 interface PlanoRegistrado {
@@ -32,7 +34,19 @@ interface PlanoRegistrado {
 
 export default function ListaPlanosAsientosPage() {
   const router = useRouter();
+  const [seatingsMaps, setSeatingsMaps] = useState<SeatingMap[]>([]);
+  const [meta, setMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 6,
+    itemCount: 6,
+  });
 
+  const [isPending, startTransition] = useTransition();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
   const [busqueda, setBusqueda] = useState<string>("");
 
   // Datos de ejemplo basados en los esquemas vectoriales de tu editor
@@ -121,6 +135,26 @@ export default function ListaPlanosAsientosPage() {
     0,
   );
 
+  const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    startTransition(async () => {
+      const res = await getAllSeatingMapsAction({
+        page: pageToFetch,
+        limit: limitToFetch
+      });
+      console.log({ res })
+      if (res.success && res.data) {
+        setSeatingsMaps(res.data);
+        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      }
+    });
+  };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchData(currentPage, itemsPerPage);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, currentPage, itemsPerPage]);
   return (
     <>
       <HeroSection
