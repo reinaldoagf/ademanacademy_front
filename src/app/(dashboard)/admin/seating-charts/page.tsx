@@ -15,24 +15,12 @@ import {
   Trash2,
   Copy,
   Eye,
+  ChevronLeft,
 } from "lucide-react";
 import { SeatingMap } from "@/types/seating-map";
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 
-// Estructura de datos simulada para los mapas de asientos guardados
-interface PlanoRegistrado {
-  id: string;
-  nombre: string;
-  eventoAsociado: string;
-  fechaCreacion: string;
-  anchoMetros: number;
-  altoMetros: number;
-  totalAsientos: number;
-  ocupacionM2: number;
-  tipoMobiliarioPredominante: string;
-}
-
-export default function ListaPlanosAsientosPage() {
+export default function SeatingMapListPage() {
   const router = useRouter();
   const [seatingsMaps, setSeatingsMaps] = useState<SeatingMap[]>([]);
   const [meta, setMeta] = useState({
@@ -47,44 +35,6 @@ export default function ListaPlanosAsientosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
-  const [busqueda, setBusqueda] = useState<string>("");
-
-  // Datos de ejemplo basados en los esquemas vectoriales de tu editor
-  const [planos, setPlanos] = useState<PlanoRegistrado[]>([
-    {
-      id: "plano-01",
-      nombre: "Distribución Concierto Gala",
-      eventoAsociado: "Filarmónica Metropolitana 2026",
-      fechaCreacion: "2026-05-15",
-      anchoMetros: 30,
-      altoMetros: 20,
-      totalAsientos: 240,
-      ocupacionM2: 173.4,
-      tipoMobiliarioPredominante: "VIP (Morada)",
-    },
-    {
-      id: "plano-02",
-      nombre: "Configuración Pasarela Moda",
-      eventoAsociado: "Fashion Week Spring",
-      fechaCreacion: "2026-05-10",
-      anchoMetros: 25,
-      altoMetros: 25,
-      totalAsientos: 180,
-      ocupacionM2: 130.05,
-      tipoMobiliarioPredominante: "Preferencia (Roja)",
-    },
-    {
-      id: "plano-03",
-      nombre: "Plano General Corporativo",
-      eventoAsociado: "Congreso de Tecnología AI",
-      fechaCreacion: "2026-04-28",
-      anchoMetros: 40,
-      altoMetros: 30,
-      totalAsientos: 450,
-      ocupacionM2: 325.12,
-      tipoMobiliarioPredominante: "General (Gris)",
-    },
-  ]);
 
   // Acciones para la barra del Hero (Redirección al creador)
   const accionesHero = [
@@ -98,48 +48,20 @@ export default function ListaPlanosAsientosPage() {
     },
   ];
 
-  // Filtrado lógico de los planos en tiempo real
-  const planosFiltrados = planos.filter((plano) => {
-    const coincideBusqueda =
-      plano.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      plano.eventoAsociado.toLowerCase().includes(busqueda.toLowerCase());
-    return coincideBusqueda;
-  });
-
-  const eliminarPlano = (id: string) => {
-    if (
-      confirm("¿Estás seguro de que deseas eliminar este plano de asientos?")
-    ) {
-      setPlanos(planos.filter((p) => p.id !== id));
-    }
+  const deleteMap = (id: string) => {
+    console.log("¿Estás seguro de que deseas eliminar este plano de asientos?")
   };
 
-  const duplicarPlano = (plano: PlanoRegistrado) => {
-    const clon: PlanoRegistrado = {
-      ...plano,
-      id: `plano-clon-${Date.now()}`,
-      nombre: `${plano.nombre} (Copia)`,
-      fechaCreacion: new Date().toISOString().split("T")[0],
-    };
-    setPlanos([...planos, clon]);
+  const duplicateMap = (map: SeatingMap) => {
+    console.log({ map })
   };
-
-  // KPIs globales calculados dinámicamente
-  const totalPlanos = planos.length;
-  const asientosTotalesRegistrados = planos.reduce(
-    (acc, p) => acc + p.totalAsientos,
-    0,
-  );
-  const m2TotalesGestionados = planos.reduce(
-    (acc, p) => acc + p.anchoMetros * p.altoMetros,
-    0,
-  );
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
       const res = await getAllSeatingMapsAction({
         page: pageToFetch,
-        limit: limitToFetch
+        limit: limitToFetch,
+        search: searchTerm || undefined,
       });
       console.log({ res })
       if (res.success && res.data) {
@@ -175,7 +97,7 @@ export default function ListaPlanosAsientosPage() {
                 Planos Registrados
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                {totalPlanos} Mapas Activos
+                1 Mapas Activos
               </h4>
             </div>
           </div>
@@ -189,7 +111,7 @@ export default function ListaPlanosAsientosPage() {
                 Aforos Totales
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                {asientosTotalesRegistrados} Asientos Diseñados
+                1 Asientos Diseñados
               </h4>
             </div>
           </div>
@@ -203,7 +125,7 @@ export default function ListaPlanosAsientosPage() {
                 Área Total Techada
               </p>
               <h4 className="text-xl font-anton text-gray-800">
-                {m2TotalesGestionados.toFixed(1)} m² Diseñables
+                {1} m² Diseñables
               </h4>
             </div>
           </div>
@@ -216,9 +138,9 @@ export default function ListaPlanosAsientosPage() {
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Buscar por nombre de plano o evento..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar mapa..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 font-questrial border border-purple-100 text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
               />
             </div>
@@ -226,31 +148,31 @@ export default function ListaPlanosAsientosPage() {
         </div>
 
         {/* --- REJILLA DE PLANOS REGISTRADOS --- */}
-        {planosFiltrados.length > 0 ? (
+        {seatingsMaps.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {planosFiltrados.map((plano) => (
+            {seatingsMaps.map((seatingMap: SeatingMap) => (
               <div
-                key={plano.id}
+                key={seatingMap.id}
                 className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Cabecera de la tarjeta */}
                 <div className="p-5 space-y-2">
                   <div className="flex justify-between items-start">
                     <span className="text-[10px] uppercase font-anton tracking-wider px-2 py-0.5 bg-purple-50 border border-purple-100 text-[#6e0372]">
-                      {plano.tipoMobiliarioPredominante}
+                      test
                     </span>
                     <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
                       <Calendar className="w-3 h-3" />
-                      <span>{plano.fechaCreacion}</span>
+                      <span>{seatingMap.createdAt}</span>
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
-                      {plano.nombre}
+                      {seatingMap.location}
                     </h3>
                     <p className="text-xs font-questrial text-gray-400 italic">
-                      Evento: {plano.eventoAsociado}
+                      Evento: test
                     </p>
                   </div>
 
@@ -261,7 +183,7 @@ export default function ListaPlanosAsientosPage() {
                         Dimensión
                       </p>
                       <p className="text-xs font-questrial font-bold text-gray-700">
-                        {plano.anchoMetros}x{plano.altoMetros}m
+                        {seatingMap.totalWidth}x{seatingMap.totalHeight}m
                       </p>
                     </div>
                     <div className="bg-slate-50 p-2">
@@ -269,15 +191,7 @@ export default function ListaPlanosAsientosPage() {
                         Asientos
                       </p>
                       <p className="text-xs font-questrial font-bold text-gray-700">
-                        {plano.totalAsientos}
-                      </p>
-                    </div>
-                    <div className="bg-slate-50 p-2">
-                      <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                        Ocupado
-                      </p>
-                      <p className="text-xs font-questrial font-bold text-pink-600">
-                        {plano.ocupacionM2.toFixed(1)}m²
+                        {seatingMap.elements.length || 0}
                       </p>
                     </div>
                   </div>
@@ -288,7 +202,7 @@ export default function ListaPlanosAsientosPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() =>
-                        (window.location.href = `/configuracion-escenarios?id=${plano.id}`)
+                        (window.location.href = `/admin/seating-charts/${seatingMap.id}`)
                       } // Redirección con query param
                       className="p-1.5 text-gray-500 hover:text-purple-700 hover:bg-purple-50 transition border border-transparent hover:border-purple-200"
                       title="Editar plano vector"
@@ -296,14 +210,14 @@ export default function ListaPlanosAsientosPage() {
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => duplicarPlano(plano)}
+                      onClick={() => duplicateMap(seatingMap)}
                       className="p-1.5 text-gray-500 hover:text-indigo-700 hover:bg-indigo-50 transition border border-transparent hover:border-indigo-200"
                       title="Duplicar distribución"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => eliminarPlano(plano.id)}
+                      onClick={() => console.log({ seatingMap })}
                       className="p-1.5 text-gray-500 hover:text-red-700 hover:bg-red-50 transition border border-transparent hover:border-red-200"
                       title="Eliminar registro"
                     >
@@ -313,7 +227,7 @@ export default function ListaPlanosAsientosPage() {
 
                   <button
                     onClick={() =>
-                      (window.location.href = `/configuracion-escenarios?id=${plano.id}`)
+                      (window.location.href = `/admin/seating-charts/${seatingMap.id}`)
                     }
                     className="flex items-center gap-1 text-[11px] font-questrial font-bold text-[#5e0472] hover:text-[#4a024d] transition"
                   >
@@ -331,6 +245,60 @@ export default function ListaPlanosAsientosPage() {
               No se encontraron mapas de asientos que coincidan con los
               criterios de búsqueda.
             </p>
+          </div>
+        )}
+
+
+        {/* Seccion de Paginación */}
+        {meta.totalPages > 1 && (
+          <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-center gap-6 border border-purple-50/60 shadow-xs">
+            <div className="text-xs font-questrial text-gray-500">
+              Mostrando <span className="font-semibold text-gray-700">{seatingsMaps.length}</span> de{" "}
+              <span className="font-semibold text-gray-700">{meta.totalItems}</span> mapas
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Selector de Items por Página */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-questrial text-gray-400">Ver:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1); // Volver a la 1 tras cambiar el límite
+                  }}
+                  className="p-1 border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Controles de Navegación */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={meta.currentPage === 1 || isPending}
+                  className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <span className="text-xs font-questrial px-3 py-1 bg-[#5e0472]/5 text-[#5e0472] font-semibold">
+                  Pág. {meta.currentPage} de {meta.totalPages}
+                </span>
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, meta.totalPages))}
+                  disabled={meta.currentPage === meta.totalPages || isPending}
+                  className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

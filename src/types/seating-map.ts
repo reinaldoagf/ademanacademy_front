@@ -1,4 +1,5 @@
 export interface SeatingMapElement {
+    id?: string;
     itemID: string;
     x: number;
     y: number;
@@ -20,10 +21,13 @@ export interface SeatingMapElement {
 }
 
 export interface SeatingMap {
+    id?: string;
     location?: string;
     totalWidth: number;
     totalHeight: number;
     elements: SeatingMapElement[];
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // 🔍 Parámetros para filtros de búsqueda y paginación
