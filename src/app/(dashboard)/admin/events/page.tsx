@@ -118,7 +118,7 @@ export default function AdminEventsPage() {
 
     "totalWidth": 30,
 
-    "totalHigh": 20,
+    "totalHeight": 20,
 
     "elements": [
 
@@ -142,7 +142,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 18.110473890733473,
 
-        "tallMeters": 5.070932689405373,
+        "heightMeters": 5.070932689405373,
 
       },
 
@@ -170,7 +170,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -198,7 +198,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -226,7 +226,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -254,7 +254,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -282,7 +282,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -310,7 +310,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -338,7 +338,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -366,7 +366,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -394,7 +394,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -422,7 +422,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -450,7 +450,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -478,7 +478,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -506,7 +506,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -534,7 +534,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       },
 
@@ -562,7 +562,7 @@ export default function AdminEventsPage() {
 
         "widthMeters": 0.85,
 
-        "tallMeters": 0.85,
+        "heightMeters": 0.85,
 
       }
 

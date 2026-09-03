@@ -28,7 +28,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
   const FACTOR_ESPACIO_COLUMNAS = 1.15;   // 15% más de separación horizontal entre sillas
 
   const canvasWidth = mapaConfig.totalWidth * ESCALA * FACTOR_ESPACIO_COLUMNAS;
-  const canvasHeight = mapaConfig.totalHigh * ESCALA;
+  const canvasHeight = mapaConfig.totalHeight * ESCALA;
 
   // Función auxiliar idéntica al editor para calcular centros de rotación grupal
   const obtenerCentroDelLote = (elementosLote: SeatingMapElement[]) => {
@@ -36,7 +36,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
     const minX = Math.min(...elementosLote.map((o) => o.xMeters * ESCALA));
     const maxX = Math.max(...elementosLote.map((o) => (o.xMeters + o.widthMeters) * ESCALA));
     const minY = Math.min(...elementosLote.map((o) => o.yMeters * ESCALA));
-    const maxY = Math.max(...elementosLote.map((o) => (o.yMeters + o.tallMeters) * ESCALA));
+    const maxY = Math.max(...elementosLote.map((o) => (o.yMeters + o.heightMeters) * ESCALA));
     return { x: minX + (maxX - minX) / 2, y: minY + (maxY - minY) / 2 };
   };
 
@@ -62,7 +62,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
       const x = el.xMeters * ESCALA * fEspacio;
       const y = el.yMeters * ESCALA;
       const w = el.widthMeters * ESCALA * fAumento;
-      const h = el.tallMeters * ESCALA * fAumento;
+      const h = el.heightMeters * ESCALA * fAumento;
 
       ctx.save();
       const centroX = x + w / 2;
@@ -197,7 +197,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
     const x = obj.xMeters * ESCALA * fEspacio;
     const y = obj.yMeters * ESCALA;
     const w = obj.widthMeters * ESCALA * fAumento;
-    const h = obj.tallMeters * ESCALA * fAumento;
+    const h = obj.heightMeters * ESCALA * fAumento;
 
     if (obj.groupId && obj.groupRotation) {
       const g = mapaConfig.elements.filter((o) => o.groupId === obj.groupId);

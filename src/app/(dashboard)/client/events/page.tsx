@@ -108,7 +108,7 @@ export default function ClientEventsPage() {
   // Datos simulados del plano de la sala
   const planoConfigurado = {
     "totalWidth": 30,
-    "totalHigh": 20,
+    "totalHeight": 20,
     "elementos": [
       { "itemID": "stage-1", "tipo": "tarima_pista", "nombre": "Pista Principal", "rotacion": 0, "precio": 0, "xMetros": 5.94, "yMetros": 1.26, "anchoMetros": 18.11, "altoMetros": 5.07 },
       { "itemID": "silla-1779563256195-0-0", "tipo": "silla_vip", "nombre": "Asiento A-1", "numeroSilla": "A-1", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 12.37, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },

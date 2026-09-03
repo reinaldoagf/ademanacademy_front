@@ -13,15 +13,16 @@ export interface SeatingMapElement {
     xMeters: number;
     yMeters: number;
     widthMeters: number;
-    tallMeters: number;
+    heightMeters: number;
     limitPerRepresentative?: number;
     width: number;
     height: number;
 }
 
 export interface SeatingMap {
+    location?: string;
     totalWidth: number;
-    totalHigh: number;
+    totalHeight: number;
     elements: SeatingMapElement[];
 }
 
