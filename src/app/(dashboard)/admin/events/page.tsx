@@ -115,6 +115,7 @@ export default function AdminEventsPage() {
   };
   // 2. Simulación de los datos del plano que vienen de tu backend
   const configuredPlan = {
+    "location": "",
 
     "totalWidth": 30,
 
@@ -136,6 +137,9 @@ export default function AdminEventsPage() {
 
         "price": 0,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 5.944763054633262,
 
         "yMeters": 1.2677331723513432,
@@ -164,6 +168,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 12.375,
 
         "yMeters": 7.393371566555994,
@@ -192,6 +199,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 13.475,
 
         "yMeters": 7.393371566555994,
@@ -220,6 +230,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 14.575,
 
         "yMeters": 7.393371566555994,
@@ -248,6 +261,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 15.674999999999999,
 
         "yMeters": 7.393371566555994,
@@ -276,6 +292,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 16.775,
 
         "yMeters": 7.393371566555994,
@@ -304,6 +323,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 12.375,
 
         "yMeters": 8.493371566555991,
@@ -332,6 +354,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 13.475,
 
         "yMeters": 8.493371566555991,
@@ -360,6 +385,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 14.575,
 
         "yMeters": 8.493371566555991,
@@ -388,6 +416,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 15.674999999999999,
 
         "yMeters": 8.493371566555991,
@@ -416,6 +447,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 16.775,
 
         "yMeters": 8.493371566555991,
@@ -444,6 +478,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 12.375,
 
         "yMeters": 9.59337156655599,
@@ -472,6 +509,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 13.475,
 
         "yMeters": 9.59337156655599,
@@ -500,6 +540,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 14.575,
 
         "yMeters": 9.59337156655599,
@@ -528,6 +571,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 15.674999999999999,
 
         "yMeters": 9.59337156655599,
@@ -556,6 +602,9 @@ export default function AdminEventsPage() {
 
         "price": 10,
 
+        "x": 0,
+
+        "y": 0,
         "xMeters": 16.775,
 
         "yMeters": 9.59337156655599,
@@ -576,7 +625,7 @@ export default function AdminEventsPage() {
   const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"];
 
   // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
-  const totalCashAmount = selectedChairs.reduce((total, silla) => total + silla.price, 0);
+  const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
   const openTicketOfficeMap = (event: EventData) => {
     setSelectedEvent(event);
     setSelectedChairs([]);

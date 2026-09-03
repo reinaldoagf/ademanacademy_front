@@ -49,3 +49,22 @@ export async function saveSeatingMapAction(formData: SeatingMap, id?: string | n
         return { success: false, error: "Error crítico de red en el servidor." };
     }
 }
+
+export async function deleteSeatingMapAction(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        await axios.delete(`${BACKEND_URL}/seating-maps/${id}`, { headers });
+
+        return { success: true };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el mapa."
+            };
+        }
+        return { success: false, error: "Error al comunicar la baja al servidor." };
+    }
+}

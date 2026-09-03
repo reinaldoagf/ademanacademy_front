@@ -11,14 +11,16 @@ import {
   Layers,
   Maximize2,
   ChevronRight,
-  SlidersHorizontal,
   Trash2,
   Copy,
   Eye,
   ChevronLeft,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { SeatingMap } from "@/types/seating-map";
-import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
+import { getAllSeatingMapsAction, deleteSeatingMapAction, saveSeatingMapAction } from "@/app/actions/seating-map";
+import DatePipe from "@/components/pipes/DatePipe";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 
 export default function SeatingMapListPage() {
   const router = useRouter();
@@ -37,7 +39,7 @@ export default function SeatingMapListPage() {
   const [itemsPerPage, setItemsPerPage] = useState(6);
 
   // Acciones para la barra del Hero (Redirección al creador)
-  const accionesHero = [
+  const actions = [
     {
       label: "Nuevo Plano →",
       onClick: () => {
@@ -47,13 +49,53 @@ export default function SeatingMapListPage() {
       variant: "primary" as const,
     },
   ];
-
-  const deleteMap = (id: string) => {
-    console.log("¿Estás seguro de que deseas eliminar este plano de asientos?")
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "simple" | "word" | "email";
+    title: string;
+    description: string;
+    requiredWord?: string;
+    userEmail?: string;
+    id?: string;
+  }>({
+    isOpen: false,
+    type: "word",
+    title: "",
+    description: "",
+  });
+  const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  // Acción definitiva que se ejecuta al pasar el filtro del Modal
+  const handleConfirmAction = async () => {
+    if (modalConfig?.id) {
+      startTransition(async () => {
+        if (modalConfig?.id) {
+          const res = await deleteSeatingMapAction(modalConfig.id);
+          if (res.success) {
+            toast.success("Operación exitosa");
+            fetchData(currentPage, itemsPerPage);
+            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+            window.dispatchEvent(new Event('refresh-seating-charts-count'));
+          }
+        }
+      });
+    }
   };
 
   const duplicateMap = (map: SeatingMap) => {
-    console.log({ map })
+    startTransition(async () => {
+      const res = await saveSeatingMapAction({
+        location: `${map.location}`,
+        totalHeight: map.totalHeight,
+        totalWidth: map.totalWidth,
+        elements: map.elements
+      }, null);
+      if (!res.success) {
+        console.log(res.error || "Ocurrió un error.");
+        return;
+      }
+      toast.success("Operación exitosa");
+      fetchData(currentPage, itemsPerPage);
+    });
   };
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -63,7 +105,6 @@ export default function SeatingMapListPage() {
         limit: limitToFetch,
         search: searchTerm || undefined,
       });
-      console.log({ res })
       if (res.success && res.data) {
         setSeatingsMaps(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
@@ -82,7 +123,7 @@ export default function SeatingMapListPage() {
       <HeroSection
         htmlTitle={`Listado de <em class="text-[#5e0472]">Mapas de Asientos</em>`}
         htmlSubTitle="Gestión, duplicación y control métrico de distribuciones vectoriales registradas."
-        actions={accionesHero}
+        actions={actions}
       />
 
       <div className="p-4 md:p-8 mx-auto w-full space-y-6">
@@ -161,12 +202,15 @@ export default function SeatingMapListPage() {
                     <span className="text-[10px] uppercase font-anton tracking-wider px-2 py-0.5 bg-purple-50 border border-purple-100 text-[#6e0372]">
                       test
                     </span>
-                    <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
-                      <Calendar className="w-3 h-3" />
-                      <span>{seatingMap.createdAt}</span>
-                    </div>
+                    {
+                      seatingMap.createdAt && (
+                        <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
+                          <Calendar className="w-3 h-3" />
+                          <DatePipe value={seatingMap.createdAt} format="long" />
+                        </div>
+                      )
+                    }
                   </div>
-
                   <div>
                     <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
                       {seatingMap.location}
@@ -211,14 +255,22 @@ export default function SeatingMapListPage() {
                     </button>
                     <button
                       onClick={() => duplicateMap(seatingMap)}
-                      className="p-1.5 text-gray-500 hover:text-indigo-700 hover:bg-indigo-50 transition border border-transparent hover:border-indigo-200"
+                      className="p-1.5 transition border border-transparent cursor-pointer text-blue-600 bg-blue-50 hover:bg-blue-100"
                       title="Duplicar distribución"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => console.log({ seatingMap })}
-                      className="p-1.5 text-gray-500 hover:text-red-700 hover:bg-red-50 transition border border-transparent hover:border-red-200"
+                      onClick={() => {
+                        setModalConfig({
+                          isOpen: true,
+                          type: "word",
+                          title: "Confirmar operación",
+                          description: "¿Quieres eliminar el registro del mapa?",
+                          id: seatingMap.id,
+                        });
+                      }}
+                      className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
                       title="Eliminar registro"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -302,6 +354,18 @@ export default function SeatingMapListPage() {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={handleConfirmAction}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        description={modalConfig.description}
+        requiredWord={modalConfig.requiredWord}
+        userEmail={modalConfig.userEmail}
+        variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+        confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
+      />
     </>
   );
 }

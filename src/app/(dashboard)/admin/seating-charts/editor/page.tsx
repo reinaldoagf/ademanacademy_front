@@ -202,7 +202,6 @@ export default function SeatingMapBuilderPage() {
 
     startTransition(async () => {
       const res = await saveSeatingMapAction(seatingMap, null);
-      console.log({ res })
       setSaving(false);
       if (!res.success) {
         console.log(res.error || "Ocurrió un error.");
