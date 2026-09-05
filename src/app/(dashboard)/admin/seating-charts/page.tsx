@@ -105,6 +105,7 @@ export default function SeatingMapListPage() {
         search: searchTerm || undefined,
       });
       if (res.success && res.data) {
+        window.dispatchEvent(new Event('refresh-seating-charts-count'));
         setSeatingsMaps(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }
