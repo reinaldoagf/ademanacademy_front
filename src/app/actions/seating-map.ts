@@ -68,3 +68,23 @@ export async function deleteSeatingMapAction(id: string): Promise<{ success: boo
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+export async function getSeatingMapAction(id: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/seating-maps/${id}`, {
+            headers: headers,
+            // Configuración de timeout opcional (en milisegundos)
+            timeout: 10000,
+        });
+
+        return response.data;
+    } catch (error: any) {
+        // Si la API responde con un status 404
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+            return null;
+        }
+
+        console.error("Error al obtener el plano de asientos con Axios:", error.message);
+        return null;
+    }
+}

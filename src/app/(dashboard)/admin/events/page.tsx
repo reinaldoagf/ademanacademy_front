@@ -31,6 +31,7 @@ const CanvasSeatingMap = dynamic(
 
 import { useModal } from "@/hooks/useModal";
 import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/actions/event";
+import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 import { EventData, EventFormData } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 
@@ -41,12 +42,9 @@ const initialFormState: EventFormData = {
   type: "sample", // Coincide con EventType.sample en tu Schema Prisma
   startDate: new Date().toISOString().split("T")[0], // YYYY-MM-DD
   endDate: new Date().toISOString().split("T")[0],   // YYYY-MM-DD
-  location: "",
-  ticketsSold: 0,
-  totalTickets: 0,
-  ticketPrice: 0,
   productionStatus: "planning", // Coincide con ProductionStatus.planning
   description: "",
+  seatingMapId: "",
 };
 export default function AdminEventsPage() {
   const {
@@ -60,7 +58,6 @@ export default function AdminEventsPage() {
     closeModal: closeModalForm,
   } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
-  const eventRef = useRef<HTMLDivElement>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,6 +65,7 @@ export default function AdminEventsPage() {
   // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   // 1. Cambia tu estado inicial en el componente padre para aceptar objetos SeatingMapElement
+  const [seatingMaps, setSeatingMaps] = useState<SeatingMap[]>([]);
   const [selectedChairs, setSelectedChairs] = useState<SeatingMapElement[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
   const [meta, setMeta] = useState({
@@ -114,7 +112,7 @@ export default function AdminEventsPage() {
     }
   };
   // 2. Simulación de los datos del plano que vienen de tu backend
-  const configuredPlan = {
+  const configuredPlan: SeatingMap = {
     "location": "",
 
     "totalWidth": 30,
@@ -147,6 +145,8 @@ export default function AdminEventsPage() {
         "widthMeters": 18.110473890733473,
 
         "heightMeters": 5.070932689405373,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -178,6 +178,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -209,6 +211,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -240,6 +244,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -271,6 +277,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -302,6 +310,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -333,6 +343,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -364,6 +376,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -395,6 +409,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -426,6 +442,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -457,6 +475,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -488,6 +508,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -519,6 +541,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -550,6 +574,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -581,6 +607,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       },
 
@@ -612,6 +640,8 @@ export default function AdminEventsPage() {
         "widthMeters": 0.85,
 
         "heightMeters": 0.85,
+        "width": 18.110473890733473,
+        "height": 18.110473890733473,
 
       }
 
@@ -670,12 +700,9 @@ export default function AdminEventsPage() {
       endDate: eventToEdit.endDate
         ? new Date(eventToEdit.endDate).toISOString().split("T")[0]
         : "",
-      location: eventToEdit.location || "",
-      ticketsSold: eventToEdit.ticketsSold ?? 0,
-      totalTickets: eventToEdit.totalTickets ?? 0,
-      ticketPrice: Number(eventToEdit.ticketPrice) || 0,
       productionStatus: eventToEdit.productionStatus || "planning",
       description: eventToEdit.description || "",
+      seatingMapId: eventToEdit.seatingMapId || "",
     });
     openModalForm();
   };
@@ -691,6 +718,11 @@ export default function AdminEventsPage() {
       return;
     }
 
+    if (!formData.seatingMapId.trim()) {
+      setErrorMsg("El mapa de asientos es obligatorio.");
+      setIsSubmitting(false);
+      return;
+    }
     if (!formData.startDate) {
       setErrorMsg("La fecha de inicio es obligatoria.");
       setIsSubmitting(false);
@@ -710,17 +742,8 @@ export default function AdminEventsPage() {
       return;
     }
 
-    if (!formData.location.trim()) {
-      setErrorMsg("La ubicación / lugar del evento es obligatoria.");
-      setIsSubmitting(false);
-      return;
-    }
 
-    if (formData.ticketPrice === undefined || formData.ticketPrice < 0) {
-      setErrorMsg("El precio de la entrada debe ser mayor o igual a 0.");
-      setIsSubmitting(false);
-      return;
-    }
+
 
     try {
       startTransition(async () => {
@@ -768,16 +791,25 @@ export default function AdminEventsPage() {
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
-      const res = await getAllEventsAction({
+      const res0 = await getAllSeatingMapsAction({
+        page: pageToFetch,
+        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+        search: undefined,
+      });
+
+      if (res0.success && res0.data) {
+        setSeatingMaps(res0.data || [])
+      }
+      const res1 = await getAllEventsAction({
         page: pageToFetch,
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
         search: searchTerm || undefined,
         type: typeFilter == 'all' ? undefined : typeFilter
       });
 
-      if (res.success && res.data) {
-        setEvents(res.data);
-        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+      if (res1.success && res1.data) {
+        setEvents(res1.data);
+        setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }
     });
   };
@@ -881,12 +913,12 @@ export default function AdminEventsPage() {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="p-2 w-full sm:w-auto font-questrial border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
-              <option value="all">Todos los formatos</option>
-              <option value="annual_gala">Galas Anuales</option>
-              <option value="competence">Competencias</option>
-              <option value="masterclass">Masterclasses / Talleres</option>
-              <option value="sample">Muestras de Aula</option>
-              <option value="other">Otro</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="all">Todos los formatos</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="annual_gala">Galas Anuales</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="competence">Competencias</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="masterclass">Masterclasses / Talleres</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sample">Muestras de Aula</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
 
             </select>
           </div>
@@ -895,12 +927,9 @@ export default function AdminEventsPage() {
           <div className="space-y-4">
             {events.length > 0 ? (
               events.map((event) => {
-                const porcentajeVendido = Math.round((event.ticketsSold / event.totalTickets) * 100);
-                const recaudacionIndividual = event.ticketsSold * event.ticketPrice;
-                const isSoldOut = event.ticketsSold === event.totalTickets;
 
                 return (
-                  <div key={event.id} className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition bg-white">
+                  <div key={`event-${event.id}`} className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition bg-white">
 
                     {/* Detalles del Evento */}
                     <div className="flex items-start gap-4 lg:w-1/4">
@@ -927,32 +956,10 @@ export default function AdminEventsPage() {
                       </div>
                       <div className="flex items-center gap-2 font-questrial">
                         <MapPin className="w-4 h-4 text-pink-400 shrink-0" />
-                        <span className="line-clamp-1">{event.location}</span>
+                        <span className="line-clamp-1">{event.seatingMap?.location || 'Sin mapa de asientos'}</span>
                       </div>
                     </div>
 
-                    {/* Control de Aforo y Taquilla */}
-                    <div className="space-y-1.5 flex-1 lg:max-w-md">
-                      <div className="flex justify-between text-xs font-questrial font-semibold">
-                        <span className="text-gray-400">Entradas vendidas</span>
-                        <span className={isSoldOut ? "text-pink-600 font-black animate-pulse" : "text-purple-700"}>
-                          {event.ticketsSold} / {event.totalTickets} ({porcentajeVendido}%)
-                        </span>
-                      </div>
-
-                      {/* Barra de Progreso de Aforo */}
-                      <div className="w-full bg-gray-100 h-1.5 overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-500 ${isSoldOut ? "bg-pink-500" : "gradient-purple"
-                            }`}
-                          style={{ width: `${porcentajeVendido}%` }}
-                        ></div>
-                      </div>
-
-                      <p className="font-questrial text-[10px] text-gray-400">
-                        Recaudado: <strong className="text-gray-700">${recaudacionIndividual.toLocaleString("en-US")}</strong> (${event.ticketPrice} c/u)
-                      </p>
-                    </div>
 
                     {/* Estatus y Botón Acciones */}
                     <div className="flex items-center justify-between lg:justify-end gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-purple-50/50 shrink-0">
@@ -1033,10 +1040,10 @@ export default function AdminEventsPage() {
                     }}
                     className="p-1 border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                   >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
+                    <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value={5}>5</option>
+                    <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value={10}>10</option>
+                    <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value={20}>20</option>
+                    <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value={50}>50</option>
                   </select>
                 </div>
 
@@ -1163,6 +1170,25 @@ export default function AdminEventsPage() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-gray-700 font-bold mb-1">
+                Mapa de Asiento
+              </label>
+              <select
+                name="seatingMapId"
+                value={formData.seatingMapId}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+              >
+                <option value="" disabled className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50/50">Selecciona el Mapa de asiento</option>
+
+                {seatingMaps.map((c: SeatingMap) => (
+                  <option key={`map-${c.id}`} value={c.id} className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50">
+                    {c.location}
+                  </option>
+                ))}
+              </select>
+            </div>
             {/* Fila 2: Tipo de Evento y Estado de Producción */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1175,11 +1201,11 @@ export default function AdminEventsPage() {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                 >
-                  <option value="annual_gala">Gala Anual</option>
-                  <option value="masterclass">Masterclass</option>
-                  <option value="competence">Competencia</option>
-                  <option value="sample">Muestra</option>
-                  <option value="other">Otro</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="annual_gala">Gala Anual</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="masterclass">Masterclass</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="competence">Competencia</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sample">Muestra</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
                 </select>
               </div>
 
@@ -1193,11 +1219,11 @@ export default function AdminEventsPage() {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                 >
-                  <option value="planning">Planificación</option>
-                  <option value="in_production">En Producción</option>
-                  <option value="ready">Listo</option>
-                  <option value="completed">Completado</option>
-                  <option value="cancelled">Cancelado</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="essays">Ensayos Generales</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="in_production">En Producción</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sold_out">Agotado</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="completed">Completado</option>
+                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="cancelled">Cancelado</option>
                 </select>
               </div>
             </div>
@@ -1233,73 +1259,8 @@ export default function AdminEventsPage() {
               </div>
             </div>
 
-            {/* Fila 4: Ubicación */}
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Ubicación / Lugar <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="location"
-                required
-                placeholder="Ej: Teatro Municipal, Sala Principal"
-                value={formData.location || ""}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
 
-            {/* Fila 5: Entradas Totales, Vendidas y Precio */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50/80 rounded-lg border border-gray-100">
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Aforo / Total Entradas
-                </label>
-                <input
-                  type="number"
-                  name="totalTickets"
-                  min="0"
-                  placeholder="0"
-                  value={formData.totalTickets ?? 0}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Entradas Vendidas
-                </label>
-                <input
-                  type="number"
-                  name="ticketsSold"
-                  min="0"
-                  placeholder="0"
-                  value={formData.ticketsSold ?? 0}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Precio Entradas <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="ticketPrice"
-                  min="0"
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  value={formData.ticketPrice ?? 0}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Fila 6: Descripción */}
+            {/* Fila 4: Descripción */}
             <div>
               <label className="block text-gray-700 font-bold mb-1">
                 Descripción <span className="text-gray-400 font-normal">(Opcional)</span>
@@ -1338,7 +1299,8 @@ export default function AdminEventsPage() {
             </div>
           </form>
         </>
-      </MacDockModal>{/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+      </MacDockModal>
+      {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={closeConfirmModal}

@@ -1,7 +1,7 @@
 "use client";
 
-import { 
-  Plus, 
+import {
+  Plus,
 } from "lucide-react";
 import html from 'react-inner-html';
 
@@ -14,34 +14,34 @@ interface HeroAction {
 }
 
 interface HeroProps {
-    htmlSubTitle: string;
-    htmlTitle: string;
-    actions?: HeroAction[]; // 2. Añadimos el array de acciones opcional
-    navigateBack?: string | null;
+  htmlSubTitle: string;
+  htmlTitle: string;
+  actions?: HeroAction[]; // 2. Añadimos el array de acciones opcional
+  navigateBack?: string | null;
 }
 
 const HeroSection: React.FC<HeroProps> = ({
-    htmlTitle,
-    htmlSubTitle,
-    actions = [], // Valor por defecto vacío si no se envían acciones
-    navigateBack = null
+  htmlTitle,
+  htmlSubTitle,
+  actions = [], // Valor por defecto vacío si no se envían acciones
+  navigateBack = null
 }) => {
-   return (
-        <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-[36px] pb-[24px] px-[44px] bg-white/80">
-            <div>
-              <h2 className="text-2xl font-anton text-gray-800" {...html(htmlTitle)}></h2>
-              <p className="text-xs text-gray-500 font-questrial"  {...html(htmlSubTitle)}></p>
-            </div>
-            {/* 3. Renderizado Dinámico del contenedor de acciones */}
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-[36px] pb-[24px] px-[44px] bg-white/80">
+        <div>
+          <h2 className="text-2xl font-anton text-gray-800" {...html(htmlTitle)}></h2>
+          <p className="text-xs text-gray-500 font-questrial"  {...html(htmlSubTitle)}></p>
+        </div>
+        {/* 3. Renderizado Dinámico del contenedor de acciones */}
         {actions.length > 0 && (
           <div className="flex flex-wrap gap-2 self-start sm:self-auto">
             {actions.map((action, index) => {
               // Determinamos el estilo base según la variante seleccionada
               const isSecondary = action.variant === "secondary";
               const buttonStyle = isSecondary
-                ? "bg-white border border-purple-100 text-purple-700 hover:bg-purple-50"
-                : "gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90";
+                ? "bg-white border border-purple-100 text-purple-700 "
+                : "gradient-purple text-white shadow-md shadow-purple-200";
 
               return (
                 <button
@@ -49,9 +49,9 @@ const HeroSection: React.FC<HeroProps> = ({
                   onClick={action.onClick}
                   disabled={action.isDisabled}
                   className={`
-                    font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
+                    font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs 
                     ${buttonStyle}
-                    ${action.isDisabled ? "opacity-40 cursor-not-allowed hover:opacity-40" : ""}
+                    ${action.isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-purple-50/30"}
                   `}
                 >
                   {/* Si el botón trae un icono asignado, lo renderiza aquí */}
@@ -62,10 +62,10 @@ const HeroSection: React.FC<HeroProps> = ({
             })}
           </div>
         )}
-            
-          </div>
-        </>
-    );
+
+      </div>
+    </>
+  );
 };
 
 export default HeroSection;

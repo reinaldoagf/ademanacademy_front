@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Trash2,
   Copy,
-  Eye,
   ChevronLeft,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -244,15 +243,7 @@ export default function SeatingMapListPage() {
                 {/* Acciones y Footer de la tarjeta */}
                 <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() =>
-                        (window.location.href = `/admin/seating-charts/${seatingMap.id}`)
-                      } // Redirección con query param
-                      className="p-1.5 text-gray-500 hover:text-purple-700 hover:bg-purple-50 transition border border-transparent hover:border-purple-200"
-                      title="Editar plano vector"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+
                     <button
                       onClick={() => duplicateMap(seatingMap)}
                       className="p-1.5 transition border border-transparent cursor-pointer text-blue-600 bg-blue-50 hover:bg-blue-100"
@@ -279,9 +270,9 @@ export default function SeatingMapListPage() {
 
                   <button
                     onClick={() =>
-                      (window.location.href = `/admin/seating-charts/${seatingMap.id}`)
+                      (window.location.href = `/admin/seating-charts/editor/${seatingMap.id}`)
                     }
-                    className="flex items-center gap-1 text-[11px] font-questrial font-bold text-[#5e0472] hover:text-[#4a024d] transition"
+                    className="cursor-pointer flex items-center gap-1 text-[11px] font-questrial font-bold text-[#5e0472] hover:text-[#4a024d] transition"
                   >
                     Abrir Editor <ChevronRight className="w-3.5 h-3.5" />
                   </button>

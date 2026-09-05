@@ -1,3 +1,5 @@
+import { SeatingMap } from "./seating-map";
+
 export interface EventData {
     id?: string;
     code?: string;
@@ -10,6 +12,8 @@ export interface EventData {
     totalTickets: number;
     ticketPrice: number;
     productionStatus: string;
+    seatingMapId: string;
+    seatingMap: SeatingMap;
 }
 
 // 🔍 Parámetros de Búsqueda y Paginación
@@ -27,10 +31,7 @@ export interface EventFormData {
     type: string;
     startDate: string;
     endDate: string;
-    location: string;
-    ticketsSold: number;
-    totalTickets: number;
-    ticketPrice: number;
     productionStatus: string;
-    description: string; // 👈 Agrega '?' para hacerla opcional
+    description: string;
+    seatingMapId: string;
 }

@@ -1,4 +1,4 @@
-// src/features/eventos/components/AcademicCalendar.tsx
+// src/components/AcademicCalendar.tsx
 "use client";
 
 import { useState } from "react";
@@ -32,7 +32,7 @@ const DAYS_OF_WEEK = ["D", "L", "M", "M", "J", "V", "S"];
 
 export function AcademicCalendar() {
   // Inicializamos en Mayo de 2026 debido a los datos del Dashboard
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 1)); 
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 1));
   const [selectedDate, setSelectedDate] = useState<string>("2026-05-11");
 
   const year = currentDate.getFullYear();
@@ -53,7 +53,7 @@ export function AcademicCalendar() {
 
   // Filtrar eventos del mes actual
   const currentMonthString = `${year}-${String(month + 1).padStart(2, "0")}`;
-  
+
   // Eventos del día seleccionado actualmente
   const eventsOfSelectedDay = DEMO_EVENTS.filter(event => event.date === selectedDate);
 
@@ -101,8 +101,8 @@ export function AcademicCalendar() {
                 onClick={() => setSelectedDate(dateString)}
                 className={`
                   p-1.5 font-medium font-anton transition relative cursor-pointer flex flex-col items-center justify-center h-8 w-8 mx-auto
-                  ${isSelected 
-                    ? "bg-[#5e0472] text-white font-bold shadow-sm shadow-[#5e0472]" 
+                  ${isSelected
+                    ? "bg-[#5e0472] text-white font-bold shadow-sm shadow-[#5e0472]"
                     : "text-gray-700 hover:bg-purple-50"
                   }
                 `}
@@ -126,17 +126,16 @@ export function AcademicCalendar() {
 
         {eventsOfSelectedDay.length > 0 ? (
           eventsOfSelectedDay.map((event) => (
-            <div 
-              key={event.id} 
-              className={`p-3 border-l-4 text-xs transition shadow-sm bg-white/60 ${
-                event.type === "ensayo" ? "border-pink-400 text-pink-700" :
-                event.type === "gala" ? "border-purple-500 text-purple-700" :
-                "border-indigo-400 text-indigo-700"
-              }`}
+            <div
+              key={event.id}
+              className={`p-3 border-l-4 text-xs transition shadow-sm bg-white/60 ${event.type === "ensayo" ? "border-pink-400 text-pink-700" :
+                  event.type === "gala" ? "border-purple-500 text-purple-700" :
+                    "border-indigo-400 text-indigo-700"
+                }`}
             >
               <p className="font-questrial font-bold text-gray-800">{event.title}</p>
               <p className="font-questrial font-medium text-gray-500 mt-0.5">{event.group}</p>
-              
+
               <div className="flex gap-3 mt-2 text-[10px] text-gray-400 font-medium">
                 <span className="font-questrial flex items-center gap-1"><Clock className="w-3 h-3" /> {event.time}</span>
                 <span className="font-questrial flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.room}</span>

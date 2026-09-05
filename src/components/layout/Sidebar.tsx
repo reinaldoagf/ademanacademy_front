@@ -22,6 +22,7 @@ import { getAllEmployeesAction } from "@/app/actions/employee";
 import { getAllUniformsAction } from "@/app/actions/uniform";
 import { getAllProductCategoriesAction } from "@/app/actions/product-category";
 import { getAllProductsAction } from "@/app/actions/product";
+import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 import {
   ChartPie,
   HeartPulse,
@@ -142,7 +143,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     },
   ]);
   const [marketingEventManagement, setMarketingEventManagement] = useState<SidebarMenuItem[]>([
-    { key: '', name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 3 },
+    { key: 'seating-charts', name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 0 },
     { key: 'events', name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
     { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
   ]);
@@ -199,6 +200,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
     { event: "refresh-orders-count", action: getAllOrdersAction, key: "orders" },
     { event: "refresh-events-count", action: getAllEventsAction, key: "events" },
+    { event: "refresh-seating-charts-count", action: getAllSeatingMapsAction, key: "seating-charts" },
 
     // Submódulos (hijos)
     { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups-list", parentKey: "groups" },

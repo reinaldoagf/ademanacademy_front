@@ -1,14 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   ShoppingBag,
-  X,
-  Minus,
-  Plus,
-  Trash2,
-  ArrowRight,
-  UserCheck,
-  Search,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
