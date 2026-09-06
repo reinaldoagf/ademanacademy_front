@@ -12,7 +12,6 @@ import {
   Plus,
   PackageCheck,
   AlertCircle,
-  ShoppingCart,
   Layers,
   ChevronLeft,
   ChevronRight,

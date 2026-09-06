@@ -9,12 +9,15 @@ import {
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
+import { MacDockModal } from "@/components/ui/MacDockModal";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
+import { useModal } from "@/hooks/useModal";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
 
 export default function PaymentOrdersPage() {
+    const { isOpen, openModal, closeModal } = useModal();
     // Mock Data alineado con tu esquema prisma nuevo
     const [orders, setOrders] = useState<PaymentOrder[]>([]);
     const [meta, setMeta] = useState({
@@ -29,7 +32,6 @@ export default function PaymentOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("all")
     const [filterConcept, setFilterConcept] = useState("all");
@@ -46,7 +48,7 @@ export default function PaymentOrdersPage() {
 
 
     const handleNewElement = () => {
-        setIsModalOpen(true);
+        openModal();
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -238,82 +240,55 @@ export default function PaymentOrdersPage() {
             </div>
 
             {/* MODAL NEÓN DE REGISTRO MANUAL */}
+            <MacDockModal
+                isOpen={isOpen}
+                onClose={closeModal}
+                title={"Emitir Nueva Cuenta por Cobrar"}
+                size={"lg"}
+            >
+                {/* Formulario */}
+                <form
+                    onSubmit={handleSave}
+                    className="space-y-4 font-questrial text-xs"
+                >
+                    {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white border border-purple-100 shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-150 rounded-none">
-                        {/* Cabecera del Modal */}
+                    <div className="grid grid-cols-1 gap-3">
+                        <div>
+                            <label className="block text-gray-700 font-bold mb-1">
+                                DNI de Representante
+                            </label>
 
-                        <div className="bg-purple-50/50 px-5 py-4 border-b border-purple-100 flex justify-between items-center">
-                            <h3 className="font-anton text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Plus className="w-4 h-4 text-purple-600" /> Emitir Nueva Cuenta por Cobrar
-                            </h3>
-
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Ej: V-12345678"
+                                value={formData.userDni}
+                                onChange={(e) => setFormData({ ...formData, userDni: e.target.value })}
+                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            />
                         </div>
-
-                        {/* Formulario */}
-
-                        <form
-                            onSubmit={handleSave}
-                            className="p-5 space-y-4 font-questrial text-xs"
-                        >
-                            {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
-
-                            <div className="grid grid-cols-1 gap-3">
-                                <div>
-                                    <label className="block text-gray-500 font-bold mb-1">
-                                        DNI de Representante
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="Ej: V-12345678"
-                                        value={formData.userDni}
-                                        onChange={(e) => setFormData({ ...formData, userDni: e.target.value })}
-                                        className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                                    />
-                                </div>
-                            </div>
-
-
-
-                            {/* Botonera */}
-
-                            <div className="pt-2 flex justify-between">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-                                >
-                                    Cancelar
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    className="
-            
-                                                    font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer
-            
-                                                    gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90
-            
-                                                "
-                                >
-                                    Guardar Alumno
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                    {/* Botonera */}
 
+                    <div className="pt-2 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={() => closeModal()}
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                        >
+                            Cancelar
+                        </button>
 
+                        <button
+                            type="submit"
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                        >
+                            Registrar
+                        </button>
+                    </div>
+                </form>
+            </MacDockModal>
         </>
     );
 }
