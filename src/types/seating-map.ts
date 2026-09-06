@@ -3,7 +3,8 @@ export interface SeatingMapElement {
     itemID: string;
     x: number;
     y: number;
-    type: "tarima_pista" | "silla_vip" | "silla_general" | "silla_patrocinante" | "silla_preferencial" | string; // expandible a otros tipos
+    type: "chair" | "platform" | string; // expandible a otros tipos
+    itemType: "stage_floor" | "vip_chair" | "general_chair" | "sponsor_chair" | "preferred_seating" | string; // expandible a otros tipos
     name: string;
     chairNumber?: string | number;
     groupId?: string;

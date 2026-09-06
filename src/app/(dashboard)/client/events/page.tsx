@@ -37,7 +37,7 @@ interface EventoAcademia {
 
 export interface ElementoMapa {
   itemID: string;
-  tipo: "tarima_pista" | "silla_vip" | string;
+  tipo: "stage_floor" | "vip_chair" | string;
   nombre: string;
   numeroSilla?: string;
   grupoId?: string;
@@ -110,17 +110,17 @@ export default function ClientEventsPage() {
     "totalWidth": 30,
     "totalHeight": 20,
     "elementos": [
-      { "itemID": "stage-1", "tipo": "tarima_pista", "nombre": "Pista Principal", "rotacion": 0, "precio": 0, "xMetros": 5.94, "yMetros": 1.26, "anchoMetros": 18.11, "altoMetros": 5.07 },
-      { "itemID": "silla-1779563256195-0-0", "tipo": "silla_vip", "nombre": "Asiento A-1", "numeroSilla": "A-1", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 12.37, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-0-1", "tipo": "silla_vip", "nombre": "Asiento A-2", "numeroSilla": "A-2", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 13.47, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-0-2", "tipo": "silla_vip", "nombre": "Asiento A-3", "numeroSilla": "A-3", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 14.57, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-0-3", "tipo": "silla_vip", "nombre": "Asiento A-4", "numeroSilla": "A-4", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 15.67, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-0-4", "tipo": "silla_vip", "nombre": "Asiento A-5", "numeroSilla": "A-5", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 16.77, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-1-0", "tipo": "silla_vip", "nombre": "Asiento A-6", "numeroSilla": "A-6", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 12.37, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-1-1", "tipo": "silla_vip", "nombre": "Asiento A-7", "numeroSilla": "A-7", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 13.47, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-1-2", "tipo": "silla_vip", "nombre": "Asiento A-8", "numeroSilla": "A-8", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 14.57, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-1-3", "tipo": "silla_vip", "nombre": "Asiento A-9", "numeroSilla": "A-9", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 15.67, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
-      { "itemID": "silla-1779563256195-1-4", "tipo": "silla_vip", "nombre": "Asiento A-10", "numeroSilla": "A-10", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 16.77, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 }
+      { "itemID": "stage-1", "tipo": "stage_floor", "nombre": "Pista Principal", "rotacion": 0, "precio": 0, "xMetros": 5.94, "yMetros": 1.26, "anchoMetros": 18.11, "altoMetros": 5.07 },
+      { "itemID": "silla-1779563256195-0-0", "tipo": "vip_chair", "nombre": "Asiento A-1", "numeroSilla": "A-1", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 12.37, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-0-1", "tipo": "vip_chair", "nombre": "Asiento A-2", "numeroSilla": "A-2", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 13.47, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-0-2", "tipo": "vip_chair", "nombre": "Asiento A-3", "numeroSilla": "A-3", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 14.57, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-0-3", "tipo": "vip_chair", "nombre": "Asiento A-4", "numeroSilla": "A-4", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 15.67, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-0-4", "tipo": "vip_chair", "nombre": "Asiento A-5", "numeroSilla": "A-5", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 16.77, "yMetros": 7.39, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-1-0", "tipo": "vip_chair", "nombre": "Asiento A-6", "numeroSilla": "A-6", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 12.37, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-1-1", "tipo": "vip_chair", "nombre": "Asiento A-7", "numeroSilla": "A-7", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 13.47, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-1-2", "tipo": "vip_chair", "nombre": "Asiento A-8", "numeroSilla": "A-8", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 14.57, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-1-3", "tipo": "vip_chair", "nombre": "Asiento A-9", "numeroSilla": "A-9", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 15.67, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 },
+      { "itemID": "silla-1779563256195-1-4", "tipo": "vip_chair", "nombre": "Asiento A-10", "numeroSilla": "A-10", "grupoId": "grupo-1779563256195", "rotacion": 0, "precio": 10, "xMetros": 16.77, "yMetros": 8.49, "anchoMetros": 0.85, "altoMetros": 0.85 }
     ]
   };
 

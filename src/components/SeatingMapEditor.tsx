@@ -91,7 +91,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
         const [lotRows, setLotRows] = useState<number>(3);
         const [lotColumns, setLotColumns] = useState<number>(5);
 
-        const [chairTypeLot, setChairTypeLot] = useState<"silla_vip" | "silla_general" | "silla_patrocinante" | "silla_preferencial">("silla_vip");
+        const [chairTypeLot, setChairTypeLot] = useState<"vip_chair" | "general_chair" | "sponsor_chair" | "preferred_seating">("vip_chair");
         const [unitPricePerLot, setUnitPricePerLot] = useState<number>(0);
 
         const [objects, setObjects] = useState<SeatingMapElement[]>(
@@ -99,7 +99,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                 initialData.elements : [
                     {
                         itemID: "stage-1",
-                        type: "tarima_pista",
+                        type: "platform",
+                        itemType: "stage_floor",
                         name: "Pista Principal",
                         x: 150,
                         y: 35,
@@ -124,11 +125,11 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
 
         // --- CONTROL EXCLUSIVO DE PRECIOS FIJADOS POR MAPA ---
         // Verifica si el type de chair seleccionado actualmente ya tiene presencia activa en el mapa
-        const typeAlreadyEstablishedOnMap = objects.some((o) => o.type === chairTypeLot);
+        const typeAlreadyEstablishedOnMap = objects.some((o) => o.itemType === chairTypeLot);
 
         // Sincroniza el price mostrado en el panel si el usuario cambia el selector a un type existente
         useEffect(() => {
-            const existingChair = objects.find((o) => o.type === chairTypeLot);
+            const existingChair = objects.find((o) => o.itemType === chairTypeLot);
             if (existingChair && existingChair.price !== undefined) {
                 setUnitPricePerLot(existingChair.price);
             }
@@ -195,6 +196,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
             onSavingStatusChange?.(true);
             const normalizedData = objects.map((obj) => ({
                 itemID: obj.itemID,
+                itemType: obj.itemType,
                 type: obj.type,
                 name: obj.name,
                 limitPerRepresentative: obj.limitPerRepresentative,
@@ -257,7 +259,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
 
         const getNextIndexGroupChairs = (listaActual: SeatingMapElement[]) => {
             const existingGroups = Array.from(
-                new Set(listaActual.filter((o) => o.type.startsWith("silla_") && o.groupId).map((o) => o.groupId))
+                new Set(listaActual.filter((o) => o.type == "chair" && o.groupId).map((o) => o.groupId))
             );
             return existingGroups.length;
         };
@@ -335,16 +337,16 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                     ctx.strokeStyle = "rgba(79, 70, 229, 0.4)"; ctx.lineWidth = 1.5 / scale; ctx.strokeRect(localX - 3, localY - 3, obj.width + 6, obj.height + 6);
                 }
 
-                if (obj.type === "tarima_pista") {
+                if (obj.itemType === "stage_floor") {
                     ctx.fillStyle = "#334155"; ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 3 / scale;
                     ctx.beginPath(); ctx.roundRect(localX, localY, obj.width, obj.height, 8); ctx.fill(); ctx.stroke();
                     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)"; ctx.lineWidth = 1 / scale;
                     for (let step = localY + 15; step < localY + obj.height; step += 15) { ctx.beginPath(); ctx.moveTo(localX, step); ctx.lineTo(localX + obj.width, step); ctx.stroke(); }
                 } else {
                     let colorCojin = "#6e0372"; let colorEstructura = "#4a024d";
-                    if (obj.type === "silla_general") { colorCojin = "#64748b"; colorEstructura = "#334155"; }
-                    else if (obj.type === "silla_preferencial") { colorCojin = "#bf72f6"; colorEstructura = "#9810fa"; }
-                    else if (obj.type === "silla_patrocinante") { colorCojin = "#eab308"; colorEstructura = "#ca8a04"; }
+                    if (obj.itemType === "general_chair") { colorCojin = "#64748b"; colorEstructura = "#334155"; }
+                    else if (obj.itemType === "preferred_seating") { colorCojin = "#bf72f6"; colorEstructura = "#9810fa"; }
+                    else if (obj.itemType === "sponsor_chair") { colorCojin = "#eab308"; colorEstructura = "#ca8a04"; }
 
                     const rEsq = Math.min(obj.width, obj.height) * 0.45;
                     ctx.fillStyle = colorCojin; ctx.strokeStyle = colorEstructura; ctx.lineWidth = 2 / scale;
@@ -364,7 +366,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                         ctx.fillText(obj.chairNumber.toString(), 0, -2); ctx.restore();
                     }
                 }
-                if (obj.type === "tarima_pista") {
+                if (obj.itemType === "stage_floor") {
                     ctx.fillStyle = "#ffffff"; ctx.font = `bold ${Math.max(12, 13 / scale)}px Questrial, sans-serif`;
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(obj.name, 0, 0);
                 }
@@ -375,13 +377,13 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                 ctx.restore(); ctx.save();
                 const tX = mousePositionCanvas.x + 15; const tY = mousePositionCanvas.y + 15;
                 const lineasInfo = [];
-                if (objectUnderHover.type === "tarima_pista") {
+                if (objectUnderHover.itemType === "stage_floor") {
                     lineasInfo.push(`Estructura: ${objectUnderHover.name}`);
                     lineasInfo.push(`Área: ${(objectUnderHover.width / pxPerMeter).toFixed(1)}m x ${(objectUnderHover.height / pxPerMeter).toFixed(1)}m`);
                 } else {
                     const col: Record<string, string> = { silla_vip: "VIP", silla_general: "General", silla_preferencial: "Preferencial", silla_patrocinante: "Patrocinante" };
                     lineasInfo.push(`Asiento: #${objectUnderHover.chairNumber}`);
-                    lineasInfo.push(`Tipo: ${col[objectUnderHover.type]}`);
+                    lineasInfo.push(`Tipo: ${col[objectUnderHover.itemType]}`);
                     lineasInfo.push(`Precio: $${(objectUnderHover.price || 0).toFixed(2)}`);
                 }
                 ctx.font = "11px sans-serif"; let anchoMax = 120;
@@ -429,7 +431,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                 for (let c = 0; c < lotColumns; c++) {
                     newS.push({
                         itemID: `chair-${Date.now()}-${f}-${c}`,
-                        type: chairTypeLot,
+                        type: "chair",
+                        itemType: chairTypeLot,
                         name: `Asiento ${prefijoLetra}-${seatNumber}`,
                         chairNumber: `${prefijoLetra}-${seatNumber}`,
                         groupId: idG,
@@ -470,18 +473,18 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                 let seatNumber = 1;
 
                 const clons = orig.map((obj, i) => {
-                    const esSilla = obj.type.startsWith("silla_");
+                    const itsChair = obj.type == "chair";
                     const c: SeatingMapElement = {
                         ...obj,
                         itemID: `clon-${Date.now()}-${i}`,
                         x: obj.x + off,
                         y: obj.y + off,
                         groupId: idN,
-                        name: esSilla ? `Asiento ${prefijoLetra}-${seatNumber}` : `${obj.name} (Copia)`,
-                        chairNumber: esSilla ? `${prefijoLetra}-${seatNumber}` : undefined,
+                        name: itsChair ? `Asiento ${prefijoLetra}-${seatNumber}` : `${obj.name} (Copia)`,
+                        chairNumber: itsChair ? `${prefijoLetra}-${seatNumber}` : undefined,
                         price: obj.price
                     };
-                    if (esSilla) seatNumber++; return c;
+                    if (itsChair) seatNumber++; return c;
                 });
                 setObjects([...objects, ...clons]); setSelectedObject(clons[0]);
             } else {
@@ -500,11 +503,11 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
             }
 
             const uniqueGroups = Array.from(
-                new Set(remainingObjects.filter((o) => o.type.startsWith("silla_") && o.groupId).map((o) => o.groupId))
+                new Set(remainingObjects.filter((o) => o.type == "chair" && o.groupId).map((o) => o.groupId))
             );
 
             const standardizedObjects = remainingObjects.map((obj) => {
-                if (obj.type.startsWith("silla_") && obj.groupId) {
+                if (obj.type == "chair" && obj.groupId) {
                     const newIndexGroup = uniqueGroups.indexOf(obj.groupId);
                     const newPrefix = getLetterPrefix(newIndexGroup);
                     const brothersGroup = remainingObjects.filter(o => o.groupId === obj.groupId);
@@ -566,7 +569,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
         const currentEffectiveAngle = selectedObject ? (selectedObject.groupId ? selectedObject.groupRotation || 0 : selectedObject.rotation) : 0;
 
         // --- MÉTODOS DE ANALÍTICAS ---
-        const currentChairs = objects.filter(o => o.type.startsWith("silla_"));
+        const currentChairs = objects.filter(o => o.type == "chair");
         const totalChairsCount = currentChairs.length;
         const totalProjectedIncome = currentChairs.reduce((acc, s) => acc + (s.price || 0), 0);
 
@@ -576,7 +579,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
         const [macroGruposConfig, setMacroGruposConfig] = useState<Record<string, { limitPerRepresentative: number; lotes: string[] }>>({});
 
         const breakdownByType = currentChairs.reduce((acc, s) => {
-            acc[s.type] = (acc[s.type] || 0) + 1;
+            acc[s.itemType] = (acc[s.itemType] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
 
@@ -612,7 +615,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
 
             // Resetear formulario lateral de macro-grupos
             setSelectedLotsForMacro([]);
-            alert(`¡Éxito! Lotes agrupados correctamente con un límite de ${limiteAsignado} sillas por representante.`);
+            toast.success(`¡Éxito! Lotes agrupados correctamente con un límite de ${limiteAsignado} sillas por representante.`);
         };
         // Extrae todos los loteIds únicos presentes en el lienzo actual
         const listaDeLotesDisponibles = Array.from(new Set(objects.map(o => o.groupId).filter(Boolean))) as string[];
@@ -740,10 +743,10 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                                 <div>
                                     <label className="block text-gray-400 font-questrial mb-1">Clasificación de Asiento</label>
                                     <select value={chairTypeLot} onChange={(e) => setChairTypeLot(e.target.value as any)} className="w-full p-2 border border-purple-100 font-questrial font-bold text-gray-700 bg-white">
-                                        <option value="silla_vip">VIP</option>
-                                        <option value="silla_general">General</option>
-                                        <option value="silla_preferencial">Preferencial</option>
-                                        <option value="silla_patrocinante">Patrocinantes</option>
+                                        <option value="vip_chair">VIP</option>
+                                        <option value="general_chair">General</option>
+                                        <option value="preferred_seating">Preferencial</option>
+                                        <option value="sponsor_chair">Patrocinantes</option>
                                     </select>
                                 </div>
                                 <div>
@@ -822,7 +825,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                                         <div className="space-y-1 max-h-36 overflow-y-auto border border-purple-50 p-2 bg-slate-50/50">
                                             {listaDeLotesDisponibles.map((groupId) => {
                                                 const count = objects.filter(o => o.groupId === groupId).length;
-                                                const tSilla = objects.find(o => o.groupId === groupId)?.type || "silla_general";
+                                                const tSilla = objects.find(o => o.groupId === groupId)?.itemType || "general_chair";
                                                 const estaChequeado = selectedLotsForMacro.includes(groupId);
 
                                                 return (
@@ -929,7 +932,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                                     {/* Encabezado e ID */}
                                     <div className="flex justify-between items-center border-b border-slate-700 pb-1">
                                         <span className="font-anton uppercase tracking-wider text-purple-400">
-                                            {objectUnderHover.type.replace("silla_", "").toUpperCase()}
+                                            {objectUnderHover.itemType.replace("_chair", "").toUpperCase()}
                                         </span>
                                         <span className="font-mono text-[9px] text-gray-400">
                                             {objectUnderHover.itemID.split("_")[1] || "ID"}
@@ -956,7 +959,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
 
                                     {/* Condiciones de Venta */}
                                     <div className="pt-1 border-t border-slate-800 space-y-1">
-                                        {objectUnderHover.type === "silla_patrocinante" ? (
+                                        {objectUnderHover.itemType === "sponsor_chair" ? (
                                             <div className="text-amber-400 font-bold flex items-center gap-1 bg-amber-950/40 p-1 rounded border border-amber-900/50 text-[10px]">
                                                 <ShieldAlert className="w-3 h-3 text-amber-500 flex-shrink-0" />
                                                 RESTRICCIÓN: Solo Organizador
@@ -985,19 +988,19 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, SeatingMapEditorProps>(
                                 <div className="flex flex-wrap gap-4 text-xs font-questrial">
                                     <div className="flex items-center gap-2">
                                         <span className="w-3 h-3 rounded-full bg-[#6e0372]" />
-                                        <span className="text-gray-600 font-medium">VIP: <strong className="text-gray-900">{breakdownByType["silla_vip"] || 0}</strong></span>
+                                        <span className="text-gray-600 font-medium">VIP: <strong className="text-gray-900">{breakdownByType["vip_chair"] || 0}</strong></span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="w-3 h-3 rounded-full bg-[#64748b]" />
-                                        <span className="text-gray-600 font-medium">General: <strong className="text-gray-900">{breakdownByType["silla_general"] || 0}</strong></span>
+                                        <span className="text-gray-600 font-medium">General: <strong className="text-gray-900">{breakdownByType["general_chair"] || 0}</strong></span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="w-3 h-3 rounded-full bg-[#9810fa]" />
-                                        <span className="text-gray-600 font-medium">Preferencial: <strong className="text-gray-900">{breakdownByType["silla_preferencial"] || 0}</strong></span>
+                                        <span className="text-gray-600 font-medium">Preferencial: <strong className="text-gray-900">{breakdownByType["preferred_seating"] || 0}</strong></span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="w-3 h-3 rounded-full bg-[#eab308]" />
-                                        <span className="text-gray-600 font-medium">Patrocinante: <strong className="text-gray-900">{breakdownByType["silla_patrocinante"] || 0}</strong></span>
+                                        <span className="text-gray-600 font-medium">Patrocinante: <strong className="text-gray-900">{breakdownByType["sponsor_chair"] || 0}</strong></span>
                                     </div>
                                 </div>
                             </div>

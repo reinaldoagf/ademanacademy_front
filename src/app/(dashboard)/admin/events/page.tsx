@@ -465,8 +465,8 @@ export default function AdminEventsPage() {
                         <div className="relative inline-block group">
                           <button
                             onClick={() => openTicketOfficeMap(event)}
-                            disabled={event.productionStatus === "Sold Out"}
-                            className={`cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm   ${event.productionStatus === "Sold Out" ? "bg-gray-200 text-gray-400" :
+                            disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
+                            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm ${event.productionStatus === "Sold Out" || !event.seatingMap ? "bg-gray-200 text-gray-400" :
                               "cursor-pointer text-white gradient-purple"
                               }`}
                           >
