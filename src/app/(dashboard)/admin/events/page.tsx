@@ -16,7 +16,8 @@ import {
   ChevronRight,
   DollarSign,
   Trash2,
-  Pencil
+  Pencil,
+  Loader2
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
@@ -34,6 +35,7 @@ import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/ac
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 import { EventData, EventFormData } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
+import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
 
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
@@ -111,549 +113,10 @@ export default function AdminEventsPage() {
       });
     }
   };
-  // 2. Simulación de los datos del plano que vienen de tu backend
-  const configuredPlan: SeatingMap = {
-    "location": "",
-
-    "totalWidth": 30,
-
-    "totalHeight": 20,
-
-    "elements": [
-
-      {
-
-        "itemID": "stage-1",
-
-        "type": "tarima_pista",
-
-        "name": "Pista Principal",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 0,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 5.944763054633262,
-
-        "yMeters": 1.2677331723513432,
-
-        "widthMeters": 18.110473890733473,
-
-        "heightMeters": 5.070932689405373,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-0-0",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-1",
-
-        "chairNumber": "A-1",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 12.375,
-
-        "yMeters": 7.393371566555994,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-0-1",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-2",
-
-        "chairNumber": "A-2",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 13.475,
-
-        "yMeters": 7.393371566555994,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-0-2",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-3",
-
-        "chairNumber": "A-3",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 14.575,
-
-        "yMeters": 7.393371566555994,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-0-3",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-4",
-
-        "chairNumber": "A-4",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 15.674999999999999,
-
-        "yMeters": 7.393371566555994,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-0-4",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-5",
-
-        "chairNumber": "A-5",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 16.775,
-
-        "yMeters": 7.393371566555994,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-1-0",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-6",
-
-        "chairNumber": "A-6",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 12.375,
-
-        "yMeters": 8.493371566555991,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-1-1",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-7",
-
-        "chairNumber": "A-7",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 13.475,
-
-        "yMeters": 8.493371566555991,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-1-2",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-8",
-
-        "chairNumber": "A-8",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 14.575,
-
-        "yMeters": 8.493371566555991,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-1-3",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-9",
-
-        "chairNumber": "A-9",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 15.674999999999999,
-
-        "yMeters": 8.493371566555991,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-1-4",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-10",
-
-        "chairNumber": "A-10",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 16.775,
-
-        "yMeters": 8.493371566555991,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-2-0",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-11",
-
-        "chairNumber": "A-11",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 12.375,
-
-        "yMeters": 9.59337156655599,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-2-1",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-12",
-
-        "chairNumber": "A-12",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 13.475,
-
-        "yMeters": 9.59337156655599,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-2-2",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-13",
-
-        "chairNumber": "A-13",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 14.575,
-
-        "yMeters": 9.59337156655599,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-2-3",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-14",
-
-        "chairNumber": "A-14",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 15.674999999999999,
-
-        "yMeters": 9.59337156655599,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      },
-
-      {
-
-        "itemID": "silla-1779563256195-2-4",
-
-        "type": "silla_vip",
-
-        "name": "Asiento A-15",
-
-        "chairNumber": "A-15",
-
-        "groupId": "grupo-1779563256195",
-
-        "rotation": 0,
-
-        "groupRotation": 0,
-
-        "price": 10,
-
-        "x": 0,
-
-        "y": 0,
-        "xMeters": 16.775,
-
-        "yMeters": 9.59337156655599,
-
-        "widthMeters": 0.85,
-
-        "heightMeters": 0.85,
-        "width": 18.110473890733473,
-        "height": 18.110473890733473,
-
-      }
-
-    ]
-
-
-
-  }; // Aquí pasas el objeto JSON del editor
-
   // 3. Simulación de los IDs ya vendidos que vienen de la base de datos
   const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"];
 
+  const selectedStudentId = undefined; // Asignar UUID si la venta es a un alumno específico
   // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
   const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
   const openTicketOfficeMap = (event: EventData) => {
@@ -788,6 +251,34 @@ export default function AdminEventsPage() {
       ...prev,
       [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
     }));
+  };
+  const handleConfirmAssignment = async () => {
+    if (selectedChairs.length === 0 || !selectedEvent?.id) return;
+
+    setIsSubmitting(true);
+
+    // Extraemos los IDs reales del mapa de elementos (Base de Datos)
+    const elementIds: string[] = selectedChairs
+      .map((s) => s.id)
+      .filter((id): id is string => typeof id === "string");
+
+    const result = await reserveOrBuySeatsAction({
+      eventId: selectedEvent?.id,
+      seatingMapElementIds: elementIds,
+      status: "reserved", // Usar "SOLD" si es una asignación/venta directa del admin
+      studentId: selectedStudentId,
+    });
+
+    setIsSubmitting(false);
+
+    if (result.success) {
+      fetchData(currentPage, itemsPerPage);
+      toast.success(result.data.message || "Asientos procesados correctamente");
+      closeModalSeatingMap();
+      // Opcional: Recargar o revalidar datos del mapa
+    } else {
+      toast.error(`Ocurrió un problema: ${result.message}`);
+    }
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
@@ -975,7 +466,7 @@ export default function AdminEventsPage() {
                           <button
                             onClick={() => openTicketOfficeMap(event)}
                             disabled={event.productionStatus === "Sold Out"}
-                            className={`cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial font-semibold hover:opacity-90 transition shadow-sm   ${event.productionStatus === "Sold Out" ? "bg-gray-200 text-gray-400" :
+                            className={`cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm   ${event.productionStatus === "Sold Out" ? "bg-gray-200 text-gray-400" :
                               "cursor-pointer text-white gradient-purple"
                               }`}
                           >
@@ -1082,11 +573,14 @@ export default function AdminEventsPage() {
         size={"5xl"}
       ><>
           {/* Inyección del mapa interactivo con la data del Payload JSON */}
-          {configuredPlan && (
+          {selectedEvent?.seatingMap && (
             <CanvasSeatingMap
-              mapaConfig={configuredPlan}
-              seatsOccupied={seatsOccupiedBD}
-              onSeleccionChange={(chairs) => setSelectedChairs(chairs)}
+              eventData={selectedEvent}
+              seatingMap={selectedEvent.seatingMap}
+              seatsOccupied={selectedEvent.eventSeats?.filter(e => e.status == "reserved" || e.status == "sold").map(e => e.seatingMapElementId) || []}
+              onSeleccionChange={(chairs) => {
+                setSelectedChairs(chairs)
+              }}
             />
           )}
 
@@ -1108,17 +602,21 @@ export default function AdminEventsPage() {
               >
                 Cancelar
               </button>
-              <button
-                disabled={selectedChairs.length === 0}
-                onClick={() => {
-                  const nombresAsientos = selectedChairs.map(s => s.chairNumber).join(", ");
-                  alert(`Venta registrada. IDs reservados: ${selectedChairs.map(s => s.itemID).join(", ")}`);
-                  closeModalSeatingMap();
-                }}
+              {selectedEvent?.id && (<button
+                disabled={selectedChairs.length === 0 || isSubmitting}
+                onClick={handleConfirmAssignment}
                 className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
               >
-                Confirmar Asignación ({selectedChairs.length})
-              </button>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  `Confirmar Asignación (${selectedChairs.length})`
+                )}
+              </button>)}
+
             </div>
           </div>
         </>

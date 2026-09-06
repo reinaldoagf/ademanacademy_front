@@ -1,5 +1,17 @@
 import { SeatingMap } from "./seating-map";
 
+export interface EventSeat {
+    id: string;
+    eventId: string;
+    seatingMapElementId: string;
+    status: string;
+    reservedAt: string;
+    expiresAt: string;
+    userId: string;
+    studentId: string;
+    createdAt: string;
+    updatedAt: string;
+}
 export interface EventData {
     id?: string;
     code?: string;
@@ -14,6 +26,7 @@ export interface EventData {
     productionStatus: string;
     seatingMapId: string;
     seatingMap: SeatingMap;
+    eventSeats?: EventSeat[];
 }
 
 // 🔍 Parámetros de Búsqueda y Paginación

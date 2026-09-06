@@ -3,20 +3,25 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Armchair, Info } from "lucide-react";
+import { io, Socket } from "socket.io-client";
 import { SeatingMapElement, SeatingMap } from "@/types/seating-map";
+import { EventData } from "@/types/event";
 
-interface MapaAsientosProps {
-  mapaConfig: SeatingMap;
+interface SeatingMapProps {
+  eventData: EventData;
+  seatingMap: SeatingMap;
   seatsOccupied?: string[]; // IDs de asientos vendidos ej: ["silla-1234"]
   onSeleccionChange: (asientosSeleccionados: SeatingMapElement[]) => void;
 }
 
-export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
-  mapaConfig,
+export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
+  eventData,
+  seatingMap,
   seatsOccupied = [],
   onSeleccionChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [occupiedSeatsState, setOccupiedSeatsState] = useState<string[]>(seatsOccupied);
   const [seleccionados, setSeleccionados] = useState<SeatingMapElement[]>([]);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
@@ -27,8 +32,8 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
   const FACTOR_AUMENTO_SILLA = 1.25;      // 25% más grandes
   const FACTOR_ESPACIO_COLUMNAS = 1.15;   // 15% más de separación horizontal entre sillas
 
-  const canvasWidth = mapaConfig.totalWidth * ESCALA * FACTOR_ESPACIO_COLUMNAS;
-  const canvasHeight = mapaConfig.totalHeight * ESCALA;
+  const canvasWidth = seatingMap.totalWidth * ESCALA * FACTOR_ESPACIO_COLUMNAS;
+  const canvasHeight = seatingMap.totalHeight * ESCALA;
 
   // Función auxiliar idéntica al editor para calcular centros de rotación grupal
   const obtenerCentroDelLote = (elementosLote: SeatingMapElement[]) => {
@@ -39,6 +44,117 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
     const maxY = Math.max(...elementosLote.map((o) => (o.yMeters + o.heightMeters) * ESCALA));
     return { x: minX + (maxX - minX) / 2, y: minY + (maxY - minY) / 2 };
   };
+
+  // Función matemática idéntica al editor para descifrar clics con rotación matricial
+  const comprobarInterseccion = (mX: number, mY: number, obj: SeatingMapElement) => {
+    let tX = mX;
+    let tY = mY;
+
+    // 💡 Sincronizamos las dimensiones y espaciados con los del renderizado
+    const fAumento = obj.type !== "tarima_pista" ? FACTOR_AUMENTO_SILLA : 1.0;
+    const fEspacio = obj.type !== "tarima_pista" ? FACTOR_ESPACIO_COLUMNAS : 1.0;
+
+    const x = obj.xMeters * ESCALA * fEspacio;
+    const y = obj.yMeters * ESCALA;
+    const w = obj.widthMeters * ESCALA * fAumento;
+    const h = obj.heightMeters * ESCALA * fAumento;
+
+    if (obj.groupId && obj.groupRotation) {
+      const g = seatingMap.elements.filter((o) => o.groupId === obj.groupId);
+      const cOriginal = obtenerCentroDelLote(g);
+
+      // Aplicamos el factor de espacio también al centro matricial de evaluación del clic
+      const c = {
+        x: cOriginal.x * fEspacio,
+        y: cOriginal.y
+      };
+
+      const radG = (-obj.groupRotation * Math.PI) / 180;
+      tX = c.x + (mX - c.x) * Math.cos(radG) - (mY - c.y) * Math.sin(radG);
+      tY = c.y + (mX - c.x) * Math.sin(radG) + (mY - c.y) * Math.cos(radG);
+    }
+
+    const cX = x + w / 2;
+    const cY = y + h / 2;
+    const radL = (-obj.rotation * Math.PI) / 180;
+    const fX = cX + (tX - cX) * Math.cos(radL) - (tY - cY) * Math.sin(radL);
+    const fY = cY + (tX - cX) * Math.sin(radL) + (tY - cY) * Math.cos(radL);
+
+    return (fX >= x && fX <= x + w && fY >= y && fY <= y + h);
+  };
+
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // Recorremos de atrás hacia adelante para priorizar los elementos superiores
+    let elementoClickeado: SeatingMapElement | undefined = undefined;
+    for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
+      const el = seatingMap.elements[i];
+      if (el.type === "tarima_pista") continue;
+      if (el.id && occupiedSeatsState.includes(el.id)) continue;
+
+      if (comprobarInterseccion(clickX, clickY, el)) {
+        elementoClickeado = el;
+        break;
+      }
+    }
+
+    if (elementoClickeado) {
+      let nuevaSeleccion: SeatingMapElement[];
+      if (seleccionados.some((s) => s.itemID === elementoClickeado!.itemID)) {
+        nuevaSeleccion = seleccionados.filter((s) => s.itemID !== elementoClickeado!.itemID);
+      } else {
+        nuevaSeleccion = [...seleccionados, elementoClickeado];
+      }
+      setSeleccionados(nuevaSeleccion);
+      onSeleccionChange(nuevaSeleccion);
+    }
+  };
+  // 2. Conexión a Socket.IO y actualización del estado en tiempo real
+  useEffect(() => {
+    if (!eventData?.id) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const socket: Socket = io(socketUrl);
+
+    socket.emit("joinEventRoom", { eventId: eventData.id });
+
+    socket.on(
+      "seatsUpdated",
+      (data: {
+        eventId: string;
+        seats: Array<{ seatingMapElementId: string; status: string }>;
+      }) => {
+        if (data.eventId !== eventData.id) return
+        // Actualizamos el estado local de forma inmutable
+        setOccupiedSeatsState((prevOccupied) => {
+          // Filtramos los asientos que fueron liberados (status === 'available')
+          const freedIds = new Set(
+            data.seats
+              .filter((s) => s.status === "available")
+              .map((s) => s.seatingMapElementId)
+          );
+
+          // Retornamos únicamente los IDs que NO han sido liberados
+          return prevOccupied.filter((id) => !freedIds.has(id));
+        });
+      }
+    );
+
+    return () => {
+      socket.emit("leaveEventRoom", { eventId: eventData.id });
+      socket.disconnect();
+    };
+  }, [eventData?.id]);
+  // Sincronizar el estado local si la prop inicial cambia desde el padre
+  useEffect(() => {
+    setOccupiedSeatsState(seatsOccupied);
+  }, [seatsOccupied]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,7 +170,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Renderizar elementos con diseño idéntico al editor
-    mapaConfig.elements.forEach((el) => {
+    seatingMap.elements.forEach((el) => {
       // 💡 Aplicamos los factores condicionales según el tipo de elemento
       const fAumento = el.type !== "tarima_pista" ? FACTOR_AUMENTO_SILLA : 1.0;
       const fEspacio = el.type !== "tarima_pista" ? FACTOR_ESPACIO_COLUMNAS : 1.0;
@@ -71,7 +187,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
       // 1. Aplicar Rotación de Grupo (si existe)
       let rotacionDelGrupoRad = 0;
       if (el.groupId && el.groupRotation) {
-        const grupoSillas = mapaConfig.elements.filter((o) => o.groupId === el.groupId);
+        const grupoSillas = seatingMap.elements.filter((o) => o.groupId === el.groupId);
         const gCentroOriginal = obtenerCentroDelLote(grupoSillas);
 
         // El centro del lote se desplaza proporcionalmente al factor de espacio en X
@@ -117,7 +233,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
         ctx.fillText(el.name, 0, 0);
       } else {
         // --- DISEÑO DE SILLAS CON ESTADOS DE SELECCIÓN ---
-        const esOcupado = seatsOccupied.includes(el.itemID);
+        const esOcupado = el.id && occupiedSeatsState.includes(el.id);
         const esSeleccionado = seleccionados.some((s) => s.itemID === el.itemID);
 
         let colorCojin = "#6e0372";
@@ -183,78 +299,7 @@ export const CanvasSeatingMap: React.FC<MapaAsientosProps> = ({
       }
       ctx.restore();
     });
-  }, [seleccionados, mapaConfig, seatsOccupied]);
-
-  // Función matemática idéntica al editor para descifrar clics con rotación matricial
-  const comprobarInterseccion = (mX: number, mY: number, obj: SeatingMapElement) => {
-    let tX = mX;
-    let tY = mY;
-
-    // 💡 Sincronizamos las dimensiones y espaciados con los del renderizado
-    const fAumento = obj.type !== "tarima_pista" ? FACTOR_AUMENTO_SILLA : 1.0;
-    const fEspacio = obj.type !== "tarima_pista" ? FACTOR_ESPACIO_COLUMNAS : 1.0;
-
-    const x = obj.xMeters * ESCALA * fEspacio;
-    const y = obj.yMeters * ESCALA;
-    const w = obj.widthMeters * ESCALA * fAumento;
-    const h = obj.heightMeters * ESCALA * fAumento;
-
-    if (obj.groupId && obj.groupRotation) {
-      const g = mapaConfig.elements.filter((o) => o.groupId === obj.groupId);
-      const cOriginal = obtenerCentroDelLote(g);
-
-      // Aplicamos el factor de espacio también al centro matricial de evaluación del clic
-      const c = {
-        x: cOriginal.x * fEspacio,
-        y: cOriginal.y
-      };
-
-      const radG = (-obj.groupRotation * Math.PI) / 180;
-      tX = c.x + (mX - c.x) * Math.cos(radG) - (mY - c.y) * Math.sin(radG);
-      tY = c.y + (mX - c.x) * Math.sin(radG) + (mY - c.y) * Math.cos(radG);
-    }
-
-    const cX = x + w / 2;
-    const cY = y + h / 2;
-    const radL = (-obj.rotation * Math.PI) / 180;
-    const fX = cX + (tX - cX) * Math.cos(radL) - (tY - cY) * Math.sin(radL);
-    const fY = cY + (tX - cX) * Math.sin(radL) + (tY - cY) * Math.cos(radL);
-
-    return (fX >= x && fX <= x + w && fY >= y && fY <= y + h);
-  };
-
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
-    // Recorremos de atrás hacia adelante para priorizar los elementos superiores
-    let elementoClickeado: SeatingMapElement | undefined = undefined;
-    for (let i = mapaConfig.elements.length - 1; i >= 0; i--) {
-      const el = mapaConfig.elements[i];
-      if (el.type === "tarima_pista") continue;
-      if (seatsOccupied.includes(el.itemID)) continue;
-
-      if (comprobarInterseccion(clickX, clickY, el)) {
-        elementoClickeado = el;
-        break;
-      }
-    }
-
-    if (elementoClickeado) {
-      let nuevaSeleccion: SeatingMapElement[];
-      if (seleccionados.some((s) => s.itemID === elementoClickeado!.itemID)) {
-        nuevaSeleccion = seleccionados.filter((s) => s.itemID !== elementoClickeado!.itemID);
-      } else {
-        nuevaSeleccion = [...seleccionados, elementoClickeado];
-      }
-      setSeleccionados(nuevaSeleccion);
-      onSeleccionChange(nuevaSeleccion);
-    }
-  };
+  }, [seleccionados, seatingMap, occupiedSeatsState]);
 
   useEffect(() => {
     setIsMounted(true);
