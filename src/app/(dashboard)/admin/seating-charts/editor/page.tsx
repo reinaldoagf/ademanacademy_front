@@ -26,8 +26,8 @@ export default function SeatingMapBuilderPage() {
       <div className="p-4 md:p-8 mx-auto w-full overflow-y-auto space-y-6">
         <SeatingMapEditor
           ref={editorRef}
-          onLocationChange={(isValid) => setIsLocationValid(isValid)}
-          onSavingStatusChange={(isSaving) => setSaving(isSaving)}
+          onLocationChange={(isValid: boolean) => setIsLocationValid(isValid)}
+          onSavingStatusChange={(isSaving: boolean) => setSaving(isSaving)}
         />
       </div>
     </>

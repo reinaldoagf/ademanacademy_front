@@ -11,12 +11,11 @@ import {
   Maximize2,
   ChevronRight,
   Trash2,
-  Copy,
   ChevronLeft,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { SeatingMap } from "@/types/seating-map";
-import { getAllSeatingMapsAction, deleteSeatingMapAction, saveSeatingMapAction } from "@/app/actions/seating-map";
+import { getAllSeatingMapsAction, deleteSeatingMapAction } from "@/app/actions/seating-map";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
@@ -40,7 +39,7 @@ export default function SeatingMapListPage() {
   // Acciones para la barra del Hero (Redirección al creador)
   const actions = [
     {
-      label: "Nuevo Plano →",
+      label: "Nuevo Mapa →",
       onClick: () => {
         router.push("/admin/seating-charts/editor");
       }, // Ajusta tu ruta aquí
@@ -80,22 +79,6 @@ export default function SeatingMapListPage() {
     }
   };
 
-  const duplicateMap = (map: SeatingMap) => {
-    startTransition(async () => {
-      const res = await saveSeatingMapAction({
-        location: `${map.location}`,
-        totalHeight: map.totalHeight,
-        totalWidth: map.totalWidth,
-        elements: map.elements
-      }, null);
-      if (!res.success) {
-        console.log(res.error || "Ocurrió un error.");
-        return;
-      }
-      toast.success("Operación exitosa");
-      fetchData(currentPage, itemsPerPage);
-    });
-  };
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
@@ -233,7 +216,15 @@ export default function SeatingMapListPage() {
                           Asientos
                         </p>
                         <p className="text-xs font-questrial font-bold text-gray-700">
-                          {seatingMap.elements.length || 0}
+                          {seatingMap.elements.filter(e => (e.type == "chair")).length || 0}
+                        </p>
+                      </div>
+                      <div className="bg-slate-50 p-2">
+                        <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                          Tarimas
+                        </p>
+                        <p className="text-xs font-questrial font-bold text-gray-700">
+                          {seatingMap.elements.filter(e => (e.type == "platform")).length || 0}
                         </p>
                       </div>
                     </div>
@@ -243,13 +234,6 @@ export default function SeatingMapListPage() {
                   <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
 
-                      <button
-                        onClick={() => duplicateMap(seatingMap)}
-                        className="p-1.5 transition border border-transparent cursor-pointer text-blue-600 bg-blue-50 hover:bg-blue-100"
-                        title="Duplicar distribución"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
                       <button
                         onClick={() => {
                           setModalConfig({

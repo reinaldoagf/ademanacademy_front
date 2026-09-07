@@ -53,6 +53,7 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
 
   // Ejecuta el método 'save' expuesto por el hijo
   const handleSavePlan = () => {
+    console.log('handleSavePlan')
     editorRef.current?.save();
   };
 
@@ -78,10 +79,10 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
           <p className="text-sm font-questrial font-medium">Cargando mapas de asientos...</p>
         </div>) : (<SeatingMapEditor
           ref={editorRef}
-          initialData={initialData}
+          seatingMap={initialData}
           elementId={id}
-          onLocationChange={(isValid) => setIsLocationValid(isValid)}
-          onSavingStatusChange={(isSaving) => setSaving(isSaving)}
+          onLocationChange={(isValid: boolean) => setIsLocationValid(isValid)}
+          onSavingStatusChange={(isSaving: boolean) => setSaving(isSaving)}
         />)}
       </div>
     </>

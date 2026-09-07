@@ -120,6 +120,7 @@ export default function AdminEventsPage() {
   // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
   const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
   const openTicketOfficeMap = (event: EventData) => {
+    console.log({ event })
     setSelectedEvent(event);
     setSelectedChairs([]);
     openModalSeatingMap();
