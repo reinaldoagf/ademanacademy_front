@@ -21,6 +21,7 @@ import Badge from "@/components/common/Badge";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { Client } from "@/types/client";
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -61,7 +62,7 @@ const initialFormState: GroupFormData = {
   userId: "",
 };
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<Client[]>([]);
   const { isOpen, openModal, closeModal } = useModal();
   const [meta, setMeta] = useState({
     currentPage: 1,
@@ -137,6 +138,8 @@ export default function StudentsPage() {
         search: searchTerm || undefined,
         kinship: kinshipFilter === "all" ? undefined : kinshipFilter,
       });
+
+      console.log({ res })
 
       if (res.success && res.data) {
         setStudents(res.data);
@@ -352,8 +355,8 @@ export default function StudentsPage() {
     },
     {
       header: "Parentesco",
-      render: (student) => (
-        <Badge variant={student.kinship || ''} />
+      render: (client) => (
+        <Badge variant={client.student?.kinship || ''} />
       ),
     },
     {
@@ -503,13 +506,13 @@ export default function StudentsPage() {
               onChange={(e) => handleFilterChange("kinship", e.target.value)}
               className="p-2 border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
-              <option value="all">Todos</option>
-              <option value="son">Hijo</option>
-              <option value="daughter">Hija</option>
-              <option value="nephew">Sobrino</option>
-              <option value="niece">Sobrina</option>
-              <option value="tutored">Tutorado</option>
-              <option value="other">Otro</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="all">Todos</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="son">Hijo</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="daughter">Hija</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="nephew">Sobrino</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="niece">Sobrina</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="tutored">Tutorado</option>
+              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
             </select>
           </div>
         </div>
@@ -528,7 +531,7 @@ export default function StudentsPage() {
       <MacDockModal
         isOpen={isOpen}
         onClose={closeModal}
-        title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+        title={editingId ? "Actualizar Estudiante" : "Registrar Nuevo Estudiante"}
         size={"lg"}
       >
         {/* Formulario */}
@@ -541,7 +544,7 @@ export default function StudentsPage() {
 
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 DNI
               </label>
 
@@ -551,14 +554,15 @@ export default function StudentsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, dni: e.target.value })
                 }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                placeholder="DNI"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Nombre
               </label>
 
@@ -569,12 +573,13 @@ export default function StudentsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, firstName: e.target.value })
                 }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                placeholder="Nombre"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Apellido
               </label>
 
@@ -585,14 +590,15 @@ export default function StudentsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, lastName: e.target.value })
                 }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                placeholder="Apellido"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 F. de Nacimiento
               </label>
 
@@ -603,12 +609,13 @@ export default function StudentsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, birthDate: e.target.value })
                 }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                placeholder="F. de Nacimiento"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Parentesco
               </label>
 
@@ -620,19 +627,19 @@ export default function StudentsPage() {
                     kinship: e.target.value as any,
                   })
                 }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
-                <option value="son">Hijo</option>
-                <option value="daughter">Hija</option>
-                <option value="nephew">Sobrino</option>
-                <option value="niece">Sobrina</option>
-                <option value="tutored">Tutorado</option>
-                <option value="other">Otro</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="son">Hijo</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="daughter">Hija</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="nephew">Sobrino</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="niece">Sobrina</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="tutored">Tutorado</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-gray-500 font-bold mb-1">
+            <label className="block text-gray-700 font-bold mb-1">
               Dirección de Habitación
             </label>
             <input
@@ -643,12 +650,12 @@ export default function StudentsPage() {
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
               }
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-gray-500 font-bold mb-1">
+            <label className="block text-gray-700 font-bold mb-1">
               Observaciones Médicas o Alergias
             </label>
 
@@ -682,7 +689,7 @@ export default function StudentsPage() {
                   })
                   // setError(null);
                 }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
               {isLoadingGroups && (
                 <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
@@ -722,7 +729,9 @@ export default function StudentsPage() {
 
           {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
           <div className="relative" ref={userRef}>
-            <label className="block text-gray-500 font-bold mb-1">Asignación de representante académico</label>
+            <label className="block text-gray-700 font-bold mb-1">
+              Asignación de representante académico
+            </label>
             <div className="relative">
               <input
                 type="text"
@@ -738,7 +747,7 @@ export default function StudentsPage() {
                   })
                   // setError(null);
                 }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
               {isLoadingUsers && (
                 <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
@@ -782,14 +791,14 @@ export default function StudentsPage() {
             <button
               type="button"
               onClick={() => closeModal()}
-              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+              className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
             >
               {editingId ? "Actualizar" : "Registrar Alumno"}
             </button>
