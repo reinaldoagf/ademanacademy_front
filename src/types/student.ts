@@ -6,7 +6,7 @@ export interface Student {
     dni: string;
     firstName: string;
     lastName: string;
-    birthDate: Date | string | null,
+    birthDate: string | Date;
     kinship: "son" | "daughter" | "nephew" | "niece" | "tutored" | "other" | undefined;
     shirtSize: string;
     groupId?: string;

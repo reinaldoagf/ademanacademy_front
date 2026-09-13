@@ -355,7 +355,7 @@ export default function StudentsPage() {
     },
     {
       header: "Parentesco",
-      render: (client) => (
+      render: (client: Client) => (
         <Badge variant={client.student?.kinship || ''} />
       ),
     },

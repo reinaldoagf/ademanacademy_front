@@ -1,8 +1,9 @@
 "use server";
 
 import axios from "axios";
-import { Student, FetchStudentsParams } from "@/types/student";
+import { RepresentedFormData, Student, FetchStudentsParams } from "@/types/student";
 import { getAuthHeaders } from "@/helpers/auth-headers";
+import { Client, FetchClientsParams } from "@/types/client";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
@@ -32,17 +33,40 @@ export async function getStudentsAction(searchTerm?: string): Promise<{ success:
 }
 
 // 2. Obtener Mis representados (Query)
-export async function getMyRepresentedAction(searchTerm?: string): Promise<{ success: boolean; data?: Student[]; error?: string }> {
+export async function getMyRepresentedAction(
+    params?: string | FetchClientsParams
+): Promise<{ success: boolean; data?: Client[]; error?: string; meta?: any }> {
     try {
-        // OBTENEMOS LOS HEADERS AUTOMÁTICAMENTE
         const headers = await getAuthHeaders();
-        const queryParam = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : "";
-        const { data } = await axios.get(`${BACKEND_URL}/students/my-represented${queryParam}`, { headers });
+        const query = new URLSearchParams();
 
-        return { success: true, data: data.data || data };
+        // Normalizar si se pasa un string directo o un objeto con parámetros
+        if (typeof params === 'string') {
+            if (params) query.append('search', params);
+        } else if (params && typeof params === 'object') {
+            if (params.page) query.append('page', params.page.toString());
+            if (params.limit) query.append('limit', params.limit.toString());
+            if (params.search) query.append('search', params.search);
+        }
+
+        const queryString = query.toString() ? `?${query.toString()}` : '';
+
+        const { data } = await axios.get(
+            `${BACKEND_URL}/students/my-represented${queryString}`,
+            { headers }
+        );
+
+        return {
+            success: true,
+            data: data.data || data,
+            meta: data.meta,
+        };
     } catch (error) {
-        console.log({ error })
-        return { success: false, error: "No se pudo conectar con el servidor." };
+        console.error('Error en getMyRepresentedAction:', error);
+        return {
+            success: false,
+            error: 'No se pudo conectar con el servidor.',
+        };
     }
 }
 
@@ -66,7 +90,7 @@ export async function getAllStudentsAction(params: FetchStudentsParams) {
 }
 
 // 5. Guardar o Actualizar Estudiante (Mutación)
-export async function saveStudentAction(formData: Omit<Student, 'id'>, id?: string | null) {
+export async function saveStudentAction(formData: Omit<RepresentedFormData, 'id'>, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/students/${id}` : `${BACKEND_URL}/students`;
         const headers = await getAuthHeaders();

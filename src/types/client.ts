@@ -4,6 +4,7 @@ import { User } from "./user";
 
 export interface Client {
     id: string;
+    dni: string;
     firstName: string;
     lastName: string;
     birthDate: string;
@@ -18,4 +19,10 @@ export interface Client {
     group?: Group;
     createdAt?: string;
     updatedAt?: string;
+}
+
+export interface FetchClientsParams {
+    page?: number;
+    limit?: number;
+    search?: string;
 }

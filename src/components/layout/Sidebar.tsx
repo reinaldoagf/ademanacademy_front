@@ -70,7 +70,6 @@ const updateBadgeInItems = (
     if (!parentKey && item.key === targetKey) {
       return { ...item, badge: badgeValue };
     }
-
     // Si buscamos actualizar un hijo dentro de un padre específico
     if (parentKey && item.key === parentKey) {
       const updatedChildren = item.children?.map((child) =>
@@ -149,15 +148,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
   ]);
 
   const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([
-    { key: '', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { key: 'represented', name: 'Representados', href: '/client/represented', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
-    { key: '', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
+    { key: 'dashboard', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
+    { key: 'my-affiliates', name: 'Mis afiliados', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
+    { key: 'classes', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { key: 'payments', name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
-    { key: '', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
-    { key: '', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
+    { key: 'clothing', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
+    { key: 'events', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
   ]);
 
-  const fetchBadge = useCallback(
+  const fetchAdminBadge = useCallback(
     async (
       actionFn: (params: any) => Promise<any>,
       targetKey: string,
@@ -176,9 +175,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
           setOperationalManagement((prev: any) =>
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
-          setPersonalManagement((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
           setMarketingEventManagement((prev: any) =>
             updateBadgeInItems(prev, targetKey, total, parentKey)
           );
@@ -189,9 +185,28 @@ export function Sidebar({ isOpen }: SidebarProps) {
     },
     []
   );
-
+  const fetchClientBadge = useCallback(
+    async (
+      actionFn: (params: any) => Promise<any>,
+      targetKey: string,
+      parentKey?: string
+    ) => {
+      try {
+        const res = await actionFn({ page: 1, limit: 1 });
+        if (res?.success && res?.meta?.totalItems !== undefined) {
+          const total = res.meta.totalItems;
+          setPersonalManagement((prev: any) =>
+            updateBadgeInItems(prev, targetKey, total, parentKey)
+          );
+        }
+      } catch (error) {
+        console.error(`Error al actualizar badge para [${targetKey}]:`, error);
+      }
+    },
+    []
+  );
   // 3. Configuración centralizada de badges y sus eventos
-  const badgeConfigs = [
+  const adminBadgeConfigs = [
     { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
     { event: "refresh-students-count", action: getAllStudentsAction, key: "students" },
     { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
@@ -208,6 +223,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: "refresh-uniforms-count", action: getAllUniformsAction, key: "wardrobe-uniforms", parentKey: "wardrobe" },
     { event: "refresh-products-count", action: getAllProductsAction, key: "store-products", parentKey: "store" },
     { event: "refresh-product-categories-count", action: getAllProductCategoriesAction, key: "store-categories", parentKey: "store" },
+  ];
+
+  const clientBadgeConfigs = [
+    { event: "refresh-my-affiliates-count", action: getMyRepresentedAction, key: "my-affiliates" },
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
@@ -339,15 +358,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
     // A. Función para refrescar todos los badges en paralelo al inicio
     const fetchAllBadges = () => {
       Promise.all(
-        badgeConfigs.map((cfg) => fetchBadge(cfg.action, cfg.key, cfg.parentKey))
+        adminBadgeConfigs.map((cfg) => fetchAdminBadge(cfg.action, cfg.key, cfg.parentKey))
       );
     };
 
     fetchAllBadges();
 
     // B. Mapeo dinámico de Listeners para Custom Events
-    const handlers = badgeConfigs.map((cfg) => {
-      const handler = () => fetchBadge(cfg.action, cfg.key, cfg.parentKey);
+    const handlers = adminBadgeConfigs.map((cfg) => {
+      const handler = () => fetchAdminBadge(cfg.action, cfg.key, cfg.parentKey);
       window.addEventListener(cfg.event, handler);
       return { event: cfg.event, handler };
     });
@@ -358,23 +377,34 @@ export function Sidebar({ isOpen }: SidebarProps) {
         window.removeEventListener(event, handler);
       });
     };
-  }, [isAdminView, orderCreatedFlag, fetchBadge]);
+  }, [isAdminView, orderCreatedFlag, fetchAdminBadge]);
 
   // useEffect para cargar la data real al montar el Sidebar por primera vez
-  /* useEffect(() => {
-    if (isClientView) {
-      // Cargamos al inicio
-      fetchRepresentedBadgeCount();
-
-      // 2️⃣ Escuchamos el evento global de actualización
-      window.addEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
-    }
-
-    // Limpieza al desmontar el componente para evitar fugas de memoria
-    return () => {
-      window.removeEventListener('refresh-represented-count', fetchRepresentedBadgeCount);
+  useEffect(() => {
+    if (!isClientView) return;
+    // A. Función para refrescar todos los badges en paralelo al inicio
+    const fetchAllBadges = () => {
+      Promise.all(
+        clientBadgeConfigs.map((cfg) => fetchClientBadge(cfg.action, cfg.key, cfg.parentKey))
+      );
     };
-  }, [isClientView]); */
+
+    fetchAllBadges();
+
+    // B. Mapeo dinámico de Listeners para Custom Events
+    const handlers = clientBadgeConfigs.map((cfg) => {
+      const handler = () => fetchClientBadge(cfg.action, cfg.key, cfg.parentKey);
+      window.addEventListener(cfg.event, handler);
+      return { event: cfg.event, handler };
+    });
+
+    // C. Limpieza automática y libre de bugs
+    return () => {
+      handlers.forEach(({ event, handler }) => {
+        window.removeEventListener(event, handler);
+      });
+    };
+  }, [isClientView, fetchClientBadge]);
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
