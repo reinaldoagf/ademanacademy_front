@@ -50,6 +50,7 @@ export default function OtpAuthPage() {
             setUser({
                 id: result.user.id,
                 name: result.user.name,
+                phone: result.user.phone,
                 email: result.user.email,
                 isAdmin: result.user.isAdmin,
                 profileOnboarding: result.user.profileOnboarding,
@@ -119,7 +120,7 @@ export default function OtpAuthPage() {
                         <div className="relative">
                             <input
                                 id="password"
-                                className={`w-full bg-white/5 border py-4 px-3 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600${errorMsg ? "text-red-400" : "text-[#5e0472]"}`}
+                                className={`w-full bg-white/5 border py-4 px-3 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 ${errorMsg ? "text-red-400" : "text-[#5e0472]"}`}
                                 type={showPassword ? 'text' : 'password'}
                                 autoComplete="current-password"
                                 required
@@ -149,7 +150,8 @@ export default function OtpAuthPage() {
                     <button
                         type="submit"
                         disabled={!!errorMsg || !formData.email || !formData.password || loading}
-                        className="w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                        className={`w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer ${!!errorMsg || !formData.email || !formData.password || loading ? "bg-gray-200 text-gray-400" : "text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90"
+                            }`}
                     >
                         {loading ? (
                             <>

@@ -23,6 +23,7 @@ import { getAllUniformsAction } from "@/app/actions/uniform";
 import { getAllProductCategoriesAction } from "@/app/actions/product-category";
 import { getAllProductsAction } from "@/app/actions/product";
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
+import { getAllClientsAction } from "@/app/actions/client";
 import {
   ChartPie,
   HeartPulse,
@@ -43,7 +44,8 @@ import {
   Calendar,
   House,
   UserPlus2,
-  LucideProps
+  LucideProps,
+  PersonStanding
 } from "lucide-react";
 
 interface SidebarProps {
@@ -106,6 +108,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [academicManagement, setAcademicManagement] = useState<SidebarMenuItem[]>([
     { key: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
+    { key: 'clients', name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
     { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     {
@@ -208,6 +211,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // 3. Configuración centralizada de badges y sus eventos
   const adminBadgeConfigs = [
     { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
+    { event: "refresh-clients-count", action: getAllClientsAction, key: "clients" },
     { event: "refresh-students-count", action: getAllStudentsAction, key: "students" },
     { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },

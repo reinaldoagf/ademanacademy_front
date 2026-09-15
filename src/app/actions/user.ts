@@ -9,7 +9,7 @@ import FormDataNode from "form-data";
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
 interface OnboardingPayload {
-    profileType: "student" | "representative";
+    profileType: "client" | "representative";
     representativeOccupation: undefined | string;
     // Si es representante, enviamos el arreglo de alumnos iniciales
     representedStudents?: {
