@@ -110,6 +110,7 @@ export default function ClientsPage() {
                         setClients(clients.filter((item) => item.id !== modalConfig.id));
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
                         window.dispatchEvent(new Event('refresh-clients-count'));
+                        window.dispatchEvent(new Event('refresh-students-count'));
                     }
                 }
             });
@@ -185,7 +186,8 @@ export default function ClientsPage() {
 
                 // Refrescar conteo o eventos
                 if (!editingId) {
-                    window.dispatchEvent(new Event("refresh-customers-count"));
+                    window.dispatchEvent(new Event('refresh-clients-count'));
+                    window.dispatchEvent(new Event('refresh-students-count'));
                 }
 
                 fetchData(currentPage, itemsPerPage);
