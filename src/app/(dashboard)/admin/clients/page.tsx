@@ -27,8 +27,9 @@ import Badge from "@/components/common/Badge";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { Client, CustomerFormData } from "@/types/client";
 import { User } from "@/types/user";
-import { getAllUsersAction } from "@/app/actions/user";
 import { formatDateForInput } from "@/helpers/dates";
+import { APP_KEYS } from "@/consts/app";
+import { getAllUsersAction } from "@/app/actions/user";
 import { saveClientAction, getAllClientsAction, deleteClientAction } from "@/app/actions/client";
 const initialFormState: CustomerFormData = {
     firstName: "",
@@ -109,8 +110,8 @@ export default function ClientsPage() {
                         toast.success("Operación exitosa");
                         setClients(clients.filter((item) => item.id !== modalConfig.id));
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event('refresh-clients-count'));
-                        window.dispatchEvent(new Event('refresh-students-count'));
+                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
+                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
                     }
                 }
             });
@@ -186,8 +187,8 @@ export default function ClientsPage() {
 
                 // Refrescar conteo o eventos
                 if (!editingId) {
-                    window.dispatchEvent(new Event('refresh-clients-count'));
-                    window.dispatchEvent(new Event('refresh-students-count'));
+                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
+                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
                 }
 
                 fetchData(currentPage, itemsPerPage);

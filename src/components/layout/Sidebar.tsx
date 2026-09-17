@@ -4,26 +4,6 @@
 import { useEffect, useState, useCallback, ForwardRefExoticComponent, RefAttributes } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuthStore } from "@/store/authStore";
-import { useCartStore } from "@/store/cartStore";
-import { getAllUsersAction } from "@/app/actions/user";
-import { getAllClassroomsAction } from "@/app/actions/classroom";
-import {
-  getMyRepresentedAction,
-  getAllStudentsAction
-} from "@/app/actions/student";
-import { getAllGroupsAction } from "@/app/actions/group";
-import { getAllTransactionsAction } from "@/app/actions/transaction";
-import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
-import { getAllOrdersAction } from "@/app/actions/order";
-import { getAllEventsAction } from "@/app/actions/event";
-import { getAllCostumesAction } from "@/app/actions/costume";
-import { getAllEmployeesAction } from "@/app/actions/employee";
-import { getAllUniformsAction } from "@/app/actions/uniform";
-import { getAllProductCategoriesAction } from "@/app/actions/product-category";
-import { getAllProductsAction } from "@/app/actions/product";
-import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
-import { getAllClientsAction } from "@/app/actions/client";
 import {
   ChartPie,
   HeartPulse,
@@ -47,6 +27,27 @@ import {
   LucideProps,
   PersonStanding
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
+import { getAllUsersAction } from "@/app/actions/user";
+import { getAllClassroomsAction } from "@/app/actions/classroom";
+import {
+  getMyRepresentedAction,
+  getAllStudentsAction
+} from "@/app/actions/student";
+import { getAllGroupsAction } from "@/app/actions/group";
+import { getAllTransactionsAction } from "@/app/actions/transaction";
+import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
+import { getAllOrdersAction } from "@/app/actions/order";
+import { getAllEventsAction } from "@/app/actions/event";
+import { getAllCostumesAction } from "@/app/actions/costume";
+import { getAllEmployeesAction } from "@/app/actions/employee";
+import { getAllUniformsAction } from "@/app/actions/uniform";
+import { getAllProductCategoriesAction } from "@/app/actions/product-category";
+import { getAllProductsAction } from "@/app/actions/product";
+import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
+import { getAllClientsAction } from "@/app/actions/client";
+import { APP_KEYS } from "@/consts/app";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -108,8 +109,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [academicManagement, setAcademicManagement] = useState<SidebarMenuItem[]>([
     { key: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
-    { key: 'clients', name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
-    { key: 'students', name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
+    { key: APP_KEYS.CLIENTS, name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
+    { key: APP_KEYS.STUDENTS, name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     {
       key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
@@ -211,8 +212,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // 3. Configuración centralizada de badges y sus eventos
   const adminBadgeConfigs = [
     { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
-    { event: "refresh-clients-count", action: getAllClientsAction, key: "clients" },
-    { event: "refresh-students-count", action: getAllStudentsAction, key: "students" },
+    { event: APP_KEYS.REFRESH_CLIENTS_COUNT, action: getAllClientsAction, key: APP_KEYS.CLIENTS },
+    { event: APP_KEYS.REFRESH_STUDENTS_COUNT, action: getAllStudentsAction, key: APP_KEYS.STUDENTS },
     { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
     { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
