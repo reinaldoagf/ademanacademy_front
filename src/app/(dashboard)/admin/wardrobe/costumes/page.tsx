@@ -419,150 +419,157 @@ export default function CostumesPage() {
           },
         ]}
       />
+      {/* Capa de Carga Asíncrona */}
+      <div className="relative w-full">
+        {isPending && (
+          <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
+            <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
+          {/* TARJETAS DE INDICADORES RÁPIDOS */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {(Object.keys(STATUS_CONFIG) as LockerRoomStatus[]).map((statusKey) => {
+              const config = STATUS_CONFIG[statusKey];
+              const count = statusCounts[statusKey] || 0;
+              const Icon = config.icon;
 
-      <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
-        {/* TARJETAS DE INDICADORES RÁPIDOS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(Object.keys(STATUS_CONFIG) as LockerRoomStatus[]).map((statusKey) => {
-            const config = STATUS_CONFIG[statusKey];
-            const count = statusCounts[statusKey] || 0;
-            const Icon = config.icon;
-
-            return (
-              <div
-                key={statusKey}
-                className="glass-card shadow-sm p-4 flex items-center gap-4 border border-purple-50/50 bg-white/70"
-              >
-                <div className={`w-10 h-10 shrink-0 flex items-center justify-center ${config.iconBgClass} ${config.iconTextClass}`}>
-                  <Icon className="w-5 h-5" />
+              return (
+                <div
+                  key={statusKey}
+                  className="glass-card shadow-sm p-4 flex items-center gap-4 border border-purple-50/50 bg-white/70"
+                >
+                  <div className={`w-10 h-10 shrink-0 flex items-center justify-center ${config.iconBgClass} ${config.iconTextClass}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider truncate">
+                      {config.title}
+                    </p>
+                    <h4 className="text-xl font-anton text-gray-800">
+                      {count} {config.unitLabel}
+                    </h4>
+                    <p className="font-questrial text-xs text-gray-500 line-clamp-1">
+                      {config.subtitle}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-gray-400 text-[11px] font-questrial font-semibold uppercase tracking-wider truncate">
-                    {config.title}
-                  </p>
-                  <h4 className="text-xl font-anton text-gray-800">
-                    {count} {config.unitLabel}
-                  </h4>
-                  <p className="font-questrial text-xs text-gray-500 line-clamp-1">
-                    {config.subtitle}
-                  </p>
+              );
+            })}
+          </div>
+
+          {/* FILTROS */}
+          <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar traje o género de danza..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
+              />
+            </div>
+
+
+            <div className="flex gap-2">
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+              >
+                <option value="all">Todas las categorías</option>
+                <option value="baby">Baby</option>
+                <option value="childrens">Infantil</option>
+                <option value="youth">Juvenil</option>
+                <option value="adult">Adulto</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="payment_pending">Pendiente por pago</option>
+                <option value="making">Confeccionando</option>
+                <option value="available">Disponible</option>
+                <option value="retired">Retirado</option>
+              </select>
+            </div>
+
+          </div>
+
+          {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {costumes.length > 0 ? (
+              costumes.map((costume) => {
+                return <WardrobeCard
+                  key={costume.id}
+                  element={costume}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              })
+            ) : (
+              <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
+                No se encontraron registros de vestuarios en base a los filtros.
+              </div>
+            )}
+          </div>
+
+          {/* Seccion de Paginación */}
+          {meta.totalPages > 1 && (
+            <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-center gap-6 border border-purple-50/60 shadow-xs">
+              <div className="text-xs font-questrial text-gray-500">
+                Mostrando <span className="font-semibold text-gray-700">{costumes.length}</span> de{" "}
+                <span className="font-semibold text-gray-700">{meta.totalItems}</span> trajes
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Selector de Items por Página */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-questrial text-gray-400">Ver:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1); // Volver a la 1 tras cambiar el límite
+                    }}
+                    className="p-1 border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                {/* Controles de Navegación */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={meta.currentPage === 1 || isPending}
+                    className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <span className="text-xs font-questrial px-3 py-1 bg-[#5e0472]/5 text-[#5e0472] font-semibold">
+                    Pág. {meta.currentPage} de {meta.totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, meta.totalPages))}
+                    disabled={meta.currentPage === meta.totalPages || isPending}
+                    className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* FILTROS */}
-        <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar traje o género de danza..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
-            />
-          </div>
-
-
-          <div className="flex gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-            >
-              <option value="all">Todas las categorías</option>
-              <option value="baby">Baby</option>
-              <option value="childrens">Infantil</option>
-              <option value="youth">Juvenil</option>
-              <option value="adult">Adulto</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="payment_pending">Pendiente por pago</option>
-              <option value="making">Confeccionando</option>
-              <option value="available">Disponible</option>
-              <option value="retired">Retirado</option>
-            </select>
-          </div>
-
-        </div>
-
-        {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {costumes.length > 0 ? (
-            costumes.map((costume) => {
-              return <WardrobeCard
-                key={costume.id}
-                element={costume}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            })
-          ) : (
-            <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-              No se encontraron registros de vestuarios en base a los filtros.
             </div>
           )}
         </div>
-
-        {/* Seccion de Paginación */}
-        {meta.totalPages > 1 && (
-          <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-center gap-6 border border-purple-50/60 shadow-xs">
-            <div className="text-xs font-questrial text-gray-500">
-              Mostrando <span className="font-semibold text-gray-700">{costumes.length}</span> de{" "}
-              <span className="font-semibold text-gray-700">{meta.totalItems}</span> trajes
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Selector de Items por Página */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-questrial text-gray-400">Ver:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1); // Volver a la 1 tras cambiar el límite
-                  }}
-                  className="p-1 border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-
-              {/* Controles de Navegación */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={meta.currentPage === 1 || isPending}
-                  className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                <span className="text-xs font-questrial px-3 py-1 bg-[#5e0472]/5 text-[#5e0472] font-semibold">
-                  Pág. {meta.currentPage} de {meta.totalPages}
-                </span>
-
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, meta.totalPages))}
-                  disabled={meta.currentPage === meta.totalPages || isPending}
-                  className="p-1.5 border border-purple-50 bg-white text-gray-600 hover:bg-purple-50 disabled:opacity-40 disabled:hover:bg-white transition cursor-pointer rounded-xs"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       {/* MODAL: APERTURA / REGISTRO DE VESTUARIO */}
 
@@ -589,7 +596,7 @@ export default function CostumesPage() {
           {/* Nombre y Beat - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Nombre del Vestuario *
               </label>
               <input
@@ -598,26 +605,26 @@ export default function CostumesPage() {
                 required
                 value={costumeFormData.name}
                 onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Ritmo / Coreografía (Beat)
               </label>
               <input
                 type="text"
                 value={costumeFormData.beat}
                 onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
                 placeholder="Ej. Salsa, Urbana..."
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-500 font-bold mb-1">
+            <label className="block text-gray-700 font-bold mb-1">
               Precio / Tarifa ($)
             </label>
             <input
@@ -627,113 +634,47 @@ export default function CostumesPage() {
               placeholder="0.00"
               value={costumeFormData.price || ''}
               onChange={(e) => setCostumeFormData({ ...costumeFormData, price: parseFloat(e.target.value) || 0 })}
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-            />
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
+                            />
           </div>
 
           {/* Categoría y Estado - Grid responsivo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Categoría *
               </label>
               <select
                 value={costumeFormData.category}
                 onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
-                <option value="baby">Baby</option>
-                <option value="childrens">Infantil</option>
-                <option value="youth">Juvenil</option>
-                <option value="adult">Adulto</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="baby">Baby</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="childrens">Infantil</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="youth">Juvenil</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="adult">Adulto</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-gray-500 font-bold mb-1">
+              <label className="block text-gray-700 font-bold mb-1">
                 Estado Inicial *
               </label>
               <select
                 value={costumeFormData.status}
                 onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
+                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               >
-                <option value="payment_pending">Pendiente por pago</option>
-                <option value="making">Confeccionando</option>
-                <option value="available">Disponible</option>
-                <option value="retired">Retirado</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="payment_pending">Pendiente por pago</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="making">Confeccionando</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="available">Disponible</option>
+                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="retired">Retirado</option>
               </select>
             </div>
           </div>
 
-          {/* Sección Dinámica: Control de Stock por Tallas */}
-          {/* <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
-            <div>
-              <label className="block text-gray-700 font-bold">Inventario disponible por Talla</label>
-              <p className="text-[10px] text-gray-400">Ajusta el stock usando los controles laterales o escribiendo el número directo.</p>
-            </div>
-
-            <div className="border border-purple-100/60 overflow-hidden bg-white shadow-xs">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-purple-50/50 border-b border-purple-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="px-4 py-2 font-anton">Talla</th>
-                    <th className="px-4 py-2 text-right font-anton">Cantidad / Unidades</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-purple-50">
-                  {costumeFormData.availableSizes.map((item, idx) => {
-                    const handleUpdateQuantity = (newVal: number) => {
-                      const safeVal = Math.max(0, newVal);
-                      const updatedSizes = [...costumeFormData.availableSizes];
-                      updatedSizes[idx] = { ...updatedSizes[idx], quantity: safeVal };
-                      setCostumeFormData({ ...costumeFormData, availableSizes: updatedSizes });
-                    };
-
-                    return (
-                      <tr key={item.size} className="hover:bg-purple-50/20 transition-colors">
-                        <td className="px-4 py-1.5 font-mono font-bold text-purple-700 text-sm">
-                          {item.size}
-                        </td>
-
-                        <td className="px-4 py-1.5 flex justify-end">
-                          <div className="flex items-center border border-purple-100 bg-purple-50/10 overflow-hidden max-w-[130px]">
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQuantity(item.quantity - 1)}
-                              disabled={item.quantity <= 0}
-                              className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm"
-                            >
-                              –
-                            </button>
-
-                            <input
-                              type="number"
-                              min={0}
-                              value={item.quantity}
-                              onChange={(e) => handleUpdateQuantity(Number(e.target.value))}
-                              className="w-12 text-center py-0.5 bg-transparent focus:outline-none font-mono text-xs text-gray-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateQuantity(item.quantity + 1)}
-                              className="px-2.5 py-1 text-gray-500 hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer select-none font-bold border-r border-purple-100 text-sm"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div> */}
-
           {/* Sección: Galería de Imágenes */}
-          <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3">
+          <div className="border border-purple-100 bg-purple-50/50 p-3 sm:p-4 space-y-3 rounded-lg">
             <div>
               <label className="block text-gray-700 font-bold">Galería de Imágenes</label>
               <p className="text-[10px] text-gray-400">Sube hasta 10 fotos del diseño en formato JPG, PNG o WEBP.</p>
@@ -797,7 +738,7 @@ export default function CostumesPage() {
           <button
             type="button"
             onClick={() => closeModalForm()}
-            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
           >
             Cancelar
           </button>
@@ -806,7 +747,7 @@ export default function CostumesPage() {
             type="submit"
             form="costume-form" // <-- Apunta al ID del formulario
             onClick={(e) => { }}
-            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
           >
             {editingId
               ? "Actualizar"
