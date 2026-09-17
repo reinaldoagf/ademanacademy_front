@@ -69,20 +69,45 @@ export default function OrdersPage() {
             ),
         },
         {
+            header: "Cliente",
+            render: (order) => {
+                return (
+                    <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                        <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${order.client
+                            ? "text-white bg-[#5e0472]"
+                            : "bg-slate-50"
+                            }`}
+
+                        >
+                            <User className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                        {order.client ? (
+                            <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName}</span>
+                                <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.email || 'No registrado'}</span>
+                            </div>) : (
+                            <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">Sin cliente</span>
+                            </div>)}
+                    </div>
+                )
+            }
+        },
+        {
             header: "Usuario",
             render: (order) => {
-                if (!order.user) {
+                if (!order.client.user) {
                     return <p className="text-[11px] text-gray-400 mt-0.5">Sin usuario</p>;
                 }
-                const userInitials = order.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {userInitials}
+
+                            <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.user.name}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.user.email}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.user.name}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.user.email}</span>
                         </div>
                     </div>
                 );
@@ -187,7 +212,7 @@ export default function OrdersPage() {
                     {/* Información General y Cliente */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Tarjeta Cliente */}
-                        <div className="font-questrial p-4 bg-gray-50 border border-gray-100 rounded-xl space-y-2">
+                        <div className="font-questrial p-4 border border-gray-100 bg-gray-50/80 rounded-lg space-y-2">
                             <div className="flex items-center gap-2 text-[#5e0472] font-bold text-sm mb-1">
                                 <User className="w-4 h-4" />
                                 <span className="">Información del Cliente</span>
@@ -207,7 +232,7 @@ export default function OrdersPage() {
                         </div>
 
                         {/* Tarjeta Pedido */}
-                        <div className="font-questrial p-4 bg-gray-50 border border-gray-100 rounded-xl space-y-2.5">
+                        <div className="font-questrial p-4 border border-gray-100 bg-gray-50/80 rounded-lg space-y-2.5">
                             <div className="flex items-center gap-2 text-[#5e0472] font-bold text-sm mb-1">
                                 <FileText className="w-4 h-4" />
                                 <span className="">Estado y Registro</span>
@@ -234,7 +259,7 @@ export default function OrdersPage() {
                             <span className="">Productos y Servicios ({selectedOrder?.items?.length || 0})</span>
                         </h4>
 
-                        <div className="border border-purple-100 rounded-xl overflow-hidden">
+                        <div className="border border-purple-100 rounded-lg overflow-hidden">
                             <table className=" w-full text-left border-collapse text-xs">
                                 <thead>
                                     <tr className="bg-purple-50/60 text-purple-900 font-bold border-b border-purple-100">
@@ -283,7 +308,7 @@ export default function OrdersPage() {
 
                     {/* Orden de Pago Asociada */}
                     {selectedOrder?.paymentOrder && (
-                        <div className="font-questrial p-4 bg-purple-50/40 border border-purple-100 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div className="font-questrial p-4 border border-purple-100 bg-gray-50/80 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-1.5 font-bold text-purple-900">
                                     <CreditCard className="w-4 h-4 text-[#5e0472]" />
@@ -305,7 +330,7 @@ export default function OrdersPage() {
                     )}
 
                     {/* Monto Total */}
-                    <div className="font-questrial flex justify-between items-center p-4 gradient-purple text-white shadow-lg shadow-purple-200  rounded-xl font-bold">
+                    <div className="font-questrial flex justify-between items-center p-4 gradient-purple text-white shadow-lg shadow-purple-200 rounded-lg font-bold">
                         <span className="text-sm">Monto Total del Pedido:</span>
                         <span className="text-lg text-emerald-400">
                             ${Number(selectedOrder?.totalAmount || 0).toFixed(2)}

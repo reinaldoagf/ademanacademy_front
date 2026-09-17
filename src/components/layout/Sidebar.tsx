@@ -252,7 +252,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
           <button
             type="button"
             onClick={() => toggleSubmenu(item.key)}
-            className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative w-full ${isActive
+            className={`font-questrial flex items-center justify-between cursor-pointer px-4 py-2.5 text-sm font-medium transition group relative w-full ${isActive
               ? 'border-l-4 border-l-[#5e0472] bg-purple-50 text-[#5e0472]'
               : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
               } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}

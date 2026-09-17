@@ -319,164 +319,169 @@ export default function ClientsPage() {
                 </div>
 
                 {/* LISTADO DE TARJETAS DE SALONES */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {clients.length > 0 ? (
-                        clients.map((client: Client) => {
-                            // Formatear la fecha de nacimiento de forma legible
-                            const formattedBirthDate = client.birthDate
-                                ? new Date(client.birthDate).toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                })
-                                : 'N/A';
 
-                            return (
-                                <div
-                                    key={client.id}
-                                    className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
-                                >
-                                    {/* Cabecera de la tarjeta */}
-                                    <div className="p-5 space-y-3">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
-                                                {client.firstName} {client.lastName}
-                                            </h3>
+                {clients.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {clients.map((client: Client) => {
+                        // Formatear la fecha de nacimiento de forma legible
+                        const formattedBirthDate = client.birthDate
+                            ? new Date(client.birthDate).toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                            })
+                            : 'N/A';
 
-                                            {
-                                                client.createdAt && (
-                                                    <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
-                                                        <Calendar className="w-3 h-3" />
-                                                        <DatePipe value={client.createdAt} format="short" />
-                                                    </div>
-                                                )
-                                            }
-                                        </div>
+                        return (
+                            <div
+                                key={client.id}
+                                className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
+                            >
+                                {/* Cabecera de la tarjeta */}
+                                <div className="p-5 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
+                                            {client.firstName} {client.lastName}
+                                        </h3>
 
-                                        {/* Sub-métricas vectoriales del plano */}
-                                        <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
-                                            <div className="bg-slate-50 p-2">
-                                                <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                                                    DNI / Cedula
-                                                </p>
-                                                <p className="text-xs font-questrial font-bold text-gray-700">
-                                                    {client.dni || 'No registrado'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-50 p-2">
-                                                <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                                                    Teléfono
-                                                </p>
-                                                <p className="text-xs font-questrial font-bold text-gray-700">
-                                                    {client.dni || 'No registrado'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-50 p-2">
-                                                <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                                                    Nacimiento
-                                                </p>
-                                                <p className="text-xs font-questrial font-bold text-gray-700">
-                                                    {formattedBirthDate}
-                                                </p>
-                                            </div>
-                                        </div>
-
-
-
-                                        {/* Relaciones opcionales (Estudiante, Usuario, Grupo) */}
-                                        {client.group && (<div className="flex justify-between text-xs font-questrial font-medium text-gray-500">
-                                            <div className="flex items-center gap-1.5 text-indigo-600 font-medium">
-                                                <Users className="w-3.5 h-3.5 shrink-0" />
-                                                <span>Grupo: {client.group.name || client.groupId}</span>
-                                            </div>
-                                        </div>)}
-
-
-                                        <div className="flex justify-between gap-2">
-
-
-                                            <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                                                <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
-                                                    ? "text-white bg-[#5e0472]"
-                                                    : "bg-slate-50"
-                                                    }`}
-
-                                                >
-                                                    <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                                        {
+                                            client.createdAt && (
+                                                <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
+                                                    <Calendar className="w-3 h-3" />
+                                                    <DatePipe value={client.createdAt} format="short" />
                                                 </div>
-                                                {client.student ? (
-                                                    <div className="hidden md:flex flex-col text-left font-questrial">
-                                                        <span className="text-xs font-bold text-gray-700 leading-tight">{client.firstName}</span>
-                                                        <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.lastName}</span>
-                                                    </div>) : (
-                                                    <div className="hidden md:flex flex-col text-left font-questrial">
-                                                        <span className="text-xs font-bold text-gray-700 leading-tight">Sin cliente</span>
-                                                    </div>)}
-                                            </div>
+                                            )
+                                        }
+                                    </div>
 
-                                            <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-
-
-                                                {client.user ? (
-                                                    <div className="hidden md:flex flex-col text-left font-questrial">
-                                                        <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.name}</span>
-                                                        <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.user.email}</span>
-                                                    </div>) : (
-                                                    <div className="hidden md:flex flex-col text-left font-questrial">
-                                                        <span className="text-xs font-bold text-gray-700 leading-tight">Sin usuario</span>
-                                                    </div>)}
-
-
-
-                                                <div
-                                                    className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.user
-                                                        ? "text-white bg-[#5e0472]"
-                                                        : "bg-slate-50"
-                                                        }`}>
-                                                    <UserLucide className="w-3.5 h-3.5 shrink-0" />
-                                                </div>
-                                            </div>
+                                    {/* Sub-métricas vectoriales del plano */}
+                                    <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                DNI / Cedula
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {client.dni || 'No registrado'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Teléfono
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {client.phone || 'No registrado'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Nacimiento
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {formattedBirthDate}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Acciones y Footer de la tarjeta */}
-                                    <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
-                                        <div className="flex items-center gap-1.5">
 
-                                            <button
-                                                onClick={() => {
-                                                    setModalConfig({
-                                                        isOpen: true,
-                                                        type: 'word',
-                                                        title: 'Confirmar eliminación',
-                                                        description: `¿Estás seguro de que deseas eliminar el registro de ${client.firstName} ${client.lastName}?`,
-                                                        id: client.id,
-                                                    });
-                                                }}
-                                                className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
-                                                title="Eliminar registro"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
 
-                                            <button
-                                                onClick={() => handleEditModal(client)}
-                                                className="p-1.5 transition border border-transparent cursor-pointer text-green-600 bg-green-50 hover:bg-green-100"
-                                                title="Editar Cliente"
+                                    {/* Relaciones opcionales (Estudiante, Usuario, Grupo) */}
+                                    {client.group && (<div className="flex justify-between text-xs font-questrial font-medium text-gray-500">
+                                        <div className="flex items-center gap-1.5 text-indigo-600 font-medium">
+                                            <Users className="w-3.5 h-3.5 shrink-0" />
+                                            <span>Grupo: {client.group.name || client.groupId}</span>
+                                        </div>
+                                    </div>)}
+
+
+                                    <div className="flex justify-between gap-2">
+
+
+                                        <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                                            <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
+                                                ? "text-white bg-[#5e0472]"
+                                                : "bg-slate-50"
+                                                }`}
+
                                             >
-                                                <Edit3 className="w-4 h-4" />
-                                            </button>
+                                                <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                                            </div>
+                                            {client.student ? (
+                                                <div className="hidden md:flex flex-col text-left font-questrial">
+                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.firstName}</span>
+                                                    <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.lastName}</span>
+                                                </div>) : (
+                                                <div className="hidden md:flex flex-col text-left font-questrial">
+                                                    <span className="text-xs font-bold text-gray-700 leading-tight">Sin estudiante</span>
+                                                </div>)}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+
+
+                                            {client.user ? (
+                                                <div className="hidden md:flex flex-col text-left font-questrial">
+                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.name}</span>
+                                                    <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.user.email}</span>
+                                                </div>) : (
+                                                <div className="hidden md:flex flex-col text-left font-questrial">
+                                                    <span className="text-xs font-bold text-gray-700 leading-tight">Sin usuario</span>
+                                                </div>)}
+
+
+
+                                            <div
+                                                className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.user
+                                                    ? "text-white bg-[#5e0472]"
+                                                    : "bg-slate-50"
+                                                    }`}>
+                                                <UserLucide className="w-3.5 h-3.5 shrink-0" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            );
-                        })
-                    ) : (
-                        <div className="col-span-full py-12 text-center text-gray-400 font-questrial border border-dashed border-purple-100 rounded-2xl bg-white/40">
-                            No se encuentran clientes bajo la modalidad seleccionada.
-                        </div>
-                    )}
-                </div>
+
+                                {/* Acciones y Footer de la tarjeta */}
+                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
+                                    <div className="flex items-center gap-1.5">
+
+                                        <button
+                                            onClick={() => {
+                                                setModalConfig({
+                                                    isOpen: true,
+                                                    type: 'word',
+                                                    title: 'Confirmar eliminación',
+                                                    description: `¿Estás seguro de que deseas eliminar el registro de ${client.firstName} ${client.lastName}?`,
+                                                    id: client.id,
+                                                });
+                                            }}
+                                            className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
+                                            title="Eliminar registro"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleEditModal(client)}
+                                            className="p-1.5 transition border border-transparent cursor-pointer text-green-600 bg-green-50 hover:bg-green-100"
+                                            title="Editar Cliente"
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>) : (
+                    <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+                        <Users className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+                        <p className="font-questrial text-xs text-gray-400">
+                            {isPending ? "Sincronizando..." : "No se encuentran clientes bajo la modalidad seleccionada.."}
+                        </p>
+                    </div>
+
+
+                )}
+
 
                 {/* Seccion de Paginación */}
                 {meta.totalPages > 1 && (

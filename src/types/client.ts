@@ -7,6 +7,7 @@ export interface Client {
     dni: string;
     firstName: string;
     lastName: string;
+    email: string;
     birthDate: string | Date;
     address: string;
     countryCode: string;

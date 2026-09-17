@@ -13,7 +13,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
-import { getAllUsersAction } from "@/app/actions/user"; // Ajusta la ruta a tu action
+import { getAllClientsAction } from "@/app/actions/client"; // Ajusta la ruta a tu action
 import { createOrderAction } from "@/app/actions/order"; // Ajusta la ruta a tu action
 import toast from "react-hot-toast";
 import { CleanOrderItem, OrderPayload } from "@/types/order";
@@ -28,80 +28,76 @@ export function CartDrawer() {
         updateQuantity,
         getTotalAmount,
         notifyOrderCreated,
-        userId,
-        setUserId,
+        clientId,
+        setClientId,
     } = useCartStore();
 
     const totalAmount = getTotalAmount();
     const totalCount = items.reduce((acc, i) => acc + i.quantity, 0);
 
     // --- ESTADOS PARA BÚSQUEDA DE USUARIOS ---
-    const [userSearch, setUserSearch] = useState("");
-    const [usersList, setUsersList] = useState<any[]>([]);
-    const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+    const [clientSearch, setClientSearch] = useState("");
+    const [clientsList, setClientsList] = useState<any[]>([]);
+    const [filteredClients, setFilteredClients] = useState<any[]>([]);
     const [selectedUserName, setSelectedUserName] = useState("");
-    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
     const userRef = useRef<HTMLDivElement>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    // Cargar usuarios al abrir la barra lateral
+    // Cargar clientes al abrir la barra lateral
     useEffect(() => {
         if (!isOpen) return;
 
-        const fetchUsers = async () => {
+        const fetchClients = async () => {
             setIsLoadingUsers(true);
             try {
-                const response = await getAllUsersAction({});
-                if (response.success && response.data) {
-                    setUsersList(response.data);
-                    setFilteredUsers(response.data);
-                } else {
-                    setUsersList([]);
-                    setFilteredUsers([]);
-                }
+                const res = await getAllClientsAction({});
+                console.log({ res })
+                setClientsList(res.success && res.data ? res.data : []);
+                setFilteredClients(res.success && res.data ? res.data : []);
             } catch (error) {
-                console.error("Error al cargar usuarios:", error);
-                setUsersList([]);
-                setFilteredUsers([]);
+                console.error("Error al cargar clientes:", error);
+                setClientsList([]);
+                setFilteredClients([]);
             } finally {
                 setIsLoadingUsers(false);
             }
         };
 
-        fetchUsers();
+        fetchClients();
     }, [isOpen]);
 
     // Evento para cerrar el desplegable al hacer clic fuera del componente
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (userRef.current && !userRef.current.contains(event.target as Node)) {
-                setShowUserDropdown(false);
+                setShowClientDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Filtrado reactivo de usuarios
+    // Filtrado reactivo de clientes
     const handleSearchChange = (value: string) => {
-        setUserSearch(value);
-        setShowUserDropdown(true);
+        setClientSearch(value);
+        setShowClientDropdown(true);
 
-        if (userId) {
-            setUserId(null);
+        if (clientId) {
+            setClientId(null);
             setSelectedUserName("");
         }
 
         const query = value.toLowerCase().trim();
         if (!query) {
-            setFilteredUsers(usersList);
+            setFilteredClients(clientsList);
             return;
         }
 
-        const filtered = usersList.filter((u) => {
+        const filtered = clientsList.filter((u) => {
             const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.toLowerCase();
             const email = u.email?.toLowerCase() ?? "";
             const dni = u.dni?.toLowerCase() ?? u.identification ?? "";
@@ -110,26 +106,26 @@ export function CartDrawer() {
             );
         });
 
-        setFilteredUsers(filtered);
+        setFilteredClients(filtered);
     };
 
     const handleSelectUser = (user: any) => {
         const displayName =
             `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
-        setUserId(user.id);
+        setClientId(user.id);
         setSelectedUserName(displayName);
-        setUserSearch(displayName);
-        setShowUserDropdown(false);
+        setClientSearch(displayName);
+        setShowClientDropdown(false);
     };
 
     const handleClearUserSelection = () => {
-        setUserId(null);
+        setClientId(null);
         setSelectedUserName("");
-        setUserSearch("");
-        setFilteredUsers(usersList);
+        setClientSearch("");
+        setFilteredClients(clientsList);
     };
     const handleRegisterOrder = async () => {
-        if (!userId || items.length === 0) return;
+        if (!clientId || items.length === 0) return;
 
         setIsSubmitting(true);
         setErrorMessage(null);
@@ -137,7 +133,7 @@ export function CartDrawer() {
         try {
             // Le pasamos la estructura exacta que pide OrderFormData
             const res = await createOrderAction({
-                userId,
+                clientId,
                 items, // Transmite CartItem[] directamente
             });
 
@@ -260,20 +256,20 @@ export function CartDrawer() {
             {/* Footer: Búsqueda + Total + Botón */}
             {items.length > 0 && (
                 <div className="p-4 border-t border-purple-100 bg-purple-50/20 space-y-3 font-questrial">
-                    {/* Campo de Búsqueda de Usuario */}
+                    {/* Campo de Búsqueda de Cliente */}
                     <div className="relative" ref={userRef}>
                         <label className="block text-gray-600 font-bold mb-1 text-xs">
-                            Asignar Cliente / Usuario *
+                            Asignar Cliente *
                         </label>
 
                         <div className="relative">
                             <input
                                 type="text"
                                 placeholder="Buscar usuario por nombre, email o DNI..."
-                                value={userSearch}
-                                onFocus={() => setShowUserDropdown(true)}
+                                value={clientSearch}
+                                onFocus={() => setShowClientDropdown(true)}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                className={`w-full p-2 pl-8 pr-7 border rounded-lg bg-white text-xs focus:outline-none transition ${userId
+                                className={`w-full p-2 pl-8 pr-7 border rounded-lg bg-white text-xs focus:outline-none transition ${clientId
                                     ? "border-emerald-400 bg-emerald-50/20 text-emerald-900 font-medium"
                                     : "border-purple-200 focus:border-purple-400"
                                     }`}
@@ -284,7 +280,7 @@ export function CartDrawer() {
                                 <div className="absolute right-2.5 top-2.5 w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                             )}
 
-                            {userId && (
+                            {clientId && (
                                 <button
                                     type="button"
                                     onClick={handleClearUserSelection}
@@ -297,18 +293,18 @@ export function CartDrawer() {
                         </div>
 
                         {/* Desplegable emergente superior */}
-                        {showUserDropdown && !userId && (
+                        {showClientDropdown && !clientId && (
                             <ul className="absolute z-50 left-0 right-0 bottom-full mb-1 max-h-44 overflow-y-auto bg-white border border-purple-100 shadow-xl rounded-lg divide-y divide-gray-50 text-xs">
                                 {isLoadingUsers ? (
                                     <li className="p-2.5 text-gray-400 italic">
-                                        Cargando usuarios...
+                                        Cargando clientes...
                                     </li>
-                                ) : filteredUsers.length === 0 ? (
+                                ) : filteredClients.length === 0 ? (
                                     <li className="p-2.5 text-rose-500 bg-rose-50/40">
-                                        No se encontraron usuarios coincidentes
+                                        No se encontraron clientes coincidentes
                                     </li>
                                 ) : (
-                                    filteredUsers.map((u: any) => (
+                                    filteredClients.map((u: any) => (
                                         <li
                                             key={u.id}
                                             onClick={() => handleSelectUser(u)}
@@ -334,7 +330,7 @@ export function CartDrawer() {
                         )}
 
                         {/* Badge de Selección */}
-                        {userId && (
+                        {clientId && (
                             <div className="mt-1.5 flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
                                 <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
                                 <span className="truncate">
@@ -353,9 +349,9 @@ export function CartDrawer() {
                     </div>
 
                     {/* Botón de Checkout */}
-                    <button type="button" disabled={!userId || isSubmitting}
+                    <button type="button" disabled={!clientId || isSubmitting}
                         onClick={handleRegisterOrder}
-                        className={`w-full py-2.5 px-4 font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-xs ${userId && !isSubmitting
+                        className={`w-full py-2.5 px-4 font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-xs ${clientId && !isSubmitting
                             ? "bg-[#5e0472] hover:bg-[#4a0359] text-white cursor-pointer"
                             : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
                             }`}
@@ -367,7 +363,7 @@ export function CartDrawer() {
                             </>
                         ) : (
                             <>
-                                <span>{userId ? "Registrar Pedido" : "Selecciona un cliente"}</span>
+                                <span>{clientId ? "Registrar Pedido" : "Selecciona un cliente"}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </>
                         )}

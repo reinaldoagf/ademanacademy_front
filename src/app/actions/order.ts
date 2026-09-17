@@ -8,9 +8,9 @@ const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
 export async function createOrderAction(formData: OrderFormData) {
     try {
-        const { userId, items, status } = formData;
+        const { clientId, items, status } = formData;
 
-        if (!userId) {
+        if (!clientId) {
             return { success: false, error: "Debe seleccionar un cliente." };
         }
 
@@ -31,7 +31,7 @@ export async function createOrderAction(formData: OrderFormData) {
         }));
 
         const body = {
-            userId,
+            clientId,
             ...(status ? { status } : {}),
             items: cleanItems, // Payload limpio hacia la API
         }

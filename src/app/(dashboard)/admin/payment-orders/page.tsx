@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
     Plus,
     Search,
-    X,
+    User,
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
@@ -15,7 +15,13 @@ import Badge from "@/components/common/Badge";
 import { useModal } from "@/hooks/useModal";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
-
+const initialFormState = {
+    userDni: "",
+    studentDni: "",
+    concept: "monthly_payment",
+    amount: "",
+    dueDate: ""
+};
 export default function PaymentOrdersPage() {
     const { isOpen, openModal, closeModal } = useModal();
     // Mock Data alineado con tu esquema prisma nuevo
@@ -38,23 +44,18 @@ export default function PaymentOrdersPage() {
 
 
     // Estados del formulario para nueva Orden
-    const [formData, setFormData] = useState({
-        userDni: "",
-        studentDni: "",
-        concept: "mensualidad",
-        amount: "",
-        dueDate: ""
-    });
+    const [formData, setFormData] = useState(initialFormState);
 
 
     const handleNewElement = () => {
+        setFormData(initialFormState);
+        setErrorMsg(null);
         openModal();
     };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
-        console.log("handleSave")
     };
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
@@ -89,20 +90,43 @@ export default function PaymentOrdersPage() {
             ),
         },
         {
-            header: "Usuario",
+            header: "Cliente",
             render: (order) => {
-                if (!order.user) {
-                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin usuario</p>;
+                if (!order.client) {
+                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin cliente</p>;
                 }
-                const userInitials = order.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {userInitials}
+
+                            <User className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                        {order.client ? (
+                            <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName}</span>
+                                <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.email || 'No registrado'}</span>
+                            </div>) : (
+                            <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">Sin cliente</span>
+                            </div>)}
+                    </div>
+                );
+            },
+        },
+        {
+            header: "Usuario",
+            render: (order) => {
+                if (!order.client.user) {
+                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin usuario</p>;
+                }
+                return (
+                    <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.user.name}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.user.email}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.user.name}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.user.email}</span>
                         </div>
                     </div>
                 );

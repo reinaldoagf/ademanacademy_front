@@ -1,5 +1,5 @@
 import { CartItem } from "@/store/cartStore";
-import { User } from "./user";
+import { Client } from "./client";
 // Tipos para la petición que va hacia el backend
 export interface CleanOrderItem {
     concept: string;      // Enum o valor en mayúsculas según backend (ej: "UNIFORM", "MERCHANDISE")
@@ -9,13 +9,13 @@ export interface CleanOrderItem {
 }
 
 export interface OrderPayload {
-    userId: string;
+    clientId: string;
     status?: string;
     items: CleanOrderItem[];
 }
 export interface OrderFormData {
     status?: string;
-    userId: string;
+    clientId: string;
     items?: CartItem[];
 }
 export interface FetchOrdersParams {
@@ -28,8 +28,8 @@ export interface FetchOrdersParams {
 
 export interface Order {
     id: string;
-    userId: string;
-    user: User;
+    clientId: string;
+    client: Client;
     totalAmount: number;
     status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
     createdAt: string,
@@ -72,7 +72,7 @@ export interface OrderItem {
 }
 export interface OrderDetails {
     id: string;
-    userId: string;
+    clientId: string;
     totalAmount: string | number;
     status: string;
     createdAt: string;

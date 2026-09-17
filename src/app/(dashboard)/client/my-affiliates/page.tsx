@@ -93,7 +93,6 @@ export default function MyAffiliatesPage() {
         const load = () => {
             startTransition(async () => {
                 const res = await getMyRepresentedAction(searchTerm);
-                //console.log({ res })
                 if (res.success && res.data) setClients(res.data);
             });
         };

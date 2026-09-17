@@ -37,7 +37,7 @@ export interface CreatedOrderNotification {
 
 interface CartState {
     items: CartItem[];
-    userId: string | null;
+    clientId: string | null;
     isOpen: boolean;
     // Estado de notificación de orden registrada
     lastOrderCreated: CreatedOrderNotification | null;
@@ -49,7 +49,7 @@ interface CartState {
     toggleCart: () => void;
 
     // Acciones del carrito
-    setUserId: (userId: string | null) => void;
+    setClientId: (clientId: string | null) => void;
     addItem: (item: Omit<CartItem, "tempId">) => void;
     removeItem: (tempId: string) => void;
     updateQuantity: (tempId: string, quantity: number) => void;
@@ -69,7 +69,7 @@ export const useCartStore = create<CartState>()(
     persist(
         (set, get) => ({
             items: [],
-            userId: null,
+            clientId: null,
             isOpen: false,
             // Estado inicial de notificación
             lastOrderCreated: null,
@@ -81,7 +81,7 @@ export const useCartStore = create<CartState>()(
             toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
             // Asignar el usuario dueño de la orden
-            setUserId: (userId) => set({ userId }),
+            setClientId: (clientId) => set({ clientId }),
 
             // Agregar ítem al carrito
             addItem: (newItem) => {
@@ -179,7 +179,7 @@ export const useCartStore = create<CartState>()(
         {
             name: "ademan-cart-storage",
             storage: createJSONStorage(() => localStorage),
-            partialize: (state) => ({ items: state.items, userId: state.userId }),
+            partialize: (state) => ({ items: state.items, clientId: state.clientId }),
         }
     )
 );

@@ -1,4 +1,4 @@
-import { User } from "@/types/user";
+import { Client } from "@/types/client";
 import { Student } from "@/types/student";
 export interface PaymentOrder {
     id: string;
@@ -6,7 +6,7 @@ export interface PaymentOrder {
     amount: number;
     dueDate: string;
     status: "pending" | "approved" | "refused";
-    user: User;
+    client: Client;
     student?: Student;
     createdAt: string,
     updatedAt: string,
