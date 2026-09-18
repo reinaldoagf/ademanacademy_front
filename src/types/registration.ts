@@ -1,13 +1,15 @@
 import { User } from "./user";
 import { Student } from "./student";
 import { Group } from "./group";
+import { Client } from "./client";
 
 export interface Registration {
     id: string;
     status: string;
     userId?: string;
     user?: User;
-    studentId?: string;
+    clientId?: string;
+    client?: Client;
     student?: Student;
     groupId?: string;
     group?: Group;

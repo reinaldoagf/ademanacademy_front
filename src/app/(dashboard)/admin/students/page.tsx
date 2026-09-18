@@ -139,8 +139,6 @@ export default function StudentsPage() {
         kinship: kinshipFilter === "all" ? undefined : kinshipFilter,
       });
 
-      console.log({ res })
-
       if (res.success && res.data) {
         setStudents(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta

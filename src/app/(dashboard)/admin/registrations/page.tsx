@@ -4,6 +4,7 @@
 import { useEffect, useState, useTransition } from "react";
 import {
     Search,
+    User,
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
@@ -65,16 +66,16 @@ export default function RegistrationsPage() {
     const columns: Column<Registration>[] = [
         {
             header: "Fecha de Registro",
-            render: (transaction) => (
+            render: (registration) => (
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                    <DatePipe value={transaction.createdAt} format="short" />
+                    <DatePipe value={registration.createdAt} format="short" />
                 </p>
             ),
         },
         {
             header: "Usuario",
-            render: (transaction) => {
-                const initials = transaction.user ? `${transaction.user.name[0] || ""}${transaction.user.name[1] || ""}`.toUpperCase() : "";
+            render: (registration) => {
+                const initials = registration.user ? `${registration.user.name[0] || ""}${registration.user.name[1] || ""}`.toUpperCase() : "";
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
@@ -82,29 +83,36 @@ export default function RegistrationsPage() {
                         </div>}
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">
-                                {transaction.user?.name}
+                                {registration.user?.name}
                             </span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.user?.email}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{registration.user?.email}</span>
                         </div>
                     </div>
                 );
             },
         },
         {
-            header: "Alumno",
-            render: (transaction) => {
-                if (!transaction.student) {
-                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin alumno</p>;
+            header: "Cliente",
+            render: (registration) => {
+                if (!registration.client) {
+                    return <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            <User className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                        <div className="hidden md:flex flex-col text-left font-questrial">
+                            <span className="text-xs font-bold text-gray-700 leading-tight">Sin cliente</span>
+                        </div>
+                    </div>;
                 }
-                const userInitials = transaction.student.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+                const userInitials = registration.client?.firstName?.split(" ")?.map(n => n[0])?.join("")?.substring(0, 2)?.toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {userInitials}
+                            {userInitials || "S/C"}
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.student.firstName} {transaction.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.student.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{registration.client?.firstName} {registration.client?.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{registration.client?.dni}</span>
                         </div>
                     </div>
                 );
@@ -112,8 +120,8 @@ export default function RegistrationsPage() {
         },
         {
             header: "Status",
-            render: (transaction) => (
-                <Badge variant={transaction.status} />
+            render: (registration) => (
+                <Badge variant={registration.status} />
             ),
         },
     ];
