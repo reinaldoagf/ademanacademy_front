@@ -9,3 +9,4 @@ export * from './PhoneInput';
 export * from './InputGroup';
 export * from './EmailInput';
 export * from './DateInput';
+export * from './RangeSliderInput';

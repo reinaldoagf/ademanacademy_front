@@ -14,6 +14,7 @@ import { useModal } from "@/hooks/useModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { TextInput, RangeSliderInput } from "@/components/ui/forms";
 import { getAllGroupCategoriesAction, saveGroupCategoryAction, deleteGroupCategoryAction } from "@/app/actions/group-category";
 import { GroupCategory } from "@/types/group-category";
 // 1. Tipado preciso para los datos que controla el formulario
@@ -85,7 +86,6 @@ export default function GroupsCategroiesPage() {
         openModal();
     };
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
-        console.log('handleSave')
         e.preventDefault();
         setErrorMsg(null);
 
@@ -314,99 +314,53 @@ export default function GroupsCategroiesPage() {
                     )}
 
                     {/* Fila 1: Nombre de la Categoría */}
-                    <div>
-                        <label className="block text-gray-500 font-bold mb-1">
-                            Nombre de la Categoría *
-                        </label>
-                        <input
-                            required
-                            type="text"
-                            placeholder="Ej: Juvenil"
-                            value={formData.name || ""}
-                            onChange={(e) =>
-                                setFormData({ ...formData, name: e.target.value })
-                            }
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 text-xs"
-                        />
-                    </div>
+                    <TextInput
+                        label="Nombre de la Categoría *"
+                        required
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Ej: Juvenil"
+                    />
+
 
                     {/* Fila 2: Barra Única de Rango Doble (Mínimo y Máximo) */}
-                    <div className="space-y-2 pt-1">
-                        <div className="flex justify-between items-center">
-                            <label className="text-gray-500 font-bold">
-                                Rango de Edad Permitido *
-                            </label>
-                            <span className="font-bold text-[#5e0472] bg-purple-100 px-2.5 py-0.5 text-[11px]">
-                                {formData.minimumAge ?? 3} - {formData.maximumAge ?? 18} años
-                            </span>
-                        </div>
+                    <RangeSliderInput
+                        label="Rango de Edad Permitido *"
+                        minValue={formData.minimumAge ?? 3}
+                        maxValue={formData.maximumAge ?? 18}
+                        minLimit={1}
+                        maxLimit={30}
+                        unitLabel="años"
+                        onRangeChange={(min, max) =>
+                            setFormData({
+                                ...formData,
+                                minimumAge: min,
+                                maximumAge: max,
+                            })
+                        }
+                    />
 
-                        <div className="bg-purple-50/30 p-4 border border-purple-100">
-                            {/* Contenedor de la barra de rango doble */}
-                            <div className="relative w-full h-8 flex items-center">
-                                {/* Fondo neutro de la barra */}
-                                <div className="absolute w-full h-2 bg-purple-100 rounded-full" />
-
-                                {/* Relleno coloreado activo entre el valor Mínimo y Máximo */}
-                                <div
-                                    className="absolute h-2 bg-gradient-to-r from-purple-500 to-[#5e0472] rounded-full pointer-events-none"
-                                    style={{
-                                        left: `${((formData.minimumAge ?? 3) / 30) * 100}%`,
-                                        width: `${(((formData.maximumAge ?? 18) - (formData.minimumAge ?? 3)) / 30) * 100
-                                            }%`,
-                                    }}
-                                />
-
-                                {/* Input para Mínimo */}
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="30"
-                                    value={formData.minimumAge ?? 3}
-                                    onChange={(e) => {
-                                        const val = Math.min(Number(e.target.value), (formData.maximumAge ?? 18) - 1);
-                                        setFormData({ ...formData, minimumAge: val });
-                                    }}
-                                    className="range-thumb absolute w-full h-2 appearance-none bg-transparent pointer-events-none cursor-pointer z-20 focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#5e0472] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#5e0472] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-md"
-                                />
-
-                                {/* Input para Máximo */}
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="30"
-                                    value={formData.maximumAge ?? 18}
-                                    onChange={(e) => {
-                                        const val = Math.max(Number(e.target.value), (formData.minimumAge ?? 3) + 1);
-                                        setFormData({ ...formData, maximumAge: val });
-                                    }}
-                                    className="range-thumb absolute w-full h-2 appearance-none bg-transparent pointer-events-none cursor-pointer z-30 focus:outline-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#5e0472] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#5e0472] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-md"
-                                />
-                            </div>
-
-                            {/* Guías inferiores de escala */}
-                            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                                <span>3 año</span>
-                                <span>15 años</span>
-                                <span>30 años</span>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Botones de Acción */}
                     <div className="pt-2 flex justify-between">
                         <button
                             type="button"
                             onClick={closeModal}
-                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
-                            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isPending}
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            Guardar Categoría
+                            {isPending
+                                ? "Guardando..."
+                                : editingId
+                                    ? "Actualizar Categoría"
+                                    : "Registrar Categoría"}
                         </button>
                     </div>
                 </form>
