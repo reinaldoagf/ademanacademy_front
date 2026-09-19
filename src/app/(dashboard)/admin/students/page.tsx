@@ -21,7 +21,7 @@ import Badge from "@/components/common/Badge";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { Client } from "@/types/client";
+import { TextInput, TextArea, SelectInput, SearchInput } from '@/components/ui/forms';
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -62,7 +62,7 @@ const initialFormState: GroupFormData = {
   userId: "",
 };
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Client[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const { isOpen, openModal, closeModal } = useModal();
   const [meta, setMeta] = useState({
     currentPage: 1,
@@ -353,8 +353,8 @@ export default function StudentsPage() {
     },
     {
       header: "Parentesco",
-      render: (client: Client) => (
-        <Badge variant={client.student?.kinship || ''} />
+      render: (student) => (
+        <Badge variant={student.kinship || ''} />
       ),
     },
     {
@@ -541,57 +541,36 @@ export default function StudentsPage() {
           {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
           <div className="grid grid-cols-1 gap-3">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                DNI
-              </label>
 
-              <input
-                type="text"
-                value={formData.dni}
-                onChange={(e) =>
-                  setFormData({ ...formData, dni: e.target.value })
-                }
-                placeholder="DNI"
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+            <TextInput
+              label="DNI"
+              required
+              type="text"
+              value={formData.dni}
+              onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+              placeholder="DNI"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Nombre
-              </label>
 
-              <input
-                required
-                type="text"
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                placeholder="Nombre"
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+            <TextInput
+              label="Nombre"
+              required
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              placeholder="Nombre"
+            />
 
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Apellido
-              </label>
-
-              <input
-                required
-                type="text"
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-                placeholder="Apellido"
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+            <TextInput
+              label="Apellido"
+              required
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              placeholder="Apellido"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -611,177 +590,97 @@ export default function StudentsPage() {
                 className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
               />
             </div>
-
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Parentesco
-              </label>
-
-              <select
-                value={formData.kinship}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    kinship: e.target.value as any,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              >
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="son">Hijo</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="daughter">Hija</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="nephew">Sobrino</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="niece">Sobrina</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="tutored">Tutorado</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">
-              Dirección de Habitación
-            </label>
-            <input
-              required
-              type="text"
-              placeholder="Calle, Avenida, Edificio / Casa..."
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+            <SelectInput
+              label="Parentesco"
+              value={formData.kinship}
+              onChange={(e) => setFormData({ ...formData, kinship: e.target.value as Student["kinship"] })}
+              options={[
+                { label: "Selecciona un parentesco", value: "", disabled: true },
+                { label: "Hijo", value: "son" },
+                { label: "Hija", value: "daughter" },
+                { label: "Sobrino", value: "nephew" },
+                { label: "Sobrina", value: "niece" },
+                { label: "Tutorado", value: "tutored" },
+                { label: "Otro", value: "other" },
+              ]}
             />
-          </div>
 
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">
-              Observaciones Médicas o Alergias
-            </label>
-
-            <textarea
-              rows={2}
-              value={formData.medicalObservations}
-              onChange={(e) =>
-                setFormData({ ...formData, medicalObservations: e.target.value })
-              }
-              placeholder="Ej: Alérgico a la penicilina, asma, etc."
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
-            ></textarea>
           </div>
+          <TextArea
+            label="Dirección de Habitación"
+            placeholder="Ej. Calle Principal #123..."
+            required
+            rows={3}
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          />
+          <TextArea
+            label="Observaciones Médicas o Alergias"
+            placeholder="Ej: Alérgico a la penicilina, asma, etc."
+            required
+            rows={3}
+            value={formData.medicalObservations}
+            onChange={(e) => setFormData({ ...formData, medicalObservations: e.target.value })}
+          />
 
           {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-          <div className="relative" ref={groupRef}>
-            <label className="block text-gray-500 font-bold mb-1">Asignación Obligatoria de Grupo Académico *</label>
-            <div className="relative">
-              <input
-                required
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={groupSearch}
-                onFocus={() => setShowGroupDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setGroupSearch(e.target.value);
-                  setShowGroupDropdown(true);
-                  setFormData({
-                    ...formData,
-                    groupId: e.target.value as any,
-                  })
-                  // setError(null);
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-              {isLoadingGroups && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
-
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showGroupDropdown && (filteredGroups.length > 0 || isLoadingGroups || groupSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingGroups ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredGroups.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron grupos coincidentes</li>
-                ) : (
-                  filteredGroups.map((c: any) => (
-                    <li
-                      key={c.id}
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          groupId: c.id as any,
-                        })
-                        setGroupSearch(`${c.name} (${c.category || 'Grupo'})`);
-                        setShowGroupDropdown(false);
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                    >
-                      <span className="font-medium text-gray-700">{c.name}</span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cat: {c.category}</span>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
+          <SearchInput
+            label="Asignación Obligatoria de Grupo Académico"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={groupSearch}
+            isLoading={isLoadingGroups}
+            options={filteredGroups.map((group: any) => ({
+              id: group.id,
+              label: group.name,
+              subLabel: `Categoría: ${group.category?.name}, Nivel: ${group.level?.name}`,
+              data: group, // Guardamos el objeto completo si hace falta
+            }))}
+            emptyMessage="No se encontraron grupos coincidentes"
+            onChangeText={(text) => {
+              setGroupSearch(text);
+              setFormData({
+                ...formData,
+                groupId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              setFormData({
+                ...formData,
+                groupId: option.id as any,
+              });
+              setGroupSearch(`${option.label} (${option.data?.level} - ${option.data?.section})`);
+            }}
+          />
 
           {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-          <div className="relative" ref={userRef}>
-            <label className="block text-gray-700 font-bold mb-1">
-              Asignación de representante académico
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={userSearch}
-                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  setFormData({
-                    ...formData,
-                    userId: e.target.value as any,
-                  })
-                  // setError(null);
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-              {isLoadingUsers && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
+          <SearchInput
+            label="Asignación de representante académico"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={userSearch}
+            isLoading={isLoadingUsers}
+            options={filteredUsers.map((user: any) => ({
+              id: user.id,
+              label: user.name,
+              subLabel: `Email: ${user.email}`,
+              data: user, // Guardamos el objeto completo si hace falta
+            }))}
+            emptyMessage="No se encontraron usuarios coincidentes"
+            onChangeText={(text) => {
+              setUserSearch(text);
+              setFormData({
+                ...formData,
+                userId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              setFormData({
+                ...formData,
+                userId: option.id as any,
+              });
+              setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+            }}
+          />
 
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingUsers ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredUsers.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
-                ) : (
-                  filteredUsers.map((c: any) => (
-                    <li
-                      key={c.id}
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          userId: c.id as any,
-                        })
-                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
-                        setShowUserDropdown(false);
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                    >
-                      <span className="font-medium text-gray-700">{c.name}</span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
 
           {/* Botonera */}
 

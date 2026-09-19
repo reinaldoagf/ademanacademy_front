@@ -19,9 +19,9 @@ import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput } from "@/components/forms/TextInput";
-import { TextArea } from "@/components/forms/TextArea";
-import { SelectInput } from "@/components/forms/SelectInput";
+import { TextInput } from "@/components/ui/forms/TextInput";
+import { TextArea } from "@/components/ui/forms/TextArea";
+import { SelectInput } from "@/components/ui/forms/SelectInput";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classroom";
 import { Classroom } from "@/types/classroom";
 import { APP_KEYS } from "@/consts/app";
@@ -423,18 +423,16 @@ export default function ClassroomsPage() {
                             ]}
                         />
 
-                        <div>
-                            <SelectInput
-                                label="Estado Operativo"
-                                value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
-                                options={[
-                                    { label: "Selecciona un estado", value: "", disabled: true },
-                                    { label: "Activo", value: "active" },
-                                    { label: "Mantenimiento", value: "maintenance" },
-                                ]}
-                            />
-                        </div>
+                        <SelectInput
+                            label="Estado Operativo"
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
+                            options={[
+                                { label: "Selecciona un estado", value: "", disabled: true },
+                                { label: "Activo", value: "active" },
+                                { label: "Mantenimiento", value: "maintenance" },
+                            ]}
+                        />
                         {/* min={1}
                                 max={60} */}
                         <TextInput
