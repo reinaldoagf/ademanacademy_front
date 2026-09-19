@@ -32,6 +32,7 @@ import { getAllGroupsAction } from "@/app/actions/group";
 import { getAllUsersAction } from "@/app/actions/user";
 import { Group } from "@/types/group";
 import { User } from "@/types/user";
+import { Client } from "@/types/client";
 
 type StudentFormData = {
   dni: string,
@@ -53,6 +54,7 @@ const initialFormState: StudentFormData = {
   firstName: "",
   lastName: "",
   birthDate: "",
+  email: "",
   kinship: "son" as Student["kinship"],
   medicalObservations: "",
   address: "",
@@ -63,7 +65,7 @@ const initialFormState: StudentFormData = {
   userId: "",
 };
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<Client[]>([]);
   const { isOpen, openModal, closeModal } = useModal();
   const [meta, setMeta] = useState({
     currentPage: 1,
@@ -85,10 +87,7 @@ export default function StudentsPage() {
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [groupSearch, setGroupSearch] = useState("");
   const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
-  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
-  // Refs para cerrar los menús si el usuario hace click afuera
-  const groupRef = useRef<HTMLDivElement>(null);
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [userSearch, setUserSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -279,71 +278,13 @@ export default function StudentsPage() {
   };
 
   // 🎯 Configuración declarativa de las columnas
-  const columns: Column<Student>[] = [
-    {
-      header: "Bailarín / DNI",
-      render: (student) => {
-        const initials = `${student.firstName[0] || ""}${student.lastName[0] || ""}`.toUpperCase();
-        return (
-          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {initials}
-            </div>
-            <div className="hidden md:flex flex-col text-left font-questrial">
-              <span className="text-xs font-bold text-gray-700 leading-tight">
-                {student.firstName} {student.lastName}
-              </span>
-              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.dni}</span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Representante",
-      render: (student) => {
-        if (!student.user) {
-          return <p className="text-[11px] text-gray-400 mt-0.5">Sin representante</p>;
-        }
-        const userInitials = student.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-        return (
-          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {userInitials}
-            </div>
-            <div className="hidden md:flex flex-col text-left font-questrial">
-              <span className="text-xs font-bold text-gray-700 leading-tight">{student.user.name}</span>
-              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{student.user.email}</span>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Grupo",
-      render: (student) => {
-        if (!student.group) {
-          return <p className="text-[11px] text-gray-400 mt-0.5">Sin grupo asignado</p>;
-        }
-        const userInitials = student.group.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-        return (
-          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {userInitials}
-            </div>
-            <div className="hidden md:flex flex-col text-left font-questrial">
-              <span className="text-xs font-bold text-gray-700 leading-tight">{student.group.name}</span>
-            </div>
-          </div>
-        );
-      },
-    },
+  const columns: Column<Client>[] = [
     {
       header: "Fecha de Nacimiento",
-      render: (student) => {
-        if (student.birthDate)
+      render: (client) => {
+        if (client.birthDate)
           return <p className="text-[11px] text-gray-400 mt-0.5">
-            <DatePipe value={student.birthDate} format="short" />
+            <DatePipe value={client.birthDate} format="short" />
           </p>
         return <p className="text-[11px] text-gray-400 mt-0.5">
           Facha no válida
@@ -351,26 +292,84 @@ export default function StudentsPage() {
       },
     },
     {
+      header: "Bailarín / DNI",
+      render: (client) => {
+        const initials = `${client.firstName[0] || ""}${client.lastName[0] || ""}`.toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {initials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">
+                {client.firstName} {client.lastName}
+              </span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.dni}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Representante",
+      render: (client) => {
+        if (!client.user) {
+          return <p className="text-[11px] text-gray-400 mt-0.5">Sin representante</p>;
+        }
+        const userInitials = client.user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {userInitials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.name}</span>
+              <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.user.email}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Grupo",
+      render: (client) => {
+        if (!client.student?.group) {
+          return <p className="text-[11px] text-gray-400 mt-0.5">Sin grupo asignado</p>;
+        }
+        const userInitials = client.student.group.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+        return (
+          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+            <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+              {userInitials}
+            </div>
+            <div className="hidden md:flex flex-col text-left font-questrial">
+              <span className="text-xs font-bold text-gray-700 leading-tight">{client.student?.group.name}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       header: "Parentesco",
-      render: (student) => (
-        <Badge variant={student.kinship || ''} />
+      render: (client) => (
+        <Badge variant={client.student?.kinship || ''} />
       ),
     },
     {
       header: "Acciones",
       className: "text-right", // Alinea el encabezado a la derecha
-      render: (student) => (
+      render: (client) => (
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => {
-              setEditingId(student.id);
+              setEditingId(client.id);
 
               // 🎯 CORRECCIÓN: Manejo robusto de fechas (sea Date o string ISO de la API)
               let formattedBirthDate = "";
-              if (student.birthDate) {
-                const dateObj = student.birthDate instanceof Date
-                  ? student.birthDate
-                  : new Date(student.birthDate);
+              if (client.birthDate) {
+                const dateObj = client.birthDate instanceof Date
+                  ? client.birthDate
+                  : new Date(client.birthDate);
 
                 if (!isNaN(dateObj.getTime())) {
                   // Extrae YYYY-MM-DD considerando la zona horaria local
@@ -382,23 +381,23 @@ export default function StudentsPage() {
               }
 
               setFormData({
-                dni: student.dni,
-                firstName: student.firstName,
-                lastName: student.lastName,
+                dni: client.dni,
+                firstName: client.firstName,
+                lastName: client.lastName,
                 birthDate: formattedBirthDate, // 👈 Ahora sí recibe "YYYY-MM-DD"
-                email: student.user?.email || '',
-                kinship: student.kinship,
-                medicalObservations: student.medicalObservations || "",
-                address: student.address,
-                shirtSize: student.shirtSize,
-                phone: student.phone,
-                hasExperience: student.hasExperience,
-                groupId: student.groupId,
-                userId: student.userId,
+                email: client.user?.email || '',
+                kinship: client.student?.kinship,
+                medicalObservations: client.student?.medicalObservations || "",
+                address: client.address,
+                shirtSize: client.student?.shirtSize || "M",
+                phone: client.phone,
+                hasExperience: client.student?.hasExperience || false,
+                groupId: client.groupId || "",
+                userId: client.userId || "",
               });
 
-              setGroupSearch(student.group?.name || "");
-              setUserSearch(student.user?.name || "");
+              setGroupSearch(client.group?.name || "");
+              setUserSearch(client.user?.name || "");
               openModal();
             }}
             className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
@@ -412,13 +411,13 @@ export default function StudentsPage() {
               type: "word",
               title: "Confirmar operación",
               description: "¿Quieres eliminar el registro del alumno?",
-              id: student.id,
+              id: client.id,
             });
           }}
-            disabled={!!student.user}
+            disabled={!!client.user}
 
             className={`
-               flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 ${!student.user ? "cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100" : "bg-gray-200"}`}
+               flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 ${!client.user ? "cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100" : "bg-gray-200"}`}
           >
             <Trash2 className="w-3.5 h-3.5" /> Eliminar
           </button>
