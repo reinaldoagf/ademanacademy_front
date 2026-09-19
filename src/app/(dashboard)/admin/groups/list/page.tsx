@@ -26,7 +26,7 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput } from '@/components/ui/forms';
+import { TextInput, SelectInput, SearchInput } from '@/components/ui/forms';
 import { getAllGroupCategoriesAction } from "@/app/actions/group-category";
 import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
@@ -67,7 +67,6 @@ export default function GroupsListPage() {
     title: "",
     description: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Estado del formulario tipado correctamente
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
@@ -225,24 +224,20 @@ export default function GroupsListPage() {
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
-    setIsSubmitting(true);
 
     // Validaciones preventivas en el cliente
     if (!formData.name.trim()) {
       setErrorMsg("El nombre del grupo es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.classroomId) {
       setErrorMsg("Debes asignar un salón de clases.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.instructorId) {
       setErrorMsg("Debes asignar un instructor responsable.");
-      setIsSubmitting(false);
       return;
     }
 
@@ -273,8 +268,6 @@ export default function GroupsListPage() {
     } catch (error: any) {
       console.error("Error detectado en handleSave:", error);
       setErrorMsg(error.message || "Ocurrió un problema de red al intentar crear el grupo.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -311,7 +304,7 @@ export default function GroupsListPage() {
       instructorId: group.instructorId || "",
     });
     setClassroomSearch(group.classroom?.name || "")
-    setInstructorSearch(group.instructor?.name || "")
+    setInstructorSearch(group.instructor?.firstName || "")
     setShowClassroomDropdown(false);
     setShowInstructorDropdown(false);
     setEditingId(group.id);

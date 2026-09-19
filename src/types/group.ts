@@ -1,6 +1,7 @@
 import { Schedule } from "@/types/schedule";
 import { Student } from "@/types/student";
 import { Classroom } from "@/types/classroom";
+import { Employee } from "@/types/employee";
 import { GroupCategory } from "@/types/group-category";
 
 export interface Group {
@@ -9,11 +10,7 @@ export interface Group {
     categoryId: string | null;  // Guardamos la referencia por ID para los selects
     category?: GroupCategory;
     instructorId: string | null; // Guardamos la referencia por ID para los selects
-    instructor?: {
-        id: string;
-        name: string;
-        email: string;
-    };
+    instructor?: Employee;
     classroomId: string | null;  // Guardamos la referencia por ID para los selects
     classroom?: Classroom;
     schedules?: Schedule[];
