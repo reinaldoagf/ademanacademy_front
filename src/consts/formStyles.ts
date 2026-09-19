@@ -1,0 +1,2 @@
+export const BASE_INPUT_STYLES =
+    "w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400";

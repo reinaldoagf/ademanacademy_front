@@ -8,16 +8,25 @@ import {
     Edit3,
     ChevronLeft,
     ChevronRight,
+    Calendar,
+    DoorOpen,
+    MapPin,
+    Users
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
+import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput } from "@/components/forms/TextInput";
+import { TextArea } from "@/components/forms/TextArea";
+import { SelectInput } from "@/components/forms/SelectInput";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classroom";
 import { Classroom } from "@/types/classroom";
+import { APP_KEYS } from "@/consts/app";
 
-export default function ClassroomPage() {
+export default function ClassroomsPage() {
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);
     const { isOpen, openModal, closeModal } = useModal();
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,7 +80,7 @@ export default function ClassroomPage() {
                         toast.success("Operación exitosa");
                         setClassrooms(classrooms.filter((item) => item.id !== modalConfig.id));
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event('refresh-classrooms-count'));
+                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
                     }
                 }
             });
@@ -94,7 +103,7 @@ export default function ClassroomPage() {
             } else {
                 setClassrooms([res.data!, ...classrooms]);
                 // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-                window.dispatchEvent(new Event('refresh-classrooms-count'));
+                window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
             }
             // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
             closeModal();
@@ -229,91 +238,79 @@ export default function ClassroomPage() {
                         classrooms.map((classroom) => (
                             <div
                                 key={classroom.id}
-                                className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col justify-between hover:shadow-md transition"
+                                className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
                             >
-                                <div>
-                                    {/* Encabezado Fila */}
-                                    <div className="flex justify-between items-start gap-3">
-                                        <div>
-                                            <div className="flex items-center gap-1.5">
-                                                <span
-                                                    className={`text-[9px] font-questrial font-bold px-1.5 py-0.5 ${classroom.type === "mirrors"
-                                                        ? "bg-purple-100 text-purple-700"
-                                                        : classroom.type === "urban"
-                                                            ? "bg-pink-100 text-pink-700"
-                                                            : classroom.type === "free"
-                                                                ? "bg-green-100 text-green-700" : classroom.type === "theories"
-                                                                    ? "bg-orange-100 text-orange-700" : "bg-indigo-100 text-indigo-700"
-                                                        }`}
-                                                >
-                                                    {classroom.type}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-anton text-gray-800 text-base mt-1">
-                                                {classroom.name}
-                                            </h3>
-                                            <p className="text-xs text-purple-600 font-questrial font-semibold">
-                                                {classroom.address}
+                                {/* Cabecera de la tarjeta */}
+                                <div className="p-5 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
+                                            {classroom.name}
+                                        </h3>
+
+                                        {
+                                            classroom.createdAt && (
+                                                <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
+                                                    <Calendar className="w-3 h-3" />
+                                                    <DatePipe value={classroom.createdAt} format="short" />
+                                                </div>
+                                            )
+                                        }
+                                    </div>
+
+                                    {/* Sub-métricas vectoriales del plano */}
+                                    <div className="grid grid-cols-2 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Dirección
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {classroom.address || 'No registrado'}
                                             </p>
                                         </div>
-
-                                        {/* Estado de la indumentaria */}
-                                        <span
-                                            className={`text-[10px] font-questrial font-bold px-2.5 py-1 ${classroom.status === "active"
-                                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                : classroom.status === "maintenance"
-                                                    ? "bg-amber-50 text-amber-700 border border-amber-100"
-                                                    : "bg-pink-50 text-pink-700 border border-pink-100"
-                                                }`}
-                                        >
-                                            {classroom.status}
-                                        </span>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Capacidad
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {classroom.maxCapacity || 'No registrado'}
+                                            </p>
+                                        </div>
                                     </div>
+
 
                                 </div>
 
-                                {/* Métricas de Uso y Alquileres */}
-                                <div className=" pt-4 border-t border-purple-50/60 space-y-2">
-                                    <div className="flex justify-between text-xs font-questrial font-medium text-gray-500">
-                                        <div className="flex items-center">
+                                {/* Acciones y Footer de la tarjeta */}
+                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
+                                    <div className="flex items-center gap-1.5">
 
-                                            <span>
-                                                Capacidad:{" "}
-                                                <strong className="text-gray-700">
-                                                    {classroom.maxCapacity} cupos
-                                                </strong>
-                                            </span>
-                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setModalConfig({
+                                                    isOpen: true,
+                                                    type: "word",
+                                                    title: "Confirmar operación",
+                                                    description: "¿Quieres eliminar el registro de tu salón de clases?",
+                                                    id: classroom.id,
+                                                });
+                                            }}
+                                            className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
+                                            title="Eliminar registro"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
 
-
-                                        <div className="flex gap-1">
-                                            <button
-                                                onClick={() => handleEditModal(classroom)}
-                                                className="p-1.5 hover:bg-purple-50 text-gray-400 hover:text-purple-700 transition rounded cursor-pointer"
-                                                title="Editar Parámetros"
-                                            >
-                                                <Edit3 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setModalConfig({
-                                                        isOpen: true,
-                                                        type: "word",
-                                                        title: "Confirmar operación",
-                                                        description: "¿Quieres eliminar el registro de tu salón de clases?",
-                                                        id: classroom.id,
-                                                    });
-                                                }}
-                                                className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 transition rounded cursor-pointer"
-                                                title="Remover Locación"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => handleEditModal(classroom)}
+                                            className="p-1.5 transition border border-transparent cursor-pointer text-green-600 bg-green-50 hover:bg-green-100"
+                                            title="Editar Cliente"
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
                                     </div>
-
                                 </div>
                             </div>
+
                         ))
                     ) : (
                         <div className="col-span-full py-12 text-center text-gray-400 font-questrial border border-dashed border-purple-100 rounded-2xl bg-white/40">
@@ -391,90 +388,75 @@ export default function ClassroomPage() {
                     {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
                     <div className="grid grid-cols-1 gap-3">
-                        <div>
-                            <label className="block text-gray-500 font-bold mb-1">
-                                Nombre de la Estructura / Aula *
-                            </label>
+                        <TextInput
+                            label="Nombre de la Estructura / Aula *"
+                            required
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Nombre de la Estructura / Aula *"
+                        />
 
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
-                                }
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                            />
-                        </div>
                     </div>
 
                     <div>
-                        <label className="block text-gray-500 font-bold mb-1">
-                            Dirección
-                        </label>
-
-                        <textarea
+                        <TextArea
+                            label="Dirección"
+                            placeholder="Ej. Calle Principal #123..."
                             required
                             rows={3}
                             value={formData.address}
-                            onChange={e => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                        ></textarea>
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
+                        <SelectInput
+                            label="Especialidad de Área"
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            options={[
+                                { label: "Selecciona una especialidad", value: "", disabled: true },
+                                { label: "Mirrors", value: "mirrors" },
+                                { label: "Urbano", value: "urban" },
+                                { label: "Estudio Libre", value: "free" },
+                                { label: "Aula de Teorías", value: "theories" },
+                            ]}
+                        />
 
                         <div>
-                            <label className="block text-gray-500 font-bold mb-1">
-                                Especialidad de Área
-                            </label>
-
-                            <select
-                                value={formData.type}
-                                onChange={e => setFormData({ ...formData, type: e.target.value as Classroom["type"] })}
-                                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                            >
-                                <option value="mirrors">Área Espejos</option>
-                                <option value="urban">Área Urbano</option>
-                                <option value="free">Estudio Libre</option>
-                                <option value="theories">Aula de Teorías</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-500 font-bold mb-1">
-                                Estado Operativo
-                            </label>
-                            <select
+                            <SelectInput
+                                label="Estado Operativo"
                                 value={formData.status}
-                                onChange={e => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
-                                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                            >
-                                <option value="active">Activo</option>
-                                <option value="maintenance">En Mantenimiento</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-500 font-bold mb-1">Aforo Máximo de Seguridad (Alumnos) *</label>
-                            <input
-                                required
-                                type="number"
-                                min={1}
-                                max={60}
-                                value={formData.maxCapacity}
-                                onChange={e => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/10 focus:outline-none focus:border-purple-400"
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
+                                options={[
+                                    { label: "Selecciona un estado", value: "", disabled: true },
+                                    { label: "Activo", value: "active" },
+                                    { label: "Mantenimiento", value: "maintenance" },
+                                ]}
                             />
                         </div>
+                        {/* min={1}
+                                max={60} */}
+                        <TextInput
+                            label="Aforo Máximo de Seguridad (Alumnos) *"
+                            type="number"
+                            step="0.01"
+                            required
+                            value={formData.maxCapacity}
+                            onChange={(e) => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
+                            placeholder="0.00"
+                        />
+
                     </div>
 
                     <div>
-                        <label className="block text-gray-500 font-bold mb-1">Descripción de Equipamiento</label>
-                        <textarea
-                            rows={3}
+                        <TextArea
+                            label="Descripción de Equipamiento"
                             placeholder="Detalla si el salón cuenta con barras de ballet, aire acondicionado o tipos específicos de pisos..."
+                            required
+                            rows={3}
                             value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 resize-none"
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
                     </div>
 
@@ -485,16 +467,21 @@ export default function ClassroomPage() {
                         <button
                             type="button"
                             onClick={() => closeModal()}
-                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                         >
                             Cancelar
                         </button>
 
                         <button
                             type="submit"
-                            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                            disabled={isPending}
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            {editingId ? 'Actualizar' : 'Registrar'}
+                            {isPending
+                                ? "Guardando..."
+                                : editingId
+                                    ? "Actualizar Salón"
+                                    : "Registrar Salón"}
                         </button>
                     </div>
                 </form>

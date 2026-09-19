@@ -111,7 +111,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: APP_KEYS.CLIENTS, name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
     { key: APP_KEYS.STUDENTS, name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
-    { key: 'classrooms', name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
+    { key: APP_KEYS.CLASSROOMS, name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     {
       key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
       // 🎯 Submenú añadido
@@ -214,7 +214,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
     { event: APP_KEYS.REFRESH_CLIENTS_COUNT, action: getAllClientsAction, key: APP_KEYS.CLIENTS },
     { event: APP_KEYS.REFRESH_STUDENTS_COUNT, action: getAllStudentsAction, key: APP_KEYS.STUDENTS },
-    { event: "refresh-classrooms-count", action: getAllClassroomsAction, key: "classrooms" },
+    { event: APP_KEYS.REFRESH_CLASSROOMS_COUNT, action: getAllClassroomsAction, key: APP_KEYS.CLASSROOMS },
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
     { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
