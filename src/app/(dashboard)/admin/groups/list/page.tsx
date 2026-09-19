@@ -26,12 +26,14 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput } from '@/components/ui/forms';
 import { getAllGroupCategoriesAction } from "@/app/actions/group-category";
 import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
 import { getAllClassroomsAction } from "@/app/actions/classroom";
 import { getAllInstructorsAction } from "@/app/actions/instructor";
 import { Group } from "@/types/group";
 import { GroupCategory } from "@/types/group-category";
+import { Employee } from "@/types/employee";
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"> & {
   classroomId: string;
@@ -199,14 +201,14 @@ export default function GroupsListPage() {
           : { search: instructorSearch.trim() };
 
         // Llamada directa al Server Action
-        const result = await getAllInstructorsAction(params);
+        const res = await getAllInstructorsAction(params);
 
-        if (result.success && result.data) {
+        if (res.success && res.data) {
           // Axios mapea la respuesta en result.data. data.data suele ser el array
           // Si tu backend anida los instructor en 'instructors', úsalo; de lo contrario asigna result.data
-          setFilteredInstructors(result.data.instructors || result.data);
+          setFilteredInstructors(res.data.instructors || res.data);
         } else {
-          console.log("Error en Server Action (Instructores):", result.error);
+          console.log("Error en Server Action (Instructores):", res.error);
           setFilteredInstructors([]);
         }
       } catch (error) {
@@ -221,7 +223,6 @@ export default function GroupsListPage() {
   }, [instructorSearch]);
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
-    console.log('handleSave')
     e.preventDefault();
     setErrorMsg(null);
     setIsSubmitting(true);
@@ -624,183 +625,122 @@ export default function GroupsListPage() {
           )}
 
           {/* Fila 1: Nombre del Grupo */}
-          <div>
-            <label className="block text-gray-500 font-bold mb-1">
-              Nombre del Grupo / Sección *
-            </label>
-            <input
-              required
-              type="text"
-              placeholder="Ej: Hip Hop Juvenil - Sección A"
-              value={formData.name || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-            />
-          </div>
+          <TextInput
+            label="Nombre del Grupo / Sección *"
+            required
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Ej: Hip Hop Juvenil - Sección A"
+          />
+
 
           {/* Fila 2: Estilo de Baile y Categoría (Edad) */}
+          {/* min={1} */}
           <div className="grid grid-cols-2 gap-3">
+            <TextInput
+              label="Cupos Máximos (Capacidad) *"
+              type="number"
+              step="1"
+              required
+              value={formData.totalNumberOfSlots}
+              onChange={(e) => setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) })}
+              placeholder="Cupos Máximos"
+            />
+            <SelectInput
+              label="Categoría (Rango de Edad) *"
+              value={formData.categoryId as string}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value as string })}
+              options={[
+                { label: "Selecciona la categoría", value: "", disabled: true },
+                ...groupCategories.map((c: GroupCategory) => ({
+                  label: `${c.name} (${c.minimumAge} - ${c.maximumAge} años)`,
+                  value: c.id
+                }))
+              ]}
+            />
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Cupos Máximos (Capacidad) *
-              </label>
-              <input
-                required
-                type="number"
-                min={1}
-                placeholder="Ej: 20"
-                value={formData.totalNumberOfSlots || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, totalNumberOfSlots: parseInt(e.target.value) || 0 })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Categoría (Rango de Edad) *
-              </label>
-              <select
-                required
-                value={formData.categoryId || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value as any })
-                }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-              >
-                <option value="" disabled className="bg-neutral-900 text-white">Selecciona la categoría</option>
-
-                {groupCategories.map((c: GroupCategory) => (
-                  <option key={c.id} value={c.id} className="bg-neutral-900 text-white">
-                    {c.name} ({c.minimumAge} - {c.maximumAge} años)
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           {/* Fila 4: Salón de Clases */}
-          <div className="relative" ref={classroomRef}>
-            <label className="block text-gray-500 font-bold mb-1">Salón de Clases Asignado *</label>
-            <div className="relative">
-              <input
-                required
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={classroomSearch}
-                onFocus={() => setShowClassroomDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setClassroomSearch(e.target.value);
-                  setShowClassroomDropdown(true);
-                  if (formData.classroomId) setFormData({ ...formData, classroomId: "" });
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-              />
-              {isLoadingClassrooms && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
-
-            <input type="hidden" required value={formData.classroomId} name="classroomId" />
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showClassroomDropdown && (filteredClassrooms.length > 0 || isLoadingClassrooms || classroomSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingClassrooms ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredClassrooms.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron salones coincidentes</li>
-                ) : (
-                  filteredClassrooms.map((c: any) => (
-                    <li
-                      key={c.id}
-                      onClick={() => {
-                        setFormData({ ...formData, classroomId: c.id });
-                        setClassroomSearch(`${c.name} (${c.type || 'Aula'})`);
-                        setShowClassroomDropdown(false);
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                    >
-                      <span className="font-medium text-gray-700">{c.name}</span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cap: {c.maxCapacity || c.capacity}</span>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
+          <SearchInput
+            label="Salón de Clases Asignado *"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={classroomSearch}
+            isLoading={isLoadingClassrooms}
+            options={filteredClassrooms.map((classroom: any) => ({
+              id: classroom.id,
+              label: classroom.name,
+              subLabel: `Dirección: ${classroom.address}, Capacidad: ${classroom.maxCapacity}`,
+              data: classroom,
+            }))}
+            emptyMessage="No se encontraron salones coincidentes"
+            onChangeText={(text) => {
+              setClassroomSearch(text);
+              setFormData({
+                ...formData,
+                classroomId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              setFormData({
+                ...formData,
+                classroomId: option.id as any,
+              });
+              setClassroomSearch(`${option.data?.name} (${option.data?.type || 'Aula'})`);
+            }}
+          />
 
           {/* Fila 5: Instructor */}
-          <div className="relative" ref={instructorRef}>
-            <label className="block text-gray-500 font-bold mb-1">Instructor / Coreógrafo Responsable *</label>
-            <div className="relative">
-              <input
-                required
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={instructorSearch}
-                onFocus={() => setShowInstructorDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setInstructorSearch(e.target.value);
-                  setShowInstructorDropdown(true);
-                  if (formData.instructorId) setFormData({ ...formData, instructorId: "" });
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-              />
-              {isLoadingInstructors && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
-
-            <input type="hidden" required value={formData.instructorId} name="instructorId" />
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showInstructorDropdown && (filteredInstructors.length > 0 || isLoadingInstructors || instructorSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingInstructors ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredInstructors.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron instructores</li>
-                ) : (
-                  filteredInstructors.map((inst: any) => (
-                    <li
-                      key={inst.id}
-                      onClick={() => {
-                        setFormData({ ...formData, instructorId: inst.id });
-                        setInstructorSearch(inst.name);
-                        setShowInstructorDropdown(false);
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex flex-col gap-0.5"
-                    >
-                      <span className="font-medium text-gray-700">{inst.name}</span>
-                      {inst.dni && <span className="text-[10px] text-gray-400">DNI: {inst.dni}</span>}
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
+          <SearchInput
+            label="Instructor / Coreógrafo Responsable *"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={instructorSearch}
+            isLoading={isLoadingInstructors}
+            options={filteredInstructors.map((instructor: Employee) => ({
+              id: instructor.id,
+              label: instructor.firstName,
+              subLabel: `DNI: ${instructor.dni}`,
+              data: instructor,
+            }))}
+            emptyMessage="No se encontraron grupos coincidentes"
+            onChangeText={(text) => {
+              setInstructorSearch(text);
+              setFormData({
+                ...formData,
+                instructorId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              setFormData({
+                ...formData,
+                instructorId: option.id as any,
+              });
+              setInstructorSearch(`${option.data?.firstName} ${option.data?.lastName}`);
+            }}
+          />
 
           {/* Botonera de Acción */}
           <div className="pt-2 flex justify-between">
             <button
               type="button"
               onClick={closeModal}
-              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isPending}
+              className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
             >
-              {isSubmitting ? "Guardando..." : (editingId ? 'Actualizar' : 'Registrar')}
+              {isPending
+                ? "Guardando..."
+                : editingId
+                  ? "Actualizar Grupo"
+                  : "Registrar GrupoGrupo"}
             </button>
           </div>
         </form>
