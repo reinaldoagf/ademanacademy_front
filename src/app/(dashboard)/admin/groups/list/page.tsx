@@ -733,7 +733,7 @@ export default function GroupsListPage() {
                 ? "Guardando..."
                 : editingId
                   ? "Actualizar Grupo"
-                  : "Registrar GrupoGrupo"}
+                  : "Registrar Grupo"}
             </button>
           </div>
         </form>
