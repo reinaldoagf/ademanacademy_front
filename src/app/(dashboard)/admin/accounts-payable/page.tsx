@@ -22,6 +22,7 @@ import { MacDockModal } from "@/components/ui/MacDockModal";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
+import { TextInput, DateInput, SelectInput } from '@/components/ui/forms';
 import {
     getAllAccountPayablesAction,
     getAccountPayableByIdAction,
@@ -48,13 +49,11 @@ export default function AccountsPayablePage() {
         itemsPerPage: 10,
         itemCount: 10,
     });
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [selectedStatus, setSelectedStatus] = useState<PayableStatus | "all">("all");
     const [isPending, startTransition] = useTransition();
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     // Estados para Modales
     const {
@@ -76,7 +75,7 @@ export default function AccountsPayablePage() {
 
     // Formulario Nueva CXP
     const createFormReference = useRef<HTMLFormElement>(null);
-    const [createForm, setCreateForm] = useState(initialFormState);
+    const [formData, setFormData] = useState(initialFormState);
 
     // Formulario Nuevo Abono/Pago
     const [paymentForm, setPaymentForm] = useState({
@@ -102,7 +101,7 @@ export default function AccountsPayablePage() {
     // Cargar cuentas por pagar desde el API
     const fetchData = async (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
-            setLoading(true);
+
             const res = await getAllAccountPayablesAction({
                 page: pageToFetch,
                 limit: limitToFetch,
@@ -114,7 +113,7 @@ export default function AccountsPayablePage() {
                 setPayables(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
             }
-            setLoading(false);
+
         });
     };
 
@@ -123,20 +122,20 @@ export default function AccountsPayablePage() {
         e.preventDefault();
 
         const payload: CreateAccountPayableDto = {
-            supplierName: createForm.supplierName,
-            supplierDni: createForm.supplierDni || undefined,
-            invoiceNumber: createForm.invoiceNumber || undefined,
-            concept: createForm.concept,
-            amountTotal: parseFloat(createForm.amountTotal),
-            dueDate: createForm.dueDate,
-            notes: createForm.notes || undefined,
+            supplierName: formData.supplierName,
+            supplierDni: formData.supplierDni || undefined,
+            invoiceNumber: formData.invoiceNumber || undefined,
+            concept: formData.concept,
+            amountTotal: parseFloat(formData.amountTotal),
+            dueDate: formData.dueDate,
+            notes: formData.notes || undefined,
         };
 
         const result = await saveAccountPayableAction(payload);
 
         if (result.success) {
             closeCreateModal();
-            setCreateForm(initialFormState);
+            setFormData(initialFormState);
             fetchData(currentPage, itemsPerPage);
         } else {
             alert(result.error || "Ocurrió un error al guardar.");
@@ -264,7 +263,8 @@ export default function AccountsPayablePage() {
                             });
                             openPaymentModal();
                         }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl ${element.status == "paid" || element.status == "cancelled" ? "bg-gray-200" : "cursor-pointer bg-emerald-400 hover:bg-emerald-500 hover:text-white"}`}
+
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl ${element.status == "paid" || element.status == "cancelled" ? "bg-gray-200" : "cursor-pointer text-green-700 bg-green-50 hover:bg-green-100"}`}
                     >
                         <CreditCard className="w-3.5 h-3.5" /> Abonar
                     </button>
@@ -365,90 +365,56 @@ export default function AccountsPayablePage() {
                     ref={createFormReference}
                     id="create-form" onSubmit={handleCreateSubmit}
                     className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin pr-1">
-
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Nombre del Proveedor *
-                        </label>
-                        <input
-                            type="text"
+                    <TextInput
+                        label="Nombre del Proveedor *"
+                        required
+                        type="text"
+                        value={formData.supplierName}
+                        onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+                        placeholder="Ej: Imprenta Rápida C.A."
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextInput
+                            label="DNI / RIF"
                             required
-                            value={createForm.supplierName}
-                            onChange={(e) => setCreateForm({ ...createForm, supplierName: e.target.value })}
-                            placeholder="Ej: Imprenta Rápida C.A."
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            type="text"
+                            value={formData.supplierDni}
+                            onChange={(e) => setFormData({ ...formData, supplierDni: e.target.value })}
+                            placeholder="J-12345678-9"
+                        />
+                        <TextInput
+                            label="Nº Factura / Control"
+                            required
+                            type="text"
+                            value={formData.invoiceNumber}
+                            onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                            placeholder="FACT-00123"
                         />
                     </div>
-
-
-
+                    <TextInput
+                        label="Concepto *"
+                        required
+                        type="text"
+                        value={formData.concept}
+                        onChange={(e) => setFormData({ ...formData, concept: e.target.value })}
+                        placeholder="Ej: Impresión de diplomas y certificados"
+                    />
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">DNI / RIF</label>
-                            <input
-                                type="text"
-                                value={createForm.supplierDni}
-                                onChange={(e) => setCreateForm({ ...createForm, supplierDni: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                placeholder="J-12345678-9"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Nº Factura / Control
-                            </label>
-                            <input
-                                type="text"
-                                value={createForm.invoiceNumber}
-                                onChange={(e) =>
-                                    setCreateForm({ ...createForm, invoiceNumber: e.target.value })
-                                }
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                placeholder="FACT-00123"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">Concepto *</label>
-                        <input
-                            type="text"
+                        <TextInput
+                            label="Monto Total ($) *"
+                            type="number"
+                            step="0.01"
                             required
-                            value={createForm.concept}
-                            onChange={(e) => setCreateForm({ ...createForm, concept: e.target.value })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            placeholder="Ej: Impresión de diplomas y certificados"
+                            value={formData.amountTotal}
+                            onChange={(e) => setFormData({ ...formData, amountTotal: e.target.value })}
+                            placeholder="0.00"
                         />
-                    </div>
+                        <DateInput
+                            label="Fecha de Vencimiento *"
+                            value={formData.dueDate}
+                            onChange={(val) => setFormData({ ...formData, dueDate: val })}
+                        />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Monto Total ($) *
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                required
-                                value={createForm.amountTotal}
-                                onChange={(e) => setCreateForm({ ...createForm, amountTotal: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Fecha de Vencimiento *
-                            </label>
-                            <input
-                                type="date"
-                                required
-                                value={createForm.dueDate}
-                                onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-
-                            />
-                        </div>
                     </div>
 
 
@@ -462,9 +428,10 @@ export default function AccountsPayablePage() {
                         </button>
                         <button
                             type="submit"
+                            disabled={isPending}
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            {isSubmitting
+                            {isPending
                                 ? "Guardando..."
                                 : "Guardar Cuenta"}
                         </button>
@@ -487,57 +454,40 @@ export default function AccountsPayablePage() {
                             ${selectedPayable?.amountRemaining.toFixed(2)}
                         </span>
                     </div>
+                    <TextInput
+                        label="Monto del Abono ($) *"
+                        type="number"
+                        step="0.01"
+                        required
+                        max={selectedPayable.amountRemaining}
+                        value={paymentForm.amount}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                        placeholder="0.00"
+                    />
+                    <SelectInput
+                        label="Método de Pago *"
+                        value={paymentForm.method}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value as PaymentMethod })}
+                        options={[
+                            { label: "Selecciona un método de pago", value: "", disabled: true },
+                            { label: "Transferencia Bancaria", value: "bank_transfer" },
+                            { label: "Efectivo", value: "cash" },
+                            { label: "Tarjeta de Débito o Crédito", value: "credit_or_debit_card" },
+                            { label: "Pago Móvil", value: "mobile_payment" },
+                            { label: "Cheque", value: "check" },
+                            { label: "Otro", value: "other" },
+                        ]}
+                    />
 
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Monto del Abono ($) *
-                        </label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            max={selectedPayable.amountRemaining}
-                            required
-                            value={paymentForm.amount}
-                            onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
 
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Método de Pago *
-                        </label>
-                        <select
-                            value={paymentForm.method}
-                            onChange={(e) =>
-                                setPaymentForm({ ...paymentForm, method: e.target.value as PaymentMethod })
-                            }
-                            className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400"
-                        >
-                            <option value="bank_transfer">Transferencia Bancaria</option>
-                            <option value="cash">Efectivo</option>
-                            <option value="credit_or_debit_card">Tarjeta de Débito o Crédito</option>
-                            <option value="mobile_payment">Pago Móvil</option>
-                            <option value="check">Cheque</option>
-                            <option value="other">Otro</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Nº Referencia / Transferencia
-                        </label>
-                        <input
-                            type="text"
-                            value={paymentForm.referenceNumber}
-                            onChange={(e) =>
-                                setPaymentForm({ ...paymentForm, referenceNumber: e.target.value })
-                            }
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-                            placeholder="Ej: REF-987654"
-                        />
-                    </div>
+                    <TextInput
+                        label="Nº Referencia / Transferencia"
+                        required
+                        type="text"
+                        value={paymentForm.referenceNumber}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, referenceNumber: e.target.value })}
+                        placeholder="Ej: REF-987654"
+                    />
 
                     <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
                         <button
