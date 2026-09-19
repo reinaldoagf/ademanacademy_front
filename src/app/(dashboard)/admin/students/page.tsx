@@ -21,7 +21,7 @@ import Badge from "@/components/common/Badge";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, TextArea, SelectInput, SearchInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput } from '@/components/ui/forms';
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -33,11 +33,12 @@ import { getAllUsersAction } from "@/app/actions/user";
 import { Group } from "@/types/group";
 import { User } from "@/types/user";
 
-type GroupFormData = {
+type StudentFormData = {
   dni: string,
   firstName: string,
   lastName: string,
   birthDate: string,
+  email: string,
   kinship: Student["kinship"],
   medicalObservations: string,
   address: string,
@@ -47,7 +48,7 @@ type GroupFormData = {
   groupId: string | undefined,
   userId: string | undefined,
 };
-const initialFormState: GroupFormData = {
+const initialFormState: StudentFormData = {
   dni: "",
   firstName: "",
   lastName: "",
@@ -91,12 +92,10 @@ export default function StudentsPage() {
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [userSearch, setUserSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  // Refs para cerrar los menús si el usuario hace click afuera
-  const userRef = useRef<HTMLDivElement>(null);
 
-  const [formData, setFormData] = useState<GroupFormData>(initialFormState);
+
+  const [formData, setFormData] = useState<StudentFormData>(initialFormState);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [modalConfig, setModalConfig] = useState<{
@@ -362,19 +361,32 @@ export default function StudentsPage() {
       className: "text-right", // Alinea el encabezado a la derecha
       render: (student) => (
         <div className="flex gap-2 justify-end">
-
           <button
             onClick={() => {
               setEditingId(student.id);
-              // 🌟 CORRECCIÓN: Extraemos solo 'YYYY-MM-DD' de la fecha ISO
-              const formattedBirthDate = student.birthDate
-                && student.birthDate instanceof Date ? student.birthDate.toDateString().split("T")[0]
-                : "";
+
+              // 🎯 CORRECCIÓN: Manejo robusto de fechas (sea Date o string ISO de la API)
+              let formattedBirthDate = "";
+              if (student.birthDate) {
+                const dateObj = student.birthDate instanceof Date
+                  ? student.birthDate
+                  : new Date(student.birthDate);
+
+                if (!isNaN(dateObj.getTime())) {
+                  // Extrae YYYY-MM-DD considerando la zona horaria local
+                  const year = dateObj.getFullYear();
+                  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                  const day = String(dateObj.getDate()).padStart(2, '0');
+                  formattedBirthDate = `${year}-${month}-${day}`;
+                }
+              }
+
               setFormData({
                 dni: student.dni,
                 firstName: student.firstName,
                 lastName: student.lastName,
-                birthDate: formattedBirthDate,
+                birthDate: formattedBirthDate, // 👈 Ahora sí recibe "YYYY-MM-DD"
+                email: student.user?.email || '',
                 kinship: student.kinship,
                 medicalObservations: student.medicalObservations || "",
                 address: student.address,
@@ -384,10 +396,9 @@ export default function StudentsPage() {
                 groupId: student.groupId,
                 userId: student.userId,
               });
-              setGroupSearch(student.group?.name || "")
-              setUserSearch(student.user?.name || "")
-              setShowGroupDropdown(false);
-              setShowUserDropdown(false);
+
+              setGroupSearch(student.group?.name || "");
+              setUserSearch(student.user?.name || "");
               openModal();
             }}
             className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
@@ -540,7 +551,7 @@ export default function StudentsPage() {
         >
           {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 gap-3">
 
             <TextInput
               label="DNI"
@@ -549,6 +560,12 @@ export default function StudentsPage() {
               value={formData.dni}
               onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
               placeholder="DNI"
+            />
+            <EmailInput
+              label="Correo Electrónico"
+              placeholder="ejemplo@correo.com"
+              value={formData.email || ""}
+              onChange={(val) => setFormData({ ...formData, email: val })}
             />
           </div>
 
@@ -574,22 +591,12 @@ export default function StudentsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                F. de Nacimiento
-              </label>
+            <DateInput
+              label="Fecha de Nacimiento"
+              value={formData.birthDate}
+              onChange={(val) => setFormData({ ...formData, birthDate: val })}
+            />
 
-              <input
-                required
-                type="date"
-                value={formData.birthDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, birthDate: e.target.value })
-                }
-                placeholder="F. de Nacimiento"
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
             <SelectInput
               label="Parentesco"
               value={formData.kinship}
@@ -617,7 +624,6 @@ export default function StudentsPage() {
           <TextArea
             label="Observaciones Médicas o Alergias"
             placeholder="Ej: Alérgico a la penicilina, asma, etc."
-            required
             rows={3}
             value={formData.medicalObservations}
             onChange={(e) => setFormData({ ...formData, medicalObservations: e.target.value })}
@@ -695,9 +701,14 @@ export default function StudentsPage() {
 
             <button
               type="submit"
+              disabled={isPending}
               className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
             >
-              {editingId ? "Actualizar" : "Registrar Alumno"}
+              {isPending
+                ? "Guardando..."
+                : editingId
+                  ? "Actualizar Alumno"
+                  : "Registrar Alumno"}
             </button>
           </div>
         </form>

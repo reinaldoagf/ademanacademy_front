@@ -62,11 +62,7 @@ export default function ClientsPage() {
     // --- ESTADOS PARA BÚSQUEDA DE grupos ---
     const [userSearch, setUserSearch] = useState("");
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-    const [showUserDropdown, setShowUserDropdown] = useState(false);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-    // Refs para cerrar los menús si el usuario hace click afuera
-    const userRef = useRef<HTMLDivElement>(null);
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<CustomerFormData>(initialFormState);
     const [clients, setClients] = useState<Client[]>([]);
@@ -143,25 +139,21 @@ export default function ClientsPage() {
     // --- MANEJADOR DE GUARDADO DE CLIENTES ---
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setErrorMsg(null);
-        setIsSubmitting(true);
+        setErrorMsg(null)
 
         // Validaciones preventivas en el cliente
         if (!formData.firstName.trim()) {
             setErrorMsg("El nombre del cliente es obligatorio.");
-            setIsSubmitting(false);
             return;
         }
 
         if (!formData.lastName.trim()) {
             setErrorMsg("El apellido del cliente es obligatorio.");
-            setIsSubmitting(false);
             return;
         }
 
         if (!formData.dni.trim()) {
             setErrorMsg("El DNI / documento de identidad es obligatorio.");
-            setIsSubmitting(false);
             return;
         }
 
@@ -176,7 +168,6 @@ export default function ClientsPage() {
 
                 if (!res.success) {
                     setErrorMsg(res.error || "Ocurrió un error al guardar el cliente.");
-                    setIsSubmitting(false);
                     return;
                 }
 
@@ -201,8 +192,6 @@ export default function ClientsPage() {
                 error.message ||
                 "Ocurrió un problema de red al intentar guardar el cliente."
             );
-        } finally {
-            setIsSubmitting(false);
         }
     };
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -385,10 +374,14 @@ export default function ClientsPage() {
 
 
                                     {/* Relaciones opcionales (Estudiante, Usuario, Grupo) */}
-                                    {client.group && (<div className="flex justify-between text-xs font-questrial font-medium text-gray-500">
-                                        <div className="flex items-center gap-1.5 text-indigo-600 font-medium">
-                                            <Users className="w-3.5 h-3.5 shrink-0" />
-                                            <span>Grupo: {client.group.name || client.groupId}</span>
+                                    {client.group && (<div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Grupo
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {client.group.name || client.groupId}
+                                            </p>
                                         </div>
                                     </div>)}
 
@@ -752,10 +745,10 @@ export default function ClientsPage() {
 
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isPending}
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            {isSubmitting
+                            {isPending
                                 ? "Guardando..."
                                 : editingId
                                     ? "Actualizar Cliente"
