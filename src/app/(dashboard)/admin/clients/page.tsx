@@ -23,6 +23,7 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
+import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
 import Badge from "@/components/common/Badge";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { Client, CustomerFormData } from "@/types/client";
@@ -551,190 +552,103 @@ export default function ClientsPage() {
                     )}
 
                     {/* ✨ SECCIÓN SELECTOR DE USUARIO (OPCIONAL) */}
-                    <div className="relative" ref={userRef}>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Asignación de usuario (Opcional)
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Escribe para buscar o selecciona de la lista..."
-                                value={userSearch}
-                                onBlur={() => {
-                                    if (userSearch == '') {
-                                        setFormData({ ...formData, userId: '' })
-                                    }
-                                    setShowUserDropdown(false)
-                                }}
-                                onFocus={() => setShowUserDropdown(true)}
-                                onChange={(e) => {
-                                    setUserSearch(e.target.value);
-                                    setShowUserDropdown(true);
-                                }}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                            {isLoadingUsers && (
-                                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                            )}
-                        </div>
+                    <SearchInput
+                        label="Asignación de representante académico"
+                        placeholder="Escribe para buscar o selecciona de la lista..."
+                        value={userSearch}
+                        isLoading={isLoadingUsers}
+                        options={filteredUsers.map((user: any) => ({
+                            id: user.id,
+                            label: user.name,
+                            subLabel: `Email: ${user.email}`,
+                            data: user, // Guardamos el objeto completo si hace falta
+                        }))}
+                        emptyMessage="No se encontraron usuarios coincidentes"
+                        onChangeText={(text) => {
+                            setUserSearch(text);
+                            setFormData({
+                                ...formData,
+                                userId: text as any,
+                            });
+                        }}
+                        onSelectOption={(option) => {
+                            setFormData({
+                                ...formData,
+                                userId: option.id as any,
+                            });
+                            setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+                        }}
+                    />
 
-                        {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
-                            <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                                {isLoadingUsers ? (
-                                    <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                                ) : filteredUsers.length === 0 ? (
-                                    <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
-                                ) : (
-                                    filteredUsers.map((c: any) => (
-                                        <li
-                                            key={c.id}
-                                            onMouseDown={(e) => {
-                                                e.preventDefault(); // Previene que el input pierda el foco inmediatamente
-                                                setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
-                                                setShowUserDropdown(false);
-                                                setFormData({
-                                                    ...formData,
-                                                    ...(c.dni && { dni: c.dni }),
-                                                    ...(c.name && { firstName: c.name }),
-                                                    ...(c.email && { email: c.email }),
-                                                    ...(c.id && { userId: c.id }),
-                                                });
-                                            }}
-                                            className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                                        >
-                                            <span className="font-medium text-gray-700">{c.name}</span>
-                                            <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">
-                                                Email: {c.email}
-                                            </span>
-                                        </li>
-                                    ))
-                                )}
-                            </ul>
-                        )}
-                    </div>
 
                     {/* Fila 1: Nombres y Apellidos */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Nombres *
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                placeholder="Ej: Maria Paula"
-                                value={formData.firstName || ""}
-                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
+                        <TextInput
+                            label="Nombres *"
+                            required
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            placeholder="Ej: Maria Paula"
+                        />
 
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Apellidos *
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                placeholder="Ej: Gomez Pérez"
-                                value={formData.lastName || ""}
-                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
+                        <TextInput
+                            label="Apellidos *"
+                            required
+                            type="text"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            placeholder="Ej: Gomez Pérez"
+                        />
+
                     </div>
 
                     {/* Fila 2: DNI / Identificación y Fecha de Nacimiento */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                DNI / Identificación *
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                placeholder="Ej: 1098765432"
-                                value={formData.dni || ""}
-                                onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Fecha de Nacimiento
-                            </label>
-                            <input
-                                type="date"
-                                value={
-                                    formData.birthDate
-                                        ? formData.birthDate instanceof Date
-                                            ? formatDateForInput(formData.birthDate)
-                                            : formData.birthDate
-                                        : ''
-                                }
-                                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
+                        <TextInput
+                            label="DNI / Identificación *"
+                            required
+                            type="text"
+                            value={formData.dni}
+                            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+                            placeholder="Ej: 1098765432"
+                        />
+                        <DateInput
+                            label="Fecha de Nacimiento"
+                            value={formData.birthDate}
+                            onChange={(val) => setFormData({ ...formData, birthDate: val })}
+                        />
                     </div>
 
                     {/* Fila 3: Correo Electrónico y Teléfono */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Correo Electrónico
-                            </label>
-                            <input
-                                type="email"
-                                placeholder="ejemplo@correo.com"
-                                value={formData.email || ""}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
+                        <EmailInput
+                            label="Correo Electrónico"
+                            placeholder="ejemplo@correo.com"
+                            value={formData.email || ""}
+                            onChange={(val) => setFormData({ ...formData, email: val })}
+                        />
+                        <PhoneInput
+                            label="Teléfono de Contacto"
+                            countryCode={formData.countryCode || "+58"}
+                            onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                            countries={countries}
+                            phoneNumber={formData.phone || ""}
+                            onPhoneNumberChange={(phone) => setFormData({ ...formData, phone })}
+                            phonePlaceholder="Ej: 412 123 4567"
+                        />
 
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Teléfono de Contacto
-                            </label>
-                            <div className="flex relative group">
-                                <select
-                                    value={formData.countryCode || "+58"}
-                                    onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-                                    className="bg-white/10 text-[#5e0472]  p-2 border-y border-l border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-all text-xs font-sans appearance-none border-r-none rounded-r-none cursor-pointer"
-                                    style={{ borderRight: 'none' }}
-                                >
-                                    {countries.map((c) => (
-                                        <option key={c.code} value={c.code} className="bg-neutral-900 text-white">
-                                            {c.label} ({c.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="text"
-                                    placeholder="Ej: +57 300 123 4567"
-                                    value={formData.phone || ""}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full p-2  border-y border-r border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 transition-colors border-l-none rounded rounded-l-none"
-                                />
-                            </div>
-                        </div>
                     </div>
 
                     {/* Fila 4: Dirección Residencia */}
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Dirección
-                        </label>
-                        <textarea
-                            rows={2}
-                            placeholder="Ej: Calle 123 #45-67, Ciudad"
-                            value={formData.address || ""}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                        ></textarea>
-                    </div>
+                    <TextArea
+                        label="Dirección"
+                        placeholder="Ej. Calle Principal #123..."
+                        required
+                        rows={3}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
                     {/* Opciones de Rol */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto font-questrial ">
                         <button
@@ -778,80 +692,50 @@ export default function ClientsPage() {
 
                                 {/* Fila: Talla de Uniforme e Experiencia */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-gray-700 font-bold mb-1">
-                                            Talla de Franela
-                                        </label>
-                                        <select
-                                            required={formData.type === "student"} // 🎯 Se vuelve requerido solo si es estudiante
-                                            value={formData.shirtSize || ""}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, shirtSize: e.target.value })
-                                            }
-                                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                        >
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="" disabled>
-                                                Selecciona una talla
-                                            </option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="2">Talla 2</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="4">Talla 4</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="6">Talla 6</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="8">Talla 8</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="10">Talla 10</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="12">Talla 12</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="14">Talla 14</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="16">Talla 16</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="S">S (Adulto)</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="M">M (Adulto)</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="L">L (Adulto)</option>
-                                        </select>
-                                    </div>
+                                    <SelectInput
+                                        label="Talla de Franela"
+                                        value={formData.shirtSize}
+                                        onChange={(e) => setFormData({ ...formData, shirtSize: e.target.value as Student["kinship"] })}
+                                        options={[
+                                            { label: "Selecciona una talla", value: "", disabled: true },
+                                            { label: "Talla 2", value: "2" },
+                                            { label: "Talla 4", value: "4" },
+                                            { label: "Talla 6", value: "6" },
+                                            { label: "Talla 8", value: "8" },
+                                            { label: "Talla 10", value: "10" },
+                                            { label: "Talla 12", value: "12" },
+                                            { label: "Talla 14", value: "14" },
+                                            { label: "Talla 16", value: "16" },
+                                            { label: "Talla S", value: "S" },
+                                            { label: "Talla M", value: "M" },
+                                            { label: "Talla L", value: "L" },
+                                        ]}
+                                    />
+
 
                                     {/* Experiencia Previa */}
-                                    <div>
-                                        <label className="block text-gray-700 font-bold mb-1">
-                                            ¿Tiene experiencia previa en baile?
-                                        </label>
-                                        <div className="flex gap-4 items-center mt-1.5 p-1">
-                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="hasExperience"
-                                                    checked={formData.hasExperience === true}
-                                                    onChange={() => setFormData({ ...formData, hasExperience: true })}
-                                                    className="accent-purple-600 w-3.5 h-3.5"
-                                                />
-                                                <span>Sí, posee experiencia</span>
-                                            </label>
-                                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="hasExperience"
-                                                    checked={formData.hasExperience === false}
-                                                    onChange={() => setFormData({ ...formData, hasExperience: false })}
-                                                    className="accent-purple-600 w-3.5 h-3.5"
-                                                />
-                                                <span>No, es principiante</span>
-                                            </label>
-                                        </div>
-                                    </div>
+                                    <RadioGroup<boolean>
+                                        label="¿Tiene experiencia previa en baile?"
+                                        name="hasExperience"
+                                        value={formData.hasExperience}
+                                        onChange={(val) => setFormData({ ...formData, hasExperience: val })}
+                                        options={[
+                                            { label: "Sí, posee experiencia", value: true },
+                                            { label: "No, es principiante", value: false },
+                                        ]}
+                                    />
+
                                 </div>
 
                                 {/* Fila: Observaciones Médicas */}
-                                <div>
-                                    <label className="block text-gray-700 font-bold mb-1">
-                                        Observaciones Médicas o Alergias
-                                    </label>
-                                    <textarea
-                                        rows={2}
-                                        value={formData.medicalObservations || ""}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, medicalObservations: e.target.value })
-                                        }
-                                        placeholder="Ej: Alérgico a la penicilina, asma, etc."
-                                        className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                    />
-                                </div>
+                                <TextArea
+                                    label="Observaciones Médicas o Alergias"
+                                    placeholder="Ej: Alérgico a la penicilina, asma, etc."
+                                    rows={3}
+                                    value={formData.medicalObservations}
+                                    onChange={(e) => setFormData({ ...formData, medicalObservations: e.target.value })}
+                                />
+
 
                             </div>
                         </div>

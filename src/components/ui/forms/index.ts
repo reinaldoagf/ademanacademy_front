@@ -3,4 +3,9 @@ export * from './TextInput';
 export * from './TextArea';
 export * from './SelectInput';
 export * from './FileInput';
-export * from './SearchInput'; // 👈 Añadido
+export * from './SearchInput';
+export * from './RadioGroup';
+export * from './PhoneInput';
+export * from './InputGroup';
+export * from './EmailInput';
+export * from './DateInput';
