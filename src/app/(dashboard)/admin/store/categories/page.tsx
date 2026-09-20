@@ -11,6 +11,7 @@ import { ProductCategory } from "@/types/product-category";
 import DataTable, { Column } from "@/components/common/DataTable";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput } from '@/components/ui/forms';
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import {
     saveProductCategoryAction,
@@ -234,18 +235,16 @@ export default function ProductCategoriesPage() {
             <HeroSection
                 htmlTitle={`<em class="text-[#5e0472]">Categorías de Productos</em> de la tienda`}
                 htmlSubTitle="Administra las categorías."
-                actions={[
-                    {
-                        label: "Registrar categoría de Producto",
-                        onClick: () => {
-                            setFormData(initialFormState);
-                            setEditingId(null);
-                            setErrorMsg(null);
-                            openModal()
-                        },
-                        icon: <Plus className="w-4 h-4" />,
-                        variant: "secondary" as const,
+                actions={[{
+                    label: "Registrar categoría de Producto →",
+                    onClick: () => {
+                        setFormData(initialFormState);
+                        setEditingId(null);
+                        setErrorMsg(null);
+                        openModal()
                     },
+                    icon: <Plus className="w-4 h-4" />,
+                },
                 ]}
             />
             <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
@@ -290,30 +289,21 @@ export default function ProductCategoriesPage() {
                             {errorMsg}
                         </p>
                     )}
-
-                    <div>
-                        <label className="block text-gray-600 font-bold mb-1">
-                            Nombre de la Categoría <span className="text-purple-600">*</span>
-                        </label>
-
-                        <input
-                            required
-                            type="text"
-                            placeholder="Ej: Accesorios, Calzado, Uniformes..."
-                            value={formData.name}
-                            onChange={(e) =>
-                                setFormData({ ...formData, name: e.target.value })
-                            }
-                            className="w-full p-2.5 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 text-xs rounded-sm transition"
-                        />
-                    </div>
+                    <TextInput
+                        label="Nombre de la Categoría *"
+                        required
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Ej: Accesorios, Calzado, Uniformes..."
+                    />
 
                     {/* Botonera de Acciones */}
-                    <div className="pt-4 flex justify-between items-center border-t border-gray-100 mt-4">
+                    <div className="pt-2 flex justify-between">
                         <button
                             type="button"
                             onClick={handleCloseModal}
-                            className="cursor-pointer font-questrial px-4 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition rounded-xs"
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                         >
                             Cancelar
                         </button>
@@ -321,13 +311,13 @@ export default function ProductCategoriesPage() {
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-xs hover:opacity-90 disabled:opacity-50 rounded-xs"
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
                             {isPending
                                 ? "Guardando..."
                                 : editingId
-                                    ? "Actualizar Categoría"
-                                    : "Registrar Categoría"}
+                                    ? "Actualizar Categoría →"
+                                    : "Registrar Categoría →"}
                         </button>
                     </div>
                 </form>

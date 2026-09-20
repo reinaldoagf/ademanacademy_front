@@ -20,7 +20,6 @@ import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
-import Badge from "@/components/common/Badge";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { Client, CustomerFormData } from "@/types/client";
 import { User } from "@/types/user";

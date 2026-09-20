@@ -133,7 +133,7 @@ export default function ConfirmationModal({
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                        className="cursor-pointer font-questrial rounded-md px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -142,7 +142,7 @@ export default function ConfirmationModal({
                         type="button"
                         onClick={handleConfirm}
                         disabled={!isInputValid() || isSubmitting}
-                        className={`cursor-pointer inline-flex justify-center items-center px-4 py-2 text-sm font-questrial text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed ${variantClasses[variant]}`}
+                        className={`cursor-pointer inline-flex justify-center items-center rounded-md px-4 py-2 text-sm font-questrial text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed ${variantClasses[variant]}`}
                     >
                         {isSubmitting ? (
                             <>
