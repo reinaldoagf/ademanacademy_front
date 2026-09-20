@@ -128,7 +128,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
     { key: 'accounts-payable', name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
     { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
-    { key: 'employees', name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
+    { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
     {
       key: 'wardrobe', name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
       // 🎯 Submenú añadido
@@ -216,7 +216,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: APP_KEYS.REFRESH_STUDENTS_COUNT, action: getAllStudentsAction, key: APP_KEYS.STUDENTS },
     { event: APP_KEYS.REFRESH_CLASSROOMS_COUNT, action: getAllClassroomsAction, key: APP_KEYS.CLASSROOMS },
     { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
-    { event: "refresh-employees-count", action: getAllEmployeesAction, key: "employees" },
+    { event: APP_KEYS.REFRESH_EMPLOYEES_COUNT, action: getAllEmployeesAction, key: APP_KEYS.EMPLOYEES },
     { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
     { event: "refresh-orders-count", action: getAllOrdersAction, key: "orders" },
     { event: "refresh-events-count", action: getAllEventsAction, key: "events" },

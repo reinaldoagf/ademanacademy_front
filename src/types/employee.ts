@@ -16,6 +16,7 @@ export interface Employee {
     typeOfEmployee: TypeOfEmployee;
     medicalObservations?: string | null;
     address: string;
+    countryCode?: string | null;
     phone?: string | null;
     hoursTaughtMonth: number;
     hourlyRate: number; // En TypeScript / Frontend suele manejar los campos Decimal de Prisma como number o string
@@ -40,6 +41,7 @@ export interface EmployeeFormData {
     firstName: string;
     lastName: string;
     dni: string;
+    countryCode: string;
     phone: string;
     typeOfContract: TypeOfContract;
     typeOfEmployee: TypeOfEmployee;

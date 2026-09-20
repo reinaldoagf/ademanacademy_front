@@ -5,4 +5,6 @@ export const APP_KEYS: Record<string, string> = {
     REFRESH_STUDENTS_COUNT: 'refresh-students-count',
     CLASSROOMS: 'classrooms',
     REFRESH_CLASSROOMS_COUNT: 'refresh-classrooms-count',
+    EMPLOYEES: 'employees',
+    REFRESH_EMPLOYEES_COUNT: 'refresh-employees-count',
 };

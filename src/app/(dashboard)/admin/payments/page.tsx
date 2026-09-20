@@ -5,7 +5,6 @@ import { useEffect, useState, useTransition } from "react";
 import {
     Wallet,
     ArrowUpRight,
-    Plus,
     Search,
     TrendingUp,
     AlertCircle,
@@ -330,9 +329,9 @@ export default function PaymentsPage() {
                     </button>
                     <button
                         type="button"
-                        disabled={isPending || selectedPayment.status === "approved"}
+                        disabled={isPending || (selectedPayment && selectedPayment?.status === "approved")}
                         onClick={() => handleApprove()}
-                        className={`font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs   shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md ${selectedPayment.status === "approved" ? " bg-gray-200 text-gray-400" : "text-white cursor-pointer gradient-purple"
+                        className={`font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs   shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md ${(selectedPayment && selectedPayment?.status === "approved") ? " bg-gray-200 text-gray-400" : "text-white cursor-pointer gradient-purple"
                             }`}
                     >
                         {isPending

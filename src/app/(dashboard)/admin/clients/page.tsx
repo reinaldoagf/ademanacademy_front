@@ -1,18 +1,14 @@
 // src/app/(dashboard)/admin/clients/page.tsx
 "use client";
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
     Plus,
     Search,
     Edit3,
     Trash2,
     User as UserLucide,
-    Phone,
     Calendar,
-    CreditCard,
     Users,
-    MapPin,
-    FileText,
     Users2,
     GraduationCap,
     ChevronLeft,
@@ -751,8 +747,8 @@ export default function ClientsPage() {
                             {isPending
                                 ? "Guardando..."
                                 : editingId
-                                    ? "Actualizar Cliente"
-                                    : "Registrar Cliente"}
+                                    ? "Actualizar Cliente →"
+                                    : "Registrar Cliente →"}
                         </button>
                     </div>
                 </form>

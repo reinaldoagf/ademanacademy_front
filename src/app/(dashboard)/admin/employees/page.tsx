@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/employees/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -15,17 +15,21 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
 import { EmployeeFormData, Employee } from "@/types/employee";
 import { User } from "@/types/user";
+import { formatDateForInput } from "@/helpers/dates";
+import { APP_KEYS } from "@/consts/app";
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: EmployeeFormData = {
   firstName: "",
   lastName: "",
   dni: "",
+  countryCode: "+58",
   phone: "",
   typeOfContract: "fixed",
   typeOfEmployee: "administrative",
@@ -36,15 +40,21 @@ const initialFormState: EmployeeFormData = {
   address: "",
   userId: "",
 };
+
+const countries = [
+  { code: "+58", label: "VE" },
+  { code: "+57", label: "CO" },
+  { code: "+51", label: "PE" },
+  { code: "+56", label: "CL" },
+  { code: "+54", label: "AR" },
+  { code: "+34", label: "ES" },
+  { code: "+1", label: "US" },
+];
 export default function EmployeesPage() {
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [userSearch, setUserSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  // Refs para cerrar los menús si el usuario hace click afuera
-  const userRef = useRef<HTMLDivElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<EmployeeFormData>(initialFormState);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -79,24 +89,20 @@ export default function EmployeesPage() {
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
-    setIsSubmitting(true);
 
     // Validaciones preventivas en el cliente
     if (!formData.firstName.trim()) {
       setErrorMsg("El nombre del empleado es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.lastName.trim()) {
       setErrorMsg("El apellido del empleado es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.dni.trim()) {
       setErrorMsg("El DNI / documento de identidad es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
 
@@ -118,7 +124,7 @@ export default function EmployeesPage() {
 
         // Reactividad: refrescar listado o badges si aplica
         if (!editingId) {
-          window.dispatchEvent(new Event("refresh-employees-count"));
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_EMPLOYEES_COUNT));
         }
 
         fetchData(currentPage, itemsPerPage);
@@ -130,8 +136,6 @@ export default function EmployeesPage() {
         error.message ||
         "Ocurrió un problema de red al intentar guardar el empleado."
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
   // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
@@ -154,13 +158,14 @@ export default function EmployeesPage() {
       firstName: employee.firstName || "",
       lastName: employee.lastName || "",
       dni: employee.dni || "",
+      countryCode: employee.countryCode || "+58",
       phone: employee.phone || "",
       typeOfContract: employee.typeOfContract || "fixed",
       typeOfEmployee: employee.typeOfEmployee || "administrative",
       hourlyRate: employee.hourlyRate || 0,
       hoursTaughtMonth: employee.hoursTaughtMonth || 0,
       bonus: employee.bonus || 0,
-      birthDate: employee.birthDate || null,
+      birthDate: formatDateForInput(employee.birthDate),
       address: employee.address || "",
     })
     setEditingId(employee.id);
@@ -367,8 +372,6 @@ export default function EmployeesPage() {
       }
     });
   };
-  // ✅ CORRECT: Format the Date to "YYYY-MM-DD"
-  const formatDateForInput = (date: Date) => date.toISOString().split('T')[0];
 
   // 🎯 MANEJADORES DE LA TABLA
   // --- EFFECT PARA usuarios (Vía Server Action) ---
@@ -486,286 +489,169 @@ export default function EmployeesPage() {
           )}
 
           {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-          <div className="relative" ref={userRef}>
-            <label className="block text-gray-500 font-bold mb-1">Asignación de usuario (Opcional)</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Escribe para buscar o selecciona de la lista..."
-                value={userSearch}
-                onFocus={() => setShowUserDropdown(true)} // Al hacer foco abre la lista inicial
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  /* setFormData({
-                    ...formData,
-                    userId: e.target.value as any,
-                  }) */
-                  // setError(null);
-                }}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 pr-8"
-              />
-              {isLoadingUsers && (
-                <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-              )}
-            </div>
+          <SearchInput
+            label="Asignación de usuario (Opcional)"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={userSearch}
+            isLoading={isLoadingUsers}
+            options={filteredUsers.map((user: any) => ({
+              id: user.id,
+              label: user.name,
+              subLabel: `Email: ${user.email}`,
+              data: user, // Guardamos el objeto completo si hace falta
+            }))}
+            emptyMessage="No se encontraron usuarios coincidentes"
+            onChangeText={(text) => {
+              setUserSearch(text);
+              setFormData({
+                ...formData,
+                userId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              if (option.data?.dni) {
+                setFormData({
+                  ...formData,
+                  dni: option.data.dni,
+                })
+              }
+              if (option.data?.name) {
+                setFormData({
+                  ...formData,
+                  firstName: option.data.name,
+                })
+              }
+              setFormData({
+                ...formData,
+                userId: option.id as any,
+              });
+              setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+            }}
+          />
 
-
-            {/* ✨ CAMBIO: Se muestra siempre que el dropdown esté activo y tengamos elementos cargados (o cargándose) */}
-            {showUserDropdown && (filteredUsers.length > 0 || isLoadingUsers || userSearch.trim().length > 0) && (
-              <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
-                {isLoadingUsers ? (
-                  <li className="p-2 text-gray-400 italic">Cargando opciones...</li>
-                ) : filteredUsers.length === 0 ? (
-                  <li className="p-2 text-red-400 bg-red-50/30">No se encontraron usuarios coincidentes</li>
-                ) : (
-                  filteredUsers.map((c: any) => (
-                    <li
-                      key={c.id}
-                      onClick={() => {
-                        setUserSearch(`${c.name} (${c.email || 'Usuario'})`);
-                        setShowUserDropdown(false);
-                        if (c.dni) {
-                          setFormData({
-                            ...formData,
-                            dni: c.dni,
-                          })
-                        }
-                        if (c.name) {
-                          setFormData({
-                            ...formData,
-                            firstName: c.name,
-                          })
-                        }
-                        if (c.id) {
-                          setFormData({
-                            ...formData,
-                            userId: c.id as any,
-                          })
-                        }
-                      }}
-                      className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
-                    >
-                      <span className="font-medium text-gray-700">{c.name}</span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Email: {c.email}</span>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
-          </div>
           {/* Fila 1: Nombre y Apellido */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Nombres *
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="Ej: Maria Paula"
-                value={formData.firstName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="Nombres *"
+              required
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              placeholder="Ej: Maria Paula"
+            />
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Apellidos *
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="Ej: Gomez Pérez"
-                value={formData.lastName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="Apellidos *"
+              required
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              placeholder="Ej: Gomez Pérez"
+            />
+
+
           </div>
 
           {/* Fila 2: DNI y Fecha de Nacimiento */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                DNI / Identificación *
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="Ej: 1098765432"
-                value={formData.dni || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, dni: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="DNI / Identificación *"
+              required
+              type="text"
+              value={formData.dni}
+              onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+              placeholder="Ej: 1098765432"
+            />
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Fecha de Nacimiento
-              </label>
-              <input
-                type="date"
-                value={
-                  formData.birthDate
-                    ? formData.birthDate instanceof Date
-                      ? formatDateForInput(formData.birthDate)
-                      : formData.birthDate
-                    : ''
-                }
-                onChange={(e) =>
-                  setFormData({ ...formData, birthDate: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 text-gray-700"
-              />
-            </div>
+            <DateInput
+              label="Fecha de Nacimiento"
+              value={formData.birthDate}
+              onChange={(val) => setFormData({ ...formData, birthDate: val })}
+            />
+
           </div>
 
           {/* Fila 3: Teléfono y Tipo de Contrato */}
           <div className="grid grid-cols-2 gap-3">
 
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Tipo de Contrato *
-              </label>
-              <select
-                required
-                value={formData.typeOfEmployee || "administrative"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    typeOfEmployee: e.target.value as EmployeeFormData["typeOfEmployee"],
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize"
-              >
-                <option value="administrative">Personal Administrativo y de Gestión</option>
-                <option value="teaching">Personal Docente y Artístico</option>
-                <option value="support">Personal de Soporte y Operaciones</option>
-              </select>
-            </div>
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Tipo de Contrato *
-              </label>
-              <select
-                required
-                value={formData.typeOfContract || "fixed"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    typeOfContract: e.target.value as EmployeeFormData["typeOfContract"],
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 capitalize"
-              >
-                <option value="fixed">Fijo</option>
-                <option value="per_hour">Por Hora</option>
-                <option value="by_project">Por proyecto</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Teléfono de Contacto
-              </label>
-              <input
-                type="text"
-                placeholder="Ej: +57 300 123 4567"
-                value={formData.phone || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <SelectInput
+              label="Tipo de Empleado *"
+              value={formData.typeOfEmployee}
+              onChange={(e) => setFormData({ ...formData, typeOfEmployee: e.target.value as EmployeeFormData["typeOfEmployee"] })}
+              options={[
+                { label: "Selecciona un tipo de empleado", value: "", disabled: true },
+                { label: "Personal Administrativo y de Gestión", value: "administrative" },
+                { label: "Personal Docente y Artístico", value: "teaching" },
+                { label: "Personal de Soporte y Operaciones", value: "support" },
+              ]}
+            />
+
+            <SelectInput
+              label="Tipo de Contrato *"
+              value={formData.typeOfEmployee}
+              onChange={(e) => setFormData({ ...formData, typeOfEmployee: e.target.value as EmployeeFormData["typeOfContract"] })}
+              options={[
+                { label: "Selecciona un tipo de contrato", value: "", disabled: true },
+                { label: "Fijo", value: "fixed" },
+                { label: "Por Hora", value: "per_hour" },
+                { label: "Por proyecto", value: "by_project" },
+              ]}
+            />
           </div>
 
-          <div>
-            <label className="block text-gray-500 font-bold mb-1">
-              Dirección
-            </label>
+          <PhoneInput
+            label="Teléfono de Contacto"
+            countryCode={formData.countryCode || "+58"}
+            onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+            countries={countries}
+            phoneNumber={formData.phone || ""}
+            onPhoneNumberChange={(phone) => setFormData({ ...formData, phone })}
+            phonePlaceholder="Ej: 412 123 4567"
+          />
 
-            <textarea
-              required
-              rows={3}
-              value={formData.address}
-              onChange={e => setFormData({ ...formData, address: e.target.value })}
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-            ></textarea>
-          </div>
+          <TextArea
+            label="Dirección"
+            placeholder="Ej. Calle Principal #123..."
+            required
+            rows={3}
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          />
+
 
 
           {/* Fila 4: Tarifa por Hora, Horas Dictadas y Bono Extra */}
           <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Tarifa / Hora ($)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0.00"
-                value={formData.hourlyRate || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hourlyRate: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="Tarifa / Hora ($)"
+              type="number"
+              step="0.01"
+              required
+              value={formData.hourlyRate}
+              onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0, })}
+              placeholder="0.00"
+            />
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Horas del Mes
-              </label>
-              <input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={formData.hoursTaughtMonth || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hoursTaughtMonth: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="Horas del Mes"
+              type="number"
+              required
+              value={formData.hoursTaughtMonth}
+              onChange={(e) => setFormData({ ...formData, hoursTaughtMonth: parseInt(e.target.value) || 0, })}
+              placeholder="0"
+            />
 
-            <div>
-              <label className="block text-gray-500 font-bold mb-1">
-                Bono Extra ($)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0.00"
-                value={formData.bonus || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    bonus: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400"
-              />
-            </div>
+            <TextInput
+              label="Bono Extra ($)"
+              type="number"
+              required
+              value={formData.bonus}
+              onChange={(e) => setFormData({ ...formData, bonus: parseInt(e.target.value) || 0, })}
+              placeholder="0"
+            />
+
           </div>
 
           {/* Botonera de Acción */}
@@ -773,21 +659,21 @@ export default function EmployeesPage() {
             <button
               type="button"
               onClick={closeModal}
-              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
             >
               Cancelar
             </button>
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isPending}
+              className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
             >
-              {isSubmitting
+              {isPending
                 ? "Guardando..."
                 : editingId
-                  ? "Actualizar Empleado"
-                  : "Registrar Empleado"}
+                  ? "Actualizar Empleado →"
+                  : "Registrar Empleado →"}
             </button>
           </div>
         </form>
