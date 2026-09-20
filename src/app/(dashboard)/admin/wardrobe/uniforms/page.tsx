@@ -9,9 +9,7 @@ import {
     Plus,
     ChevronLeft,
     ChevronRight,
-    ImagePlus,
     Search,
-    X,
     CheckCircle2,
     Shirt,
     Wrench,
@@ -22,6 +20,7 @@ import { useModal } from "@/hooks/useModal";
 import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
 import { APP_KEYS } from "@/consts/app";
 
 // 2. Configuración visual estática fuera del componente
@@ -138,8 +137,7 @@ export default function UniformsPage() {
         availableSizes: [...DEFAULT_SIZES] as SizeStock[]
     });
     // Estados locales exclusivos para la gestión de archivos
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
+    const [newFiles, setNewFiles] = useState<File[]>([]);
     const [existingImages, setExistingImages] = useState<string[]>([]);
     // 1. Definimos las funciones que recibirán el elemento capturado
     const handleEdit = (uniform: Uniform) => {
@@ -179,9 +177,7 @@ export default function UniformsPage() {
             setExistingImages([]);
         }
 
-        // Limpiamos los archivos nuevos que estuviesen cargados de antes
-        setSelectedFiles([]);
-        setPreviews([]);
+
     };
     const handleDelete = (uniform: any) => {
         setModalConfig({
@@ -194,18 +190,9 @@ export default function UniformsPage() {
 
     };
 
-    // 2. Manejador de selección de imágenes
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const filesArray = Array.from(e.target.files);
-
-            // Acumulamos los nuevos archivos
-            setSelectedFiles((prev) => [...prev, ...filesArray]);
-
-            // Generamos URLs locales temporales para ver la miniatura antes de subir
-            const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
-            setPreviews((prev) => [...prev, ...newPreviews]);
-        }
+    const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
+        setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+        // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
     };
     // Manejo de inserción de nuevo salón
     const fileToBase64 = (file: File): Promise<string> => {
@@ -217,16 +204,7 @@ export default function UniformsPage() {
         });
     };
 
-    {/* Función auxiliar para remover una imagen ya existente del servidor */ }
-    const removeExistingImage = (indexToRemove: number) => {
-        setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    };
 
-    {/* Tu función actual para remover nuevos archivos locales */ }
-    const removeNewImage = (indexToRemove: number) => {
-        setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-        setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    };
     // 4. Adaptación del envío del formulario
     const storeUniform = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -234,7 +212,7 @@ export default function UniformsPage() {
 
         try {
             // 1. Procesar los archivos nuevos cargados localmente a Base64
-            const imagesPromises = selectedFiles.map(async (file) => {
+            const imagesPromises = newFiles.map(async (file) => {
                 const base64String = await fileToBase64(file);
                 return {
                     name: file.name,
@@ -258,15 +236,14 @@ export default function UniformsPage() {
             };
 
             // saveUniformAction debe recibir el payload y el editingId (si existe)
-            const result = await saveUniformAction(payload, editingId);
+            const res = await saveUniformAction(payload, editingId);
 
-            if (result.success) {
+            if (res.success) {
                 fetchData(currentPage, itemsPerPage);
                 toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
 
                 // Limpieza de estados tras el guardado exitoso
-                setSelectedFiles([]);
-                setPreviews([]);
+                setNewFiles([]);
                 setExistingImages([]);
                 setEditingId(null); // Reset del ID de edición
 
@@ -284,8 +261,8 @@ export default function UniformsPage() {
 
                 closeModalForm();
             } else {
-                toast.error(result.error);
-                setErrorMsg(result.error);
+                toast.error(res.error);
+                setErrorMsg(res.error);
                 scrollToTopForm();
             }
         } catch (error) {
@@ -352,8 +329,7 @@ export default function UniformsPage() {
                             });
                             setEditingId(null);
                             setErrorMsg(null);
-                            setSelectedFiles([]);
-                            setPreviews([]);
+                            setNewFiles([]);
                             setExistingImages([]);
                             openModalForm()
                         },
@@ -443,22 +419,25 @@ export default function UniformsPage() {
                     </div>
 
                     {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {uniforms.length > 0 ? (
-                            uniforms.map((uniform) => {
-                                return <WardrobeCard
-                                    key={uniform.id}
-                                    element={uniform}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                />
-                            })
-                        ) : (
-                            <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                                No se encontraron registros de vestuarios en base a los filtros.
-                            </div>
-                        )}
-                    </div>
+
+                    {uniforms.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {uniforms.map((uniform) => {
+                            return <WardrobeCard
+                                key={uniform.id}
+                                element={uniform}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                            />
+                        })}
+                    </div>) : (
+                        <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+                            <Shirt className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+                            <p className="font-questrial text-xs text-gray-400">
+                                {isPending ? "Sincronizando..." : "No se encuentran uniformes bajo la modalidad seleccionada.."}
+                            </p>
+                        </div>
+                    )}
+
 
                     {/* Seccion de Paginación */}
                     {meta.totalPages > 1 && (
@@ -539,69 +518,55 @@ export default function UniformsPage() {
 
                     {/* Nombre - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Nombre del Uniforme *
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Ej. Set urbano..."
-                                required
-                                value={uniformFormData.name}
-                                onChange={(e) => setUniformFormData({ ...uniformFormData, name: e.target.value })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Precio / Tarifa ($)
-                            </label>
-                            <input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                placeholder="0.00"
-                                value={uniformFormData.price || ''}
-                                onChange={(e) => setUniformFormData({ ...uniformFormData, price: parseFloat(e.target.value) || 0 })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
-                            />
-                        </div>
+                        <TextInput
+                            label="Nombre del Uniforme *"
+                            required
+                            type="text"
+                            value={uniformFormData.name}
+                            onChange={(e) => setUniformFormData({ ...uniformFormData, name: e.target.value })}
+                            placeholder="Ej. Set urbano..."
+                        />
+                        <TextInput
+                            label="Precio / Tarifa ($)"
+                            type="number"
+                            step="0.01"
+                            required
+                            value={uniformFormData.price}
+                            onChange={(e) => setUniformFormData({ ...uniformFormData, price: parseFloat(e.target.value) || 0 })}
+                            placeholder="0.00"
+                        />
+
                     </div>
 
 
                     {/* Categoría y Estado - Grid responsivo */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Categoría *
-                            </label>
-                            <select
-                                value={uniformFormData.category}
-                                onChange={(e) => setUniformFormData({ ...uniformFormData, category: e.target.value as UniformCategory })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            >
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="baby">Baby</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="childrens">Infantil</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="youth">Juvenil</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="adult">Adulto</option>
-                            </select>
-                        </div>
+                        <SelectInput
+                            label="Categoría *"
+                            value={uniformFormData.category}
+                            onChange={(e) => setUniformFormData({ ...uniformFormData, category: e.target.value as UniformCategory })}
+                            options={[
+                                { label: "Selecciona una categoría", value: "", disabled: true },
+                                { label: "Baby", value: "baby" },
+                                { label: "Infantil", value: "childrens" },
+                                { label: "Juvenil", value: "youth" },
+                                { label: "Adulto", value: "adult" },
+                            ]}
+                        />
 
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Estado Inicial *
-                            </label>
-                            <select
-                                value={uniformFormData.status}
-                                onChange={(e) => setUniformFormData({ ...uniformFormData, status: e.target.value as UniformStatus })}
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            >
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="payment_pending">Pendiente por pago</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="making">Confeccionando</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="available">Disponible</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="retired">Retirado</option>
-                            </select>
-                        </div>
+                        <SelectInput
+                            label="Estado Inicial *"
+                            value={uniformFormData.status}
+                            onChange={(e) => setUniformFormData({ ...uniformFormData, status: e.target.value as UniformStatus })}
+                            options={[
+                                { label: "Selecciona una categoría", value: "", disabled: true },
+                                { label: "Pendiente por pago", value: "payment_pending" },
+                                { label: "Confeccionando", value: "making" },
+                                { label: "Disponible", value: "available" },
+                                { label: "Retirado", value: "retired" },
+                            ]}
+                        />
+
                     </div>
 
                     {/* Sección Dinámica: Control de Stock por Tallas */}
@@ -676,58 +641,15 @@ export default function UniformsPage() {
                             <label className="block text-gray-700 font-bold">Galería de Imágenes</label>
                             <p className="text-[10px] text-gray-400">Sube hasta 10 fotos del diseño en formato JPG, PNG o WEBP.</p>
                         </div>
-
                         {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                            <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group">
-                                <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                            </label>
-                            {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
-                            {existingImages.map((src, index) => (
-                                <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                                    <img
-                                        src={src}
-                                        alt={`Guardada ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {/* Etiqueta sutil que indica que está guardada */}
-                                    <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
-                                        Guardada
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeExistingImage(index)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                                    >
-                                        <X className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            ))}
-                            {previews.map((src, index) => (
-                                <div key={index} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                                    <img
-                                        src={src}
-                                        alt={`Vista previa ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeNewImage(index)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                                    >
-                                        <X className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                        <ImageGalleryPicker
+                            label="Fotografías del Uniforme"
+                            existingImages={existingImages}
+                            onRemoveExistingImage={handleRemoveExisting}
+                            files={newFiles}
+                            onFilesChange={setNewFiles}
+                            buttonText="Añadir foto"
+                        />
                     </div>
                 </form>
                 {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
@@ -735,7 +657,7 @@ export default function UniformsPage() {
                     <button
                         type="button"
                         onClick={() => closeModalForm()}
-                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                     >
                         Cancelar
                     </button>
@@ -744,11 +666,11 @@ export default function UniformsPage() {
                         type="submit"
                         form="uniform-form" // <-- Apunta al ID del formulario
                         onClick={(e) => { }}
-                        className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+                        className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                     >
                         {editingId
-                            ? "Actualizar"
-                            : "Registrar"}
+                            ? "Actualizar uniforme →"
+                            : "Registrar uniforme →"}
                     </button>
                 </div>
             </MacDockModal>

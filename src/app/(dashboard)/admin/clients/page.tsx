@@ -468,8 +468,6 @@ export default function ClientsPage() {
                             {isPending ? "Sincronizando..." : "No se encuentran clientes bajo la modalidad seleccionada.."}
                         </p>
                     </div>
-
-
                 )}
 
 

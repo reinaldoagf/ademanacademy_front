@@ -479,22 +479,25 @@ export default function CostumesPage() {
           </div>
 
           {/* LISTADO DE STOCK CON DESGLOSE DE TALLAS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {costumes.length > 0 ? (
-              costumes.map((costume) => {
-                return <WardrobeCard
-                  key={costume.id}
-                  element={costume}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              })
-            ) : (
-              <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                No se encontraron registros de vestuarios en base a los filtros.
-              </div>
-            )}
-          </div>
+
+          {costumes.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {costumes.map((costume) => {
+              return <WardrobeCard
+                key={costume.id}
+                element={costume}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            })}
+          </div>) : (
+            <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+              <Shirt className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+              <p className="font-questrial text-xs text-gray-400">
+                {isPending ? "Sincronizando..." : "No se encuentran vestuarios bajo la modalidad seleccionada.."}
+              </p>
+            </div>
+          )}
+
 
           {/* Seccion de Paginación */}
           {meta.totalPages > 1 && (
@@ -641,63 +644,13 @@ export default function CostumesPage() {
 
             {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
             <ImageGalleryPicker
-              label="Fotografías del Uniforme"
+              label="Fotografías del Vestuario"
               existingImages={existingImages}
               onRemoveExistingImage={handleRemoveExisting}
               files={newFiles}
               onFilesChange={setNewFiles}
               buttonText="Añadir foto"
             />
-            {/* <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group">
-                <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-              {/.* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR *./}
-              {existingImages.map((src, index) => (
-                <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                  <img
-                    src={src}
-                    alt={`Guardada ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  {/.* Etiqueta sutil que indica que está guardada *./}
-                  <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
-                    Guardada
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeExistingImage(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              {previews.map((src, index) => (
-                <div key={index} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
-                  <img
-                    src={src}
-                    alt={`Vista previa ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNewImage(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div> */}
           </div>
         </form>
         {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
