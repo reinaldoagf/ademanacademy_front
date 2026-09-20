@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/students/page.tsx
 "use client";
 
-import React, { useState, useEffect, useTransition, useRef } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import {
   Trash2,
   Pencil,

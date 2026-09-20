@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  ImagePlus, Wrench, ArchiveX, X,
+  Wrench, ArchiveX,
   AlertCircle
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -18,6 +18,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
 import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
@@ -147,23 +148,12 @@ export default function CostumesPage() {
     /* availableSizes: [...DEFAULT_SIZES] as SizeStock[] */
   });
   // Estados locales exclusivos para la gestión de archivos
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   // Almacena el ID del vestuario que se está editando (null si es una creación)
-
-  // 2. Manejador de selección de imágenes
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-
-      // Acumulamos los nuevos archivos
-      setSelectedFiles((prev) => [...prev, ...filesArray]);
-
-      // Generamos URLs locales temporales para ver la miniatura antes de subir
-      const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
-      setPreviews((prev) => [...prev, ...newPreviews]);
-    }
+  const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
   };
   // Manejo de inserción de nuevo salón
   const fileToBase64 = (file: File): Promise<string> => {
@@ -174,16 +164,7 @@ export default function CostumesPage() {
       reader.onerror = (error) => reject(error);
     });
   };
-  {/* Función auxiliar para remover una imagen ya existente del servidor */ }
-  const removeExistingImage = (indexToRemove: number) => {
-    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
 
-  {/* Tu función actual para remover nuevos archivos locales */ }
-  const removeNewImage = (indexToRemove: number) => {
-    setSelectedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (costume: any) => {
     openModalForm();
@@ -217,14 +198,13 @@ export default function CostumesPage() {
 
       // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
       setExistingImages(formattedImages);
+      setNewFiles([]);
     } catch (e) {
       console.error("Error al procesar imágenes existentes para edición", e);
       setExistingImages([]);
+      setNewFiles([]);
     }
 
-    // Limpiamos los archivos nuevos que estuviesen cargados de antes
-    setSelectedFiles([]);
-    setPreviews([]);
   };
 
   const handleDelete = (costume: any) => {
@@ -268,7 +248,7 @@ export default function CostumesPage() {
 
     try {
       // 1. Procesar los archivos nuevos cargados localmente a Base64
-      const imagesPromises = selectedFiles.map(async (file) => {
+      const imagesPromises = newFiles.map(async (file) => {
         const base64String = await fileToBase64(file);
         return {
           name: file.name,
@@ -300,8 +280,7 @@ export default function CostumesPage() {
         toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
 
         // Limpieza de estados tras el guardado exitoso
-        setSelectedFiles([]);
-        setPreviews([]);
+
         setExistingImages([]);
         setEditingId(null); // Reset del ID de edición
 
@@ -410,9 +389,8 @@ export default function CostumesPage() {
               });
               setEditingId(null);
               setErrorMsg(null);
-              setSelectedFiles([]);
-              setPreviews([]);
               setExistingImages([]);
+              setNewFiles([]);
               openModalForm()
             },
             icon: <Plus className="w-4 h-4" />,
@@ -596,82 +574,62 @@ export default function CostumesPage() {
 
           {/* Nombre y Beat - Se vuelve un grid de 1 columna en celulares y 2 en pantallas más anchas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Nombre del Vestuario *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Set urbano..."
-                required
-                value={costumeFormData.name}
-                onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Ritmo / Coreografía (Beat)
-              </label>
-              <input
-                type="text"
-                value={costumeFormData.beat}
-                onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                placeholder="Ej. Salsa, Urbana..."
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">
-              Precio / Tarifa ($)
-            </label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              placeholder="0.00"
-              value={costumeFormData.price || ''}
-              onChange={(e) => setCostumeFormData({ ...costumeFormData, price: parseFloat(e.target.value) || 0 })}
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
+            <TextInput
+              label="Nombre del Vestuario *"
+              required
+              type="text"
+              value={costumeFormData.name}
+              onChange={(e) => setCostumeFormData({ ...costumeFormData, name: e.target.value })}
+              placeholder="Ej. Set urbano..."
             />
+
+            <TextInput
+              label="Ritmo / Coreografía (Beat)"
+              required
+              type="text"
+              value={costumeFormData.beat}
+              onChange={(e) => setCostumeFormData({ ...costumeFormData, beat: e.target.value })}
+              placeholder="Ej. Salsa, Urbana..."
+            />
+
           </div>
+          <TextInput
+            label="Precio / Tarifa ($)"
+            type="number"
+            step="0.01"
+            required
+            value={costumeFormData.price}
+            onChange={(e) => setCostumeFormData({ ...costumeFormData, price: parseFloat(e.target.value) || 0 })}
+            placeholder="0.00"
+          />
+
 
           {/* Categoría y Estado - Grid responsivo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Categoría *
-              </label>
-              <select
-                value={costumeFormData.category}
-                onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              >
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="baby">Baby</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="childrens">Infantil</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="youth">Juvenil</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="adult">Adulto</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Estado Inicial *
-              </label>
-              <select
-                value={costumeFormData.status}
-                onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              >
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="payment_pending">Pendiente por pago</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="making">Confeccionando</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="available">Disponible</option>
-                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="retired">Retirado</option>
-              </select>
-            </div>
+            <SelectInput
+              label="Categoría *"
+              value={costumeFormData.category}
+              onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
+              options={[
+                { label: "Selecciona una categoría", value: "", disabled: true },
+                { label: "Baby", value: "baby" },
+                { label: "Infantil", value: "childrens" },
+                { label: "Juvenil", value: "youth" },
+                { label: "Adulto", value: "adult" },
+              ]}
+            />
+            <SelectInput
+              label="Estado Inicial *"
+              value={costumeFormData.status}
+              onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
+              options={[
+                { label: "Selecciona el status", value: "", disabled: true },
+                { label: "Pendiente por pago", value: "payment_pending" },
+                { label: "Confeccionando", value: "making" },
+                { label: "Disponible", value: "available" },
+                { label: "Retirado", value: "retired" },
+              ]}
+            />
           </div>
 
           {/* Sección: Galería de Imágenes */}
@@ -682,7 +640,15 @@ export default function CostumesPage() {
             </div>
 
             {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <ImageGalleryPicker
+              label="Fotografías del Uniforme"
+              existingImages={existingImages}
+              onRemoveExistingImage={handleRemoveExisting}
+              files={newFiles}
+              onFilesChange={setNewFiles}
+              buttonText="Añadir foto"
+            />
+            {/* <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group">
                 <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
                 <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
@@ -694,7 +660,7 @@ export default function CostumesPage() {
                   className="hidden"
                 />
               </label>
-              {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
+              {/.* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR *./}
               {existingImages.map((src, index) => (
                 <div key={`existing-${index}`} className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group">
                   <img
@@ -702,7 +668,7 @@ export default function CostumesPage() {
                     alt={`Guardada ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  {/* Etiqueta sutil que indica que está guardada */}
+                  {/.* Etiqueta sutil que indica que está guardada *./}
                   <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
                     Guardada
                   </span>
@@ -731,7 +697,7 @@ export default function CostumesPage() {
                   </button>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         </form>
         {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
@@ -751,8 +717,8 @@ export default function CostumesPage() {
             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
           >
             {editingId
-              ? "Actualizar"
-              : "Registrar"}
+              ? "Actualizar vestuario →"
+              : "Registrar vestuario →"}
           </button>
         </div>
       </MacDockModal>
@@ -760,7 +726,7 @@ export default function CostumesPage() {
       <MacDockModal
         isOpen={isPoliciesModalOpen}
         onClose={closePoliciesModal}
-        title={editingId ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
+        title={"Actualizar política de uso del vestuario"}
         size={"lg"}
       >
         <form
