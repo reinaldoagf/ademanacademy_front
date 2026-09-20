@@ -10,6 +10,7 @@ import {
   Search,
   ImagePlus,
   Plus,
+  ShoppingBag,
   PackageCheck,
   AlertCircle,
   Layers,
@@ -31,6 +32,7 @@ import {
   getAllProductsAction,
   deleteProductAction
 } from "@/app/actions/product";
+import { TextInput, TextArea, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
 import { APP_KEYS } from "@/consts/app";
 
 
@@ -74,6 +76,7 @@ export default function ProductsPage() {
     description: "",
   });
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
@@ -115,6 +118,7 @@ export default function ProductsPage() {
         setFormData(initialFormState);
         setEditingId(null);
         setErrorMsg(null);
+        setNewFiles([]);
         openModal()
       },
       icon: <Plus className="w-4 h-4" />,
@@ -183,6 +187,13 @@ export default function ProductsPage() {
       id: product.id,
     });
   };
+  const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      existingImages: (prev.existingImages || []).filter((_, index) => index !== indexToRemove),
+    }));
+    // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
+  };
   // 📷 Manejador actualizado para cargar y convertir imágenes
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -212,39 +223,53 @@ export default function ProductsPage() {
     });
   };
 
-  // 🗑️ Eliminar imagen ya existente en el servidor
-  const removeExistingImage = (indexToRemove: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      existingImages: (prev.existingImages || []).filter((_, index) => index !== indexToRemove),
-    }));
-  };
-
-  // 🗑️ Eliminar nueva imagen seleccionada antes de subirla
-  const removeNewImage = (indexToRemove: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: (prev.images || []).filter((_, index) => index !== indexToRemove),
-    }));
+  // Manejo de inserción de nuevo salón
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file); // Lee el archivo como Data URL (contiene base64)
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
   // Manejo de inserción de nuevo salón
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     startTransition(async () => {
-      const res = await saveProductAction(formData, editingId);
-      if (!res.success) {
-        setErrorMsg(res.error || "Ocurrió un error.");
-        return;
+      try {
+        // 1. Procesar los archivos nuevos cargados localmente a Base64
+        const imagesPromises = newFiles.map(async (file) => {
+          const base64String = await fileToBase64(file);
+          return {
+            name: file.name,
+            type: file.type, // 'image/png', 'image/jpeg', etc.
+            base64: base64String,
+          };
+        });
+
+        const newImagesPayload = await Promise.all(imagesPromises);
+        const payload = {
+          ...formData,
+          images: newImagesPayload, // Nuevas imágenes Base64
+        };
+        const res = await saveProductAction(payload, editingId);
+        if (!res.success) {
+          setErrorMsg(res.error || "Ocurrió un error.");
+          return;
+        }
+        toast.success("Operación exitosa");
+        // Sincronizar estado local
+        if (!editingId) {
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
+        }
+        fetchData(currentPage, itemsPerPage);
+        // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
+        closeModal();
+      } catch (error) {
+        setErrorMsg("Ocurrió un error al procesar las imágenes seleccionadas.");
+        console.error(error);
       }
-      toast.success("Operación exitosa");
-      // Sincronizar estado local
-      if (!editingId) {
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
-      }
-      fetchData(currentPage, itemsPerPage);
-      // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-      closeModal();
     });
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
@@ -390,23 +415,26 @@ export default function ProductsPage() {
 
 
           {/* GRILLA DE CATÁLOGO / PRODUCTOS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.length > 0 ? (
-              products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  backendUrl={backendUrl}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                Ningún ítem coincide con los criterios de búsqueda comerciales.
-              </div>
-            )}
-          </div>
+
+          {products.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                backendUrl={backendUrl}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>) : (
+            <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+              <ShoppingBag className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+              <p className="font-questrial text-xs text-gray-400">
+                {isPending ? "Sincronizando..." : "Ningún ítem coincide con los criterios de búsqueda comerciales."}
+              </p>
+            </div>
+          )}
+
 
           {/* Seccion de Paginación */}
           {meta.totalPages > 1 && (
@@ -505,144 +533,99 @@ export default function ProductsPage() {
           </div>
 
           {/* Nombre del Producto */}
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">
-              Nombre del Producto *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ej: Zapatillas de Salsa Profesionales, Camiseta Academia..."
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-            />
-          </div>
+          <TextInput
+            label="Nombre del Producto *"
+            required
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Ej: Zapatillas de Salsa Profesionales, Camiseta Academia..."
+          />
+
 
           {/* Categoría y Precios en Grid de 3 Columnas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Categoría */}
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Categoría
-              </label>
-              <select
-                value={formData.categoryId || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              >
-                <option value="">Seleccionar Categoría</option>
-                {categories.map((category: ProductCategory) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectInput
+              label="Categoría"
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value as string })}
+              options={[
+                { label: "Selecciona una Categoría", value: "", disabled: true },
+                ...categories.map((c: ProductCategory) => ({
+                  label: `${c.name}`,
+                  value: c.id
+                }))
+              ]}
+            />
+
 
             {/* Precio de Venta */}
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Precio de Venta ($) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                placeholder="0.00"
-                value={formData.salePrice || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    salePrice: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
-              />
-            </div>
+            <TextInput
+              label="Precio de Venta ($) *"
+              type="number"
+              step="0.01"
+              required
+              value={formData.salePrice}
+              onChange={(e) => setFormData({ ...formData, salePrice: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00"
+            />
+
 
             {/* Costo Base */}
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Costo Base ($) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                placeholder="0.00"
-                value={formData.cost || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    cost: parseFloat(e.target.value) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-gray-600"
-              />
-            </div>
+            <TextInput
+              label="Costo Base ($) *"
+              type="number"
+              step="0.01"
+              required
+              value={formData.cost}
+              onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00"
+            />
+
           </div>
 
           {/* Gestión de Inventario / Stock */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50/80 rounded-lg border border-gray-100">
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Stock Actual
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.currentStock ?? 1}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    currentStock: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+            <TextInput
+              label="Stock Actual"
+              type="number"
+              min="0"
+              value={formData.currentStock ?? 1}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  currentStock: parseInt(e.target.value, 10) || 0,
+                })
+              }
+              placeholder="0.00"
+            />
 
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Alerta de Stock Mínimo
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.minimumStockAlert ?? 1}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    minimumStockAlert: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                className="w-full p-2 border border-purple-100 bg-white focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+
+            <TextInput
+              label="Alerta de Stock Mínimo"
+              type="number"
+              min="0"
+              value={formData.minimumStockAlert ?? 1}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  minimumStockAlert: parseInt(e.target.value, 10) || 0,
+                })
+              }
+              placeholder="0.00"
+            />
           </div>
 
           {/* Descripción del Producto */}
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">
-              Descripción del Producto
-            </label>
-            <textarea
-              placeholder="Detalles sobre material, tallas sugeridas, cuidados..."
-              rows={3}
-              value={formData.description || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-            ></textarea>
-          </div>
+          <TextArea
+            label="Descripción del Producto"
+            placeholder="Detalles sobre material, tallas sugeridas, cuidados..."
+            rows={3}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+
 
           {/* Sección: Galería de Imágenes */}
           <div className="border border-purple-100 bg-purple-50/10 p-3 sm:p-4 space-y-3 rounded-lg">
@@ -654,65 +637,15 @@ export default function ProductsPage() {
             </div>
 
             {/* Grid adaptable de imágenes */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {/* Botón personalizado para seleccionar archivos */}
-              <label className="h-20 sm:h-24 border border-dashed border-purple-200 bg-white hover:bg-purple-50/50 hover:border-purple-400 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer group rounded-lg">
-                <ImagePlus className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-medium text-gray-500">Añadir foto</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-              </label>
+            <ImageGalleryPicker
+              label="Fotografías del Producto"
+              existingImages={formData.existingImages || []}
+              onRemoveExistingImage={handleRemoveExisting}
+              files={newFiles}
+              onFilesChange={setNewFiles}
+              buttonText="Añadir foto"
+            />
 
-              {/* 1. RENDERIZADO DE IMÁGENES GUARDADAS EN EL SERVIDOR */}
-              {(formData.existingImages || []).map((src, index) => (
-                <div
-                  key={`existing-${index}`}
-                  className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={src}
-                    alt={`Guardada ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-1 left-1 bg-purple-900/80 text-white text-[8px] px-1 py-0.5 rounded uppercase font-bold tracking-wider">
-                    Guardada
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeExistingImage(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-
-              {/* 2. RENDERIZADO DE NUEVAS IMÁGENES SELECCIONADAS (BASE64) */}
-              {(formData.images || []).map((img, index) => (
-                <div
-                  key={`new-${index}`}
-                  className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={img.base64}
-                    alt={`Vista previa ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNewImage(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
         </form>
 
@@ -739,9 +672,9 @@ export default function ProductsPage() {
                 : "Registrar Producto"}
           </button>
         </div>
-      </MacDockModal>
+      </MacDockModal >
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
-      <ConfirmationModal
+      < ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}

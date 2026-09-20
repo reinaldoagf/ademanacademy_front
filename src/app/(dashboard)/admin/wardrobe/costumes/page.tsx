@@ -59,6 +59,14 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     unitLabel: "Unidades",
   },
 };
+const initialCostumeFormState = {
+  name: '',
+  price: 0, // 👈 Nuevo campo de precio
+  beat: '',
+  category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
+  status: 'payment_pending' as CostumeStatus,
+  existingImages: [],
+};
 export default function CostumesPage() {
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
   const clothingFormReference = useRef<HTMLFormElement>(null);
@@ -139,21 +147,12 @@ export default function CostumesPage() {
     price: 0,
   });
   // 1. Estado del formulario interno del modal
-  const [costumeFormData, setCostumeFormData] = useState({
-    name: '',
-    price: 0, // 👈 Nuevo campo de precio
-    beat: '',
-    category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
-    status: 'payment_pending' as CostumeStatus,
-    /* availableSizes: [...DEFAULT_SIZES] as SizeStock[] */
-  });
+  const [costumeFormData, setCostumeFormData] = useState(initialCostumeFormState);
   // Estados locales exclusivos para la gestión de archivos
   const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [existingImages, setExistingImages] = useState<string[]>([]);
   // Almacena el ID del vestuario que se está editando (null si es una creación)
   const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
-    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
+    setCostumeFormData({ ...costumeFormData, existingImages: (costumeFormData.existingImages || []).filter((_, index) => index !== indexToRemove) });
   };
   // Manejo de inserción de nuevo salón
   const fileToBase64 = (file: File): Promise<string> => {
@@ -175,6 +174,7 @@ export default function CostumesPage() {
       beat: costume.beat ?? '',
       category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
       status: costume.status as CostumeStatus,
+      existingImages: []
       /* availableSizes: costume.availableSizes as SizeStock[] */
     })
     // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
@@ -195,13 +195,12 @@ export default function CostumesPage() {
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
         return `${cleanBackendUrl}${cleanPath}`;
       });
-
       // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
-      setExistingImages(formattedImages);
+      setCostumeFormData({ ...costumeFormData, existingImages: formattedImages });
       setNewFiles([]);
     } catch (e) {
       console.error("Error al procesar imágenes existentes para edición", e);
-      setExistingImages([]);
+      setCostumeFormData({ ...costumeFormData, existingImages: [] });
       setNewFiles([]);
     }
 
@@ -269,7 +268,7 @@ export default function CostumesPage() {
         /* availableSizes: costumeFormData.availableSizes || [], */
         images: newImagesPayload, // Nuevas imágenes Base64
         // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
-        existingImages: editingId ? existingImages : [],
+        existingImages: editingId ? costumeFormData.existingImages : [],
       };
 
       // saveCostumeAction debe recibir el payload y el editingId (si existe)
@@ -280,40 +279,21 @@ export default function CostumesPage() {
         toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
 
         // Limpieza de estados tras el guardado exitoso
-
-        setExistingImages([]);
-        setEditingId(null); // Reset del ID de edición
-
-        // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
-        if (!editingId) {
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
-          setCostumeFormData({
-            name: '',
-            price: 0,
-            beat: '',
-            category: 'childrens' as CostumeCategory,
-            status: 'payment_pending' as CostumeStatus,
-            /* availableSizes: [...DEFAULT_SIZES] */
-          });
-        }
-
-        closeModalForm();
-      } else {
-        toast.error(result.error);
-        setErrorMsg(result.error);
-        scrollToTopForm();
+        setCostumeFormData({ ...costumeFormData, existingImages: [] })
       }
+      setEditingId(null); // Reset del ID de edición
+
+      // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
+      if (!editingId) {
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
+        setCostumeFormData(initialCostumeFormState);
+      }
+
+      closeModalForm();
+
     } catch (error) {
       setErrorMsg("Ocurrió un error al procesar las imágenes seleccionadas.");
       console.error(error);
-    }
-  };
-  const scrollToTopForm = () => {
-    if (clothingFormReference.current) {
-      clothingFormReference.current.scrollTo({
-        top: 0,
-        behavior: 'smooth' // 'smooth' para animación suave, o 'auto' para instantáneo
-      });
     }
   };
   // 4. Carga e integración de datos
@@ -379,17 +359,9 @@ export default function CostumesPage() {
           {
             label: "Agregar Diseño / Traje →",
             onClick: () => {
-              setCostumeFormData({
-                name: '',
-                price: 0,
-                beat: '',
-                category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
-                status: 'payment_pending' as CostumeStatus,
-                /* availableSizes: [...DEFAULT_SIZES] as SizeStock[] */
-              });
+              setCostumeFormData(initialCostumeFormState);
               setEditingId(null);
               setErrorMsg(null);
-              setExistingImages([]);
               setNewFiles([]);
               openModalForm()
             },
@@ -645,7 +617,7 @@ export default function CostumesPage() {
             {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
             <ImageGalleryPicker
               label="Fotografías del Vestuario"
-              existingImages={existingImages}
+              existingImages={costumeFormData.existingImages}
               onRemoveExistingImage={handleRemoveExisting}
               files={newFiles}
               onFilesChange={setNewFiles}
