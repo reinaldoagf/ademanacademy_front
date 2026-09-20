@@ -17,6 +17,7 @@ import {
     getAllProductCategoriesAction,
     deleteProductCategoryAction
 } from "@/app/actions/product-category";
+import { APP_KEYS } from "@/consts/app";
 
 type ProductCategoryFormData = {
     name: string,
@@ -61,7 +62,7 @@ export default function ProductCategoriesPage() {
                         toast.success("Operación exitosa");
                         fetchData(currentPage, itemsPerPage);
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event('refresh-product-categories-count'));
+                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT));
                     }
                 }
             });
@@ -201,7 +202,7 @@ export default function ProductCategoriesPage() {
             } else {
                 setCategories([res.data!, ...categories]);
                 // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-                window.dispatchEvent(new Event('refresh-product-categories-count'));
+                window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT));
             }
             closeModal();
         });

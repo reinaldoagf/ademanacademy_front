@@ -34,6 +34,8 @@ import { getAllInstructorsAction } from "@/app/actions/instructor";
 import { Group } from "@/types/group";
 import { GroupCategory } from "@/types/group-category";
 import { Employee } from "@/types/employee";
+import { APP_KEYS } from "@/consts/app";
+
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"> & {
   classroomId: string;
@@ -87,7 +89,7 @@ export default function GroupsListPage() {
           if (res.success) {
             toast.success("Operación exitosa");
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event('refresh-groups-count'));
+            window.dispatchEvent(new Event(APP_KEYS.REFRESH_GROUPS_COUNT));
             fetchData(currentPage, itemsPerPage);
           }
         }
@@ -254,7 +256,7 @@ export default function GroupsListPage() {
         // Sincronizar estado local
         if (!editingId) {
           // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-          window.dispatchEvent(new Event('refresh-groups-count'));
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_GROUPS_COUNT));
         }
         fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir

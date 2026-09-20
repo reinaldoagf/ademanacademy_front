@@ -103,61 +103,61 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   // Secciones modulares del software (Administrador)
   const [systemAdministration, setSystemAdministration] = useState<SidebarMenuItem[]>([
-    { key: 'users', name: 'Usuarios', href: '/admin/users', icon: UsersIcon, badge: 0 },
+    { key: APP_KEYS.USERS, name: 'Usuarios', href: '/admin/users', icon: UsersIcon, badge: 0 },
   ]);
 
   const [academicManagement, setAcademicManagement] = useState<SidebarMenuItem[]>([
-    { key: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
-    { key: 'schedule', name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
+    { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
+    { key: APP_KEYS.SCHEDULE, name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
     { key: APP_KEYS.CLIENTS, name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
     { key: APP_KEYS.STUDENTS, name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
     { key: APP_KEYS.CLASSROOMS, name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
     {
-      key: 'groups', name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
+      key: APP_KEYS.GROUPS, name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
       // 🎯 Submenú añadido
       children: [
-        { key: 'groups-categories', name: 'Categorías', href: '/admin/groups/categories' },
-        { key: 'groups-list', name: 'Lista de Grupos', href: '/admin/groups/list', badge: 0 },
+        { key: APP_KEYS.GROUPS_CATEGORIES, name: 'Categorías', href: '/admin/groups/categories' },
+        { key: APP_KEYS.GROUPS_LIST, name: 'Lista de Grupos', href: '/admin/groups/list', badge: 0 },
       ]
     },
-    { key: 'registrations', name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
+    { key: APP_KEYS.REGISTRATIONS, name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
   ]);
 
   const [operationalManagement, setOperationalManagement] = useState<SidebarMenuItem[]>([
-    { key: 'orders', name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
-    { key: 'payment-orders', name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
-    { key: 'accounts-payable', name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
-    { key: 'payments', name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
+    { key: APP_KEYS.ORDERS, name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
+    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
+    { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
+    { key: APP_KEYS.PAYMENTS, name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
     { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
     {
-      key: 'wardrobe', name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
+      key: APP_KEYS.WARDROBE, name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
       // 🎯 Submenú añadido
       children: [
-        { key: 'wardrobe-costumes', name: 'Vestuarios', href: '/admin/wardrobe/costumes', badge: 0 },
-        { key: 'wardrobe-uniforms', name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
+        { key: APP_KEYS.WARDROBE_COSTUMES, name: 'Vestuarios', href: '/admin/wardrobe/costumes', badge: 0 },
+        { key: APP_KEYS.WARDROBE_UNIFORMS, name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
       ]
     }, {
-      key: 'store', name: 'Tienda e Inventario', href: '/admin/store', icon: ShoppingBag,
+      key: APP_KEYS.STORE, name: 'Tienda e Inventario', href: '/admin/store', icon: ShoppingBag,
       // 🎯 Submenú añadido
       children: [
-        { key: 'store-categories', name: 'Categorías', href: '/admin/store/categories', badge: 0 },
-        { key: 'store-products', name: 'Productos', href: '/admin/store/products', badge: 0 },
+        { key: APP_KEYS.STORE_CATEGORIES, name: 'Categorías', href: '/admin/store/categories', badge: 0 },
+        { key: APP_KEYS.STORE_PRODUCTS, name: 'Productos', href: '/admin/store/products', badge: 0 },
       ]
     },
   ]);
   const [marketingEventManagement, setMarketingEventManagement] = useState<SidebarMenuItem[]>([
-    { key: 'seating-charts', name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 0 },
-    { key: 'events', name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
-    { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 8 },
+    { key: APP_KEYS.SEATING_CHARTS, name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 0 },
+    { key: APP_KEYS.EVENTS, name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
+    { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 0 },
   ]);
 
   const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([
-    { key: 'dashboard', name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { key: 'my-affiliates', name: 'Mis afiliados', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
-    { key: 'classes', name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
-    { key: 'payments', name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
-    { key: 'clothing', name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
-    { key: 'events', name: 'Eventos', href: '/client/events', icon: Star, badge: 4 }, // Tu otro badge estático
+    { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
+    { key: APP_KEYS.MY_AFFILIATES, name: 'Mis afiliados', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
+    { key: APP_KEYS.CLASSES, name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
+    { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
+    { key: APP_KEYS.CLOTHING, name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
+    { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 }, // Tu otro badge estático
   ]);
 
   const fetchAdminBadge = useCallback(
@@ -211,27 +211,27 @@ export function Sidebar({ isOpen }: SidebarProps) {
   );
   // 3. Configuración centralizada de badges y sus eventos
   const adminBadgeConfigs = [
-    { event: "refresh-users-count", action: getAllUsersAction, key: "users" },
+    { event: APP_KEYS.REFRESH_USERS_COUNT, action: getAllUsersAction, key: APP_KEYS.USERS },
     { event: APP_KEYS.REFRESH_CLIENTS_COUNT, action: getAllClientsAction, key: APP_KEYS.CLIENTS },
     { event: APP_KEYS.REFRESH_STUDENTS_COUNT, action: getAllStudentsAction, key: APP_KEYS.STUDENTS },
     { event: APP_KEYS.REFRESH_CLASSROOMS_COUNT, action: getAllClassroomsAction, key: APP_KEYS.CLASSROOMS },
-    { event: "refresh-payments-count", action: getAllTransactionsAction, key: "payments" },
+    { event: APP_KEYS.REFRESH_PAYMENTS_COUNT, action: getAllTransactionsAction, key: APP_KEYS.PAYMENTS },
     { event: APP_KEYS.REFRESH_EMPLOYEES_COUNT, action: getAllEmployeesAction, key: APP_KEYS.EMPLOYEES },
-    { event: "refresh-payment-orders-count", action: getAllPaymentOrdersAction, key: "payment-orders" },
-    { event: "refresh-orders-count", action: getAllOrdersAction, key: "orders" },
-    { event: "refresh-events-count", action: getAllEventsAction, key: "events" },
-    { event: "refresh-seating-charts-count", action: getAllSeatingMapsAction, key: "seating-charts" },
+    { event: APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT, action: getAllPaymentOrdersAction, key: APP_KEYS.PAYMENT_ORDERS },
+    { event: APP_KEYS.REFRESH_ORDERS_COUNT, action: getAllOrdersAction, key: APP_KEYS.ORDERS },
+    { event: APP_KEYS.REFRESH_EVENTS_COUNT, action: getAllEventsAction, key: APP_KEYS.EVENTS },
+    { event: APP_KEYS.REFRESH_SEATING_CHARTS_COUNT, action: getAllSeatingMapsAction, key: APP_KEYS.SEATING_CHARTS },
 
     // Submódulos (hijos)
-    { event: "refresh-groups-count", action: getAllGroupsAction, key: "groups-list", parentKey: "groups" },
-    { event: "refresh-costumes-count", action: getAllCostumesAction, key: "wardrobe-costumes", parentKey: "wardrobe" },
-    { event: "refresh-uniforms-count", action: getAllUniformsAction, key: "wardrobe-uniforms", parentKey: "wardrobe" },
-    { event: "refresh-products-count", action: getAllProductsAction, key: "store-products", parentKey: "store" },
-    { event: "refresh-product-categories-count", action: getAllProductCategoriesAction, key: "store-categories", parentKey: "store" },
+    { event: APP_KEYS.REFRESH_GROUPS_COUNT, action: getAllGroupsAction, key: APP_KEYS.GROUPS_LIST, parentKey: APP_KEYS.GROUPS },
+    { event: APP_KEYS.REFRESH_COSTUMES_COUNT, action: getAllCostumesAction, key: APP_KEYS.WARDROBE_COSTUMES, parentKey: APP_KEYS.WARDROBE },
+    { event: APP_KEYS.REFRESH_UNIFORMS_COUNT, action: getAllUniformsAction, key: APP_KEYS.WARDROBE_UNIFORMS, parentKey: APP_KEYS.WARDROBE },
+    { event: APP_KEYS.REFRESH_PRODUCTS_COUNT, action: getAllProductsAction, key: APP_KEYS.STORE_PRODUCTS, parentKey: APP_KEYS.STORE },
+    { event: APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT, action: getAllProductCategoriesAction, key: APP_KEYS.STORE_CATEGORIES, parentKey: APP_KEYS.STORE },
   ];
 
   const clientBadgeConfigs = [
-    { event: "refresh-my-affiliates-count", action: getMyRepresentedAction, key: "my-affiliates" },
+    { event: APP_KEYS.REFRESH_MY_AFFILIATES_COUNT, action: getMyRepresentedAction, key: APP_KEYS.MY_AFFILIATES },
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos
@@ -390,7 +390,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     // A. Función para refrescar todos los badges en paralelo al inicio
     const fetchAllBadges = () => {
       Promise.all(
-        clientBadgeConfigs.map((cfg) => fetchClientBadge(cfg.action, cfg.key, cfg.parentKey))
+        clientBadgeConfigs.map((cfg) => fetchClientBadge(cfg.action, cfg.key))
       );
     };
 
@@ -398,7 +398,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
     // B. Mapeo dinámico de Listeners para Custom Events
     const handlers = clientBadgeConfigs.map((cfg) => {
-      const handler = () => fetchClientBadge(cfg.action, cfg.key, cfg.parentKey);
+      const handler = () => fetchClientBadge(cfg.action, cfg.key);
       window.addEventListener(cfg.event, handler);
       return { event: cfg.event, handler };
     });

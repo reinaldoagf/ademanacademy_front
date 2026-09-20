@@ -31,6 +31,7 @@ import {
   getAllProductsAction,
   deleteProductAction
 } from "@/app/actions/product";
+import { APP_KEYS } from "@/consts/app";
 
 
 // Estado inicial limpio del formulario para Empleados
@@ -85,7 +86,7 @@ export default function ProductsPage() {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event('refresh-products-count'));
+            window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
           }
         }
       });
@@ -239,7 +240,7 @@ export default function ProductsPage() {
       toast.success("Operación exitosa");
       // Sincronizar estado local
       if (!editingId) {
-        window.dispatchEvent(new Event('refresh-products-count'));
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
       }
       fetchData(currentPage, itemsPerPage);
       // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir

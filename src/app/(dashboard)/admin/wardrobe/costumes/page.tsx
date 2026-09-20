@@ -21,6 +21,7 @@ import { MacDockModal } from "@/components/ui/MacDockModal";
 import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
+import { APP_KEYS } from "@/consts/app";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
@@ -111,7 +112,7 @@ export default function CostumesPage() {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event('refresh-costumes-count'));
+            window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
           }
         }
       });
@@ -306,7 +307,7 @@ export default function CostumesPage() {
 
         // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
         if (!editingId) {
-          window.dispatchEvent(new Event('refresh-costumes-count'));
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
           setCostumeFormData({
             name: '',
             price: 0,
@@ -634,8 +635,8 @@ export default function CostumesPage() {
               placeholder="0.00"
               value={costumeFormData.price || ''}
               onChange={(e) => setCostumeFormData({ ...costumeFormData, price: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
-                            />
+              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors font-bold text-purple-700"
+            />
           </div>
 
           {/* Categoría y Estado - Grid responsivo */}

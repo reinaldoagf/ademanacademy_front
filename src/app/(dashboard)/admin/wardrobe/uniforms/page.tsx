@@ -22,6 +22,7 @@ import { useModal } from "@/hooks/useModal";
 import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { APP_KEYS } from "@/consts/app";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
@@ -104,7 +105,7 @@ export default function UniformsPage() {
                         toast.success("Operación exitosa");
                         fetchData(currentPage, itemsPerPage);
                         // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event('refresh-uniforms-count'));
+                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_UNIFORMS_COUNT));
                     }
                 }
             });
@@ -271,7 +272,7 @@ export default function UniformsPage() {
 
                 // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
                 if (!editingId) {
-                    window.dispatchEvent(new Event('refresh-uniforms-count'));
+                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_UNIFORMS_COUNT));
                     setUniformFormData({
                         name: '',
                         price: 0,

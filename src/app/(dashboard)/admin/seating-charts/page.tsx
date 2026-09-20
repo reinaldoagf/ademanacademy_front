@@ -19,6 +19,7 @@ import { getAllSeatingMapsAction, deleteSeatingMapAction } from "@/app/actions/s
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
+import { APP_KEYS } from "@/consts/app";
 
 export default function SeatingMapListPage() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function SeatingMapListPage() {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event('refresh-seating-charts-count'));
+            window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
           }
         }
       });
@@ -88,7 +89,7 @@ export default function SeatingMapListPage() {
         search: searchTerm || undefined,
       });
       if (res.success && res.data) {
-        window.dispatchEvent(new Event('refresh-seating-charts-count'));
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
         setSeatingsMaps(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }

@@ -36,6 +36,7 @@ import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 import { EventData, EventFormData } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
+import { APP_KEYS } from "@/consts/app";
 
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
@@ -107,7 +108,7 @@ export default function AdminEventsPage() {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
             // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event('refresh-events-count'));
+            window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
           }
         }
       });
@@ -227,7 +228,7 @@ export default function AdminEventsPage() {
 
         // Reactividad: refrescar listado, conteos o métricas si aplica
         if (!editingId) {
-          window.dispatchEvent(new Event("refresh-events-count"));
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
         }
 
         fetchData(currentPage, itemsPerPage);
