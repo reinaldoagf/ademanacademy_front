@@ -11,15 +11,25 @@ import {
     AlertCircle,
     Eye
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import HeroSection from '@/components/layout/HeroSection';
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import PaymentDetailModal from "@/components/modals/PaymentDetailModal";
-import { getAllTransactionsAction } from "@/app/actions/transaction";
+import { MacDockModal } from "@/components/ui/MacDockModal";
+import { getAllTransactionsAction, approveTransactionAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
+import { useModal } from "@/hooks/useModal";
 
 export default function PaymentsPage() {
+    const [error, setError] = useState<string | null>(null);
+    // Estados para Modales
+    const {
+        isOpen: isModalOpen,
+        openModal: openModal,
+        closeModal: closeModal
+    } = useModal();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
@@ -36,20 +46,14 @@ export default function PaymentsPage() {
     const [filterConcept, setFilterConcept] = useState("all");
     // 💡 Estados para controlar el modal
     const [selectedPayment, setSelectedPayment] = useState<any>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedGroupId, setSelectedGroupId] = useState<string>("");
 
-    const handleSuccessApproval = () => {
-        fetchTableData(currentPage, itemsPerPage);
-    };
 
     // Métricas financieras calculadas dinámicamente
     const ingresosMes = 6450;
     const porCobrar = 1120;
     const cajaChica = 340;
 
-    const handleNewElement = async () => {
-        console.log('handleNewElement')
-    }
     const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
             const res = await getAllTransactionsAction({
@@ -74,6 +78,30 @@ export default function PaymentsPage() {
 
         return () => clearTimeout(handler);
     }, [searchTerm, filterConcept, currentPage, itemsPerPage]);
+
+    const handleApprove = () => {
+        // 🎯 VALIDACIÓN: Si es matrícula, obligar a seleccionar un grupo antes de proceder
+        if (selectedPayment.concept === "tuition" && !selectedGroupId) {
+            setError("Por favor, selecciona un grupo académico para asignar al estudiante.");
+            return;
+        }
+
+        startTransition(async () => {
+            setError(null);
+
+            // Pasamos el realId junto al groupId (si aplica) al Server Action
+            const res = await approveTransactionAction(selectedPayment.realId, selectedGroupId || undefined);
+
+            if (res.success) {
+                toast.success(res.data.message ?? 'Operación exitosa')
+                setError(null);
+                closeModal()
+                fetchTableData(currentPage, itemsPerPage);
+            } else {
+                setError(res.error);
+            }
+        });
+    };
 
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
@@ -172,9 +200,9 @@ export default function PaymentsPage() {
                     <button
                         onClick={() => {
                             setSelectedPayment(transaction); // Seteamos el objeto de la consola
-                            setIsModalOpen(true);        // Abrimos el modal
+                            openModal();        // Abrimos el modal
                         }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald/80 rounded-xl cursor-pointer bg-emerald-200 hover:bg-emerald-500 hover:text-white"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald-700 rounded-xl cursor-pointer bg-emerald-50 hover:bg-emerald-100"
                     >
                         <Eye className="w-3.5 h-3.5" /> Ver detalles
                     </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
@@ -192,11 +220,7 @@ export default function PaymentsPage() {
             <HeroSection
                 htmlTitle={`Caja y Flujo de <em class="text-[#5e0472]">Pagos</em>`}
                 htmlSubTitle={`Administra las recaudaciones diarias, mensualidades de alumnos e ingresos por tienda.`}
-                actions={[{
-                    label: "Registrar Ingreso a Caja →",
-                    onClick: handleNewElement,
-                    icon: <Plus className="w-4 h-4" />,
-                }]}
+                actions={[]}
             />
             <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
                 {/* REPORTE FINANCIERO EXPRESS */}
@@ -279,15 +303,44 @@ export default function PaymentsPage() {
                 />
 
             </div>
-            <PaymentDetailModal
+
+            {/* MODAL: HISTORIAL DE ABONOS */}
+            <MacDockModal
                 isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setSelectedPayment(null);
-                }}
-                transaction={selectedPayment}
-                onSuccess={handleSuccessApproval}
-            />
+                onClose={closeModal}
+                title={`Detalles del Pago  ${selectedPayment?.id}`}
+                size={"lg"}
+            >
+                <PaymentDetailModal
+                    transaction={selectedPayment}
+                    selectedGroupId={selectedGroupId}
+                    error={error}
+                    onSelectGroupId={(id) => {
+                        setSelectedGroupId(id);
+                        setError(null);
+                    }}
+                />
+                <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+                    <button
+                        type="button"
+                        onClick={() => closeModal()}
+                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        disabled={isPending || selectedPayment.status === "approved"}
+                        onClick={() => handleApprove()}
+                        className={`font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs   shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md ${selectedPayment.status === "approved" ? " bg-gray-200 text-gray-400" : "text-white cursor-pointer gradient-purple"
+                            }`}
+                    >
+                        {isPending
+                            ? "Abonando..."
+                            : "Abonar →"}
+                    </button>
+                </div>
+            </MacDockModal>
         </>
     );
 }
