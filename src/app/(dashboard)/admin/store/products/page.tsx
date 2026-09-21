@@ -32,7 +32,7 @@ import {
   getAllProductsAction,
   deleteProductAction
 } from "@/app/actions/product";
-import { TextInput, TextArea, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
 import { APP_KEYS } from "@/consts/app";
 
 
@@ -509,29 +509,14 @@ export default function ProductsPage() {
           )}
 
           {/* Toggle de Activación / Visibilidad */}
-          <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-lg">
-            <div className="flex flex-col">
-              <span className="font-bold text-gray-700">Estado del Producto</span>
-              <span className="text-gray-500 text-[11px]">
-                {formData.isActive
-                  ? "El producto está activo y visible en la tienda"
-                  : "El producto está oculto / inactivado"}
-              </span>
-            </div>
-
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) =>
-                  setFormData({ ...formData, isActive: e.target.checked })
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-            </label>
-          </div>
-
+          <ToggleSwitch
+            label="Estado del Producto"
+            description={formData.isActive
+              ? "El producto está activo y visible en la tienda"
+              : "El producto está oculto / inactivado"}
+            checked={formData.isActive}
+            onChange={(active) => setFormData({ ...formData, isActive: active })}
+          />
           {/* Nombre del Producto */}
           <TextInput
             label="Nombre del Producto *"

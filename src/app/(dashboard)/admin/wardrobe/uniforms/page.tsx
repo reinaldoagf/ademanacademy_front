@@ -433,7 +433,7 @@ export default function UniformsPage() {
                         <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
                             <Shirt className="w-10 h-10 text-purple-200 mx-auto mb-3" />
                             <p className="font-questrial text-xs text-gray-400">
-                                {isPending ? "Sincronizando..." : "No se encuentran uniformes bajo la modalidad seleccionada.."}
+                                {isPending ? "Sincronizando..." : "No se encuentran uniformes bajo la modalidad seleccionada."}
                             </p>
                         </div>
                     )}

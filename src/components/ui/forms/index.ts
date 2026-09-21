@@ -11,3 +11,4 @@ export * from './EmailInput';
 export * from './DateInput';
 export * from './RangeSliderInput';
 export * from './ImageGalleryPicker';
+export * from './ToggleSwitch';

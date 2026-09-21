@@ -535,8 +535,11 @@ export default function GroupsListPage() {
               </div>
             ))
           ) : (
-            <div className="text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-              No hay grupos registrados para este filtro.
+            <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+              <CalendarDays className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+              <p className="font-questrial text-xs text-gray-400">
+                {isPending ? "Sincronizando..." : "No hay grupos registrados para este filtro."}
+              </p>
             </div>
           )}
         </div>

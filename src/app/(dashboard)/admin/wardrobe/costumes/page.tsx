@@ -18,7 +18,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
+import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
 import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
@@ -166,17 +166,7 @@ export default function CostumesPage() {
 
   // 1. Definimos las funciones que recibirán el elemento capturado
   const handleEdit = (costume: any) => {
-    openModalForm();
-    setEditingId(costume.id);
-    setCostumeFormData({
-      name: costume.name ?? '',
-      price: Number(costume.price) || 0,
-      beat: costume.beat ?? '',
-      category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
-      status: costume.status as CostumeStatus,
-      existingImages: []
-      /* availableSizes: costume.availableSizes as SizeStock[] */
-    })
+
     // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
     let imagesParsed: string[] = [];
     try {
@@ -196,8 +186,17 @@ export default function CostumesPage() {
         return `${cleanBackendUrl}${cleanPath}`;
       });
       // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
-      setCostumeFormData({ ...costumeFormData, existingImages: formattedImages });
+      setEditingId(costume.id);
+      setCostumeFormData({
+        name: costume.name ?? '',
+        price: Number(costume.price) || 0,
+        beat: costume.beat ?? '',
+        category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
+        status: costume.status as CostumeStatus,
+        existingImages: formattedImages as any
+      })
       setNewFiles([]);
+      openModalForm();
     } catch (e) {
       console.error("Error al procesar imágenes existentes para edición", e);
       setCostumeFormData({ ...costumeFormData, existingImages: [] });
@@ -221,20 +220,21 @@ export default function CostumesPage() {
     e.preventDefault();
     setErrorMsg(null);
     try {
-      // 2. Construir el payload definitivo
-      const payload = {
-        id: policyFormData.id,
-        key: policyFormData.key,
-        value: policyFormData.value,
-        active: policyFormData.active,
-      };
-
-      // saveCostumeAction debe recibir el payload
-      const result = await saveSettingAction(payload, payload.id);
-      if (result.success) {
-        toast.success("Los Términos y Condiciones se actualizado correctamente.");
-        closePoliciesModal();
-      }
+      startTransition(async () => {
+        // 2. Construir el payload definitivo
+        const payload = {
+          id: policyFormData.id,
+          key: policyFormData.key,
+          value: policyFormData.value,
+          active: policyFormData.active,
+        };
+        // saveCostumeAction debe recibir el payload
+        const result = await saveSettingAction(payload, payload.id);
+        if (result.success) {
+          toast.success("Los Términos y Condiciones se actualizado correctamente.");
+          closePoliciesModal();
+        }
+      });
     } catch (error) {
       console.error(error);
     }
@@ -244,7 +244,6 @@ export default function CostumesPage() {
   const wardrobeStorage = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-
     try {
       // 1. Procesar los archivos nuevos cargados localmente a Base64
       const imagesPromises = newFiles.map(async (file) => {
@@ -465,7 +464,7 @@ export default function CostumesPage() {
             <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
               <Shirt className="w-10 h-10 text-purple-200 mx-auto mb-3" />
               <p className="font-questrial text-xs text-gray-400">
-                {isPending ? "Sincronizando..." : "No se encuentran vestuarios bajo la modalidad seleccionada.."}
+                {isPending ? "Sincronizando..." : "No se encuentran vestuarios bajo la modalidad seleccionada."}
               </p>
             </div>
           )}
@@ -626,7 +625,7 @@ export default function CostumesPage() {
           </div>
         </form>
         {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
-        <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+        <div className="pt-2 flex justify-between">
           <button
             type="button"
             onClick={() => closeModalForm()}
@@ -639,11 +638,14 @@ export default function CostumesPage() {
             type="submit"
             form="costume-form" // <-- Apunta al ID del formulario
             onClick={(e) => { }}
+            disabled={isPending}
             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
           >
-            {editingId
-              ? "Actualizar vestuario →"
-              : "Registrar vestuario →"}
+            {isPending
+              ? "Guardando..."
+              : editingId
+                ? "Actualizar Vestuario →"
+                : "Registrar Vestuario →"}
           </button>
         </div>
       </MacDockModal>
@@ -667,47 +669,35 @@ export default function CostumesPage() {
           )}
 
           {/* Control de Activación (Toggle Switch) */}
-          <div className="flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100">
-            <div className="flex flex-col">
-              <span className="font-bold text-gray-700">Estado de la Política</span>
-              <span className="text-gray-500 text-[11px]">
-                {policyFormData.active ? "La política está activa y visible" : "La política está desactivada"}
-              </span>
-            </div>
-
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={policyFormData.active}
-                onChange={(e) => setPolicyFormData({ ...policyFormData, active: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-            </label>
-          </div>
-
+          <ToggleSwitch
+            label="Estado de la Política"
+            description={
+              policyFormData.active
+                ? "La política está activa y visible"
+                : "La política está desactivada"
+            }
+            checked={policyFormData.active}
+            onChange={(active) => setPolicyFormData({ ...policyFormData, active })}
+          />
           {/* Campo de Políticas de Uso */}
-          <div>
-            <label className="block text-gray-500 font-bold mb-1">
-              Políticas de Uso *
-            </label>
-            <textarea
-              placeholder="Escribe las políticas de uso aquí..."
-              rows={5}
-              value={policyFormData.value}
-              onChange={(e) => setPolicyFormData({ ...policyFormData, value: e.target.value })}
-              className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-            ></textarea>
-          </div>
+          <TextArea
+            label="Políticas de Uso *"
+            placeholder="Escribe las políticas de uso aquí..."
+            required
+            rows={3}
+            value={policyFormData.value}
+            onChange={(e) => setPolicyFormData({ ...policyFormData, value: e.target.value })}
+          />
+
         </form>
 
 
         {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
-        <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+        <div className="pt-2 flex justify-between">
           <button
             type="button"
             onClick={() => closePoliciesModal()}
-            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
+            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
           >
             Cancelar
           </button>
@@ -716,9 +706,12 @@ export default function CostumesPage() {
             type="submit"
             form="policies-form" // <-- Apunta al ID del formulario
             onClick={(e) => { }}
-            className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
+            disabled={isPending}
+            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
           >
-            Actualizar
+            {isPending
+              ? "Guardando..."
+              : "Actualizar →"}
           </button>
         </div>
 

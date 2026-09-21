@@ -393,16 +393,14 @@ export default function ClassroomsPage() {
 
                     </div>
 
-                    <div>
-                        <TextArea
-                            label="Dirección"
-                            placeholder="Ej. Calle Principal #123..."
-                            required
-                            rows={3}
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        />
-                    </div>
+                    <TextArea
+                        label="Dirección"
+                        placeholder="Ej. Calle Principal #123..."
+                        required
+                        rows={3}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
                     <div className="grid grid-cols-2 gap-3">
                         <SelectInput
                             label="Especialidad de Área"
@@ -472,8 +470,8 @@ export default function ClassroomsPage() {
                             {isPending
                                 ? "Guardando..."
                                 : editingId
-                                    ? "Actualizar Salón"
-                                    : "Registrar Salón"}
+                                    ? "Actualizar Salón →"
+                                    : "Registrar Salón →"}
                         </button>
                     </div>
                 </form>

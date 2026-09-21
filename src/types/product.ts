@@ -43,7 +43,7 @@ export interface SaveProductPayload {
     currentStock?: number;
     minimumStockAlert?: number;
     categoryId?: string;
-    isActive?: boolean;
+    isActive: boolean;
     images?: { name: string; type: string; base64: string }[];
     existingImages?: string[];
 }

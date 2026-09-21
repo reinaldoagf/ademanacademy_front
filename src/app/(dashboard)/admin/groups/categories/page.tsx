@@ -7,7 +7,7 @@ import {
     BookmarkCheck,
     User, Search,
     ChevronLeft, ChevronRight,
-    Trash2, Pencil
+    Trash2, Pencil, CalendarDays
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -235,8 +235,11 @@ export default function GroupsCategroiesPage() {
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                            No hay categorías de grupos registrados para este filtro.
+                        <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+                            <CalendarDays className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+                            <p className="font-questrial text-xs text-gray-400">
+                                {isPending ? "Sincronizando..." : "No hay categorías de grupos registrados para este filtro."}
+                            </p>
                         </div>
                     )}
                 </div>
