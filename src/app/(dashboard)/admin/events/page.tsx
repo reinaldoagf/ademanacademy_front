@@ -272,6 +272,7 @@ export default function AdminEventsPage() {
         if (res.success) {
           fetchData(currentPage, itemsPerPage);
           toast.success(res.data.message || "Asientos procesados correctamente");
+          window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
           closeModalSeatingMap();
           // Opcional: Recargar o revalidar datos del mapa
         } else {
