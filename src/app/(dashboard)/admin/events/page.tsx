@@ -17,11 +17,13 @@ import {
   DollarSign,
   Trash2,
   Pencil,
-  Loader2
+  Loader2,
+  Star
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, TextArea, SelectInput, DateInput } from '@/components/ui/forms';
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 // Importar el mapa asegurando que solo se cargue en el cliente
@@ -121,7 +123,7 @@ export default function AdminEventsPage() {
   // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
   const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
   const openTicketOfficeMap = (event: EventData) => {
-    console.log({ event })
+    // console.log({ event })
     setSelectedEvent(event);
     setSelectedChairs([]);
     openModalSeatingMap();
@@ -418,73 +420,167 @@ export default function AdminEventsPage() {
 
           {/* LISTADO DE EVENTOS */}
           <div className="space-y-4">
-            {events.length > 0 ? (
-              events.map((event) => {
-
+            {events.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event) => {
+                const getProductionStatusBadge = (status: string) => {
+                  switch (status?.toLowerCase()) {
+                    case 'draft':
+                    case 'borrador':
+                      return {
+                        label: 'Borrador',
+                        bg: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                        dot: 'bg-amber-500',
+                      };
+                    case 'in_production':
+                    case 'en_produccion':
+                      return {
+                        label: 'En Producción',
+                        bg: 'bg-purple-50 text-[#5e0472] border-purple-200/80',
+                        dot: 'bg-purple-600',
+                      };
+                    case 'published':
+                    case 'publicado':
+                      return {
+                        label: 'Publicado',
+                        bg: 'bg-blue-50 text-blue-700 border-blue-200/80',
+                        dot: 'bg-blue-500',
+                      };
+                    case 'completed':
+                    case 'finalizado':
+                      return {
+                        label: 'Finalizado',
+                        bg: 'bg-slate-100 text-slate-700 border-slate-200',
+                        dot: 'bg-slate-500',
+                      };
+                    case 'cancelled':
+                    case 'cancelado':
+                      return {
+                        label: 'Cancelado',
+                        bg: 'bg-rose-50 text-rose-700 border-rose-200/80',
+                        dot: 'bg-rose-500',
+                      };
+                    default:
+                      return {
+                        label: status || 'Sin Estado',
+                        bg: 'bg-gray-50 text-gray-700 border-gray-200',
+                        dot: 'bg-gray-400',
+                      };
+                  }
+                };
+                const prodStatus = getProductionStatusBadge(event.productionStatus);
                 return (
-                  <div key={`event-${event.id}`} className="glass-card p-5 shadow-sm border border-purple-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-md transition bg-white">
-
-                    {/* Detalles del Evento */}
-                    <div className="flex items-start gap-4 lg:w-1/4">
-                      <div className={`w-12 h-12 flex items-center justify-center shrink-0 ${event.type === "annual_gala" ? "bg-purple-100 text-purple-700" :
-                        event.type === "Masterclass" ? "bg-pink-100 text-pink-700" :
-                          "bg-indigo-100 text-indigo-700"
-                        }`}>
-                        <Sparkles className="w-5 h-5" />
+                  <div
+                    key={`event-${event.id}`}
+                    className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
+                  >
+                    {/* Cabecera de la tarjeta */}
+                    <div className="p-5 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
+                          {event.name}
+                        </h3>
+                        <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
+                          {
+                            event.startDate && (
+                              <div className="flex items-center gap-1 text-green-500 text-[11px] font-questrial">
+                                <Calendar className="w-3 h-3" />
+                                <DatePipe value={event.startDate} format="short" />
+                              </div>
+                            )
+                          }
+                          {
+                            event.endDate && event.endDate !== event.startDate && (
+                              <div className="flex items-center gap-1 text-red-500 text-[11px] font-questrial">
+                                - <DatePipe value={event.endDate} format="short" />
+                                <Calendar className="w-3 h-3" />
+                              </div>
+                            )
+                          }</div>
                       </div>
-                      <div>
-                        <span className="text-[9px] uppercase font-questrial font-bold tracking-wider text-gray-400 font-mono">{event.code}</span>
-                        <h3 className="font-anton text-gray-800 text-base leading-tight mt-0.5">{event.name}</h3>
-                        <span className="text-[10px] bg-purple-50 text-purple-700 font-questrial font-semibold px-2 py-0.5 mt-1 inline-block">
-                          {event.type}
-                        </span>
+
+                      {/* Sub-métricas vectoriales del plano */}
+                      <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Código
+                          </p>
+                          <p className="text-xs font-questrial font-bold text-gray-700">
+                            {event.code || 'Sin código'}
+                          </p>
+                        </div><div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Ubicación
+                          </p>
+                          <p className="text-xs font-questrial font-bold text-gray-700">
+                            {event.seatingMap?.location || 'Sin mapa de asientos'}
+                          </p>
+                        </div>
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Descripción
+                          </p>
+                          <p className="text-xs font-questrial font-bold text-gray-700">
+                            {event.description || 'Sin descripción'}
+                          </p>
+                        </div>
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Tipo
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 justify-center">
+
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-questrial font-bold tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm backdrop-blur-md">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                              <span className="capitalize">{event.type}</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Status de Producción
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 justify-center">
+
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-questrial font-bold tracking-wide border shadow-sm transition-all backdrop-blur-md ${prodStatus.bg}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${prodStatus.dot}`} />
+                              {prodStatus.label}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Status
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 justify-center">
+
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-questrial font-bold tracking-wide border shadow-sm transition-all backdrop-blur-md ${event.isActive
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                : 'bg-rose-50 text-rose-700 border-rose-200/80'
+                                }`}
+                            >
+                              <span className="relative flex h-2 w-2">
+                                {event.isActive && (
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                )}
+                                <span
+                                  className={`relative inline-flex rounded-full h-2 w-2 ${event.isActive ? 'bg-emerald-500' : 'bg-rose-500'
+                                    }`}
+                                />
+                              </span>
+                              {event.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Logística Física y Fecha */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-500 lg:w-1/4 font-medium">
-                      <div className="flex items-center gap-2 font-questrial">
-                        <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
-                        <DatePipe value={event.startDate} format="short" />
-                      </div>
-                      <div className="flex items-center gap-2 font-questrial">
-                        <MapPin className="w-4 h-4 text-pink-400 shrink-0" />
-                        <span className="line-clamp-1">{event.seatingMap?.location || 'Sin mapa de asientos'}</span>
-                      </div>
-                    </div>
-
-
-                    {/* Estatus y Botón Acciones */}
-                    <div className="flex items-center justify-between lg:justify-end gap-4 border-t lg:border-t-0 pt-3 lg:pt-0 border-purple-50/50 shrink-0">
-                      <span className={`text-[10px] font-questrial font-semibold uppercase tracking-wider px-3 py-1 ${event.productionStatus === "Sold Out" ? "bg-pink-100 text-pink-700" :
-                        event.productionStatus === "essays" ? "bg-purple-100 text-purple-700" :
-                          "bg-gray-100 text-gray-500"
-                        }`}>
-                        {event.productionStatus}
-                      </span>
-
-                      <div className="flex gap-2 justify-end">
-                        <div className="relative inline-block group">
-                          <button
-                            onClick={() => openTicketOfficeMap(event)}
-                            disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
-                            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm ${event.productionStatus === "Sold Out" || !event.seatingMap ? "bg-gray-200 text-gray-400" :
-                              "cursor-pointer text-white gradient-purple"
-                              }`}
-                          >
-                            <DollarSign className="w-3.5 h-3.5" /> {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
-                          </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                            {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
-                          </div>
-                        </div>
-                        <div className="relative inline-block group">
-                          <button onClick={() => openEditModal(event as EventFormData & { id: string })} className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95">
-                            <Pencil className="w-3.5 h-3.5" /> Editar
-                          </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                            Editar
-                          </div>
-                        </div>
-                        <div className="relative inline-block group">
+                    {/* Acciones y Footer de la tarjeta */}
+                    <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
+                      <div className="flex w-full justify-between gap-1.5">
+                        <div><div className="relative inline-block group">
                           <button onClick={() => {
                             setModalConfig({
                               isOpen: true,
@@ -500,17 +596,41 @@ export default function AdminEventsPage() {
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
                             Eliminar
                           </div>
-                        </div>
+                        </div></div>
+                        <div className="flex w-full justify-end gap-1.5">
+                          <div className="relative inline-block group">
+                            <button onClick={() => openEditModal(event as EventFormData & { id: string })} className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95">
+                              <Pencil className="w-3.5 h-3.5" /> Editar
+                            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                              Editar
+                            </div>
+                          </div>
+                          <div className="relative inline-block group">
+                            <button
+                              onClick={() => openTicketOfficeMap(event)}
+                              disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
+                              className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm ${event.productionStatus === "Sold Out" || !event.seatingMap ? "bg-gray-200 text-gray-400" :
+                                "cursor-pointer text-white gradient-purple"
+                                }`}
+                            >
+                              <DollarSign className="w-3.5 h-3.5" /> {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
+                              {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                            </div>
+                          </div></div>
                       </div>
                     </div>
-
                   </div>
                 );
-              })
-            ) : (
-              <div className="text-center py-12 text-xs text-gray-400 border border-dashed border-purple-100 rounded-3xl bg-white/20">
-                No se encontraron eventos activos o planificados que coincidan con los filtros establecidos.
+              })}
+            </div>) : ((
+              <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+                <Star className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+                <p className="font-questrial text-xs text-gray-400">
+                  {isPending ? "Sincronizando..." : " No se encontraron eventos activos o planificados que coincidan con los filtros establecidos."}
+                </p>
               </div>
+            )
             )}
           </div>
           {/* Seccion de Paginación */}
@@ -640,140 +760,105 @@ export default function AdminEventsPage() {
 
             {/* Fila 1: Código (Opcional) y Nombre (Requerido) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Código <span className="text-gray-400 font-normal">(Opcional)</span>
-                </label>
-                <input
-                  type="text"
-                  name="code"
-                  placeholder="Ej: EVE-2026-01"
-                  value={formData.code || ""}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 font-bold mb-1">
-                  Nombre del Evento <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  placeholder="Ej: Muestra Anual de Danza"
-                  value={formData.name || ""}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Mapa de Asiento
-              </label>
-              <select
-                name="seatingMapId"
-                value={formData.seatingMapId}
+              <TextInput
+                label="Código (Opcional)"
+                name="code" // 👈 Necesario si handleInputChange usa e.target.name
+                required
+                type="text"
+                value={formData.code || ""}
+                placeholder="Ej: Maria Paula"
                 onChange={handleInputChange}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              >
-                <option value="" disabled className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50/50">Selecciona el Mapa de asiento</option>
+              />
+              <div className="md:col-span-2">
+                <TextInput
+                  label="Nombre del Evento *"
+                  name="name" // 👈 Necesario si handleInputChange usa e.target.name
+                  required
+                  type="text"
+                  value={formData.name || ""}
+                  placeholder="Ej: Muestra Anual de Danza"
+                  onChange={handleInputChange}
+                />
 
-                {seatingMaps.map((c: SeatingMap) => (
-                  <option key={`map-${c.id}`} value={c.id} className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50">
-                    {c.location}
-                  </option>
-                ))}
-              </select>
+              </div>
             </div>
+            <SelectInput
+              label="Mapa de Asiento"
+              name="seatingMapId"
+              value={formData.seatingMapId}
+              onChange={handleInputChange}
+              options={[
+                { label: "Selecciona el Mapa de asiento", value: "", disabled: true },
+                ...seatingMaps.map((c: SeatingMap) => ({
+                  label: `${c.location}`,
+                  value: `${c.id}`
+                }))
+              ]}
+            />
+
             {/* Fila 2: Tipo de Evento y Estado de Producción */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Tipo de Evento
-                </label>
-                <select
-                  name="type"
-                  value={formData.type || "sample"}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                >
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="annual_gala">Gala Anual</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="masterclass">Masterclass</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="competence">Competencia</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sample">Muestra</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Estado de Producción
-                </label>
-                <select
-                  name="productionStatus"
-                  value={formData.productionStatus || "planning"}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                >
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="essays">Ensayos Generales</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="in_production">En Producción</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sold_out">Agotado</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="completed">Completado</option>
-                  <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="cancelled">Cancelado</option>
-                </select>
-              </div>
+              <SelectInput
+                label="Tipo de Evento"
+                name="type"
+                value={formData.type || "sample"}
+                onChange={handleInputChange}
+                options={[
+                  { label: "Selecciona el Tipo de Evento", value: "", disabled: true },
+                  { label: "Gala Anual", value: "annual_gala", },
+                  { label: "Masterclass", value: "masterclass", },
+                  { label: "Competencia", value: "competence", },
+                  { label: "Muestra", value: "sample", },
+                  { label: "Otro", value: "other", },
+                ]}
+              />
+              <SelectInput
+                label="Estado de Producción"
+                name="productionStatus"
+                value={formData.productionStatus || "planning"}
+                onChange={handleInputChange}
+                options={[
+                  { label: "Selecciona el Estado de Producción", value: "", disabled: true },
+                  { label: "Ensayos Generales", value: "essays", },
+                  { label: "En Producción", value: "in_production", },
+                  { label: "Agotado", value: "sold_out", },
+                  { label: "Completado", value: "completed", },
+                  { label: "Cancelado", value: "cancelled", },
+                ]}
+              />
             </div>
 
             {/* Fila 3: Fecha Inicio y Fecha Fin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Fecha de Inicio <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="startDate"
-                  required
-                  value={formData.startDate || ""}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
+              <DateInput
+                label="Fecha de Inicio *"
+                name="startDate"
+                value={formData.startDate || ""}
+                onChange={(val) => setFormData({ ...formData, startDate: val })}
 
-              <div>
-                <label className="block text-gray-700 font-bold mb-1">
-                  Fecha de Fin <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="endDate"
-                  required
-                  value={formData.endDate || ""}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                />
-              </div>
+              />
+              <DateInput
+                label="Fecha de Fin *"
+                name="endDate"
+                value={formData.endDate || ""}
+                onChange={(val) => setFormData({ ...formData, endDate: val })}
+
+              />
+
+
             </div>
 
 
             {/* Fila 4: Descripción */}
-            <div>
-              <label className="block text-gray-700 font-bold mb-1">
-                Descripción <span className="text-gray-400 font-normal">(Opcional)</span>
-              </label>
-              <textarea
-                name="description"
-                rows={3}
-                placeholder="Detalles adicionales sobre el evento..."
-                value={formData.description || ""}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-              />
-            </div>
+            <TextArea
+              label="Descripción (Opcional)"
+              placeholder="Detalles adicionales sobre el evento..."
+              name="description"
+              rows={3}
+              value={formData.description}
+              onChange={handleInputChange}
+            />
+
 
             {/* Botonera de Acción */}
             <div className="pt-2 flex justify-between items-center border-t border-gray-100 mt-4">
@@ -793,8 +878,8 @@ export default function AdminEventsPage() {
                 {isSubmitting
                   ? "Guardando..."
                   : editingId
-                    ? "Actualizar Evento"
-                    : "Registrar Evento"}
+                    ? "Actualizar Evento →"
+                    : "Registrar Evento →"}
               </button>
             </div>
           </form>

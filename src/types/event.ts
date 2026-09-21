@@ -15,6 +15,8 @@ export interface EventSeat {
 export interface EventData {
     id?: string;
     code?: string;
+    isActive?: boolean;
+    description?: string;
     name: string;
     type: string;
     startDate: string; // Formato YYYY-MM-DD

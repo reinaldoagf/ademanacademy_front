@@ -11,6 +11,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     labelColor,
     containerClassName,
     className = "",
+    onChange,
     ...props
 }) => {
     return (
@@ -21,6 +22,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         >
             <input
                 className={`${BASE_INPUT_STYLES} ${className}`.trim()}
+                onChange={onChange}
                 {...props}
             />
         </FieldLayout>
