@@ -15,6 +15,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from "@/components/ui/ActionButton";
 import Badge from "@/components/common/Badge";
 import { useModal } from "@/hooks/useModal";
 import { getAllOrdersAction } from "@/app/actions/order";
@@ -125,16 +126,15 @@ export default function OrdersPage() {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
             render: (element) => (<div className="flex gap-2 justify-end">
-                <div className="relative inline-block group">
-                    <button onClick={() => handleOpenDetails(element)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl cursor-pointer text-emerald-700 bg-emerald-50 hover:bg-emerald-100`}
-                    >
-                        <Eye className="w-3.5 h-3.5" /> Ver detalles
-                    </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                        Ver detalles
-                    </div>
-                </div>
+                <ActionButton
+                    variant="success"
+                    icon={Eye}
+                    tooltip="Ver detalles"
+                    onClick={() => handleOpenDetails(element)}
+                >
+                    Ver detalles
+                </ActionButton>
+
             </div>
             ),
         },

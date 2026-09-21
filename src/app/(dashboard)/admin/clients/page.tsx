@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import {
     Plus,
     Search,
-    Edit3,
+    Pencil,
     Trash2,
     User as UserLucide,
     Calendar,
@@ -19,8 +19,9 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
-import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from '@/components/ui/ActionButton';
+import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
 import { Client, CustomerFormData } from "@/types/client";
 import { User } from "@/types/user";
 import { formatDateForInput } from "@/helpers/dates";
@@ -429,33 +430,32 @@ export default function ClientsPage() {
                                 </div>
 
                                 {/* Acciones y Footer de la tarjeta */}
-                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
-                                    <div className="flex items-center gap-1.5">
+                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 w-full flex items-center justify-between gap-1.5">
 
-                                        <button
-                                            onClick={() => {
-                                                setModalConfig({
-                                                    isOpen: true,
-                                                    type: 'word',
-                                                    title: 'Confirmar eliminación',
-                                                    description: `¿Estás seguro de que deseas eliminar el registro de ${client.firstName} ${client.lastName}?`,
-                                                    id: client.id,
-                                                });
-                                            }}
-                                            className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
-                                            title="Eliminar registro"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-
-                                        <button
-                                            onClick={() => handleEditModal(client)}
-                                            className="p-1.5 transition border border-transparent cursor-pointer text-green-600 bg-green-50 hover:bg-green-100"
-                                            title="Editar Cliente"
-                                        >
-                                            <Edit3 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                    <ActionButton
+                                        variant="danger"
+                                        icon={Trash2}
+                                        tooltip="Eliminar"
+                                        onClick={() => {
+                                            setModalConfig({
+                                                isOpen: true,
+                                                type: 'word',
+                                                title: 'Confirmar operación',
+                                                description: `¿Estás seguro de que deseas eliminar el registro de ${client.firstName} ${client.lastName}?`,
+                                                id: client.id,
+                                            });
+                                        }}
+                                    >
+                                        Eliminar
+                                    </ActionButton>
+                                    <ActionButton
+                                        variant="success"
+                                        icon={Pencil}
+                                        tooltip="Editar"
+                                        onClick={() => handleEditModal(client)}
+                                    >
+                                        Editar
+                                    </ActionButton>
                                 </div>
                             </div>
                         );

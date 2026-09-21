@@ -15,7 +15,8 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
+import { ActionButton } from "@/components/ui/ActionButton";
+import { TextInput, TextArea, SelectInput, SearchInput, PhoneInput, DateInput } from '@/components/ui/forms';
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
@@ -325,18 +326,19 @@ export default function EmployeesPage() {
       className: "text-right",
       render: (employee) => (
         <div className="flex gap-2 justify-end">
-
-          <div className="relative inline-block group">
-            <button
-              onClick={() => handleEditModal(employee)}
-              className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Editar
-            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-              Editar
-            </div></div>
-          <div className="relative inline-block group">
-            <button onClick={() => {
+          <ActionButton
+            variant="success"
+            icon={Pencil}
+            tooltip="Editar"
+            onClick={() => handleEditModal(employee)}
+          >
+            Editar
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            icon={Trash2}
+            tooltip="Eliminar"
+            onClick={() => {
               setModalConfig({
                 isOpen: true,
                 type: "word",
@@ -345,12 +347,10 @@ export default function EmployeesPage() {
                 id: employee.id,
               });
             }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Eliminar
-            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-              Eliminar
-            </div></div>
+          >
+            Eliminar
+          </ActionButton>
+
         </div>
 
 

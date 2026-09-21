@@ -7,6 +7,7 @@ import {
     Trash2,
     Pencil
 } from "lucide-react";
+import { ActionButton } from "@/components/ui/ActionButton";
 // Props tipadas (puedes cambiar 'any' por tu interfaz si lo prefieres)
 interface WardrobeCardProps {
     element: any;
@@ -218,24 +219,23 @@ export function WardrobeCard({ element, onEdit, onDelete }: WardrobeCardProps) {
 
 
                 {/* Botones de acción */}
-                <div className="flex gap-2 pt-3 border-t border-purple-50/50 mt-3">
-                    <button
-                        type="button"
+                <div className="flex gap-2 pt-3 border-t border-purple-50/50 mt-3 w-full justify-between">
+                    <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        tooltip=""
                         onClick={handleDelete}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
                         Eliminar
-                    </button>
-                    <button
-                        type="button"
+                    </ActionButton>
+                    <ActionButton
+                        variant="success"
+                        icon={Pencil}
+                        tooltip=""
                         onClick={handleEdit}
-                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
                     >
-                        <Pencil className="w-3.5 h-3.5" />
                         Editar
-                    </button>
-
+                    </ActionButton>
                     {/* <button
                                 onClick={handleAddToCart}
                                 disabled={isOutOfStock}

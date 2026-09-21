@@ -8,8 +8,8 @@ export interface ReserveSeatsPayload {
     eventId: string;
     seatingMapElementIds: string[];
     status: "reserved" | "sold";
-    userId?: string;
-    studentId?: string;
+    clientId: string;
+    totalAmount: number;
 }
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";

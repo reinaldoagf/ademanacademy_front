@@ -1,12 +1,10 @@
 // src/app/(dashboard)/events/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect } from "react";
 import dynamic from "next/dynamic";
 import {
-  Sparkles,
   Calendar,
-  MapPin,
   Search,
   Plus,
   Music,
@@ -18,12 +16,15 @@ import {
   Trash2,
   Pencil,
   Loader2,
-  Star
+  Star,
+  UserCheck,
+  Ticket,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, TextArea, SelectInput, DateInput } from '@/components/ui/forms';
+import { ActionButton } from "@/components/ui/ActionButton";
+import { TextInput, TextArea, SelectInput, DateInput, SearchInput } from '@/components/ui/forms';
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 // Importar el mapa asegurando que solo se cargue en el cliente
@@ -37,7 +38,9 @@ import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/ac
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
 import { EventData, EventFormData } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
+import { Client } from "@/types/client";
 import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
+import { getAllClientsAction } from "@/app/actions/client";
 import { APP_KEYS } from "@/consts/app";
 
 // 2. Valores por defecto para crear un evento nuevo
@@ -52,6 +55,11 @@ const initialFormState: EventFormData = {
   seatingMapId: "",
 };
 export default function AdminEventsPage() {
+  // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientSelected, setClientSelected] = useState<Client | null>(null);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
   const {
     isOpen: isOpenModalSeatingMap,
     openModal: openModalSeatingMap,
@@ -64,7 +72,6 @@ export default function AdminEventsPage() {
   } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState("all");
   // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
@@ -116,16 +123,14 @@ export default function AdminEventsPage() {
       });
     }
   };
-  // 3. Simulación de los IDs ya vendidos que vienen de la base de datos
-  const seatsOccupiedBD = ["silla-1779563256195-1-2", "silla-1779563256195-2-0"];
-
-  const selectedStudentId = undefined; // Asignar UUID si la venta es a un alumno específico
-  // 4. Calcular el monto total sumando el precio real de cada asiento seleccionado
+  //  Calcular el monto total sumando el precio real de cada asiento seleccionado
   const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
   const openTicketOfficeMap = (event: EventData) => {
     // console.log({ event })
     setSelectedEvent(event);
     setSelectedChairs([]);
+    setClientSearch("");
+    setClientSelected(null);
     openModalSeatingMap();
   };
   // Configuración de acciones del HeroSection
@@ -149,10 +154,7 @@ export default function AdminEventsPage() {
   const totalBailarinesEnEscena = 0;
   const eventosProximos = 0;
   // 5. Limpiar o resetear el formulario al cerrar el modal o al terminar de guardar
-  const resetForm = () => {
-    setFormData(initialFormState);
-    setEditingId(null);
-  };
+
 
   // 6. Cargar datos cuando entras en modo edición
   const openEditModal = (eventToEdit: EventFormData & { id: string }) => {
@@ -176,36 +178,30 @@ export default function AdminEventsPage() {
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
-    setIsSubmitting(true);
 
     // 1. Validaciones preventivas en el cliente para Eventos
     if (!formData.name.trim()) {
       setErrorMsg("El nombre del evento es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.seatingMapId.trim()) {
       setErrorMsg("El mapa de asientos es obligatorio.");
-      setIsSubmitting(false);
       return;
     }
     if (!formData.startDate) {
       setErrorMsg("La fecha de inicio es obligatoria.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!formData.endDate) {
       setErrorMsg("La fecha de fin es obligatoria.");
-      setIsSubmitting(false);
       return;
     }
 
     // Validación de orden de fechas
     if (new Date(formData.endDate) < new Date(formData.startDate)) {
       setErrorMsg("La fecha de fin no puede ser anterior a la fecha de inicio.");
-      setIsSubmitting(false);
       return;
     }
 
@@ -242,8 +238,6 @@ export default function AdminEventsPage() {
         error.message ||
         "Ocurrió un problema de red al intentar guardar el evento."
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
   const handleInputChange = (
@@ -257,33 +251,80 @@ export default function AdminEventsPage() {
     }));
   };
   const handleConfirmAssignment = async () => {
-    if (selectedChairs.length === 0 || !selectedEvent?.id) return;
+    try {
+      startTransition(async () => {
+        if (selectedChairs.length === 0 || !selectedEvent?.id || !clientSelected?.id) return;
 
-    setIsSubmitting(true);
 
-    // Extraemos los IDs reales del mapa de elementos (Base de Datos)
-    const elementIds: string[] = selectedChairs
-      .map((s) => s.id)
-      .filter((id): id is string => typeof id === "string");
+        // Extraemos los IDs reales del mapa de elementos (Base de Datos)
+        const elementIds: string[] = selectedChairs
+          .map((s) => s.id)
+          .filter((id): id is string => typeof id === "string");
+        const res = await reserveOrBuySeatsAction({
+          eventId: selectedEvent?.id,
+          seatingMapElementIds: elementIds,
+          status: "reserved", // Usar "SOLD" si es una asignación/venta directa del admin
+          clientId: clientSelected.id,
+          totalAmount: (totalCashAmount || 0),
+        });
 
-    const result = await reserveOrBuySeatsAction({
-      eventId: selectedEvent?.id,
-      seatingMapElementIds: elementIds,
-      status: "reserved", // Usar "SOLD" si es una asignación/venta directa del admin
-      studentId: selectedStudentId,
-    });
 
-    setIsSubmitting(false);
-
-    if (result.success) {
-      fetchData(currentPage, itemsPerPage);
-      toast.success(result.data.message || "Asientos procesados correctamente");
-      closeModalSeatingMap();
-      // Opcional: Recargar o revalidar datos del mapa
-    } else {
-      toast.error(`Ocurrió un problema: ${result.message}`);
+        if (res.success) {
+          fetchData(currentPage, itemsPerPage);
+          toast.success(res.data.message || "Asientos procesados correctamente");
+          closeModalSeatingMap();
+          // Opcional: Recargar o revalidar datos del mapa
+        } else {
+          toast.error(`Ocurrió un problema: ${res.message}`);
+        }
+      });
+    } catch (error: any) {
+      console.error("Error detectado en handleSave (Events):", error);
+      setErrorMsg(
+        error.message ||
+        "Ocurrió un problema de red al intentar guardar el evento."
+      );
     }
   };
+  // 🎯 MANEJADORES DE LA TABLA
+  // --- EFFECT PARA usuarios (Vía Server Action) ---
+  useEffect(() => {
+
+
+    setIsLoadingClients(true);
+
+    const isSearchEmpty = !clientSearch.trim();
+    const delay = isSearchEmpty ? 0 : 400;
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // Construimos los parámetros requeridos por FetchUsersParams
+        const params = isSearchEmpty
+          ? { limit: 5 }
+          : { search: clientSearch.trim() };
+
+        // Llamada directa al Server Action
+        const result = await getAllClientsAction(params);
+
+        if (result.success && result.data) {
+          // Axios mapea la respuesta en result.data. data.data suele ser el array
+          // Si tu backend anida los grupos en 'users', úsalo; de lo contrario asigna result.data
+          setFilteredClients(result.data.users || result.data);
+        } else {
+          console.error("Error en Server Action (usuarios):", result.error);
+          setFilteredClients([]);
+        }
+      } catch (error) {
+        console.error("Error crítico buscando usuarios:", error);
+        setFilteredClients([]);
+      } finally {
+        setIsLoadingClients(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(delayDebounce);
+  }, [isOpenModalSeatingMap, clientSearch]);
+
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     startTransition(async () => {
       const res0 = await getAllSeatingMapsAction({
@@ -578,47 +619,43 @@ export default function AdminEventsPage() {
                     </div>
 
                     {/* Acciones y Footer de la tarjeta */}
-                    <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-end">
-                      <div className="flex w-full justify-between gap-1.5">
-                        <div><div className="relative inline-block group">
-                          <button onClick={() => {
-                            setModalConfig({
-                              isOpen: true,
-                              type: "word",
-                              title: "Confirmar operación",
-                              description: "¿Quieres eliminar el registro del evento?",
-                              id: event.id,
-                            });
-                          }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                          </button>
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                            Eliminar
-                          </div>
-                        </div></div>
-                        <div className="flex w-full justify-end gap-1.5">
-                          <div className="relative inline-block group">
-                            <button onClick={() => openEditModal(event as EventFormData & { id: string })} className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95">
-                              <Pencil className="w-3.5 h-3.5" /> Editar
-                            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                              Editar
-                            </div>
-                          </div>
-                          <div className="relative inline-block group">
-                            <button
-                              onClick={() => openTicketOfficeMap(event)}
-                              disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
-                              className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl text-xs px-4 py-2 font-questrial hover:opacity-90 transition shadow-sm ${event.productionStatus === "Sold Out" || !event.seatingMap ? "bg-gray-200 text-gray-400" :
-                                "cursor-pointer text-white gradient-purple"
-                                }`}
-                            >
-                              <DollarSign className="w-3.5 h-3.5" /> {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
-                            </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                              {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
-                            </div>
-                          </div></div>
+                    <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 w-full flex items-center justify-between gap-1.5">
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        tooltip="Eliminar"
+                        onClick={() => {
+                          setModalConfig({
+                            isOpen: true,
+                            type: 'word',
+                            title: 'Confirmar operación',
+                            description: '¿Quieres eliminar el registro del evento?',
+                            id: event.id,
+                          });
+                        }}
+                      >
+                        Eliminar
+                      </ActionButton>
+                      <div className="flex w-full justify-end gap-1.5">
+                        <ActionButton
+                          variant="success"
+                          icon={Pencil}
+                          tooltip="Editar"
+                          onClick={() => openEditModal(event as EventFormData & { id: string })}
+                        >
+                          Editar
+                        </ActionButton>
+                        <ActionButton
+                          variant="gradient_purple"
+                          icon={DollarSign}
+                          disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
+                          tooltip={event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                          onClick={() => openTicketOfficeMap(event)}
+                        >
+                          {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                        </ActionButton>
                       </div>
+
                     </div>
                   </div>
                 );
@@ -696,50 +733,114 @@ export default function AdminEventsPage() {
       ><>
           {/* Inyección del mapa interactivo con la data del Payload JSON */}
           {selectedEvent?.seatingMap && (
-            <CanvasSeatingMap
-              eventData={selectedEvent}
-              seatingMap={selectedEvent.seatingMap}
-              seatsOccupied={selectedEvent.eventSeats?.filter(e => e.status == "reserved" || e.status == "sold").map(e => e.seatingMapElementId) || []}
-              onSeleccionChange={(chairs) => {
-                setSelectedChairs(chairs)
-              }}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-start">
+              {/* COLUMNA IZQUIERDA: MAPA DE ASIENTOS (~80% del ancho en pantallas md/lg) */}
+              <div className="md:col-span-9 bg-white p-4 rounded-md border border-gray-100 shadow-sm overflow-hidden">
+                <CanvasSeatingMap
+                  eventData={selectedEvent}
+                  seatingMap={selectedEvent.seatingMap}
+                  seatsOccupied={selectedEvent.eventSeats?.filter(e => e.status == "reserved" || e.status == "sold").map(e => e.seatingMapElementId) || []}
+                  onSeleccionChange={(chairs) => {
+                    setSelectedChairs(chairs);
+                  }}
+                />
+              </div>
+
+              {/* COLUMNA DERECHA: PANEL DE CONTROL Y RESUMEN (~20% del ancho) */}
+              <div className="md:col-span-3 space-y-4">
+
+                {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
+                <div className="font-questrial bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
+                  {/* Adorno visual de fondo */}
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+                  <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
+                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                    <span>Monto a Liquidar</span>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-3xl font-black tracking-tight">
+                      ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-xs font-semibold text-purple-200">USD</span>
+                  </div>
+
+                  {/* Contador dinámico de sillas seleccionadas */}
+                  <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-purple-100">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Ticket className="w-3.5 h-3.5 text-purple-300" />
+                      Asientos elegidos:
+                    </span>
+                    <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
+                      {selectedChairs?.length || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* TARJETA DE BÚSQUEDA Y ASIGNACIÓN DE CLIENTE */}
+                <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm space-y-3  font-questrial ">
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                    <UserCheck className="w-4 h-4 text-purple-600" />
+                    <span>Asignación de Cliente</span>
+                  </div>
+
+                  <SearchInput
+                    label="" // Vacio porque el título está en el header de la tarjeta
+                    placeholder="Buscar cliente..."
+                    value={clientSearch}
+                    isLoading={isLoadingClients}
+                    options={filteredClients.map((client: Client) => ({
+                      id: client.id,
+                      label: `${client.firstName} ${client.lastName}`,
+                      subLabel: `DNI: ${client.dni || 'N/A'} • Usuario: ${client.user?.email || 'Sin email'}`,
+                      data: client,
+                    }))}
+                    emptyMessage="No se encontraron usuarios coincidentes"
+                    onChangeText={(text) => {
+                      setClientSearch(text)
+                      setClientSelected(null)
+                    }}
+                    onSelectOption={(option) => {
+                      setClientSelected(option.data || null)
+                      setClientSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+                    }}
+                  />
+                </div>
+
+              </div>
+            </div>
           )}
 
+
+
+
           {/* Cierre de Compra */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-50">
-            <div className="text-center sm:text-left font-questrial">
-              <p className="text-xs text-gray-400 font-medium">Monto Total Liquidado en Caja</p>
+          <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
 
-              <h4 className="text-2xl font-black text-gray-800">
-                {/* 2. CLAVAMOS UN LOCALE FIJO (US) PARA QUE SERVIDOR Y CLIENTE COINCIDAN EN LA COMA ',' */}
-                ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}{" "}
-                <span className="text-xs text-gray-400 font-normal">USD</span>
-              </h4>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => closeModalSeatingMap()}
-                className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
-              >
-                Cancelar
-              </button>
-              {selectedEvent?.id && (<button
-                disabled={selectedChairs.length === 0 || isSubmitting}
-                onClick={handleConfirmAssignment}
-                className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  `Confirmar Asignación (${selectedChairs.length})`
-                )}
-              </button>)}
+            <button
+              onClick={() => closeModalSeatingMap()}
+              className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+            >
+              Cancelar
+            </button>
+            {selectedEvent?.id && (<button
+              disabled={selectedChairs.length === 0 || !clientSelected || isPending}
+              onClick={handleConfirmAssignment}
+              className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : (<div className="flex items-center justify-center gap-2">
+                Confirmar Asignación <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
+                  {selectedChairs?.length || 0}
+                </span>
+              </div>)}
+            </button>)}
 
-            </div>
           </div>
         </>
       </MacDockModal>
@@ -872,10 +973,10 @@ export default function AdminEventsPage() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isPending}
                 className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
               >
-                {isSubmitting
+                {isPending
                   ? "Guardando..."
                   : editingId
                     ? "Actualizar Evento →"

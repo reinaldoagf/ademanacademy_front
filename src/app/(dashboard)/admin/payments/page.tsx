@@ -17,6 +17,7 @@ import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import PaymentDetailModal from "@/components/modals/PaymentDetailModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { getAllTransactionsAction, approveTransactionAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
 import { useModal } from "@/hooks/useModal";
@@ -195,21 +196,17 @@ export default function PaymentsPage() {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
             render: (transaction) => (<div className="flex gap-2 justify-end">
-                <div className="relative inline-block group">
-                    <button
-                        onClick={() => {
-                            setSelectedPayment(transaction); // Seteamos el objeto de la consola
-                            openModal();        // Abrimos el modal
-                        }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-emerald-700 rounded-xl cursor-pointer bg-emerald-50 hover:bg-emerald-100"
-                    >
-                        <Eye className="w-3.5 h-3.5" /> Ver detalles
-                    </button><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                        Ver detalles
-                    </div>
-                </div>
-
-            </div >
+                <ActionButton
+                    variant="success"
+                    icon={Eye}
+                    tooltip="Ver detalles"
+                    onClick={() => {
+                        setSelectedPayment(transaction); // Seteamos el objeto de la consola
+                        openModal();        // Abrimos el modal
+                    }}>
+                    Ver detalles
+                </ActionButton>
+            </div>
             ),
         },
     ];

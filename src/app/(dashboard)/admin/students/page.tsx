@@ -21,6 +21,7 @@ import Badge from "@/components/common/Badge";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from '@/components/ui/ActionButton';
 import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput } from '@/components/ui/forms';
 import { Student } from "@/types/student";
 import {
@@ -360,7 +361,10 @@ export default function StudentsPage() {
       className: "text-right", // Alinea el encabezado a la derecha
       render: (client) => (
         <div className="flex gap-2 justify-end">
-          <button
+          <ActionButton
+            variant="success"
+            icon={Pencil}
+            tooltip="Editar"
             onClick={() => {
               setEditingId(client.id);
 
@@ -400,27 +404,27 @@ export default function StudentsPage() {
               setUserSearch(client.user?.name || "");
               openModal();
             }}
-            className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
           >
-            <Pencil className="w-3.5 h-3.5" />
             Editar
-          </button>
-          <button onClick={() => {
-            setModalConfig({
-              isOpen: true,
-              type: "word",
-              title: "Confirmar operación",
-              description: "¿Quieres eliminar el registro del alumno?",
-              id: client.id,
-            });
-          }}
-            disabled={!!client.user}
+          </ActionButton>
 
-            className={`
-               flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 ${!client.user ? "cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100" : "bg-gray-200"}`}
+          <ActionButton
+            variant="danger"
+            icon={Trash2}
+            disabled={!!client.user}
+            tooltip={!!client.user ? "" : "Eliminar"}
+            onClick={() => {
+              setModalConfig({
+                isOpen: true,
+                type: "word",
+                title: "Confirmar operación",
+                description: "¿Quieres eliminar el registro del alumno?",
+                id: client.id,
+              });
+            }}
           >
-            <Trash2 className="w-3.5 h-3.5" /> Eliminar
-          </button>
+            Eliminar
+          </ActionButton>
         </div>
       ),
     },

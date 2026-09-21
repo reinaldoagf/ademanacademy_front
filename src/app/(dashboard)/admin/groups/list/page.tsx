@@ -26,6 +26,7 @@ import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { TextInput, SelectInput, SearchInput } from '@/components/ui/forms';
 import { getAllGroupCategoriesAction } from "@/app/actions/group-category";
 import { getAllGroupsAction, saveGroupAction, deleteGroupAction } from "@/app/actions/group";
@@ -473,57 +474,51 @@ export default function GroupsListPage() {
 
                 {/* Estado de Ejecución en Salón */}
                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
-                  <div className="relative inline-block group">
-                    <button
-                      onClick={() => {
-                        // Tomamos el primer elemento del array de horarios del grupo
-                        const groupSchedule = group.schedules?.[0]?.schedule;
-                        if (groupSchedule) {
-                          setSelectedGroupSchedule({
-                            name: group.name,
-                            classroom: group.classroom?.name || "Salón no asignado",
-                            days: groupSchedule
-                          });
-                          setIsScheduleModalOpen(true);
-                        } else {
-                          alert("Este grupo aún no tiene un horario asignado.");
-                        }
-                      }}
-                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
-                    >
-                      <Calendar className="w-3.5 h-3.5" /> Ver horario
-                    </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                      Ver horario
-                    </div>
-                  </div>
-                  <div className="relative inline-block group">
-                    <button
-                      onClick={() => {
-                        setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
-                        setIsStudentsModalOpen(true);
-                      }}
-                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors active:scale-95"
-                    >
-                      <Users2 className="w-3.5 h-3.5" />  Ver Alumnos
-                    </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                      Ver Alumnos
-                    </div>
-                  </div>
-                  <div className="relative inline-block group">
-                    <button
-                      onClick={() => handleEditModal(group)}
-                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-green-700 bg-green-50 hover:bg-green-100 rounded-xl transition-colors active:scale-95"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />  Editar
-                    </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                      Editar Parámetros
-                    </div>
-                  </div>
-                  <div className="relative inline-block group">
-                    <button onClick={() => {
+                  <ActionButton
+                    variant="purple"
+                    icon={Calendar}
+                    tooltip="Ver horario"
+                    onClick={() => {
+                      // Tomamos el primer elemento del array de horarios del grupo
+                      const groupSchedule = group.schedules?.[0]?.schedule;
+                      if (groupSchedule) {
+                        setSelectedGroupSchedule({
+                          name: group.name,
+                          classroom: group.classroom?.name || "Salón no asignado",
+                          days: groupSchedule
+                        });
+                        setIsScheduleModalOpen(true);
+                      } else {
+                        toast("Este grupo aún no tiene un horario asignado.");
+                      }
+                    }}
+                  >
+                    Ver horario
+                  </ActionButton>
+                  <ActionButton
+                    variant="primary"
+                    icon={Users2}
+                    tooltip="Ver Alumnos"
+                    onClick={() => {
+                      setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
+                      setIsStudentsModalOpen(true);
+                    }}
+                  >
+                    Ver Alumnos
+                  </ActionButton>
+                  <ActionButton
+                    variant="success"
+                    icon={Pencil}
+                    tooltip="Editar Parámetros"
+                    onClick={() => handleEditModal(group)}
+                  >
+                    Editar
+                  </ActionButton>
+                  <ActionButton
+                    variant="danger"
+                    icon={Trash2}
+                    tooltip="Eliminar"
+                    onClick={() => {
                       setModalConfig({
                         isOpen: true,
                         type: "word",
@@ -531,13 +526,10 @@ export default function GroupsListPage() {
                         description: "¿Quieres eliminar el registro del grupo?",
                         id: group.id,
                       });
-                    }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100">
-                      <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                    </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                      Eliminar
-                    </div>
-                  </div>
+                    }}
+                  >
+                    Eliminar
+                  </ActionButton>
                 </div>
 
               </div>

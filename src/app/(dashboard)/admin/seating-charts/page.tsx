@@ -16,6 +16,7 @@ import {
 import { toast } from "react-hot-toast";
 import { SeatingMap } from "@/types/seating-map";
 import { getAllSeatingMapsAction, deleteSeatingMapAction } from "@/app/actions/seating-map";
+import { ActionButton } from "@/components/ui/ActionButton";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
@@ -234,8 +235,10 @@ export default function SeatingMapListPage() {
                   {/* Acciones y Footer de la tarjeta */}
                   <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-
-                      <button
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        tooltip=""
                         onClick={() => {
                           setModalConfig({
                             isOpen: true,
@@ -245,11 +248,9 @@ export default function SeatingMapListPage() {
                             id: seatingMap.id,
                           });
                         }}
-                        className="p-1.5 transition border border-transparent cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100"
-                        title="Eliminar registro"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        Eliminar
+                      </ActionButton>
                     </div>
 
                     <button

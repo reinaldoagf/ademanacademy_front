@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { TrendingUp, Pencil, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon, Plus } from 'lucide-react';
+import React, { useState } from "react";
+import { TrendingUp, Pencil, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon, Plus } from "lucide-react";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { Product } from "@/types/product";
 import { useCartStore } from "@/store/cartStore";
 
@@ -239,37 +240,37 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 )}
 
                 {/* Botones de acción */}
-                <div className="flex gap-1.5 sm:gap-2 pt-3 border-t border-purple-50/50 mt-3">
-                    <button
-                        type="button"
+                <div className="w-full flex items-center justify-between gap-1.5 sm:gap-2 pt-3 border-t border-purple-50/50 mt-3">
+                    <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        tooltip=""
                         onClick={() => onDelete(product)}
-                        className="cursor-pointer flex-1 min-w-0 flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-xs font-questrial font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors active:scale-95"
                     >
-                        <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">Eliminar</span>
-                    </button>
+                        Eliminar
+                    </ActionButton>
+                    <div className="flex w-full justify-end gap-1.5">
+                        <ActionButton
+                            variant="success"
+                            icon={Pencil}
+                            tooltip=""
+                            onClick={() => onEdit(product)}
+                        >
+                            Editar
+                        </ActionButton>
 
-                    <button
-                        type="button"
-                        onClick={() => onEdit(product)}
-                        className="cursor-pointer flex-1 min-w-0 flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
-                    >
-                        <Pencil className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">Editar</span>
-                    </button>
+                        <ActionButton
+                            variant="gradient_purple"
+                            icon={Plus}
+                            tooltip=""
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock}
+                        >
+                            Agregar a Carrito
+                        </ActionButton>
 
-                    <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        disabled={isOutOfStock}
-                        className={`flex-1 min-w-0 flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-xs font-questrial font-bold rounded-xl transition-all ${!isOutOfStock
-                                ? "cursor-pointer text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:scale-95"
-                                : "cursor-not-allowed text-gray-400 bg-gray-100 opacity-70"
-                            }`}
-                    >
-                        <Plus className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">Agregar</span>
-                    </button>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -12,6 +12,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from "@/components/ui/ActionButton";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { TextInput, RangeSliderInput } from "@/components/ui/forms";
@@ -206,21 +207,19 @@ export default function GroupsCategroiesPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-purple-50/50 shrink-0 font-questrial">
-
-                                    <div className="relative inline-block group">
-                                        <button
-                                            onClick={() => handleEditModal(groupCategory)}
-                                            className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors active:scale-95"
-                                        >
-                                            <Pencil className="w-3.5 h-3.5" />
-                                            Editar
-                                        </button>
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                                            Editar Parámetros
-                                        </div>
-                                    </div>
-                                    <div className="relative inline-block group">
-                                        <button onClick={() => {
+                                    <ActionButton
+                                        variant="success"
+                                        icon={Pencil}
+                                        tooltip="Editar Parámetros"
+                                        onClick={() => handleEditModal(groupCategory)}
+                                    >
+                                        Editar
+                                    </ActionButton>
+                                    <ActionButton
+                                        variant="danger"
+                                        icon={Trash2}
+                                        tooltip="Eliminar"
+                                        onClick={() => {
                                             setModalConfig({
                                                 isOpen: true,
                                                 type: "word",
@@ -228,13 +227,10 @@ export default function GroupsCategroiesPage() {
                                                 description: "¿Quieres eliminar el registro del grupo?",
                                                 id: groupCategory.id,
                                             });
-                                        }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold  rounded-xl transition-colors active:scale-95 cursor-pointer text-rose-600 bg-rose-50 hover:bg-rose-100">
-                                            <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                                        </button>
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs px-3 py-1.5 pointer-events-none">
-                                            Eliminar
-                                        </div>
-                                    </div>
+                                        }}
+                                    >
+                                        Eliminar
+                                    </ActionButton>
                                 </div>
                             </div>
                         ))
