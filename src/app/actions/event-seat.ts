@@ -10,6 +10,7 @@ export interface ReserveSeatsPayload {
     status: "reserved" | "sold";
     clientId: string;
     totalAmount: number;
+    reservationDurationMinutes?: number;
 }
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";

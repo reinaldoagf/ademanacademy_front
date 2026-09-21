@@ -200,7 +200,7 @@ export default function OrdersPage() {
             </div>
 
 
-            {/* MODAL: HISTORIAL DE ABONOS */}
+            {/* MODAL: Detalles del Producto */}
             <MacDockModal
                 isOpen={isOrderDetailsModalOpen}
                 onClose={closeOrderDetailsModal}

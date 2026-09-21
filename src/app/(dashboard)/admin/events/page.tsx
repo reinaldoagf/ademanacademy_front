@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Calendar,
@@ -19,11 +20,14 @@ import {
   Star,
   UserCheck,
   Ticket,
+  ListStart,
+  Clock
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { FeedbackAlert } from "@/components/ui/FeedbackAlert";
 import { TextInput, TextArea, SelectInput, DateInput, SearchInput } from '@/components/ui/forms';
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
@@ -55,9 +59,9 @@ const initialFormState: EventFormData = {
   seatingMapId: "",
 };
 export default function AdminEventsPage() {
+  const router = useRouter();
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [clientSearch, setClientSearch] = useState("");
-  const [clientSelected, setClientSelected] = useState<Client | null>(null);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(false);
   const {
@@ -76,6 +80,16 @@ export default function AdminEventsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [clientSelected, setClientSelected] = useState<Client | null>(null);
+  const [statusSelected, setStatusSelected] = useState<"reserved" | "sold">("reserved");
+  const [reservationMinutes, setReservationMinutes] = useState<number>(10);
+  const [showFeedbackAlert, setShowFeedbackAlert] = useState<{
+    title: string;
+    description: string;
+    data: {
+      paymentOrderId?: string | null;
+    };
+  } | false>(false);
   // 1. Cambia tu estado inicial en el componente padre para aceptar objetos SeatingMapElement
   const [seatingMaps, setSeatingMaps] = useState<SeatingMap[]>([]);
   const [selectedChairs, setSelectedChairs] = useState<SeatingMapElement[]>([]);
@@ -131,6 +145,7 @@ export default function AdminEventsPage() {
     setSelectedChairs([]);
     setClientSearch("");
     setClientSelected(null);
+    setStatusSelected("reserved");
     openModalSeatingMap();
   };
   // Configuración de acciones del HeroSection
@@ -250,28 +265,45 @@ export default function AdminEventsPage() {
       [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
     }));
   };
+  const handleCopyPaymentOrderLink = async (paymentOrderId: string) => {
+    const link = `${window.location.origin}/client/payment-orders/${paymentOrderId}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Enlace de la orden copiado al portapapeles");
+    } catch (err) {
+      console.error("Error al copiar al portapapeles:", err);
+      toast.error("No se pudo copiar el enlace");
+    }
+  };
   const handleConfirmAssignment = async () => {
     try {
       startTransition(async () => {
         if (selectedChairs.length === 0 || !selectedEvent?.id || !clientSelected?.id) return;
-
 
         // Extraemos los IDs reales del mapa de elementos (Base de Datos)
         const elementIds: string[] = selectedChairs
           .map((s) => s.id)
           .filter((id): id is string => typeof id === "string");
         const res = await reserveOrBuySeatsAction({
-          eventId: selectedEvent?.id,
+          eventId: selectedEvent.id,
           seatingMapElementIds: elementIds,
-          status: "reserved", // Usar "SOLD" si es una asignación/venta directa del admin
+          status: statusSelected, // Usar "SOLD" si es una asignación/venta directa del admin
           clientId: clientSelected.id,
           totalAmount: (totalCashAmount || 0),
+          ...(statusSelected === "reserved" && {
+            reservationDurationMinutes: reservationMinutes,
+          }),
         });
-
 
         if (res.success) {
           fetchData(currentPage, itemsPerPage);
-          toast.success(res.data.message || "Asientos procesados correctamente");
+          setShowFeedbackAlert({
+            title: '¡Operación Completada!',
+            description: res.data?.message || 'Se ha generado la orden de pago y los boletos están listos para impresión.',
+            data: { paymentOrderId: res.data.paymentOrderId || null }
+          })
+          //toast.success(res.data.message || "Asientos procesados correctamente");
           window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
           closeModalSeatingMap();
           // Opcional: Recargar o revalidar datos del mapa
@@ -661,14 +693,13 @@ export default function AdminEventsPage() {
                   </div>
                 );
               })}
-            </div>) : ((
+            </div>) : (
               <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
                 <Star className="w-10 h-10 text-purple-200 mx-auto mb-3" />
                 <p className="font-questrial text-xs text-gray-400">
                   {isPending ? "Sincronizando..." : " No se encontraron eventos activos o planificados que coincidan con los filtros establecidos."}
                 </p>
               </div>
-            )
             )}
           </div>
           {/* Seccion de Paginación */}
@@ -748,67 +779,109 @@ export default function AdminEventsPage() {
               </div>
 
               {/* COLUMNA DERECHA: PANEL DE CONTROL Y RESUMEN (~20% del ancho) */}
-              <div className="md:col-span-3 space-y-4">
+              <div className="md:col-span-3">
+                <div className="font-questrial space-y-4">
+                  {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
+                  <div className="bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
 
-                {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
-                <div className="font-questrial bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
-                  {/* Adorno visual de fondo */}
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+                    <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      <span>Monto a Liquidar</span>
+                    </div>
 
-                  <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
-                    <span>Monto a Liquidar</span>
+                    <div className="flex items-baseline gap-1 my-1">
+                      <span className="text-3xl font-black tracking-tight">
+                        ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-xs font-semibold text-purple-200">USD</span>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-purple-100">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Ticket className="w-3.5 h-3.5 text-purple-300" />
+                        Asientos elegidos:
+                      </span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
+                        {selectedChairs?.length || 0}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex items-baseline gap-1 my-1">
-                    <span className="text-3xl font-black tracking-tight">
-                      ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
-                    </span>
-                    <span className="text-xs font-semibold text-purple-200">USD</span>
+                  {/* TARJETA DE BÚSQUEDA Y ASIGNACIÓN DE CLIENTE */}
+                  <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm space-y-3 text-xs">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                      <UserCheck className="w-4 h-4 text-purple-600" />
+                      <span>Asignación de Cliente</span>
+                    </div>
+
+                    <SearchInput
+                      label=""
+                      placeholder="Buscar cliente..."
+                      value={clientSearch}
+                      isLoading={isLoadingClients}
+                      options={filteredClients.map((client: Client) => ({
+                        id: client.id,
+                        label: `${client.firstName} ${client.lastName}`,
+                        subLabel: `DNI: ${client.dni || 'N/A'} • Usuario: ${client.user?.email || 'Sin email'}`,
+                        data: client,
+                      }))}
+                      emptyMessage="No se encontraron clientes coincidentes"
+                      onChangeText={(text) => {
+                        setClientSelected(null);
+                        setClientSearch(text);
+                      }}
+                      onSelectOption={(option) => {
+                        setClientSelected(option.data || null);
+                        setClientSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+                      }}
+                    />
                   </div>
 
-                  {/* Contador dinámico de sillas seleccionadas */}
-                  <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-purple-100">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Ticket className="w-3.5 h-3.5 text-purple-300" />
-                      Asientos elegidos:
-                    </span>
-                    <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
-                      {selectedChairs?.length || 0}
-                    </span>
+                  {/* TARJETA DE ESTADO DE OPERACIÓN Y TIEMPO DE RESERVA */}
+                  <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm space-y-3 text-xs">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                      <ListStart className="w-4 h-4 text-purple-600" />
+                      <span>Estado de operación</span>
+                    </div>
+
+                    <SelectInput
+                      label=""
+                      value={statusSelected}
+                      onChange={(e) => setStatusSelected(e.target.value as ("reserved" | "sold"))}
+                      options={[
+                        { label: "Selecciona un status", value: "", disabled: true },
+                        { label: "Reservado", value: "reserved" },
+                        { label: "Pagado", value: "sold" },
+                      ]}
+                    />
+
+                    {/* ⏱️ CONDICIONAL: Mostrar tiempo de reserva solo si el status es "reserved" */}
+                    {statusSelected === "reserved" && (
+                      <div className="pt-2 space-y-1.5 border-t border-gray-100 animate-fadeIn">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700">
+                          <Clock className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Tiempo de reserva</span>
+                        </div>
+
+                        <SelectInput
+                          label=""
+                          value={reservationMinutes.toString()}
+                          onChange={(e) => setReservationMinutes(Number(e.target.value))}
+                          options={[
+                            { label: "5 minutos", value: "5" },
+                            { label: "10 minutos", value: "10" },
+                            { label: "15 minutos", value: "15" },
+                            { label: "30 minutos", value: "30" },
+                            { label: "1 hora", value: "60" },
+                            { label: "2 horas", value: "120" },
+                            { label: "24 horas", value: "1440" },
+                          ]}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* TARJETA DE BÚSQUEDA Y ASIGNACIÓN DE CLIENTE */}
-                <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm space-y-3  font-questrial ">
-                  <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
-                    <UserCheck className="w-4 h-4 text-purple-600" />
-                    <span>Asignación de Cliente</span>
-                  </div>
-
-                  <SearchInput
-                    label="" // Vacio porque el título está en el header de la tarjeta
-                    placeholder="Buscar cliente..."
-                    value={clientSearch}
-                    isLoading={isLoadingClients}
-                    options={filteredClients.map((client: Client) => ({
-                      id: client.id,
-                      label: `${client.firstName} ${client.lastName}`,
-                      subLabel: `DNI: ${client.dni || 'N/A'} • Usuario: ${client.user?.email || 'Sin email'}`,
-                      data: client,
-                    }))}
-                    emptyMessage="No se encontraron usuarios coincidentes"
-                    onChangeText={(text) => {
-                      setClientSearch(text)
-                      setClientSelected(null)
-                    }}
-                    onSelectOption={(option) => {
-                      setClientSelected(option.data || null)
-                      setClientSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
-                    }}
-                  />
-                </div>
-
               </div>
             </div>
           )}
@@ -1000,6 +1073,47 @@ export default function AdminEventsPage() {
         variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
         confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
       />
+
+      {showFeedbackAlert && (
+        <FeedbackAlert
+          isOpen={Boolean(showFeedbackAlert)}
+          title={showFeedbackAlert.title}
+          description={showFeedbackAlert.description}
+          onClose={() => setShowFeedbackAlert(false)}
+          extraActions={[
+            // Accion 1: Copiar Enlace
+            {
+              label: "Compartir a Cliente",
+              variant: "neutral",
+              onClick: () => {
+                if (showFeedbackAlert.data?.paymentOrderId) {
+                  handleCopyPaymentOrderLink(showFeedbackAlert.data.paymentOrderId);
+                }
+              },
+            },
+            // Acción 2: Ir a la Orden
+            {
+              label: "Ver Orden",
+              variant: "primary",
+              onClick: () => {
+                if (showFeedbackAlert.data?.paymentOrderId) {
+                  router.push(`/admin/payment-orders/${showFeedbackAlert.data.paymentOrderId}`);
+                  setShowFeedbackAlert(false);
+                }
+              },
+            },
+          ]}
+        >
+          {/* Contenido dinámico si existe la orden de pago */}
+          {showFeedbackAlert.data?.paymentOrderId && (
+            <div className="space-y-1">
+              <p>
+                <strong>Orden ID:</strong> #{showFeedbackAlert.data.paymentOrderId}
+              </p>
+            </div>
+          )}
+        </FeedbackAlert>
+      )}
     </>
   );
 }

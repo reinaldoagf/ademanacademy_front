@@ -1,4 +1,5 @@
-@import "tailwindcss"; /* <-- La nueva y única directiva de v4 */
+@import "tailwindcss";
+/* <-- La nueva y única directiva de v4 */
 
 :root {
   --background: #ffffff;
@@ -31,6 +32,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
@@ -43,4 +45,34 @@ body {
 
 .gradient-pink {
   background: linear-gradient(135deg, #f472b6 0%, #c084fc 100%);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
