@@ -2,18 +2,22 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
     Search,
     User,
+    Eye
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
 
 export default function PaymentOrdersPage() {
+    const router = useRouter();
     // Mock Data alineado con tu esquema prisma nuevo
     const [orders, setOrders] = useState<PaymentOrder[]>([]);
     const [meta, setMeta] = useState({
@@ -151,7 +155,23 @@ export default function PaymentOrdersPage() {
             render: (order) => (
                 <Badge variant={order.status} />
             ),
-        }
+        },
+        {
+            header: "Acciones",
+            className: "text-right", // Alinea el encabezado a la derecha
+            render: (element) => (<div className="flex gap-2 justify-end">
+                <ActionButton
+                    variant="success"
+                    icon={Eye}
+                    tooltip="Ver detalles"
+                    onClick={() => { router.push(`/admin/payment-orders/${element.id}`); }}
+                >
+                    Ver detalles
+                </ActionButton>
+
+            </div>
+            ),
+        },
     ];
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {

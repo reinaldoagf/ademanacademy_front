@@ -5,6 +5,21 @@ import { FetchPaymentOrdersParams } from "@/types/payment-order";
 import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
+
+export async function getPaymentOrderByIdAction(id: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/payment-orders/${id}`, {
+            headers: headers
+        });
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
 export async function getAllPaymentOrdersAction(params: FetchPaymentOrdersParams) {
     try {
         const headers = await getAuthHeaders();

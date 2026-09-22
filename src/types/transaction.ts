@@ -5,7 +5,7 @@ export interface Transaction {
     id: string;
     concept: "Mensualidad" | "Matrícula" | "Uniforme" | "Entradas Gala";
     method: "Transferencia" | "Tarjeta" | "Efectivo" | "Pago Móvil";
-    status: "Aprobado" | "Pendiente";
+    status: "approved" | "pending" | "refused";
     amount: number;
     userId?: string;
     user?: User;
@@ -14,7 +14,6 @@ export interface Transaction {
     createdAt: string;
     updatedAt: string;
 }
-
 export interface FetchTransactionsParams {
     page?: number;
     limit?: number;

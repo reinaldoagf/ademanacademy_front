@@ -15,105 +15,35 @@ import {
     DollarSign,
     Ticket,
     Receipt,
-    Building
+    Phone
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
-
-// Interfaz adaptada al schema de Prisma para PaymentOrder
-interface PaymentOrderDetail {
-    id: string;
-    concept: string;
-    amount: number | string;
-    dueDate?: string | Date | null;
-    status: string;
-    createdAt: string | Date;
-    updatedAt: string | Date;
-    user?: {
-        id: string;
-        name?: string;
-        email?: string;
-        phone?: string;
-        dni?: string;
-    } | null;
-    client?: {
-        id: string;
-        name?: string;
-        email?: string;
-        phone?: string;
-    } | null;
-    order?: {
-        id: string;
-        status: string;
-        totalAmount: number | string;
-        createdAt: string | Date;
-        items?: Array<{
-            id: string;
-            concept: string;
-            description: string;
-            quantity: number;
-            price: number | string;
-            student?: {
-                name?: string;
-                firstName?: string;
-                lastName?: string;
-            };
-        }>;
-    } | null;
-    transactions?: Array<{
-        id: string;
-        concept: string;
-        amount: number | string;
-        method: string;
-        status: string;
-        referenceNumber?: string | null;
-        bankName?: string | null;
-        receiptPath?: string | null;
-        createdAt: string | Date;
-    }>;
-    eventSeats?: Array<{
-        id: string;
-        status: string;
-        event?: {
-            id: string;
-            title?: string;
-            name?: string;
-        };
-        seatingMapElement?: {
-            id: string;
-            label?: string;
-            row?: string;
-            number?: string | number;
-        };
-    }>;
-}
+import { getPaymentOrderByIdAction } from "@/app/actions/payment-order";
+import { PaymentOrder } from "@/types/payment-order";
 
 export default function PaymentOrderDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const id = params?.id as string;
 
-    const [paymentOrder, setPaymentOrder] = useState<PaymentOrderDetail | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [paymentOrder, setPaymentOrder] = useState<PaymentOrder | null>(null);
     const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         if (!id) return;
 
         const fetchPaymentOrderDetails = async () => {
-            setIsLoading(true);
             try {
-                // Reemplaza por tu Server Action o API Endpoint correspondiente
-                const res = await fetch(`/api/payment-orders/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setPaymentOrder(data);
-                }
+                startTransition(async () => {
+                    const res = await getPaymentOrderByIdAction(id);
+                    if (res.success && res.data) {
+                        setPaymentOrder(res.data);
+                    }
+                });
             } catch (error) {
                 console.error("Error al obtener los detalles de la orden de pago:", error);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -125,7 +55,7 @@ export default function PaymentOrderDetailsPage() {
     };
 
     const totalPaid = paymentOrder?.transactions
-        ?.filter((t) => t.status === "completed" || t.status === "approved" || t.status === "success")
+        ?.filter((t) => t.status === "approved")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
     const pendingAmount = Math.max(0, Number(paymentOrder?.amount || 0) - totalPaid);
@@ -148,11 +78,7 @@ export default function PaymentOrderDetailsPage() {
             {/* Capa de Carga Asíncrona */}
             <div className="relative w-full">
                 <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center p-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5e0472]" />
-                        </div>
-                    ) : !paymentOrder ? (
+                    {!paymentOrder ? (
                         <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
                             <Package className="w-10 h-10 text-purple-200 mx-auto mb-3" />
                             <p className="font-questrial text-xs text-gray-400">
@@ -160,67 +86,76 @@ export default function PaymentOrderDetailsPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="max-w-5xl mx-auto space-y-6 text-xs">
+
+                        <div className="space-y-6">
                             {/* Información General y Cliente */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Tarjeta Cliente */}
-                                <div className="font-questrial p-4 border border-gray-100 bg-gray-50/80 rounded-lg space-y-2">
-                                    <div className="flex items-center gap-2 text-[#5e0472] font-bold text-sm mb-1">
-                                        <User className="w-4 h-4" />
-                                        <span>Información del Cliente</span>
+                                <div className="glass-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-anton mb-4">Información del Cliente</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <User className="w-4 h-4 text-purple-500" /> Cliente
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.name || paymentOrder.client?.firstName || "Sin Nombre"}</span>
+                                        </div>
+                                        {(paymentOrder.user?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <User className="w-4 h-4 text-pink-500" /> DNI / Cédula
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user.dni}</span>
+                                        </div>)}
+                                        {(paymentOrder.user?.email || paymentOrder.client?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Ticket className="w-4 h-4 text-indigo-500" /> Email
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.email || paymentOrder.client?.email}</span>
+                                        </div>)}
+                                        {(paymentOrder.user?.phone || paymentOrder.client?.phone) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Phone className="w-4 h-4 text-green-500" /> Teléfono
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.phone || paymentOrder.client?.phone}</span>
+                                        </div>)}
                                     </div>
-                                    <p className="text-gray-900 font-bold text-sm">
-                                        {paymentOrder.user?.name || paymentOrder.client?.name || "Sin Nombre"}
-                                    </p>
-                                    {(paymentOrder.user?.dni) && (
-                                        <p className="text-gray-500 font-medium">DNI / Cédula: {paymentOrder.user.dni}</p>
-                                    )}
-                                    {(paymentOrder.user?.email || paymentOrder.client?.email) && (
-                                        <p className="text-gray-500">
-                                            Email: {paymentOrder.user?.email || paymentOrder.client?.email}
-                                        </p>
-                                    )}
-                                    {(paymentOrder.user?.phone || paymentOrder.client?.phone) && (
-                                        <p className="text-gray-500">
-                                            Teléfono: {paymentOrder.user?.phone || paymentOrder.client?.phone}
-                                        </p>
-                                    )}
+
                                 </div>
 
                                 {/* Tarjeta Orden / Estado */}
-                                <div className="font-questrial p-4 border border-gray-100 bg-gray-50/80 rounded-lg space-y-2.5">
-                                    <div className="flex items-center gap-2 text-[#5e0472] font-bold text-sm mb-1">
-                                        <FileText className="w-4 h-4" />
-                                        <span>Estado y Registro</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-500">Estado Orden:</span>
-                                        <Badge variant={paymentOrder.status} />
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-500">Concepto Principal:</span>
-                                        <span className="font-semibold text-purple-900 capitalize">
-                                            {paymentOrder.concept}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="w-3.5 h-3.5 text-gray-400" /> Creado:
-                                        </span>
-                                        <span className="font-medium text-gray-800">
-                                            <DatePipe value={paymentOrder.createdAt} format="short" />
-                                        </span>
-                                    </div>
-                                    {paymentOrder.dueDate && (
-                                        <div className="flex justify-between items-center text-gray-500">
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-3.5 h-3.5 text-gray-400" /> Vencimiento:
+                                <div className="glass-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-anton mb-4">Estado y Registro</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <User className="w-4 h-4 text-purple-500" /> Estado Orden
                                             </span>
-                                            <span className="font-medium text-amber-700">
-                                                <DatePipe value={paymentOrder.dueDate} format="short" />
-                                            </span>
+                                            <Badge variant={paymentOrder.status} />
                                         </div>
-                                    )}
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <User className="w-4 h-4 text-pink-500" /> Concepto Principal
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.concept}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Ticket className="w-4 h-4 text-indigo-500" /> Creado
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800"><DatePipe value={paymentOrder.createdAt} format="short" /></span>
+                                        </div>
+                                        {paymentOrder.dueDate && (
+                                            <div className="flex justify-between items-center text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="w-3.5 h-3.5 text-gray-400" /> Vencimiento:
+                                                </span>
+                                                <span className="font-medium text-amber-700">
+                                                    <DatePipe value={paymentOrder.dueDate} format="short" />
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -287,30 +222,39 @@ export default function PaymentOrderDetailsPage() {
 
                             {/* Asientos / Eventos Asociados (Si existen registros en EventSeat) */}
                             {paymentOrder.eventSeats && paymentOrder.eventSeats.length > 0 && (
-                                <div className="space-y-3 font-questrial">
-                                    <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                        <Ticket className="w-4 h-4 text-[#5e0472]" />
-                                        <span>Entradas / Asientos Reservados ({paymentOrder.eventSeats.length})</span>
-                                    </h4>
+                                <div className="glass-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-anton mb-4">
+                                        Entradas / Asientos Reservados
+                                    </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                         {paymentOrder.eventSeats.map((seat) => (
                                             <div
                                                 key={seat.id}
-                                                className="p-3 border border-purple-100 bg-purple-50/30 rounded-lg flex justify-between items-center"
+                                                className="p-3 border border-purple-100 bg-purple-50/30 rounded-lg grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100"
                                             >
-                                                <div>
-                                                    <p className="font-bold text-purple-950">
-                                                        {seat.event?.title || seat.event?.name || "Evento"}
-                                                    </p>
-                                                    <p className="text-gray-500 text-[11px]">
-                                                        {seat.seatingMapElement?.label
-                                                            ? `Asiento: ${seat.seatingMapElement.label}`
-                                                            : seat.seatingMapElement?.row
-                                                                ? `Fila ${seat.seatingMapElement.row} - Asiento ${seat.seatingMapElement.number}`
-                                                                : `Silla ID: ${seat.id}`}
-                                                    </p>
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Evento</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">{seat.event?.name || "Evento"}</p>
+                                                </div> <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Status</p>
+                                                    <Badge variant={seat.status} />
                                                 </div>
-                                                <Badge variant={seat.status} />
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium"># de Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">{seat.seatingMapElement?.chairNumber || ""}</p>
+                                                </div>
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Nombre de Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">{seat.seatingMapElement?.name || ""}</p>
+                                                </div>
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Tipo de Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">{seat.seatingMapElement?.itemType || ""}</p>
+                                                </div>
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Precio de Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">${seat.seatingMapElement?.price || ""}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -318,11 +262,10 @@ export default function PaymentOrderDetailsPage() {
                             )}
 
                             {/* Historial de Transacciones / Intentos de Pago */}
-                            <div className="space-y-3 font-questrial">
-                                <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                    <CreditCard className="w-4 h-4 text-[#5e0472]" />
-                                    <span>Transacciones / Intentos de Pago ({paymentOrder.transactions?.length || 0})</span>
-                                </h4>
+                            <div className="glass-card p-6 shadow-sm">
+                                <h3 className="text-lg font-anton mb-4">
+                                    Transacciones / Intentos de Pago
+                                </h3>
 
                                 <div className="border border-purple-100 rounded-lg overflow-hidden">
                                     <table className="w-full text-left border-collapse text-xs">
@@ -341,12 +284,13 @@ export default function PaymentOrderDetailsPage() {
                                                     <tr key={tx.id} className="hover:bg-purple-50/20">
                                                         <td className="p-3 font-semibold uppercase">{tx.method}</td>
                                                         <td className="p-3">
-                                                            <div>{tx.bankName || "N/A"}</div>
+                                                            test
+                                                            {/* <div>{tx.bankName || "N/A"}</div>
                                                             {tx.referenceNumber && (
                                                                 <div className="text-[10px] text-gray-400 font-mono">
                                                                     Ref: {tx.referenceNumber}
                                                                 </div>
-                                                            )}
+                                                            )} */}
                                                         </td>
                                                         <td className="p-3 text-gray-500">
                                                             <DatePipe value={tx.createdAt} format="short" />
@@ -372,20 +316,24 @@ export default function PaymentOrderDetailsPage() {
                             </div>
 
                             {/* Resumen y Monto Total */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-questrial">
-                                <div className="p-4 border border-purple-100 bg-purple-50/40 rounded-lg flex justify-between items-center">
-                                    <span className="text-gray-600 font-medium">Abonado / Pagado:</span>
-                                    <span className="text-base font-bold text-emerald-600">
-                                        ${totalPaid.toFixed(2)}
-                                    </span>
-                                </div>
-                                <div className="p-4 gradient-purple text-white shadow-lg shadow-purple-200 rounded-lg flex justify-between items-center font-bold">
-                                    <span className="text-sm">Monto Total de la Orden:</span>
-                                    <span className="text-lg text-emerald-400">
-                                        ${Number(paymentOrder.amount || 0).toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
+                            <div className="glass-card p-6 shadow-sm">
+                                <h3 className="text-lg font-anton mb-4">
+                                    Resumen y Monto Total
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-questrial">
+                                    <div className="p-4 border border-purple-100 bg-purple-50/40 rounded-lg flex justify-between items-center">
+                                        <span className="text-gray-600 font-medium">Abonado / Pagado:</span>
+                                        <span className="text-base font-bold text-emerald-600">
+                                            ${totalPaid.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="p-4 gradient-purple text-white shadow-lg shadow-purple-200 rounded-lg flex justify-between items-center font-bold">
+                                        <span className="text-sm">Monto Total de la Orden:</span>
+                                        <span className="text-lg text-emerald-400">
+                                            ${Number(paymentOrder.amount || 0).toFixed(2)}
+                                        </span>
+                                    </div>
+                                </div></div>
                         </div>
                     )}
                 </div>

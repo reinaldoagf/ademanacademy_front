@@ -32,6 +32,18 @@ export interface Order {
     client: Client;
     totalAmount: number;
     status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
+    items?: Array<{
+        id: string;
+        concept: string;
+        description: string;
+        quantity: number;
+        price: number | string;
+        student?: {
+            name?: string;
+            firstName?: string;
+            lastName?: string;
+        };
+    }>;
     createdAt: string,
     updatedAt: string,
 }

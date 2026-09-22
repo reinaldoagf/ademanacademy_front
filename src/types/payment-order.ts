@@ -1,15 +1,27 @@
 import { Client } from "@/types/client";
-import { Student } from "@/types/student";
+import { Order } from "@/types/order";
+import { SeatingMapElement } from "@/types/seating-map";
+import { User } from "@/types/user";
+import { EventData } from "@/types/event";
+import { Transaction } from "@/types/transaction";
 export interface PaymentOrder {
     id: string;
-    concept: "monthly_payment" | "tuition" | "locker_room" | "ticket";
-    amount: number;
-    dueDate: string;
-    status: "pending" | "approved" | "refused";
-    client: Client;
-    student?: Student;
-    createdAt: string,
-    updatedAt: string,
+    concept: string;
+    amount: number | string;
+    dueDate?: string | Date | null;
+    status: string;
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    user?: User | null;
+    client?: Client | null;
+    order?: Order | null;
+    transactions?: Array<Transaction>;
+    eventSeats?: Array<{
+        id: string;
+        status: string;
+        event?: EventData;
+        seatingMapElement?: SeatingMapElement;
+    }>;
 }
 export interface FetchPaymentOrdersParams {
     page?: number;
