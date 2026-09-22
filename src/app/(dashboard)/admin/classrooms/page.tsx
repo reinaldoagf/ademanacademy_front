@@ -8,7 +8,7 @@ import {
     Pencil,
     ChevronLeft,
     ChevronRight,
-    Calendar,
+    Calendar, House
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -229,89 +229,92 @@ export default function ClassroomsPage() {
                 </div>
 
                 {/* LISTADO DE TARJETAS DE SALONES */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {classrooms.length > 0 ? (
-                        classrooms.map((classroom) => (
-                            <div
-                                key={classroom.id}
-                                className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
-                            >
-                                {/* Cabecera de la tarjeta */}
-                                <div className="p-5 space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
-                                            {classroom.name}
-                                        </h3>
 
-                                        {
-                                            classroom.createdAt && (
-                                                <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
-                                                    <Calendar className="w-3 h-3" />
-                                                    <DatePipe value={classroom.createdAt} format="short" />
-                                                </div>
-                                            )
-                                        }
-                                    </div>
+                {classrooms.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {classrooms.map((classroom) => (
+                        <div
+                            key={classroom.id}
+                            className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
+                        >
+                            {/* Cabecera de la tarjeta */}
+                            <div className="p-5 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
+                                        {classroom.name}
+                                    </h3>
 
-                                    {/* Sub-métricas vectoriales del plano */}
-                                    <div className="grid grid-cols-2 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
-                                        <div className="bg-slate-50 p-2">
-                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                                                Dirección
-                                            </p>
-                                            <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {classroom.address || 'No registrado'}
-                                            </p>
-                                        </div>
-                                        <div className="bg-slate-50 p-2">
-                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                                                Capacidad
-                                            </p>
-                                            <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {classroom.maxCapacity || 'No registrado'}
-                                            </p>
-                                        </div>
-                                    </div>
-
-
+                                    {
+                                        classroom.createdAt && (
+                                            <div className="flex items-center gap-1 text-gray-400 text-[11px] font-questrial">
+                                                <Calendar className="w-3 h-3" />
+                                                <DatePipe value={classroom.createdAt} format="short" />
+                                            </div>
+                                        )
+                                    }
                                 </div>
 
-                                {/* Acciones y Footer de la tarjeta */}
-                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 w-full flex items-center justify-between gap-1.5">
-                                    <ActionButton
-                                        variant="danger"
-                                        icon={Trash2}
-                                        tooltip="Eliminar"
-                                        onClick={() => {
-                                            setModalConfig({
-                                                isOpen: true,
-                                                type: "word",
-                                                title: "Confirmar operación",
-                                                description: "¿Quieres eliminar el registro de tu salón de clases?",
-                                                id: classroom.id,
-                                            });
-                                        }}
-                                    >
-                                        Eliminar
-                                    </ActionButton>
-                                    <ActionButton
-                                        variant="success"
-                                        icon={Pencil}
-                                        tooltip="Editar"
-                                        onClick={() => handleEditModal(classroom)}
-                                    >
-                                        Editar
-                                    </ActionButton>
+                                {/* Sub-métricas vectoriales del plano */}
+                                <div className="grid grid-cols-2 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                    <div className="bg-slate-50 p-2">
+                                        <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                            Dirección
+                                        </p>
+                                        <p className="text-xs font-questrial font-bold text-gray-700">
+                                            {classroom.address || 'No registrado'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-slate-50 p-2">
+                                        <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                            Capacidad
+                                        </p>
+                                        <p className="text-xs font-questrial font-bold text-gray-700">
+                                            {classroom.maxCapacity || 'No registrado'}
+                                        </p>
+                                    </div>
                                 </div>
+
+
                             </div>
 
-                        ))
-                    ) : (
-                        <div className="col-span-full py-12 text-center text-gray-400 font-questrial border border-dashed border-purple-100 rounded-2xl bg-white/40">
-                            No se encuentran salones configurados bajo la modalidad seleccionada.
+                            {/* Acciones y Footer de la tarjeta */}
+                            <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 w-full flex items-center justify-between gap-1.5">
+                                <ActionButton
+                                    variant="danger"
+                                    icon={Trash2}
+                                    tooltip="Eliminar"
+                                    onClick={() => {
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: "word",
+                                            title: "Confirmar operación",
+                                            description: "¿Quieres eliminar el registro de tu salón de clases?",
+                                            id: classroom.id,
+                                        });
+                                    }}
+                                >
+                                    Eliminar
+                                </ActionButton>
+                                <ActionButton
+                                    variant="success"
+                                    icon={Pencil}
+                                    tooltip="Editar"
+                                    onClick={() => handleEditModal(classroom)}
+                                >
+                                    Editar
+                                </ActionButton>
+                            </div>
                         </div>
-                    )}
-                </div>
+
+                    ))}
+                </div>) : (
+                    <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+                        <House className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+                        <p className="font-questrial text-xs text-gray-400">
+                            {isPending ? "Sincronizando..." : "No se encuentran salones configurados bajo la modalidad seleccionada."}
+                        </p>
+                    </div>
+                )}
+
 
                 {/* Seccion de Paginación */}
                 {meta.totalPages > 1 && (

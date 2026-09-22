@@ -148,7 +148,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [marketingEventManagement, setMarketingEventManagement] = useState<SidebarMenuItem[]>([
     { key: APP_KEYS.SEATING_CHARTS, name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 0 },
     { key: APP_KEYS.EVENTS, name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
-    { key: '', name: 'Preinscripciones', href: '/admin/preinscripciones', icon: UserPlus, badge: 0 },
   ]);
 
   const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([

@@ -340,11 +340,6 @@ export default function UniformsPage() {
             />
             {/* Capa de Carga Asíncrona */}
             <div className="relative w-full">
-                {isPending && (
-                    <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
-                        <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                )}
                 <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
                     {/* TARJETAS DE INDICADORES RÁPIDOS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

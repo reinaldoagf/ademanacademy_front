@@ -111,11 +111,7 @@ export default function SeatingMapListPage() {
         actions={actions}
       />
       <div className="relative w-full">
-        {isPending && (
-          <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
-            <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
+
         <div className="p-4 md:p-8 mx-auto w-full space-y-6">
           {/* --- CONTENEDOR DE INDICADORES / KPIs --- */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -266,12 +262,10 @@ export default function SeatingMapListPage() {
               ))}
             </div>
           ) : (
-            /* --- ESTADO SIN RESULTADOS --- */
-            <div className="bg-white border border-purple-100 p-12 text-center shadow-sm">
-              <Armchair className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-xs font-questrial text-gray-400 italic">
-                No se encontraron mapas de asientos que coincidan con los
-                criterios de búsqueda.
+            <div className="text-center py-16 border border-dashed border-purple-100 bg-white">
+              <Armchair className="w-10 h-10 text-purple-200 mx-auto mb-3" />
+              <p className="font-questrial text-xs text-gray-400">
+                {isPending ? "Sincronizando..." : "No se encontraron mapas de asientos que coincidan con los criterios de búsqueda."}
               </p>
             </div>
           )}
