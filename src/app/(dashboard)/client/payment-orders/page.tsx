@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/payment-orders/page.tsx
+// src/app/(dashboard)/client/payment-orders/page.tsx
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -13,7 +13,7 @@ import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
+import { getMyPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
 
 export default function PaymentOrdersPage() {
@@ -98,25 +98,6 @@ export default function PaymentOrdersPage() {
             },
         },
         {
-            header: "Usuario",
-            render: (order) => {
-                if (!order.client?.user) {
-                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin usuario</p>;
-                }
-                return (
-                    <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            <User className="w-3.5 h-3.5 shrink-0" />
-                        </div>
-                        <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.user.name}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.user.email}</span>
-                        </div>
-                    </div>
-                );
-            },
-        },
-        {
             header: "Alumno",
             render: (order) => {
                 if (!order.client?.student) {
@@ -128,8 +109,8 @@ export default function PaymentOrdersPage() {
                             <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.student.firstName} {order.client.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client?.student?.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName + " " + order.client.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client?.dni}</span>
                         </div>
                     </div>
                 );
@@ -163,7 +144,7 @@ export default function PaymentOrdersPage() {
                     variant="success"
                     icon={Eye}
                     tooltip="Ver detalles"
-                    onClick={() => { router.push(`/admin/payment-orders/${element.id}`); }}
+                    onClick={() => { router.push(`/client/payment-orders/${element.id}`); }}
                 >
                     Ver detalles
                 </ActionButton>
@@ -174,7 +155,7 @@ export default function PaymentOrdersPage() {
     ];
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
-            const res = await getAllPaymentOrdersAction({
+            const res = await getMyPaymentOrdersAction({
                 page: pageToFetch,
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined,

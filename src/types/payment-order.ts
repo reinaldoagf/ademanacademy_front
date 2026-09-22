@@ -8,7 +8,7 @@ export interface PaymentOrder {
     id: string;
     concept: string;
     amount: number | string;
-    dueDate?: string | Date | null;
+    dueDate: string | Date;
     status: string;
     createdAt: string | Date;
     updatedAt: string | Date;

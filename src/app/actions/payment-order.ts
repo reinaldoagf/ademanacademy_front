@@ -20,6 +20,25 @@ export async function getPaymentOrderByIdAction(id: string) {
         };
     }
 }
+
+export async function getMyPaymentOrdersAction(params: FetchPaymentOrdersParams) {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/payment-orders/my-orders`, {
+            params,
+            headers: headers
+        });
+
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
+
 export async function getAllPaymentOrdersAction(params: FetchPaymentOrdersParams) {
     try {
         const headers = await getAuthHeaders();

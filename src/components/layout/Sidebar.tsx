@@ -155,6 +155,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: APP_KEYS.MY_AFFILIATES, name: 'Mis afiliados', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
     { key: APP_KEYS.CLASSES, name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
     { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
+    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Mis Ordenes de Pago', href: '/client/payment-orders', icon: Package },
     { key: APP_KEYS.CLOTHING, name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
     { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 }, // Tu otro badge estático
   ]);
