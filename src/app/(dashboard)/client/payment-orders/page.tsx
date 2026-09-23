@@ -142,7 +142,7 @@ export default function PaymentOrdersPage() {
             render: (element) => (<div className="flex gap-2 justify-end">
                 <Link
                     href={`/client/payment-orders/${element.id}`}
-                    className="px-3 py-2 bg-green-100 hover:bg-green-200 rounded-xl border border-green-100 cursor-pointer flex items-center gap-1 text-[11px] font-questrial font-bold text-green-600 hover:text-green-700 transition"
+                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
                 >
                     Ver detalles <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
