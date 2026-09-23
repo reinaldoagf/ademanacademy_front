@@ -8,7 +8,8 @@ import {
     Search,
     TrendingUp,
     AlertCircle,
-    Eye
+    Eye,
+    User
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from '@/components/layout/HeroSection';
@@ -149,18 +150,17 @@ export default function PaymentsPage() {
         {
             header: "Alumno",
             render: (transaction) => {
-                if (!transaction.student) {
+                if (!transaction.client?.student) {
                     return <p className="text-[11px] text-gray-400 mt-0.5">Sin alumno</p>;
                 }
-                const userInitials = transaction.student.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {userInitials}
+                            <User className="w-4 h-4" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.student.firstName} {transaction.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.student.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.client.firstName} {transaction.client.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.client.dni}</span>
                         </div>
                     </div>
                 );
