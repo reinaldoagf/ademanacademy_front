@@ -58,7 +58,7 @@ export function SearchInput<T = any>({
             labelColor={labelColor}
             containerClassName={containerClassName}
         >
-            <div className="relative" ref={wrapperRef}>
+            <div className={`relative ${isOpen ? 'z-50' : 'z-10'}`} ref={wrapperRef}>
                 {/* Input de Búsqueda */}
                 <div className="relative">
                     <input
@@ -82,7 +82,7 @@ export function SearchInput<T = any>({
 
                 {/* Desplegable de Resultados */}
                 {showDropdown && (
-                    <ul className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
+                    <ul className="absolute z-[9999] left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 shadow-lg font-questrial text-xs rounded-none divide-y divide-gray-50">
                         {isLoading ? (
                             <li className="p-2 text-gray-400 italic">{loadingMessage}</li>
                         ) : options.length === 0 ? (

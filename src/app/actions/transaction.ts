@@ -59,3 +59,17 @@ export async function approveTransactionAction(transactionId: string, selectedGr
         };
     }
 }
+export async function getTransactionByIdAction(id: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/transactions/${id}`, {
+            headers: headers
+        });
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}

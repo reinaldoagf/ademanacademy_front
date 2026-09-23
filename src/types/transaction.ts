@@ -3,10 +3,11 @@ import { Client } from "@/types/client";
 
 export interface Transaction {
     id: string;
-    concept: "Mensualidad" | "Matrícula" | "Uniforme" | "Entradas Gala";
-    method: "Transferencia" | "Tarjeta" | "Efectivo" | "Pago Móvil";
+    concept: "monthly_payment" | "tuition" | "locker_room" | "ticket" | "product";
+    method: "bank_transfer" | "credit_or_debit_card" | "cash" | "mobile_payment" | "check" | "other";
     status: "approved" | "pending" | "refused";
     amount: number;
+    receiptPath?: string;
     userId?: string;
     user?: User;
     clientId?: string;

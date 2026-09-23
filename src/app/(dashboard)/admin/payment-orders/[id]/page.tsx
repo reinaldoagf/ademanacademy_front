@@ -347,7 +347,8 @@ export default function PaymentOrderDetailsPage() {
                                             ${Number(paymentOrder.amount || 0).toFixed(2)}
                                         </span>
                                     </div>
-                                </div></div>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
