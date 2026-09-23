@@ -2,6 +2,7 @@
 
 import { useEffect, useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Armchair,
   Search,
@@ -248,15 +249,12 @@ export default function SeatingMapListPage() {
                         Eliminar
                       </ActionButton>
                     </div>
-
-                    <button
-                      onClick={() =>
-                        (window.location.href = `/admin/seating-charts/editor/${seatingMap.id}`)
-                      }
-                      className="cursor-pointer flex items-center gap-1 text-[11px] font-questrial font-bold text-[#5e0472] hover:text-[#4a024d] transition"
+                    <Link
+                      href={`/admin/seating-charts/editor/${seatingMap.id}`}
+                      className="px-3 py-2 bg-green-100 hover:bg-green-200 rounded-xl border border-green-100 cursor-pointer flex items-center gap-1 text-[11px] font-questrial font-bold text-green-600 hover:text-green-700 transition"
                     >
                       Abrir Editor <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useRef, use } from "react";
+import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
+import { Save, Loader2, ArrowLeft } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
-import { Save, Loader2 } from "lucide-react";
-import SeatingMapEditor, { SeatingMapEditorRef } from "@/components/SeatingMapEditor";
+import SeatingMapEditor from "@/components/SeatingMapEditor";
+import { SeatingMapEditorRef } from "@/types/seating-map";
 import { getSeatingMapAction } from "@/app/actions/seating-map";
 
 interface PageProps {
@@ -14,6 +16,7 @@ interface PageProps {
 export default function EditSeatingMapBuilderPage({ params }: PageProps) {
   // 1. Desenvolver params de la promesa
   const { id } = use(params);
+  const router = useRouter();
 
   // Estados
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,7 +59,9 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
     console.log('handleSavePlan')
     editorRef.current?.save();
   };
-
+  const handleBack = () => {
+    router.back();
+  };
   return (
     <>
       <HeroSection
@@ -64,6 +69,11 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
         htmlSubTitle="Manejo dinámico vectorial con herramientas de alineación y leyes métricas."
         actions={[
           {
+            label: "Volver al listado",
+            icon: <ArrowLeft className="w-4 h-4" />,
+            onClick: handleBack,
+            variant: "secondary",
+          }, {
             label: saving ? "Guardando..." : (id ? "Actualizar Mapa" : "Registrar Mapa"),
             onClick: handleSavePlan,
             icon: <Save className="w-4 h-4" />,

@@ -3,10 +3,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
     Search,
     User,
-    Eye
+    ChevronRight
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
@@ -159,15 +160,12 @@ export default function PaymentOrdersPage() {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
             render: (element) => (<div className="flex gap-2 justify-end">
-                <ActionButton
-                    variant="success"
-                    icon={Eye}
-                    tooltip="Ver detalles"
-                    onClick={() => { router.push(`/admin/payment-orders/${element.id}`); }}
+                <Link
+                    href={`/admin/payment-orders/${element.id}`}
+                    className="px-3 py-2 bg-green-100 hover:bg-green-200 rounded-xl border border-green-100 cursor-pointer flex items-center gap-1 text-[11px] font-questrial font-bold text-green-600 hover:text-green-700 transition"
                 >
-                    Ver detalles
-                </ActionButton>
-
+                    Ver detalles <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
             </div>
             ),
         },
