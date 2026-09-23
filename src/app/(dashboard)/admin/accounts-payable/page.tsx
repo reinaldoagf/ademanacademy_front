@@ -255,7 +255,7 @@ export default function AccountsPayablePage() {
             className: "text-right", // Alinea el encabezado a la derecha
             render: (element) => (<div className="flex gap-2 justify-end">
                 <ActionButton
-                    variant="purple"
+                    variant="success"
                     icon={CreditCard}
                     tooltip="Abonar"
                     onClick={() => {

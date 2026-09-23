@@ -5,7 +5,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     User,
-    FileText,
     Calendar,
     ShoppingBag,
     CreditCard,
@@ -264,14 +263,21 @@ export default function PaymentOrderDetailsPage() {
 
                             {/* Historial de Transacciones / Intentos de Pago */}
                             <div className="glass-card p-6 shadow-sm">
-                                <h3 className="text-lg font-anton mb-4">
-                                    Transacciones / Intentos de Pago
-                                </h3>
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-anton mb-1">Transacciones / Intentos de Pago</h3>
+                                    </div>
+                                    <div>
+                                        <button className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
+                                            <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div className="border border-purple-100 rounded-lg overflow-hidden">
-                                    <table className="w-full text-left border-collapse text-xs">
+                                    <table className="w-full text-left text-sm">
                                         <thead>
-                                            <tr className="bg-purple-50/60 text-purple-900 font-bold border-b border-purple-100">
+                                            <tr className="text-gray-400 border-b border-purple-50 font-questrial">
                                                 <th className="p-3">Método</th>
                                                 <th className="p-3">Banco / Ref.</th>
                                                 <th className="p-3">Fecha</th>

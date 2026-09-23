@@ -316,7 +316,7 @@ export default function PaymentsPage() {
                         setError(null);
                     }}
                 />
-                <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+                <div className="pt-2 flex justify-between">
                     <button
                         type="button"
                         onClick={() => closeModal()}

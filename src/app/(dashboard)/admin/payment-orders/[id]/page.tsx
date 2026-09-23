@@ -159,27 +159,33 @@ export default function PaymentOrderDetailsPage() {
                                 </div>
                             </div>
 
+
+
                             {/* Pedido Asociado e Ítems / Productos (Si existe relación con Order) */}
                             {paymentOrder.order && (
-                                <div className="space-y-3 font-questrial">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                            <ShoppingBag className="w-4 h-4 text-[#5e0472]" />
-                                            <span>
-                                                Pedido Vinculado #{paymentOrder.order.id} ({paymentOrder.order.items?.length || 0})
-                                            </span>
-                                        </h4>
-                                        <Badge variant={paymentOrder.order.status} />
+                                <div className="glass-card p-6 shadow-sm">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div>
+                                            <h3 className="text-lg font-anton mb-1">
+                                                <span>
+                                                    Pedido Vinculado #{paymentOrder.order.id}
+                                                </span>
+                                            </h3>
+                                        </div>
+                                        <div>
+                                            <Badge variant={paymentOrder.order.status} />
+                                        </div>
                                     </div>
 
+
                                     <div className="border border-purple-100 rounded-lg overflow-hidden">
-                                        <table className="w-full text-left border-collapse text-xs">
+                                        <table className="w-full text-left text-sm">
                                             <thead>
-                                                <tr className="bg-purple-50/60 text-purple-900 font-bold border-b border-purple-100">
+                                                <tr className="text-gray-400 border-b border-purple-50 font-questrial">
                                                     <th className="p-3">Concepto</th>
                                                     <th className="p-3">Descripción</th>
                                                     <th className="p-3 text-center">Cantidad</th>
-                                                    <th className="p-3 text-right">Precio Un.</th>
+                                                    <th className="p-3">Precio Un.</th>
                                                     <th className="p-3 text-right">Subtotal</th>
                                                 </tr>
                                             </thead>
@@ -189,8 +195,8 @@ export default function PaymentOrderDetailsPage() {
                                                         const priceNum = Number(item.price) || 0;
                                                         const subtotal = priceNum * item.quantity;
                                                         return (
-                                                            <tr key={item.id} className="hover:bg-purple-50/20">
-                                                                <td className="p-3 font-medium text-gray-900">
+                                                            <tr key={item.id} className="text-gray-700 hover:bg-purple-50/20 transition font-questrial">
+                                                                <td className="p-3 text-[11px] text-gray-400">
                                                                     <div className="capitalize">{item.concept}</div>
                                                                     {item.student && (
                                                                         <div className="text-[10px] text-gray-400">
@@ -198,9 +204,10 @@ export default function PaymentOrderDetailsPage() {
                                                                         </div>
                                                                     )}
                                                                 </td>
-                                                                <td className="p-3">{item.description}</td>
+                                                                <td className="p-3 text-[11px] text-gray-400">{item.description}</td>
                                                                 <td className="p-3 text-center font-bold">{item.quantity}</td>
-                                                                <td className="p-3 text-right">${priceNum.toFixed(2)}</td>
+                                                                <td className="p-3"> <span className="font-bold text-gray-800">${priceNum.toFixed(2)}</span>
+                                                                </td>
                                                                 <td className="p-3 text-right font-bold text-gray-900">
                                                                     ${subtotal.toFixed(2)}
                                                                 </td>
@@ -263,14 +270,21 @@ export default function PaymentOrderDetailsPage() {
 
                             {/* Historial de Transacciones / Intentos de Pago */}
                             <div className="glass-card p-6 shadow-sm">
-                                <h3 className="text-lg font-anton mb-4">
-                                    Transacciones / Intentos de Pago
-                                </h3>
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-anton mb-1">Transacciones / Intentos de Pago</h3>
+                                    </div>
+                                    <div>
+                                        <button className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
+                                            <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div className="border border-purple-100 rounded-lg overflow-hidden">
-                                    <table className="w-full text-left border-collapse text-xs">
+                                    <table className="w-full text-left text-sm">
                                         <thead>
-                                            <tr className="bg-purple-50/60 text-purple-900 font-bold border-b border-purple-100">
+                                            <tr className="text-gray-400 border-b border-purple-50 font-questrial">
                                                 <th className="p-3">Método</th>
                                                 <th className="p-3">Banco / Ref.</th>
                                                 <th className="p-3">Fecha</th>
@@ -278,7 +292,7 @@ export default function PaymentOrderDetailsPage() {
                                                 <th className="p-3 text-right">Monto</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100 text-gray-700">
+                                        <tbody className="divide-y divide-purple-50/50">
                                             {paymentOrder.transactions && paymentOrder.transactions.length > 0 ? (
                                                 paymentOrder.transactions.map((tx) => (
                                                     <tr key={tx.id} className="hover:bg-purple-50/20">
