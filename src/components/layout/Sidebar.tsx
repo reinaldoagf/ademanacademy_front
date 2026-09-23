@@ -35,6 +35,8 @@ import {
   getMyRepresentedAction,
   getAllStudentsAction
 } from "@/app/actions/student";
+import { getMyTransactionsAction } from "@/app/actions/transaction";
+import { getMyPaymentOrdersAction } from "@/app/actions/payment-order";
 import { getAllGroupsAction } from "@/app/actions/group";
 import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
@@ -154,8 +156,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
     { key: APP_KEYS.MY_AFFILIATES, name: 'Mis afiliados', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
     { key: APP_KEYS.CLASSES, name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
-    { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet },
-    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Mis Ordenes de Pago', href: '/client/payment-orders', icon: Package },
+    { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet, badge: 0 },
+    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Mis Ordenes de Pago', href: '/client/payment-orders', icon: Package, badge: 0 },
     { key: APP_KEYS.CLOTHING, name: 'Mis Vestuarios', href: '/client/clothing', icon: Shirt },
     { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 }, // Tu otro badge estático
   ]);
@@ -232,6 +234,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   const clientBadgeConfigs = [
     { event: APP_KEYS.REFRESH_MY_AFFILIATES_COUNT, action: getMyRepresentedAction, key: APP_KEYS.MY_AFFILIATES },
+    { event: APP_KEYS.REFRESH_PAYMENTS_COUNT, action: getMyTransactionsAction, key: APP_KEYS.PAYMENTS },
+    { event: APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT, action: getMyPaymentOrdersAction, key: APP_KEYS.PAYMENT_ORDERS },
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos

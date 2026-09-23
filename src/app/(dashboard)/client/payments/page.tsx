@@ -10,7 +10,7 @@ import {
     TrendingUp,
     CreditCard,
     AlertCircle,
-    Users
+    User
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
@@ -38,9 +38,6 @@ export default function ClientPaymentsPage() {
     const totalInvertidoMes = 10;
     const saldoPendiente = 45; // Ejemplo de mensualidad o vestuario por pagar
 
-    const handleReportarPago = async () => {
-        console.log('Abrir modal de reporte de pago');
-    };
     const fetchTableData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
             const res = await getMyTransactionsAction({
@@ -91,18 +88,17 @@ export default function ClientPaymentsPage() {
         {
             header: "Alumno",
             render: (transaction) => {
-                if (!transaction.student) {
+                if (!transaction.client?.student) {
                     return <p className="text-[11px] text-gray-400 mt-0.5">Sin alumno</p>;
                 }
-                const userInitials = transaction.student.firstName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {userInitials}
+                            <User className="w-4 h-4" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.student.firstName} {transaction.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.student.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.client?.firstName} {transaction.client?.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.client?.dni}</span>
                         </div>
                     </div>
                 );
@@ -141,11 +137,7 @@ export default function ClientPaymentsPage() {
             <HeroSection
                 htmlTitle={`Historial y <em class="text-[#5e0472]">Estado de Pagos</em>`}
                 htmlSubTitle={`Revisa tus recibos emitidos, saldos pendientes de tus representados y reporta nuevas transacciones.`}
-                actions={[{
-                    label: "Reportar Nuevo Pago →",
-                    onClick: handleReportarPago,
-                    icon: <Plus className="w-4 h-4" />,
-                }]}
+                actions={[]}
             />
 
             <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">

@@ -1,5 +1,5 @@
 import { User } from "@/types/user";
-import { Student } from "@/types/student";
+import { Client } from "@/types/client";
 
 export interface Transaction {
     id: string;
@@ -9,8 +9,8 @@ export interface Transaction {
     amount: number;
     userId?: string;
     user?: User;
-    studentId?: string;
-    student?: Student;
+    clientId?: string;
+    client?: Client;
     createdAt: string;
     updatedAt: string;
 }
