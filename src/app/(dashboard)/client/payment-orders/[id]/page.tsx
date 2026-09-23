@@ -15,7 +15,8 @@ import {
     DollarSign,
     Ticket,
     Receipt,
-    Phone
+    Phone,
+    Info
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import Badge from "@/components/common/Badge";
@@ -134,7 +135,7 @@ export default function PaymentOrderDetailsPage() {
                                         </div>
                                         <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
-                                                <User className="w-4 h-4 text-pink-500" /> Concepto Principal
+                                                <Info className="w-4 h-4 text-pink-500" /> Concepto Principal
                                             </span>
                                             <span className="text-sm font-anton text-gray-800">{paymentOrder.concept}</span>
                                         </div>
