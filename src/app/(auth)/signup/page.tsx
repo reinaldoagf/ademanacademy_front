@@ -474,9 +474,9 @@ export default function RegisterPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={!isStep2Valid || isLoading}
-                                    className="flex-2 cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90"
-                                >
+                                    disabled={!isStep2Valid || password !== confirmPassword || isLoading}
+                                    className={`w-full cursor-pointer group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer ${!isStep2Valid || password !== confirmPassword || isLoading ? "bg-gray-200 text-gray-400" : "text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90"
+                                        }`}>
                                     {/* 💡 Agregamos el Spinner SVG de carga condicional */}
 
                                     {isLoading ? (

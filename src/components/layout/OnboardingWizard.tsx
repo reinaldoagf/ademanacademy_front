@@ -415,15 +415,16 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
                                             className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                         >
-                                            <option value="2">Talla 2</option>
-                                            <option value="4">Talla 4</option>
-                                            <option value="6">Talla 6</option>
-                                            <option value="8">Talla 8</option>
-                                            <option value="10">Talla 10</option>
-                                            <option value="12">Talla 12</option>
-                                            <option value="S">S (Adulto)</option>
-                                            <option value="M">M (Adulto)</option>
-                                            <option value="L">L (Adulto)</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="2">Talla 2</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="2">Talla 2</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="4">Talla 4</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="6">Talla 6</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="8">Talla 8</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="10">Talla 10</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="12">Talla 12</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="S">S (Adulto)</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="M">M (Adulto)</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="L">L (Adulto)</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1 sm:col-span-2">
@@ -433,12 +434,12 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
                                             className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                         >
-                                            <option value="son">Hijo</option>
-                                            <option value="daughter">Hija</option>
-                                            <option value="nephew">Sobrino</option>
-                                            <option value="niece">Sobrina</option>
-                                            <option value="tutored">Tutorado</option>
-                                            <option value="other">Otro</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="son">Hijo</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="daughter">Hija</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="nephew">Sobrino</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="niece">Sobrina</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="tutored">Tutorado</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="other">Otro</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1 sm:col-span-2">
@@ -530,6 +531,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                                     onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
                                                     className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
                                                 >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="" disabled>Selecciona una Plataforma</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
