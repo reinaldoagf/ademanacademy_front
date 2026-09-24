@@ -250,6 +250,22 @@ export default function PaymentDetailsPage() {
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Receipt className="w-4 h-4 text-purple-500" /> Banco/Plataforma de Origen
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">
+                                                {transaction.bankName}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Receipt className="w-4 h-4 text-purple-500" /> Número de Referencia
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800">
+                                                {transaction.referenceNumber}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <Receipt className="w-4 h-4 text-purple-500" /> Estado
                                             </span>
                                             <Badge variant={transaction.status} />

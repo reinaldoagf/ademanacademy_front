@@ -42,7 +42,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
 
     // --- ESTADOS PARA COBRO DE INSCRIPCIÓN ---
     const [paymentInfo, setPaymentInfo] = useState({
-        reference: "",
+        referenceNumber: "",
         bankName: "",
         amount: 0,
     });
@@ -88,7 +88,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         finalRole: "student" | "representative",
         finalStudents: any[],
         occupation?: string,
-        paymentData?: { bankName: string; reference: string; amount: number },
+        paymentData?: { bankName: string; referenceNumber: string; amount: number },
         receiptFile?: File | null
     ) => {
         if (finalRole === "representative") {
@@ -101,13 +101,13 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 return;
             }
 
-            if (!paymentData?.reference || !paymentData?.bankName || !receiptFile) {
+            if (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile) {
                 setError("Por favor, completa los datos de pago y adjunta el comprobante.");
                 return;
             }
         }
         if (finalRole === "student") {
-            if (!paymentData?.reference || !paymentData?.bankName || !receiptFile) {
+            if (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile) {
                 setError("Por favor, completa los datos de pago y adjunta el comprobante.");
                 return;
             }
@@ -129,7 +129,9 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                     formData.append("receiptFile", receiptFile); // 📂 Adjunto del archivo original
                 }
             } else {
-                formData.append("payment", JSON.stringify({ amount: REGISTRATION_FEE }));
+                if (paymentData) {
+                    formData.append("payment", JSON.stringify({ ...paymentData, amount: REGISTRATION_FEE }));
+                }
                 if (receiptFile) {
                     formData.append("receiptFile", receiptFile); // 📂 Adjunto del archivo original
                 }
@@ -521,20 +523,28 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     {calculatedTotal > 0 ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                             <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] text-gray-400">Banco de Origen *</label>
-                                                <input
-                                                    type="text" required placeholder="Ej: Banesco, Mercantil, Zelle..."
+                                                <label className="text-[10px] text-gray-400">Banco/Plataforma de Origen *</label>
+
+                                                <select
                                                     value={paymentInfo.bankName}
                                                     onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
-                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                                />
+                                                    className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
+                                                >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco Mercantil">Banco Mercantil</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Zelle">Zelle</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Binance">Binance</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="other">Otro</option>
+                                                </select>
                                             </div>
                                             <div className="flex flex-col gap-1">
                                                 <label className="text-[10px] text-gray-400">Número de Referencia *</label>
                                                 <input
                                                     type="text" required placeholder="Últimos 4 o 6 dígitos"
-                                                    value={paymentInfo.reference}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, reference: e.target.value })}
+                                                    value={paymentInfo.referenceNumber}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, referenceNumber: e.target.value })}
                                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                                 />
                                             </div>
@@ -569,7 +579,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={students.length === 0 || !representativeOccupation || !paymentInfo.reference || !paymentInfo.bankName || !paymentReceipt || isPending}
+                                        disabled={students.length === 0 || !representativeOccupation || !paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt || isPending}
                                         onClick={() => {
                                             handleSubmit(
                                                 "representative",
@@ -611,20 +621,28 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     {calculatedTotal > 0 ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                             <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] text-gray-400">Banco de Origen *</label>
-                                                <input
-                                                    type="text" required placeholder="Ej: Banesco, Mercantil, Zelle..."
+                                                <label className="text-[10px] text-gray-400">Banco/Plataforma de Origen *</label>
+
+                                                <select
                                                     value={paymentInfo.bankName}
                                                     onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
-                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                                />
+                                                    className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
+                                                >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco Mercantil">Banco Mercantil</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Zelle">Zelle</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Binance">Binance</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="other">Otro</option>
+                                                </select>
                                             </div>
                                             <div className="flex flex-col gap-1">
                                                 <label className="text-[10px] text-gray-400">Número de Referencia *</label>
                                                 <input
                                                     type="text" required placeholder="Últimos 4 o 6 dígitos"
-                                                    value={paymentInfo.reference}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, reference: e.target.value })}
+                                                    value={paymentInfo.referenceNumber}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, referenceNumber: e.target.value })}
                                                     className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                                 />
                                             </div>
@@ -658,16 +676,9 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={!paymentInfo.reference || !paymentInfo.bankName || !paymentReceipt || isPending}
+                                        disabled={!paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt || isPending}
                                         onClick={() => {
                                             handleSubmit("student", [], "", { ...paymentInfo, amount: calculatedTotal }, paymentReceipt);
-                                            /* handleSubmit(
-                                                "representative",
-                                                students,
-                                                representativeOccupation,
-                                                { ...paymentInfo, amount: calculatedTotal },
-                                                paymentReceipt
-                                            ); */
                                         }}
                                         className="cursor-pointer w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                                     >
