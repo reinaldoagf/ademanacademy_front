@@ -61,6 +61,14 @@ export async function completeOnboardingAction(formData: FormData) {
             }
         } else {
             backendForm.append("payment", formData.get("payment"));
+            const file = formData.get("receiptFile") as File | null;
+            if (file && file.size > 0) {
+                const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos el archivo a un Buffer binario de Node
+                backendForm.append("receiptFile", buffer, {
+                    filename: file.name,
+                    contentType: file.type,
+                });
+            }
         }
 
         // 3. Enviamos a NestJS combinando los headers dinámicos del Multipart

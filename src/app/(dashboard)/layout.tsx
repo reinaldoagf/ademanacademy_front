@@ -44,17 +44,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Solo consultamos si el usuario está autenticado y tiene rol de administrador
     if (user && user.isAdmin) {
       fetchTotalClassrooms();
-
-      /* fetch("/api/classrooms?limit=1") // Limitemos a 1 en el backend para máxima velocidad
-        .then((res) => res.json())
-        .then((resData) => {
-          // Si resData es un arreglo vacío o su propiedad count/totalItems es 0
-          
-        })
-        .catch((err) => {
-          console.error("Error verificando infraestructura:", err);
-          setHasCheckedClassrooms(true); // Evitamos bloquear la UI si la API falla
-        }); */
     } else {
       setHasCheckedClassrooms(true);
     }

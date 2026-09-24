@@ -81,11 +81,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             return;
         }
         setError(null);
-        if (profileType === "student") {
-            handleSubmit("student", []);
-        } else {
-            setStep(2);
-        }
+        setStep(2);
     };
 
     const handleSubmit = (
@@ -95,7 +91,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         paymentData?: { bankName: string; reference: string; amount: number },
         receiptFile?: File | null
     ) => {
-        console.log({ finalRole, finalStudents, occupation, paymentData, receiptFile })
         if (finalRole === "representative") {
             if (finalStudents.length === 0) {
                 setError("Como representante, debes registrar al menos a un estudiante.");
@@ -111,7 +106,12 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 return;
             }
         }
-
+        if (finalRole === "student") {
+            if (!paymentData?.reference || !paymentData?.bankName || !receiptFile) {
+                setError("Por favor, completa los datos de pago y adjunta el comprobante.");
+                return;
+            }
+        }
         startTransition(async () => {
             setError(null);
             // ✨ Construimos un FormData para adjuntar el archivo binario
@@ -125,14 +125,15 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 if (paymentData) {
                     formData.append("payment", JSON.stringify(paymentData));
                 }
-                console.log({ receiptFile })
                 if (receiptFile) {
                     formData.append("receiptFile", receiptFile); // 📂 Adjunto del archivo original
                 }
             } else {
                 formData.append("payment", JSON.stringify({ amount: REGISTRATION_FEE }));
+                if (receiptFile) {
+                    formData.append("receiptFile", receiptFile); // 📂 Adjunto del archivo original
+                }
             }
-            console.log('completeOnboardingAction')
             const res = await completeOnboardingAction(formData);
 
             if (res.success) {
@@ -327,7 +328,8 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     disabled={isPending}
                                     className="cursor-pointer w-full max-w-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white font-questrial font-bold py-3 text-xs tracking-wider uppercase hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2 mx-auto"
                                 >
-                                    {profileType === "student" ? "Completar registro ✓" : "Continuar paso siguiente →"}
+                                    {/* {profileType === "student" ? "Completar registro ✓" : "Continuar paso siguiente →"} */}
+                                    Continuar paso siguiente →
                                 </button>
                             </div>
                         )}
@@ -584,6 +586,95 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                 </div>
                             </div>
                         )}
+
+                        {step === 2 && profileType === "student" && (
+                            <div className="space-y-6 text-left animate-fadeIn">
+                                <div className="text-center space-y-2">
+                                    <h3 className="text-2xl font-anton tracking-wide text-white">Control y cobro de incripción</h3>
+                                    <p className="text-gray-300 font-questrial text-xs">Reporta el pago de incripción para activar tu afiliación</p>
+                                </div>
+                                {/* ========================================================================= */}
+                                {/* ✨ NUEVA SECCIÓN: CONTROL Y COBRO DE INSCRIPCIONES */}
+                                {/* ========================================================================= */}
+                                <div className="bg-gradient-to-b from-purple-950/20 to-black/50 border border-purple-500/30 p-4 space-y-4 font-questrial rounded-sm">
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                        <div>
+                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wide">Pago de Inscripción</h4>
+                                            <p className="text-[10px] text-gray-400">Costo: 10$ por alumno registrado.</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-gray-400 block">Total a Reportar:</span>
+                                            <span className="text-xl font-anton text-white tracking-wider">{calculatedTotal}$</span>
+                                        </div>
+                                    </div>
+
+                                    {calculatedTotal > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Banco de Origen *</label>
+                                                <input
+                                                    type="text" required placeholder="Ej: Banesco, Mercantil, Zelle..."
+                                                    value={paymentInfo.bankName}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Número de Referencia *</label>
+                                                <input
+                                                    type="text" required placeholder="Últimos 4 o 6 dígitos"
+                                                    value={paymentInfo.reference}
+                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, reference: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1 sm:col-span-2">
+                                                <label className="text-[10px] text-gray-400">Adjuntar Comprobante (Capture / PDF) *</label>
+                                                <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/20 p-3 text-center cursor-pointer">
+                                                    <input
+                                                        type="file" required accept="image/*,application/pdf"
+                                                        onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    />
+                                                    <p className="text-gray-400 text-[11px]">
+                                                        {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[11px] text-yellow-400/80 italic text-center">Agrega al menos un alumno para habilitar la pasarela de pago.</p>
+                                    )}
+                                </div>
+
+                                {error && <p className="text-xs text-center text-red-400 font-questrial font-semibold bg-red-500/10 py-2 border border-red-500/20">{error}</p>}
+                                <div className="flex flex-col sm:flex-row gap-3 pt-2 font-questrial">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setStep(1); setError(null); }}
+                                        className="cursor-pointer w-full py-3 border border-white/10 bg-white/5 hover:bg-white/10 transition text-xs font-semibold text-center uppercase tracking-wider"
+                                    >
+                                        ← Volver atrás
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={!paymentInfo.reference || !paymentInfo.bankName || !paymentReceipt || isPending}
+                                        onClick={() => {
+                                            handleSubmit("student", [], "", { ...paymentInfo, amount: calculatedTotal }, paymentReceipt);
+                                            /* handleSubmit(
+                                                "representative",
+                                                students,
+                                                representativeOccupation,
+                                                { ...paymentInfo, amount: calculatedTotal },
+                                                paymentReceipt
+                                            ); */
+                                        }}
+                                        className="cursor-pointer w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 font-bold transition text-xs text-center uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                                    >
+                                        {isPending ? "Guardando datos..." : "Finalizar y Entrar al Sistema ✓"}
+                                    </button>
+                                </div>
+                            </div>)}
                     </div>
                 )}
             </div>

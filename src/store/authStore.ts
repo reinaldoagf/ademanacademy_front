@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { Client } from "@/types/client";
 
 interface User {
     id: string;
@@ -8,6 +9,7 @@ interface User {
     isAdmin: boolean;
     profileOnboarding: boolean;
     phone: string;
+    client?: Client;
 }
 
 interface AuthState {

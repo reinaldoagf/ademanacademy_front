@@ -1,10 +1,10 @@
 'use client';
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Mail, Lock, ChevronRight, Loader2, ShieldCheck, Globe, Star, Eye, EyeOff } from "lucide-react";
+import { Mail, ChevronRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { handleLogin } from "@/app/actions/auth";
 import { useAuthStore } from "@/store/authStore";
 
@@ -34,26 +34,27 @@ export default function OtpAuthPage() {
         payload.append("email", formData.email);
         payload.append("password", formData.password);
 
-        const result = await handleLogin(payload);
+        const res = await handleLogin(payload);
         // 1. Manejo de respuesta errónea
-        if (result?.error || !result?.success) {
-            setErrorMsg(result?.error || "Ocurrió un error inesperado");
+        if (res?.error || !res?.success) {
+            setErrorMsg(res?.error || "Ocurrió un error inesperado");
             setLoading(false);
             return;
         }
 
         // 2. Manejo de respuesta satisfactoria en formato API
-        if (result.success) {
+        if (res.success) {
             toast.success("Inicio de sesión exitoso");
-            console.log("Datos del usuario capturados con éxito en el Frontend:", result.user);
+            console.log("Datos del usuario capturados con éxito en el Frontend:", res.user);
             // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
             setUser({
-                id: result.user.id,
-                name: result.user.name,
-                phone: result.user.phone,
-                email: result.user.email,
-                isAdmin: result.user.isAdmin,
-                profileOnboarding: result.user.profileOnboarding,
+                id: res.user.id,
+                name: res.user.name,
+                phone: res.user.phone,
+                email: res.user.email,
+                isAdmin: res.user.isAdmin,
+                profileOnboarding: res.user.profileOnboarding,
+                client: res.user.client[0] || null,
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.
