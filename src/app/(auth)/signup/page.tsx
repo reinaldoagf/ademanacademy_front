@@ -250,21 +250,20 @@ export default function RegisterPage() {
                             {/* Input: DNI */}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                                    Documento de Identidad (DNI)
-                                </label>
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="dni">Documento de Identidad (DNI)</label>
 
                                 <div className="relative group">
                                     <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
                                     <input
                                         type="text"
+                                        id="dni"
                                         name="dni" // 💡 Agregado
                                         required
                                         value={dni}
                                         onChange={(e) => setDni(e.target.value)}
                                         placeholder="Ej: 12345678"
-                                        className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
                                     />
                                 </div>
                             </div>
@@ -272,30 +271,29 @@ export default function RegisterPage() {
                             {/* Input: NAME */}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                                    Nombre Completo
-                                </label>
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="name">Nombre Completo</label>
+
 
                                 <div className="relative group">
                                     <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
                                     <input
                                         type="text"
+                                        id="name"
                                         name="name" // 💡 Agregado
                                         required
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Valentina Birrot"
-                                        className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
                                     />
                                 </div>
                             </div>
 
                             {/* 🎯 NUEVO INPUT: WHATSAPP CON CÓDIGO DE PAÍS */}
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                                    Número de WhatsApp
-                                </label>
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="phone">Número de WhatsApp</label>
+
 
                                 <div className="flex relative group">
                                     {/* Contenedor del Icono */}
@@ -307,7 +305,7 @@ export default function RegisterPage() {
                                     <select
                                         value={countryCode}
                                         onChange={(e) => setCountryCode(e.target.value)}
-                                        className="bg-white/10 text-[#5e0472] pl-11 pr-2 py-4 border-y border-l border-[#5e0472] focus:outline-none focus:border-[#5e0472] transition-all text-xs font-sans appearance-none rounded-l-none cursor-pointer"
+                                        className="bg-white/10 text-[#5e0472] pl-11 pr-2 py-4 border-y border-l border-purple-200 focus:outline-none focus:border-purple-400 rounded-l transition-all text-xs font-sans appearance-none cursor-pointer"
                                         style={{ borderRight: 'none' }}
                                     >
                                         {countries.map((c) => (
@@ -320,12 +318,13 @@ export default function RegisterPage() {
                                     {/* Input de Número Telefónico */}
                                     <input
                                         type="tel"
+                                        id="phone"
                                         name="phone"
                                         required
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} // Previene letras
                                         placeholder="4121234567"
-                                        className={`w-full bg-white/5 border-y border-r border-[#5e0472]  p-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={` border-y border-r p-4  w-full border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded-r transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
                                     />
                                 </div>
                             </div>
@@ -352,9 +351,8 @@ export default function RegisterPage() {
                             {/* Input: Email */}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                                    Email Institucional
-                                </label>
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="email-address">Correo Electrónico</label>
+
 
                                 <div className="relative group">
                                     <Mail
@@ -366,12 +364,13 @@ export default function RegisterPage() {
 
                                     <input
                                         type="email"
+                                        id="email-address"
                                         name="email" // 💡 Agregado
                                         required
                                         value={email}
                                         onChange={(e) => validarEmail(e.target.value)}
                                         placeholder="ejemplo@ademan.com"
-                                        className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={`w-full py-4 pl-12 pr-4 border border-purple-200 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600`}
 
                                     />
                                 </div>
@@ -386,21 +385,21 @@ export default function RegisterPage() {
                             {/* Input: Contraseña */}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                                    Contraseña
-                                </label>
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="password">Contraseña</label>
+
 
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
                                     <input
                                         type={showPassword ? "text" : "password"}
+                                        id="password"
                                         name="password" // 💡 Agregado
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••••••"
-                                        className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={`w-full py-4 pl-12 pr-4 border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600`}
                                     />
 
                                     <button
@@ -420,7 +419,7 @@ export default function RegisterPage() {
                             {/* Input: Confirmar Contraseña */}
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="repeat-password">
                                     Confirmar Contraseña
                                 </label>
 
@@ -429,11 +428,12 @@ export default function RegisterPage() {
 
                                     <input
                                         type={showConfirmPassword ? "text" : "password"}
+                                        id="repeat-password"
                                         required
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="••••••••••••"
-                                        className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 text-[#5e0472]`}
+                                        className={`w-full py-4 pl-12 pr-4 border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600`}
                                     />
 
                                     <button

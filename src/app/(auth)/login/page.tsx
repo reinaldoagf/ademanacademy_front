@@ -102,7 +102,9 @@ export default function OtpAuthPage() {
                             <input
                                 type="email"
                                 id="email-address"
-                                className={`w-full bg-white/5 border py-4 pl-12 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 ${errorMsg ? "text-red-400" : "text-[#5e0472]"}`}
+                                className={`
+                                    w-full py-4 pl-12 pr-4 border border-purple-200 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600
+                                    ${errorMsg ? "focus:border-red-400 border-red-400 text-red-400" : "text-[#5e0472]"}`}
                                 autoComplete="email"
                                 required
                                 placeholder="nombre@ejemplo.com"
@@ -121,7 +123,9 @@ export default function OtpAuthPage() {
                         <div className="relative">
                             <input
                                 id="password"
-                                className={`w-full bg-white/5 border py-4 px-3 pr-4 focus:outline-none focus:border-[#5e0472] focus:bg-white/10 transition-all placeholder:text-gray-600 ${errorMsg ? "text-red-400" : "text-[#5e0472]"}`}
+                                className={`
+                                    w-full py-4 px-3 pr-4 border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600
+                                     ${errorMsg ? "focus:border-red-400 border-red-400 text-red-400" : "text-[#5e0472]"}`}
                                 type={showPassword ? 'text' : 'password'}
                                 autoComplete="current-password"
                                 required
