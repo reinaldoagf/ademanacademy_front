@@ -75,7 +75,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         : students.length * REGISTRATION_FEE;
 
     const handleOkFeedbackMessage = () => {
-        console.log('handleOkFeedbackMessage')
         if(userResponse) {
             closeFeedbackAlertModal();
             setShowFeedbackAlert(false);
@@ -164,7 +163,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 }
             }
             const res = await completeOnboardingAction(formData);
-            console.log({ res })
             if (res.success) {
                 openFeedbackAlertModal();
                 setShowFeedbackAlert({

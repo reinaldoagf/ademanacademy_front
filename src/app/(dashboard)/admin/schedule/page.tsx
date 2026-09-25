@@ -939,9 +939,11 @@ export default function SchedulePage() {
                                         className="p-2.5 bg-white border border-purple-100/70 shadow-sm flex items-center justify-between hover:border-purple-200 transition-all"
                                     >
                                         <div className="flex flex-col gap-0.5">
-                                            <p className="font-bold text-gray-800 text-xs">
-                                                {student.firstName} {student.lastName}
-                                            </p>
+                                            {
+                                                student.clients[0] && (<p className="font-bold text-gray-800 text-xs">
+                                                {student.clients[0].firstName} {student.clients[0].lastName}
+                                                </p>)
+                                            }
                                             <p className="text-[9px] text-gray-400 font-medium">
                                                 Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
                                                 {student.hasExperience && " • Con Experiencia"}
