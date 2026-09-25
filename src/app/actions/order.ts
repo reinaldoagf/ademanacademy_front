@@ -90,3 +90,16 @@ export async function deleteOrderAction(id: string): Promise<{ success: boolean;
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+
+export async function getOrderByIdAction(id: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/orders/${id}`, { headers });
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al obtener la orden."
+        };
+    }
+}

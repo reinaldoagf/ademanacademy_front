@@ -298,13 +298,12 @@ export default function PaymentOrderDetailsPage() {
                                                     <tr key={tx.id} className="hover:bg-purple-50/20">
                                                         <td className="p-3 font-semibold uppercase">{tx.method}</td>
                                                         <td className="p-3">
-                                                            test
-                                                            {/* <div>{tx.bankName || "N/A"}</div>
+                                                            <div>{tx.bankName || "N/A"}</div>
                                                             {tx.referenceNumber && (
                                                                 <div className="text-[10px] text-gray-400 font-mono">
                                                                     Ref: {tx.referenceNumber}
                                                                 </div>
-                                                            )} */}
+                                                            )}
                                                         </td>
                                                         <td className="p-3 text-gray-500">
                                                             <DatePipe value={tx.createdAt} format="short" />

@@ -1,5 +1,6 @@
 import { CartItem } from "@/store/cartStore";
 import { Client } from "./client";
+import { PaymentOrder } from "./payment-order";
 // Tipos para la petición que va hacia el backend
 export interface CleanOrderItem {
     concept: string;      // Enum o valor en mayúsculas según backend (ej: "UNIFORM", "MERCHANDISE")
@@ -32,18 +33,8 @@ export interface Order {
     client: Client;
     totalAmount: number;
     status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
-    items?: Array<{
-        id: string;
-        concept: string;
-        description: string;
-        quantity: number;
-        price: number | string;
-        student?: {
-            name?: string;
-            firstName?: string;
-            lastName?: string;
-        };
-    }>;
+    items?: OrderItem[];
+    paymentOrder?: PaymentOrder;
     createdAt: string,
     updatedAt: string,
 }
@@ -69,7 +60,9 @@ export interface StudentOption {
 }
 export interface OrderItem {
     id: string;
-    orderId: string;
+    orderId?: string; // 👈 Cambiado a opcional
+    paymentOrderId?: string;
+    paymentOrder?: PaymentOrder;
     studentId?: string | null;
     concept: string;
     quantity: number;
@@ -85,10 +78,9 @@ export interface OrderItem {
 export interface OrderDetails {
     id: string;
     clientId: string;
+    client: Client;
     totalAmount: string | number;
-    status: string;
-    createdAt: string;
-    updatedAt: string;
+    status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
     user?: {
         id: string;
         dni?: string;
@@ -102,6 +94,8 @@ export interface OrderDetails {
         concept: string;
         amount: string | number;
         status: string;
-        createdAt: string;
+        createdAt: string | Date;
     } | null;
+    createdAt: string | Date; // 👈 Acepta string o Date
+    updatedAt: string | Date; // 👈 Acepta string o Date
 }
