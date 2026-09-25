@@ -54,7 +54,21 @@ const initialFormState: GroupFormData = {
 export default function GroupsListPage() {
   const [groupCategories, setGroupCategories] = useState<GroupCategory[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const { isOpen, openModal, closeModal } = useModal();
+  const { 
+    isOpen: isFormModalOpen, 
+    openModal: openFormModal, 
+    closeModal: closeFormModal 
+  } = useModal();
+  const { 
+    isOpen: isStudentsModalOpen, 
+    openModal: openStudentsModal, 
+    closeModal: closeStudentsModal 
+  } = useModal();
+  const { 
+    isOpen: isScheduleModalOpen, 
+    openModal: openScheduleModal, 
+    closeModal: closeScheduleModal 
+  } = useModal();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -75,9 +89,6 @@ export default function GroupsListPage() {
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
 
   const [selectedGroupSchedule, setSelectedGroupSchedule] = useState<any | null>(null);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-
-  const [isStudentsModalOpen, setIsStudentsModalOpen] = useState(false);
   const [selectedGroupStudents, setSelectedGroupStudents] = useState<any>(null);
 
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -261,11 +272,11 @@ export default function GroupsListPage() {
         }
         fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-        closeModal();
+        closeFormModal();
       });
 
       // Si todo sale bien, refrescamos y limpiamos estados
-      closeModal();
+      closeFormModal();
       setFormData(initialFormState); // Resetea el formulario para el siguiente registro
 
     } catch (error: any) {
@@ -312,7 +323,7 @@ export default function GroupsListPage() {
     setShowInstructorDropdown(false);
     setEditingId(group.id);
     setErrorMsg(null);
-    openModal();
+    openFormModal();
   };
 
   // Resetear a la página 1 cuando cambien los filtros de búsqueda o categorías
@@ -345,7 +356,7 @@ export default function GroupsListPage() {
             setShowClassroomDropdown(false);
             setShowInstructorDropdown(false);
             setEditingId(null);
-            openModal();
+            openFormModal();
           },
           icon: <Plus className="w-4 h-4" />,
           variant: "primary",
@@ -487,7 +498,7 @@ export default function GroupsListPage() {
                           classroom: group.classroom?.name || "Salón no asignado",
                           days: groupSchedule
                         });
-                        setIsScheduleModalOpen(true);
+                        openScheduleModal();
                       } else {
                         toast("Este grupo aún no tiene un horario asignado.");
                       }
@@ -500,8 +511,9 @@ export default function GroupsListPage() {
                     icon={Users2}
                     tooltip="Ver Alumnos"
                     onClick={() => {
+                      console.log({group})
                       setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
-                      setIsStudentsModalOpen(true);
+                      openStudentsModal();
                     }}
                   >
                     Ver Alumnos
@@ -598,8 +610,8 @@ export default function GroupsListPage() {
         )}
       </div>
       <MacDockModal
-        isOpen={isOpen}
-        onClose={closeModal}
+        isOpen={isFormModalOpen}
+        onClose={closeFormModal}
         title={editingId ? "Actualizar Grupo" : "Registrar Nuevo Grupo"}
         size={"lg"}
       >
@@ -715,7 +727,7 @@ export default function GroupsListPage() {
           <div className="pt-2 flex justify-between">
             <button
               type="button"
-              onClick={closeModal}
+              onClick={closeFormModal}
               className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
             >
               Cancelar
@@ -736,8 +748,15 @@ export default function GroupsListPage() {
         </form>
       </MacDockModal>
 
+      
+      <MacDockModal
+        isOpen={isScheduleModalOpen}
+        onClose={closeScheduleModal}
+        title={"Horarios"}
+        size={"lg"}
+      >
       {/* 🗓️ MODAL DE VISUALIZACIÓN DE HORARIO EN MALLA CONTINUA */}
-      {isScheduleModalOpen && selectedGroupSchedule && (() => {
+      {selectedGroupSchedule && (() => {
         const GRID_START_TIME = 8;
         const GRID_END_TIME = 21;
         const PIXELS_PER_HOUR = 60;
@@ -784,7 +803,7 @@ export default function GroupsListPage() {
                 </div>
                 <button
                   onClick={() => {
-                    setIsScheduleModalOpen(false);
+                    closeScheduleModal();
                     setSelectedGroupSchedule(null);
                   }}
                   className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
@@ -891,15 +910,15 @@ export default function GroupsListPage() {
               </div>
 
               {/* Botonera de Acción */}
-              <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-end shrink-0">
+              <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
                 <button
                   type="button"
                   onClick={() => {
-                    setIsScheduleModalOpen(false);
+                    closeScheduleModal();
                     setSelectedGroupSchedule(null);
                   }}
-                  className="cursor-pointer font-questrial px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition border border-gray-200 shadow-2xs"
-                >
+                     className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+            >
                   Cerrar vista
                 </button>
               </div>
@@ -908,9 +927,17 @@ export default function GroupsListPage() {
           </div>
         );
       })()}
+      </MacDockModal>
+      <MacDockModal
+        isOpen={isStudentsModalOpen}
+        onClose={closeStudentsModal}
+        title={"Estudiantes"}
+        size={"lg"}
+      >
       {/* 👥 MODAL DE VISUALIZACIÓN DE ALUMNOS INSCRITOS */}
-      {isStudentsModalOpen && selectedGroupStudents && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        {
+          selectedGroupStudents && (
+<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
 
             {/* Encabezado del Modal */}
@@ -925,7 +952,7 @@ export default function GroupsListPage() {
               </div>
               <button
                 onClick={() => {
-                  setIsStudentsModalOpen(false);
+                  closeStudentsModal();
                   setSelectedGroupStudents(null);
                 }}
                 className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
@@ -943,9 +970,10 @@ export default function GroupsListPage() {
                     className="p-3 bg-white border border-purple-100/70 shadow-2xs flex items-center justify-between hover:border-purple-200 rounded-sm transition-all"
                   >
                     <div className="flex flex-col gap-0.5">
-                      <p className="font-bold text-gray-800 text-xs">
-                        {student.firstName} {student.lastName}
-                      </p>
+                      {student.clients[0] && (<p className="font-bold text-gray-800 text-xs">
+                        {student.clients[0]?.firstName} {student.clients[0]?.lastName}
+                      </p>)}
+                      
                       <p className="text-[10px] text-gray-400 font-medium">
                         Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
                         {student.hasExperience && (
@@ -971,22 +999,26 @@ export default function GroupsListPage() {
             </div>
 
             {/* Botonera de Acción / Footer */}
-            <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-end shrink-0">
+            <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
               <button
                 type="button"
                 onClick={() => {
-                  setIsStudentsModalOpen(false);
+                  closeStudentsModal();
                   setSelectedGroupStudents(null);
                 }}
-                className="cursor-pointer font-questrial px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition border border-gray-200 shadow-2xs"
-              >
+                 className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+            >
                 Cerrar lista
               </button>
             </div>
 
           </div>
         </div>
-      )}
+          )
+        }
+        
+      
+      </MacDockModal>
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}

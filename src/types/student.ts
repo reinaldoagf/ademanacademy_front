@@ -17,6 +17,7 @@ export interface Student {
     medicalObservations?: string;
     userId?: string;
     user?: User;
+    clients: Client[];
 }
 
 export interface RepresentedFormData {
