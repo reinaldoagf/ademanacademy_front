@@ -923,7 +923,7 @@ export default function AdminEventsPage() {
       <MacDockModal
         isOpen={isOpenModalForm}
         onClose={closeModalForm}
-        title={"Registrar Evento"}
+        title={editingId ? "Actualizar Evento" : "Registrar Evento"}
         size={"lg"}
       ><>
           {/* Formulario */}
@@ -1078,8 +1078,8 @@ export default function AdminEventsPage() {
       <MacDockModal
         isOpen={isFeedbackAlertOpen}
         onClose={closeFeedbackAlertModal}
-        title={"Registrar Evento"}
-        size={"lg"}
+        title={showFeedbackAlert.title || "¡Operación Completada!"}
+        size={"md"}
       >
       {showFeedbackAlert && (
         <FeedbackAlert
