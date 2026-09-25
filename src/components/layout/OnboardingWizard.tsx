@@ -2,10 +2,14 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { User, Users2, Plus, Trash2, Home, ShieldAlert } from "lucide-react";
 import { completeOnboardingAction } from "@/app/actions/user";
 import { saveClassroomAction } from "@/app/actions/classroom";
 import { useAuthStore } from "@/store/authStore";
+import { MacDockModal } from "@/components/ui/MacDockModal";
+import { FeedbackAlert } from "@/components/ui/FeedbackAlert";
+import { useModal } from "@/hooks/useModal";
 
 interface OnboardingWizardProps {
     userEmail: string;
@@ -14,8 +18,22 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }: OnboardingWizardProps) {
+  const router = useRouter();
+  const { 
+    isOpen: isFeedbackAlertOpen, 
+    openModal: openFeedbackAlertModal, 
+    closeModal: closeFeedbackAlertModal 
+  } = useModal();
+  const [showFeedbackAlert, setShowFeedbackAlert] = useState<{
+    title: string;
+    description: string;
+    data: {
+      paymentOrderId?: string | null;
+    };
+  } | false>(false);
     const user = useAuthStore((state) => state.user);
     const setUser = useAuthStore((state) => state.setUser);
+    const [userResponse, setUserResponse] = useState<User | null>(null);
     const [isPending, startTransition] = useTransition();
     const [step, setStep] = useState(1);
     const [profileType, setProfileType] = useState<"student" | "representative" | null>(null);
@@ -56,6 +74,15 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         ? REGISTRATION_FEE
         : students.length * REGISTRATION_FEE;
 
+    const handleOkFeedbackMessage = () => {
+        console.log('handleOkFeedbackMessage')
+        if(userResponse) {
+            closeFeedbackAlertModal();
+            setShowFeedbackAlert(false);
+            setUser(userResponse);
+            router.refresh();
+        }
+    };
     const handleAddStudent = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newStudent.firstName || !newStudent.lastName || !newStudent.birthDate) {
@@ -137,10 +164,16 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 }
             }
             const res = await completeOnboardingAction(formData);
-
+            console.log({ res })
             if (res.success) {
-                setUser({ ...user, ...res.data.user });
-                window.location.reload();
+                openFeedbackAlertModal();
+                setShowFeedbackAlert({
+                    title: '¡Operación Completada!',
+                    description: 'Pago registrado satisfactoriamente',
+                    data: null
+                })
+                setUserResponse({ ...user, ...res.data.user })
+            
             } else {
                 setError(typeof res.error === "string" ? res.error : "Error crítico al procesar la solicitud.");
             }
@@ -170,7 +203,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         });
     };
 
-    return (
+    return (<>
         <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-tr from-purple-900 via-[#400252] to-black text-white relative overflow-hidden">
 
             {/* Círculos decorativos de fondo tipo Blur */}
@@ -630,6 +663,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                                     onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
                                                     className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
                                                 >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="" disabled>Selecciona una Plataforma</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
@@ -692,5 +726,34 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 )}
             </div>
         </div>
-    );
+        {/* MODAL DETALLE DE SILLAS CON CANVAS */}
+      <MacDockModal
+        isOpen={isFeedbackAlertOpen}
+        onClose={handleOkFeedbackMessage}
+        title={showFeedbackAlert.title || "¡Operación Completada!"}
+        size={"md"}
+      >
+      {showFeedbackAlert && (
+        <FeedbackAlert
+          title={showFeedbackAlert.title}
+          description={showFeedbackAlert.description}
+          onClose={handleOkFeedbackMessage}
+          extraActions={[{
+              label: "Ok →",
+              variant: "purple",
+              onClick: () => {
+                handleOkFeedbackMessage()
+              },
+            }]}
+        >
+            <div className="space-y-1">
+              <p>
+                Nuestro equipo estará validando su pago dentro de las próximas <strong>24 horas</strong> para completar la afiliación.
+               
+              </p>
+            </div>
+        </FeedbackAlert>
+      )}
+      </MacDockModal>
+    </>);
 }
