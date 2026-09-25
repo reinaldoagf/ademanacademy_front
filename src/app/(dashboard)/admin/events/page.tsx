@@ -74,6 +74,11 @@ export default function AdminEventsPage() {
     openModal: openModalForm,
     closeModal: closeModalForm,
   } = useModal();
+  const { 
+    isOpen: isFeedbackAlertOpen, 
+    openModal: openFeedbackAlertModal, 
+    closeModal: closeFeedbackAlertModal 
+  } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -298,6 +303,7 @@ export default function AdminEventsPage() {
 
         if (res.success) {
           fetchData(currentPage, itemsPerPage);
+          openFeedbackAlertModal()
           setShowFeedbackAlert({
             title: '¡Operación Completada!',
             description: res.data?.message || 'Se ha generado la orden de pago y los boletos están listos para impresión.',
@@ -1068,18 +1074,24 @@ export default function AdminEventsPage() {
         variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
         confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
       />
-
+      {/* MODAL DETALLE DE SILLAS CON CANVAS */}
+      <MacDockModal
+        isOpen={isFeedbackAlertOpen}
+        onClose={closeFeedbackAlertModal}
+        title={"Registrar Evento"}
+        size={"lg"}
+      >
       {showFeedbackAlert && (
         <FeedbackAlert
-          isOpen={Boolean(showFeedbackAlert)}
           title={showFeedbackAlert.title}
           description={showFeedbackAlert.description}
-          onClose={() => setShowFeedbackAlert(false)}
+          onClose={() => {
+          closeFeedbackAlertModal(); setShowFeedbackAlert(false)}}
           extraActions={[
             // Accion 1: Copiar Enlace
             {
               label: "Compartir a Cliente",
-              variant: "neutral",
+              variant: "success",
               onClick: () => {
                 if (showFeedbackAlert.data?.paymentOrderId) {
                   handleCopyPaymentOrderLink(showFeedbackAlert.data.paymentOrderId);
@@ -1093,6 +1105,7 @@ export default function AdminEventsPage() {
               onClick: () => {
                 if (showFeedbackAlert.data?.paymentOrderId) {
                   router.push(`/admin/payment-orders/${showFeedbackAlert.data.paymentOrderId}`);
+                  closeFeedbackAlertModal();
                   setShowFeedbackAlert(false);
                 }
               },
@@ -1109,6 +1122,7 @@ export default function AdminEventsPage() {
           )}
         </FeedbackAlert>
       )}
+      </MacDockModal>
     </>
   );
 }

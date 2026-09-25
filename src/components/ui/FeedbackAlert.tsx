@@ -9,8 +9,6 @@ export interface FeedbackAlertAction {
 }
 
 export interface FeedbackAlertProps {
-    /** Controla la visibilidad de la alerta */
-    isOpen: boolean;
     /** Título principal de la alerta */
     title: string;
     /** Mensaje descriptivo opcional */
@@ -24,29 +22,34 @@ export interface FeedbackAlertProps {
 }
 
 export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
-    isOpen,
     title,
     description,
     onClose,
     extraActions = [],
     children,
 }) => {
-    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-purple-100 overflow-hidden font-questrial animate-scaleUp">
-
-                {/* Decoración superior sutil */}
-                <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-purple-600 to-indigo-600" />
-
-                {/* Botón X de cierre rápido */}
+            <div className="relative w-full max-w-md bg-white shadow-2xl overflow-hidden font-questrial animate-scaleUp">
+ {/* Encabezado del Modal */}
+              <div className="bg-gradient-to-tr from-purple-900 to-[#400252] p-4 text-white flex justify-between items-center shrink-0">
+                <div>
+                  <h3 className="font-questrial font-bold text-lg">{title}</h3>
+                  {description && (
+                            <p className="text-xs text-purple-200 font-medium">
+                                {description}
+                            </p>
+                        )}
+                </div>
                 <button
-                    onClick={onClose}
-                    className="absolute top-3.5 right-3.5 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  onClick={onClose}
+                  className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
                 >
-                    <X className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
+              </div>
+                
 
                 <div className="p-6 text-center space-y-4">
 
@@ -57,18 +60,6 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
                         <CheckCircle2 className="w-9 h-9 text-emerald-500 relative z-10 transition-transform duration-300 transform scale-100" />
                     </div>
 
-                    {/* Textos Informativos */}
-                    <div className="space-y-1.5">
-                        <h3 className="text-lg font-bold text-gray-800 tracking-tight">
-                            {title}
-                        </h3>
-                        {description && (
-                            <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
-                                {description}
-                            </p>
-                        )}
-                    </div>
-
                     {/* Contenido personalizado si se envía */}
                     {children && (
                         <div className="pt-2 text-xs text-gray-600 text-left bg-purple-50/40 p-3 rounded-xl border border-purple-100/60">
@@ -76,9 +67,19 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
                         </div>
                     )}
 
-                    {/* 🔘 Sección de Acciones y Navegación */}
-                    <div className="pt-2 flex items-center gap-2 justify-center">
-                        {/* Acciones adicionales opcionales */}
+                </div>
+                {/* Botonera de Acción */}
+              <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-between shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                     className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+            >
+                  Cerrar
+                </button>
+                
+              <div className="flex gap-2">
+                {/* Acciones adicionales opcionales */}
                         {extraActions.map((action, index) => (
                             <ActionButton
                                 key={index}
@@ -88,17 +89,8 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
                                 {action.label}
                             </ActionButton>
                         ))}
-
-                        {/* Botón Principal de Confirmación */}
-                        <ActionButton
-                            variant="purple"
-                            onClick={onClose}
-                            className="min-w-[100px]"
-                        >
-                            Ok
-                        </ActionButton>
-                    </div>
-                </div>
+              </div>
+              </div>
             </div>
         </div>
     );
