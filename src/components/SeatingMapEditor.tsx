@@ -27,7 +27,8 @@ import {
     Layers,
     Locate,
     AlignCenterHorizontal,
-    AlignCenterVertical
+    AlignCenterVertical,
+    Undo2
 } from "lucide-react";
 import { saveSeatingMapAction } from "@/app/actions/seating-map";
 import { SeatingMap, SeatingMapElement, EditorProps, SeatingMapEditorRef } from "@/types/seating-map";
@@ -79,12 +80,14 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
             heightMeters: 0,
             groupRotation: 0,
         },
-    ]);
+    ]);// Estado para almacenar las sillas agregadas en el último lote
+    const [previousObjectsState, setPreviousObjectsState] = useState<SeatingMapElement[] | null>(null);
     const [selectedObjectID, setSelectedObjectID] = useState<string | null>(null);
     const [activeTool, setActiveTool] = useState<ToolMode>("select");
 
     // Modo de Arrastre: "single" | "group" | "macroGroup"
     const [dragMode, setDragMode] = useState<DragMode>("single");
+    const [isStaggeredLot, setIsStaggeredLot] = useState<boolean>(false);
 
     const [scale, setScale] = useState(1);
     const [pan, setPan] = useState({ x: 50, y: 50 });
@@ -382,14 +385,65 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
         const startX = canvasWidthPx / 2 - (lotColumns * (dim + gap)) / 2;
         const startY = canvasHeightPx / 2 - (lotRows * (dim + gap)) / 2;
 
-        const newChairs: SeatingMapElement[] = new Array(lotRows * lotColumns);
+        // 1. Obtener todos los chairNumber existentes
+        const existingChairNumbers = new Set(
+            objects
+                .map((obj) => obj.chairNumber)
+                .filter((cn): cn is string => Boolean(cn))
+        );
+
+        // 2. Mapear el número de fila más alto por cada letra existente (ej: si existe 'A1-1', para 'A' el max es 1)
+        const maxRowNumberByLetter: Record<string, number> = {};
+
+        existingChairNumbers.forEach((cn) => {
+            // Regex para capturar la letra (A-Z) y el primer número después de la letra
+            const match = cn.match(/^([A-Z])(\d+)-/);
+            if (match) {
+                const letter = match[1];
+                const rowNum = parseInt(match[2], 10);
+                if (!maxRowNumberByLetter[letter] || rowNum > maxRowNumberByLetter[letter]) {
+                    maxRowNumberByLetter[letter] = rowNum;
+                }
+            }
+        });
+
+        const newChairs: SeatingMapElement[] = [];
+        const duplicatedNumbers: string[] = [];
+
         let count = 0;
 
         for (let r = 0; r < lotRows; r++) {
             const rowLetter = String.fromCharCode(65 + (r % 26));
-            for (let c = 0; c < lotColumns; c++) {
-                const chairNum = `${rowLetter}-${c + 1}`;
-                newChairs[count] = {
+
+            // 3. Determinar el número de fila base para esta letra (si ya había A1, comenzamos en A2)
+            const baseRowNumber = (maxRowNumberByLetter[rowLetter] || 0) + 1;
+
+            // Si hay múltiples filas con la misma letra en el mismo lote, sumamos la vuelta correspondiente
+            const letterCycleOffset = Math.floor(r / 26);
+            const effectiveRowNum = baseRowNumber + letterCycleOffset;
+
+            // Determinar si esta fila va desplazada/intercalada
+            const isOddRow = isStaggeredLot && r % 2 !== 0;
+
+            // Si la fila está intercalada, tiene 1 columna menos para encajar en los huecos
+            const colsInRow = isOddRow ? lotColumns - 1 : lotColumns;
+
+            // Desplazamiento horizontal para filas intercaladas
+            const xOffset = isOddRow ? (dim + gap) / 2 : 0;
+
+            for (let c = 0; c < colsInRow; c++) {
+                // Genera el formato dinámico: 'A1-1', 'A2-1', 'AX-Y', etc.
+                const chairNum = `${rowLetter}${effectiveRowNum}-${c + 1}`;
+
+                // Control de duplicados por seguridad
+                if (existingChairNumbers.has(chairNum)) {
+                    duplicatedNumbers.push(chairNum);
+                    continue;
+                }
+
+                existingChairNumbers.add(chairNum);
+
+                newChairs.push({
                     itemID: `c_${Date.now()}_${count}`,
                     type: "chair",
                     itemType: chairTypeLot,
@@ -397,7 +451,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                     chairNumber: chairNum,
                     groupId,
                     macroGroupId,
-                    x: startX + c * (dim + gap),
+                    x: startX + c * (dim + gap) + xOffset,
                     y: startY + r * (dim + gap),
                     width: dim,
                     height: dim,
@@ -407,15 +461,39 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                     yMeters: 0,
                     widthMeters: 0,
                     heightMeters: 0,
-                };
+                });
+
                 count++;
             }
         }
 
+        // Validaciones y notificaciones al usuario
+        if (newChairs.length === 0) {
+            toast.error("No se generó ninguna silla.");
+            return;
+        }
+        setPreviousObjectsState(objects);
         setObjects((prev) => [...prev, ...newChairs]);
-        toast.success(`Se agregaron ${newChairs.length} sillas al grupo "${groupId}"`);
-    };
 
+        if (duplicatedNumbers.length > 0) {
+            toast.error(
+                `Se agregaron ${newChairs.length} sillas. Se omitieron ${duplicatedNumbers.length} por estar duplicadas (${duplicatedNumbers.slice(0, 3).join(", ")}${duplicatedNumbers.length > 3 ? "..." : ""})`
+            );
+        } else {
+            toast.success(`Se agregaron ${newChairs.length} sillas al grupo "${groupId}"`);
+        }
+    };
+    const handleUndoLastBatch = () => {
+        if (!previousObjectsState) return;
+
+        // Restauramos el estado de objetos exacto como estaba antes del lote
+        setObjects(previousObjectsState);
+
+        toast.success("Se restauró el estado anterior a la generación del último lote.");
+
+        // Limpiamos el snapshot para evitar múltiples deshaceres seguidos sobre el mismo punto
+        setPreviousObjectsState(null);
+    };
     // Coordenadas del mundo
     const getWorldCoordinates = (clientX: number, clientY: number) => {
         const rect = canvasRef.current!.getBoundingClientRect();
@@ -850,8 +928,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => setActiveTool("select")}
-                                className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg text-sm font-medium transition ${activeTool === "select"
-                                    ? "bg-purple-600 text-white"
+                                className={`cursor-pointer flex items-center gap-2 p-2 text-sm font-medium transition ${activeTool === "select"
+                                    ? "gradient-purple text-white"
                                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                     }`}
                             >
@@ -859,8 +937,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                             </button>
                             <button
                                 onClick={() => setActiveTool("pan")}
-                                className={`cursor-pointer flex items-center gap-2 p-2 rounded-lg text-sm font-medium transition ${activeTool === "pan"
-                                    ? "bg-purple-600 text-white"
+                                className={`cursor-pointer flex items-center gap-2 p-2 text-sm font-medium transition ${activeTool === "pan"
+                                    ? "gradient-purple text-white"
                                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                     }`}
                             >
@@ -877,8 +955,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                         <div className="grid grid-cols-3 gap-1">
                             <button
                                 onClick={() => setDragMode("single")}
-                                className={`cursor-pointer p-1.5 rounded text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "single"
-                                    ? "bg-purple-600 text-white shadow-sm"
+                                className={`cursor-pointer p-1.5 text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "single"
+                                    ? "gradient-purple text-white shadow-sm"
                                     : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
                                     }`}
                             >
@@ -886,8 +964,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                             </button>
                             <button
                                 onClick={() => setDragMode("group")}
-                                className={`cursor-pointer p-1.5 rounded text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "group"
-                                    ? "bg-purple-600 text-white shadow-sm"
+                                className={`cursor-pointer p-1.5 text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "group"
+                                    ? "gradient-purple text-white shadow-sm"
                                     : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
                                     }`}
                             >
@@ -895,8 +973,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                             </button>
                             <button
                                 onClick={() => setDragMode("macroGroup")}
-                                className={`cursor-pointer p-1.5 rounded text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "macroGroup"
-                                    ? "bg-purple-600 text-white shadow-sm"
+                                className={`cursor-pointer p-1.5 text-xs font-medium transition flex flex-col items-center gap-1 ${dragMode === "macroGroup"
+                                    ? "gradient-purple text-white shadow-sm"
                                     : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
                                     }`}
                             >
@@ -990,12 +1068,62 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                                 />
                             </div>
                         </div>
-                        <button
-                            onClick={addMappedChairsBatch}
-                            className="cursor-pointer w-full bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5"
-                        >
-                            <Plus className="w-4 h-4" /> Generar ({lotRows * lotColumns}) Sillas
-                        </button>
+                        <div className="grid">
+                            <div
+                                className={`flex items-center justify-between p-3 bg-purple-50/50 border border-purple-100 rounded-xl transition-colors`
+                                }
+                            >
+
+                                <div className="flex flex-col pr-4 select-none">
+                                    <span className="font-bold text-xs text-gray-700">Generar Sillas Intercaladas</span>
+
+                                    <span className="text-gray-500 text-[11px] leading-tight">
+                                        Aplicar desplazamiento horizontal
+                                    </span>
+
+                                </div>
+
+
+                                <label
+                                    htmlFor={'intercalate-chairs'}
+                                    className={`relative inline-flex items-center shrink-0 cursor-pointer`}
+                                >
+                                    <input
+                                        id={'intercalate-chairs'}
+                                        type="checkbox"
+                                        checked={isStaggeredLot}
+                                        onChange={(e) => setIsStaggeredLot(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div
+                                        className={`w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer 
+            peer-checked:after:translate-x-full peer-checked:after:border-white 
+            after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+            after:bg-white after:border-gray-300 after:border after:rounded-full 
+            after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600`}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+
+                            {/* Botón para Deshacer/Ir atrás */}
+                            {previousObjectsState !== null && (
+                                <button
+                                    onClick={handleUndoLastBatch}
+                                    title="Deshacer y remover el último lote generado"
+                                    className="cursor-pointer w-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800/60 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5"
+                                >
+                                    <Undo2 className="w-4 h-4" /> Deshacer
+                                </button>
+                            )}
+                            <button
+                                onClick={addMappedChairsBatch}
+                                className="cursor-pointer w-full gradient-purple text-white hover:bg-purple-700 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5"
+                            >
+                                <Plus className="w-4 h-4" /> Generar ({lotRows * lotColumns}) Sillas
+                            </button>
+                        </div>
                     </div>
 
                     {/* Editor de Selección Individual */}

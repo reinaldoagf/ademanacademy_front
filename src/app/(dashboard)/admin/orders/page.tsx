@@ -113,7 +113,7 @@ export default function OrdersPage() {
 
                 <Link
                     href={`/admin/orders/${element.id}`}
-                    className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
+                    className="font-bold font-questrial px-4 py-2 flex items-center justify-center gap-2 transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
                 >
                     Ver detalles <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
