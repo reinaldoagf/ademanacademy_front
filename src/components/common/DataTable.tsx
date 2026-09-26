@@ -137,7 +137,7 @@ export default function DataTable<T>({
 
                     {/* Navegación por números y flechas */}
                     {meta.totalPages > 1 && onPageChange && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 pr-8">
                             {/* Flecha Izquierda */}
                             <button
                                 disabled={meta.currentPage === 1 || isLoading}

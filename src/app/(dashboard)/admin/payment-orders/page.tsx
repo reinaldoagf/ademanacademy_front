@@ -36,12 +36,6 @@ export default function PaymentOrdersPage() {
     const [statusFilter, setStatusFilter] = useState("all")
     const [filterConcept, setFilterConcept] = useState("all");
 
-
-    // Estados del formulario para nueva Orden
-
-
-
-
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
         // Actualizamos el estado local. Al cambiar, disparará el useEffect superior de forma reactiva
@@ -129,8 +123,8 @@ export default function PaymentOrdersPage() {
                             <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.student.firstName} {order.client.student.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client?.student?.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName} {order.client.lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client?.dni}</span>
                         </div>
                     </div>
                 );

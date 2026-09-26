@@ -20,31 +20,53 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
   seatsOccupied = [],
   onSeleccionChange,
 }) => {
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [occupiedSeatsState, setOccupiedSeatsState] = useState<string[]>(seatsOccupied);
   const [selected, setSelected] = useState<SeatingMapElement[]>([]);
-  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [hoveredSeat, setHoveredSeat] = useState<{
     element: SeatingMapElement;
     x: number;
     y: number;
   } | null>(null);
-  // Factor de escala (píxeles por metro)
-  const SCALE = 25;
 
-  // CONSTANTES GLOBALES DE AJUSTE VISUAL (Solo aplican a sillas)
-  const CHAIR_INCREASE_FACTOR = 1.0;      // 25% más grandes
-  const COLUMN_SPACE_FACTOR = 1.0;   // 15% más de separación horizontal entre sillas
+  // Escala fija uniforme (Píxeles por Metro) para mantener la proporción 1:1 exacta de ancho/alto
+  const SCALE = 35;
 
-  // Dimensiones dinámicas del Canvas calculadas a partir del mapa de asientos
-  const baseWidth = Math.max(800, (seatingMap.totalWidth || 30) * SCALE * COLUMN_SPACE_FACTOR);
+  // Factores globales ajustados simétricamente para evitar distorsiones
+  const CHAIR_INCREASE_FACTOR = 1.0;
+
+  // Dimensiones internas del Canvas (Buffer lógico)
+  const baseWidth = Math.max(800, (seatingMap.totalWidth || 30) * SCALE);
   const baseHeight = Math.max(500, (seatingMap.totalHeight || 20) * SCALE);
 
   const canvasWidth = baseWidth * zoomLevel;
   const canvasHeight = baseHeight * zoomLevel;
+
+  // Helper para obtener el centro del grupo (en metros)
+  const getLotCenterInMeters = (elements: SeatingMapElement[]) => {
+    if (!elements || elements.length === 0) return { x: 0, y: 0 };
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+    elements.forEach((el) => {
+      const w = el.widthMeters || (el.width ? el.width / SCALE : 0.8);
+      const h = el.heightMeters || (el.height ? el.height / SCALE : 0.8);
+      minX = Math.min(minX, el.xMeters);
+      maxX = Math.max(maxX, el.xMeters + w);
+      minY = Math.min(minY, el.yMeters);
+      maxY = Math.max(maxY, el.yMeters + h);
+    });
+
+    return {
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2,
+    };
+  };
 
   // Funciones para control de Zoom
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.2, 2.5));
@@ -98,63 +120,81 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     }
   };
 
-  // Función auxiliar idéntica al editor para calcular centros de rotación grupal
-  const getLotCenter = (elementsLot: SeatingMapElement[]) => {
-    if (elementsLot.length === 0) return { x: 0, y: 0 };
-    const minX = Math.min(...elementsLot.map((o) => o.xMeters * SCALE));
-    const maxX = Math.max(...elementsLot.map((o) => (o.xMeters + o.widthMeters) * SCALE));
-    const minY = Math.min(...elementsLot.map((o) => o.yMeters * SCALE));
-    const maxY = Math.max(...elementsLot.map((o) => (o.yMeters + o.heightMeters) * SCALE));
-    return { x: minX + (maxX - minX) / 2, y: minY + (maxY - minY) / 2 };
+  /**
+    * CORRECCIÓN #2: Obtiene las coordenadas exactas dentro del buffer interno del Canvas
+    * independiente del CSS, del zoom o de la escala.
+    */
+  const getCanvasCoordinates = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+
+    // Calcula la relación de escala entre los píxeles reales del CSS y el buffer interno
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    // Coordenada exacta en el Canvas (tomando en cuenta el Zoom interno del CTX)
+    const canvasX = (event.clientX - rect.left) * scaleX;
+    const canvasY = (event.clientY - rect.top) * scaleY;
+
+    return {
+      x: canvasX / zoomLevel,
+      y: canvasY / zoomLevel,
+    };
   };
 
-  // Función matemática ajustada al nivel de zoom para descifrar clics
-  const checkIntersection = (mX: number, mY: number, obj: SeatingMapElement) => {
-    // Normalizar coordenadas del clic eliminando el factor del zoom
-    const unscaledMX = mX / zoomLevel;
-    const unscaledMY = mY / zoomLevel;
 
+  /**
+   * CORRECCIÓN #1 y #2: Chequeo de colisión matemático sin desfasamiento por rotación o proporciones
+   */
+  const checkIntersection = (unscaledMX: number, unscaledMY: number, obj: SeatingMapElement) => {
     let tX = unscaledMX;
     let tY = unscaledMY;
 
     const fAumento = obj.type !== "platform" ? CHAIR_INCREASE_FACTOR : 1.0;
-    const fEspacio = obj.type !== "platform" ? COLUMN_SPACE_FACTOR : 1.0;
 
-    const x = obj.xMeters * SCALE * fEspacio;
+    // Usamos dimensiones uniformes
+    const w = (obj.widthMeters || 0.8) * SCALE * fAumento;
+    const h = (obj.heightMeters || 0.8) * SCALE * fAumento;
+    const x = obj.xMeters * SCALE;
     const y = obj.yMeters * SCALE;
-    const w = obj.widthMeters * SCALE * fAumento;
-    const h = obj.heightMeters * SCALE * fAumento;
 
+    // 1. Desrotar según el Centro del Grupo (si pertenece a un grupo con rotación)
     if (obj.groupId && obj.groupRotation) {
-      const g = seatingMap.elements.filter((o) => o.groupId === obj.groupId);
-      const cOriginal = getLotCenter(g);
+      const groupElements = seatingMap.elements.filter((o) => o.groupId === obj.groupId);
+      const cMeters = getLotCenterInMeters(groupElements);
 
       const c = {
-        x: cOriginal.x * fEspacio,
-        y: cOriginal.y
+        x: cMeters.x * SCALE,
+        y: cMeters.y * SCALE,
       };
 
       const radG = (-obj.groupRotation * Math.PI) / 180;
-      tX = c.x + (unscaledMX - c.x) * Math.cos(radG) - (unscaledMY - c.y) * Math.sin(radG);
-      tY = c.y + (unscaledMX - c.x) * Math.sin(radG) + (unscaledMY - c.y) * Math.cos(radG);
+      const dx = unscaledMX - c.x;
+      const dy = unscaledMY - c.y;
+
+      tX = c.x + dx * Math.cos(radG) - dy * Math.sin(radG);
+      tY = c.y + dx * Math.sin(radG) + dy * Math.cos(radG);
     }
 
+    // 2. Desrotar la posición respecto a la rotación individual del objeto
     const cX = x + w / 2;
     const cY = y + h / 2;
     const radL = (-obj.rotation * Math.PI) / 180;
-    const fX = cX + (tX - cX) * Math.cos(radL) - (tY - cY) * Math.sin(radL);
-    const fY = cY + (tX - cX) * Math.sin(radL) + (tY - cY) * Math.cos(radL);
 
-    return (fX >= x && fX <= x + w && fY >= y && fY <= y + h);
+    const dxL = tX - cX;
+    const dyL = tY - cY;
+
+    const fX = cX + dxL * Math.cos(radL) - dyL * Math.sin(radL);
+    const fY = cY + dxL * Math.sin(radL) + dyL * Math.cos(radL);
+
+    // Bounding box en espacio local
+    return fX >= x && fX <= x + w && fY >= y && fY <= y + h;
   };
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
+    const { x: clickX, y: clickY } = getCanvasCoordinates(event);
 
     let elementClicked: SeatingMapElement | undefined = undefined;
     for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
@@ -227,22 +267,19 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
-    // Escalar el contexto según el nivel de zoom
     ctx.scale(zoomLevel, zoomLevel);
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, baseWidth, baseHeight);
 
     seatingMap.elements.forEach((el) => {
-      // Aplicamos COLUMN_SPACE_FACTOR globalmente a la posición X de TODOS los elementos 
-      // para que mantengan la misma distancia relativa entre sí.
-      const x = el.xMeters * SCALE * COLUMN_SPACE_FACTOR;
-      const y = el.yMeters * SCALE;
-
-      // El tamaño del sprite (width/height) solo aumenta para sillas
       const fAumento = el.type !== "platform" ? CHAIR_INCREASE_FACTOR : 1.0;
-      const w = el.widthMeters * SCALE * fAumento;
-      const h = el.heightMeters * SCALE * fAumento;
+
+      // Dimensiones cuadradas/proporcionales exactas (1:1 en metros)
+      const w = (el.widthMeters || 0.8) * SCALE * fAumento;
+      const h = (el.heightMeters || 0.8) * SCALE * fAumento;
+      const x = el.xMeters * SCALE;
+      const y = el.yMeters * SCALE;
 
       ctx.save();
       const centroX = x + w / 2;
@@ -251,12 +288,11 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
       let rotacionDelGrupoRad = 0;
       if (el.groupId && el.groupRotation) {
         const grupoSillas = seatingMap.elements.filter((o) => o.groupId === el.groupId);
-        const gCentroOriginal = getLotCenter(grupoSillas);
+        const gCentroMeters = getLotCenterInMeters(grupoSillas);
 
-        // Mantenemos COLUMN_SPACE_FACTOR en el punto de pivote del grupo
         const gCentro = {
-          x: gCentroOriginal.x * SCALE * COLUMN_SPACE_FACTOR,
-          y: gCentroOriginal.y * SCALE,
+          x: gCentroMeters.x * SCALE,
+          y: gCentroMeters.y * SCALE,
         };
 
         rotacionDelGrupoRad = (el.groupRotation * Math.PI) / 180;
@@ -281,15 +317,6 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
         ctx.fill();
         ctx.stroke();
 
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
-        ctx.lineWidth = 1;
-        for (let step = localY + 15; step < localY + h; step += 15) {
-          ctx.beginPath();
-          ctx.moveTo(localX, step);
-          ctx.lineTo(localX + w, step);
-          ctx.stroke();
-        }
-
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 13px Questrial, sans-serif";
         ctx.textAlign = "center";
@@ -309,13 +336,21 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
           colorCushion = "#10b981";
           colorStructure = "#047857";
         } else {
-          if (el.itemType === "general_chair") { colorCushion = "#64748b"; colorStructure = "#334155"; }
-          else if (el.itemType === "preferred_seating") { colorCushion = "#bf72f6"; colorStructure = "#9810fa"; }
-          else if (el.itemType === "sponsor_chair") { colorCushion = "#eab308"; colorStructure = "#ca8a04"; }
+          if (el.itemType === "general_chair") {
+            colorCushion = "#64748b";
+            colorStructure = "#334155";
+          } else if (el.itemType === "preferred_seating") {
+            colorCushion = "#bf72f6";
+            colorStructure = "#9810fa";
+          } else if (el.itemType === "sponsor_chair") {
+            colorCushion = "#eab308";
+            colorStructure = "#ca8a04";
+          }
         }
 
         const rEsq = Math.min(w, h) * 0.25;
 
+        // Asiento principal
         ctx.fillStyle = colorCushion;
         ctx.strokeStyle = colorStructure;
         ctx.lineWidth = 2;
@@ -324,16 +359,25 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
         ctx.fill();
         ctx.stroke();
 
+        // Respaldar
         ctx.fillStyle = colorStructure;
         ctx.beginPath();
         ctx.roundRect(localX + 2, localY + h - h * 0.22 - 2, w - 4, h * 0.22, rEsq / 2);
         ctx.fill();
 
+        // Reposabrazos
         ctx.strokeStyle = colorStructure;
         ctx.lineWidth = 3.5;
         ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(localX + 1.5, localY + 4); ctx.lineTo(localX + 1.5, localY + h - 4); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(localX + w - 1.5, localY + 4); ctx.lineTo(localX + w - 1.5, localY + h - 4); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(localX + 1.5, localY + 4);
+        ctx.lineTo(localX + 1.5, localY + h - 4);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(localX + w - 1.5, localY + 4);
+        ctx.lineTo(localX + w - 1.5, localY + h - 4);
+        ctx.stroke();
 
         const textoSilla = el.chairNumber || el.name.replace("Asiento ", "");
         if (textoSilla) {
@@ -431,18 +475,24 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
         <div
           ref={containerRef}
           onWheel={handleWheel}
-          className="overflow-auto max-h-[550px] max-w-full flex justify-start lg:justify-center p-4 cursor-grab active:cursor-grabbing"
+          className="w-full max-h-[50vh] overflow-auto border border-gray-300 rounded-lg bg-gray-50 p-4 relative"
         >
+          <div className="inline-block min-w-full min-h-full flex justify-center items-center">
+            <canvas
+              ref={canvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+              onClick={handleCanvasClick}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                width: `${canvasWidth}px`,
+                height: `${canvasHeight}px`,
+              }}
+              className="cursor-pointer border border-gray-200 bg-white shadow-md rounded transition-all duration-75 block"
+            />
+          </div>
 
-          <canvas
-            ref={canvasRef}
-            width={canvasWidth}
-            height={canvasHeight}
-            onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="cursor-pointer border border-gray-200 bg-white shadow-md rounded transition-all duration-75"
-          />
           {/* TOOLTIP EMERGENTE EN HOVER */}
           {hoveredSeat && (
             <div
@@ -451,7 +501,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
                 top: hoveredSeat.y,
                 left: hoveredSeat.x,
                 pointerEvents: "none", // Evita interferir con los clics del mouse
-                transform: "translate(0, -10%)",
+                transform: "translate(0, -110%)",
                 backgroundColor: "#0f172a",
                 color: "#ffffff",
                 padding: "8px 12px",
