@@ -22,8 +22,11 @@ export default function ToastProvider() {
                     },
                     // Si deseas cambiar el fondo o borde solo para success, puedes usar style:
                     style: {
-                        borderLeft: '4px solid #a855f7',
-                    }
+                        color: '#ffff',
+                        borderLeft: "4px solid #a855f7",
+                        // Gradiente CSS válido (CSS nativo, no clases de Tailwind):
+                        background: "linear-gradient(to top right, #581c87, #400252)",
+                    },
                 },
 
                 // 🔴 Estilos específicos para casos de Error
