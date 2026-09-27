@@ -128,8 +128,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [operationalManagement, setOperationalManagement] = useState<SidebarMenuItem[]>([
     { key: APP_KEYS.ORDERS, name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
     { key: APP_KEYS.PAYMENT_ORDERS, name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
-    { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
     { key: APP_KEYS.PAYMENTS, name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
+    { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
     { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
     {
       key: APP_KEYS.WARDROBE, name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,

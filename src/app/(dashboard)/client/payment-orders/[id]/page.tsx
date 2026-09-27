@@ -267,11 +267,16 @@ export default function PaymentOrderDetailsPage() {
                                     <div>
                                         <h3 className="text-lg font-anton mb-1">Transacciones / Intentos de Pago</h3>
                                     </div>
-                                    <div>
-                                        <button className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
-                                            <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
-                                        </button>
-                                    </div>
+
+                                    {
+                                        paymentOrder?.status !== 'paid' && (
+                                            <div>
+                                                <button className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
+                                                    <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
+                                                </button>
+                                            </div>
+                                        )
+                                    }
                                 </div>
 
                                 <div className="border border-purple-100 rounded-lg overflow-hidden">

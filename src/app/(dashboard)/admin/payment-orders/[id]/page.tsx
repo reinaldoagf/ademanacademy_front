@@ -5,24 +5,27 @@ import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     User,
-    FileText,
-    Calendar,
-    ShoppingBag,
-    CreditCard,
     ArrowLeft,
     Package,
     Clock,
     DollarSign,
     Ticket,
-    Receipt,
     Phone
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
-import { getPaymentOrderByIdAction } from "@/app/actions/payment-order";
+import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, SelectInput } from "@/components/ui/forms";
+import { getPaymentOrderByIdAction, recordPaymentOrderAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
-
+const initialFormState = {
+    referenceNumber: "",
+    bankName: "",
+    amount: 0,
+};
 export default function PaymentOrderDetailsPage() {
     const params = useParams();
     const router = useRouter();
@@ -31,25 +34,11 @@ export default function PaymentOrderDetailsPage() {
     const [paymentOrder, setPaymentOrder] = useState<PaymentOrder | null>(null);
     const [isPending, startTransition] = useTransition();
 
-    useEffect(() => {
-        if (!id) return;
-
-        const fetchPaymentOrderDetails = async () => {
-            try {
-                startTransition(async () => {
-                    const res = await getPaymentOrderByIdAction(id);
-                    if (res.success && res.data) {
-                        setPaymentOrder(res.data);
-                    }
-                });
-            } catch (error) {
-                console.error("Error al obtener los detalles de la orden de pago:", error);
-            }
-        };
-
-        fetchPaymentOrderDetails();
-    }, [id]);
-
+    const { isOpen, openModal, closeModal } = useModal();
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    // --- ESTADOS PARA COBRO DE INSCRIPCIÓN ---
+    const [formData, setFormData] = useState(initialFormState);
+    const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
     const handleBack = () => {
         router.back();
     };
@@ -58,8 +47,64 @@ export default function PaymentOrderDetailsPage() {
         ?.filter((t) => t.status === "approved")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
-    const pendingAmount = Math.max(0, Number(paymentOrder?.amount || 0) - totalPaid);
+    // const pendingAmount = Math.max(0, Number(paymentOrder?.amount || 0) - totalPaid);
+    const handleSave = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setErrorMsg(null)
 
+        // Validaciones preventivas en el cliente
+        if (!formData?.referenceNumber || !formData?.bankName) {
+            setErrorMsg("Por favor, completa los datos de pago.");
+            return;
+        }
+
+        // ✨ Construimos un FormData para adjuntar el archivo binario
+        const newFormData = new FormData();
+        newFormData.append("referenceNumber", formData.referenceNumber);
+        newFormData.append("bankName", formData.bankName);
+        newFormData.append("amount", formData.amount.toString());
+
+        if (paymentReceipt) {
+            newFormData.append("receiptFile", paymentReceipt); // 📂 Adjunto del archivo original
+        }
+        try {
+            startTransition(async () => {
+                // 🎯 Acción de servidor / API para guardar el cliente
+                const res = await recordPaymentOrderAction(newFormData, id);
+
+                if (!res.success) {
+                    setErrorMsg(res.error || "Ocurrió un error al guardar el cliente.");
+                    return;
+                }
+
+                toast.success("Pago registrado correctamente");
+                fetchPaymentOrderDetails();
+                closeModal();
+            });
+        } catch (error: any) {
+            console.error("Error detectado en handleSave:", error);
+            setErrorMsg(
+                error.message ||
+                "Ocurrió un problema de red al intentar guardar el cliente."
+            );
+        }
+    };
+    const fetchPaymentOrderDetails = async () => {
+        try {
+            startTransition(async () => {
+                const res = await getPaymentOrderByIdAction(id);
+                if (res.success && res.data) {
+                    setPaymentOrder(res.data);
+                }
+            });
+        } catch (error) {
+            console.error("Error al obtener los detalles de la orden de pago:", error);
+        }
+    };
+    useEffect(() => {
+        if (!id) return;
+        fetchPaymentOrderDetails();
+    }, [id]);
     return (
         <>
             {/* HERO SECTION */}
@@ -274,11 +319,20 @@ export default function PaymentOrderDetailsPage() {
                                     <div>
                                         <h3 className="text-lg font-anton mb-1">Transacciones / Intentos de Pago</h3>
                                     </div>
-                                    <div>
-                                        <button className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
-                                            <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
-                                        </button>
-                                    </div>
+                                    {
+                                        paymentOrder?.status !== 'paid' && (
+                                            <div>
+                                                <button onClick={() => {
+                                                    setFormData({ ...initialFormState, amount: paymentOrder.amount - totalPaid });
+                                                    setErrorMsg(null);
+                                                    openModal()
+                                                }} className="font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs gradient-purple text-white shadow-md shadow-purple-200 cursor-pointer hover:bg-purple-50/30">
+                                                    <DollarSign className="w-4 h-4" /><span>Agregar Pago</span>
+                                                </button>
+                                            </div>
+                                        )
+                                    }
+
                                 </div>
 
                                 <div className="border border-purple-100 rounded-lg overflow-hidden">
@@ -352,6 +406,92 @@ export default function PaymentOrderDetailsPage() {
                     )}
                 </div>
             </div>
+            <MacDockModal
+                isOpen={isOpen}
+                onClose={closeModal}
+                title={"Registrar Pago"}
+                size={"2xl"}
+            >
+                {/* --- FORMULARIO DE REGISTRO DE CLIENTES --- */}
+                <form onSubmit={handleSave} className="space-y-4 font-questrial text-xs">
+                    {errorMsg && (
+                        <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4 border border-red-100">
+                            {errorMsg}
+                        </p>
+                    )}
+
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+
+                        <div className="flex flex-col gap-1 sm:col-span-2">
+
+                            <SelectInput
+                                label="Banco/Plataforma de Origen *"
+                                value={formData.bankName}
+                                onChange={(e) => setFormData({ ...formData, bankName: e.target.value as string })}
+                                options={[
+                                    { label: "Selecciona una Plataforma", value: "", disabled: true },
+                                    { label: "Banesco", value: "Banesco" },
+                                    { label: "Banco de Venezuela", value: "Banco de Venezuela" },
+                                    { label: "Bancaribe", value: "Bancaribe" },
+                                    { label: "Banco Mercantil", value: "Banco Mercantil" },
+                                    { label: "Zelle", value: "Zelle" },
+                                    { label: "Binance", value: "Binance" },
+                                    { label: "Otro", value: "Otro" },
+                                ]}
+                            />
+                        </div>
+                        <TextInput
+                            label="Referencia de la Transacción *"
+                            type="text"
+                            required
+                            value={formData.referenceNumber}
+                            onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                            placeholder="Referencia"
+                        />
+                        <TextInput
+                            label="Monto Total ($) *"
+                            type="number"
+                            step="0.01"
+                            required
+                            max={paymentOrder && totalPaid ? paymentOrder.amount - totalPaid : 0}
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+                            placeholder="0.00"
+                        />
+                        <div className="flex flex-col gap-1 sm:col-span-2">
+                            <label className="block font-bold mb-1 text-gray-700">Adjuntar Comprobante (Capture / PDF) *</label>
+                            <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/10 p-3 text-center cursor-pointer">
+                                <input
+                                    type="file" accept="image/*,application/pdf"
+                                    onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <p className="text-gray-400 text-[11px]">
+                                    {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="pt-2 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                        >
+                            {isPending ? "Registrando..." : "Registrar Pago →"}
+                        </button>
+                    </div>
+                </form>
+            </MacDockModal>
         </>
     );
 }

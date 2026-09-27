@@ -3,13 +3,14 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { User, Users2, Plus, Trash2, Home, ShieldAlert } from "lucide-react";
+import { User as UserIcon, Users2, Plus, Trash2, Home, ShieldAlert } from "lucide-react";
 import { completeOnboardingAction } from "@/app/actions/user";
 import { saveClassroomAction } from "@/app/actions/classroom";
 import { useAuthStore } from "@/store/authStore";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { FeedbackAlert } from "@/components/ui/FeedbackAlert";
 import { useModal } from "@/hooks/useModal";
+import { User } from "@/types/user";
 
 interface OnboardingWizardProps {
     userEmail: string;
@@ -29,7 +30,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         description: string;
         data: {
             paymentOrderId?: string | null;
-        };
+        } | null;
     } | false>(false);
     const user = useAuthStore((state) => state.user);
     const setUser = useAuthStore((state) => state.setUser);
@@ -331,7 +332,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             : "border-white/10 bg-white/5 text-gray-400 hover:border-purple-400 hover:text-white"
                                             }`}
                                     >
-                                        <User className={`w-8 h-8 mb-4 ${profileType === "student" ? "text-purple-400" : "text-gray-400"}`} />
+                                        <UserIcon className={`w-8 h-8 mb-4 ${profileType === "student" ? "text-purple-400" : "text-gray-400"}`} />
                                         <div>
                                             <h4 className="font-bold text-sm text-white">Soy Estudiante solo</h4>
                                             <p className="text-[11px] text-gray-400 mt-1 leading-normal">Asistiré a clases de baile yo mismo y controlaré mi propio progreso técnico.</p>
@@ -569,7 +570,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco Mercantil">Banco Mercantil</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Zelle">Zelle</option>
                                                     <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Binance">Binance</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="other">Otro</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
                                                 </select>
                                             </div>
                                             <div className="flex flex-col gap-1">
@@ -728,7 +729,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         <MacDockModal
             isOpen={isFeedbackAlertOpen}
             onClose={handleOkFeedbackMessage}
-            title={showFeedbackAlert.title || "¡Operación Completada!"}
+            title={"¡Operación Completada!"}
             size={"md"}
         >
             {showFeedbackAlert && (

@@ -9,6 +9,7 @@ export interface User {
     password?: string;
     isAdmin: boolean;
     students: Student[]
+    profileOnboarding: boolean;
     createdAt: string;
     updatedAt: string;
 }

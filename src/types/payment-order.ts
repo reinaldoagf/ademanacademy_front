@@ -7,7 +7,7 @@ import { Transaction } from "@/types/transaction";
 export interface PaymentOrder {
     id: string;
     concept: string;
-    amount: number | string;
+    amount: number;
     dueDate: string | Date;
     status: string;
     createdAt: string | Date;
