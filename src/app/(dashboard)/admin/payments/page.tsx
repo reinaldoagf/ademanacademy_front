@@ -102,7 +102,7 @@ export default function PaymentsPage() {
             ),
         },
         {
-            header: "Usuario",
+            header: "Registrado por",
             render: (transaction) => {
                 const initials = transaction.user ? `${transaction.user.name[0] || ""}${transaction.user.name[1] || ""}`.toUpperCase() : "";
                 return (
