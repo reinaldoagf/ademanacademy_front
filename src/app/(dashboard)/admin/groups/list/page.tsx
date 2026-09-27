@@ -54,20 +54,20 @@ const initialFormState: GroupFormData = {
 export default function GroupsListPage() {
   const [groupCategories, setGroupCategories] = useState<GroupCategory[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const { 
-    isOpen: isFormModalOpen, 
-    openModal: openFormModal, 
-    closeModal: closeFormModal 
+  const {
+    isOpen: isFormModalOpen,
+    openModal: openFormModal,
+    closeModal: closeFormModal
   } = useModal();
-  const { 
-    isOpen: isStudentsModalOpen, 
-    openModal: openStudentsModal, 
-    closeModal: closeStudentsModal 
+  const {
+    isOpen: isStudentsModalOpen,
+    openModal: openStudentsModal,
+    closeModal: closeStudentsModal
   } = useModal();
-  const { 
-    isOpen: isScheduleModalOpen, 
-    openModal: openScheduleModal, 
-    closeModal: closeScheduleModal 
+  const {
+    isOpen: isScheduleModalOpen,
+    openModal: openScheduleModal,
+    closeModal: closeScheduleModal
   } = useModal();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [modalConfig, setModalConfig] = useState<{
@@ -511,7 +511,6 @@ export default function GroupsListPage() {
                     icon={Users2}
                     tooltip="Ver Alumnos"
                     onClick={() => {
-                      console.log({group})
                       setSelectedGroupStudents(group); // O la propiedad que contenga el grupo actual
                       openStudentsModal();
                     }}
@@ -748,185 +747,185 @@ export default function GroupsListPage() {
         </form>
       </MacDockModal>
 
-      
+
       <MacDockModal
         isOpen={isScheduleModalOpen}
         onClose={closeScheduleModal}
         title={"Horarios"}
         size={"lg"}
       >
-      {/* 🗓️ MODAL DE VISUALIZACIÓN DE HORARIO EN MALLA CONTINUA */}
-      {selectedGroupSchedule && (() => {
-        const GRID_START_TIME = 8;
-        const GRID_END_TIME = 21;
-        const PIXELS_PER_HOUR = 60;
-        const TOTAL_HOURS = GRID_END_TIME - GRID_START_TIME;
-        const TOTAL_HEIGHT = TOTAL_HOURS * PIXELS_PER_HOUR;
+        {/* 🗓️ MODAL DE VISUALIZACIÓN DE HORARIO EN MALLA CONTINUA */}
+        {selectedGroupSchedule && (() => {
+          const GRID_START_TIME = 8;
+          const GRID_END_TIME = 21;
+          const PIXELS_PER_HOUR = 60;
+          const TOTAL_HOURS = GRID_END_TIME - GRID_START_TIME;
+          const TOTAL_HEIGHT = TOTAL_HOURS * PIXELS_PER_HOUR;
 
-        const daysOfWeek = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+          const daysOfWeek = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
-        // Función auxiliar para convertir una cadena "HH:MM" a minutos totales desde las 00:00
-        const timeToMinutes = (timeStr: string): number => {
-          if (!timeStr) return 0;
-          const [hours, minutes] = timeStr.split(":").map(Number);
-          return hours * 60 + minutes;
-        };
-
-        // Calcula la posición 'top' y la altura 'height' en píxeles para una clase
-        const getSlotStyles = (startTimeStr: string, endTimeStr: string) => {
-          const startMinutes = timeToMinutes(startTimeStr);
-          const endMinutes = timeToMinutes(endTimeStr);
-          const gridStartMinutes = GRID_START_TIME * 60;
-
-          // Calcular distancia desde el inicio de la cuadrícula (en horas)
-          const topInHours = (startMinutes - gridStartMinutes) / 60;
-          const durationInHours = (endMinutes - startMinutes) / 60;
-
-          return {
-            top: `${topInHours * PIXELS_PER_HOUR}px`,
-            height: `${durationInHours * PIXELS_PER_HOUR}px`,
+          // Función auxiliar para convertir una cadena "HH:MM" a minutos totales desde las 00:00
+          const timeToMinutes = (timeStr: string): number => {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(":").map(Number);
+            return hours * 60 + minutes;
           };
-        };
 
-        // Generar el array de horas para el eje izquierdo [8, 9, 10, ..., 20]
-        const hourLabels = Array.from({ length: TOTAL_HOURS }, (_, i) => GRID_START_TIME + i);
+          // Calcula la posición 'top' y la altura 'height' en píxeles para una clase
+          const getSlotStyles = (startTimeStr: string, endTimeStr: string) => {
+            const startMinutes = timeToMinutes(startTimeStr);
+            const endMinutes = timeToMinutes(endTimeStr);
+            const gridStartMinutes = GRID_START_TIME * 60;
 
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white shadow-xl w-full max-w-6xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+            // Calcular distancia desde el inicio de la cuadrícula (en horas)
+            const topInHours = (startMinutes - gridStartMinutes) / 60;
+            const durationInHours = (endMinutes - startMinutes) / 60;
 
-              {/* Encabezado del Modal */}
-              <div className="bg-gradient-to-tr from-purple-900 to-[#400252] p-4 text-white flex justify-between items-center shrink-0">
-                <div>
-                  <h3 className="font-questrial font-bold text-lg">{selectedGroupSchedule.name}</h3>
-                  <p className="text-xs text-purple-200 font-medium">📍 Ubicación: {selectedGroupSchedule.classroom}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    closeScheduleModal();
-                    setSelectedGroupSchedule(null);
-                  }}
-                  className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+            return {
+              top: `${topInHours * PIXELS_PER_HOUR}px`,
+              height: `${durationInHours * PIXELS_PER_HOUR}px`,
+            };
+          };
 
-              {/* Cuerpo del Modal: Vista de Agenda por Píxeles */}
-              <div className="p-6 overflow-auto bg-purple-50/10 flex-1">
-                <div className="min-w-[850px] border border-purple-100 bg-white shadow-xs flex flex-col">
+          // Generar el array de horas para el eje izquierdo [8, 9, 10, ..., 20]
+          const hourLabels = Array.from({ length: TOTAL_HOURS }, (_, i) => GRID_START_TIME + i);
 
-                  {/* Cabecera Fija de Días (1 columna para horas + 7 para los días) */}
-                  <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] bg-purple-50 text-[#5e0472] font-questrial font-bold text-xs uppercase tracking-wider text-center py-3 border-b border-purple-100 sticky top-0 z-10">
-                    <div className="text-purple-900/60 font-semibold">Hora</div>
-                    <div>Lun</div>
-                    <div>Mar</div>
-                    <div>Mié</div>
-                    <div>Jue</div>
-                    <div>Vie</div>
-                    <div>Sáb</div>
-                    <div>Dom</div>
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white shadow-xl w-full max-w-6xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+
+                {/* Encabezado del Modal */}
+                <div className="bg-gradient-to-tr from-purple-900 to-[#400252] p-4 text-white flex justify-between items-center shrink-0">
+                  <div>
+                    <h3 className="font-questrial font-bold text-lg">{selectedGroupSchedule.name}</h3>
+                    <p className="text-xs text-purple-200 font-medium">📍 Ubicación: {selectedGroupSchedule.classroom}</p>
                   </div>
-
-                  {/* Contenedor del canvas del Horario */}
-                  <div
-                    className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative"
-                    style={{ height: `${TOTAL_HEIGHT}px` }}
+                  <button
+                    onClick={() => {
+                      closeScheduleModal();
+                      setSelectedGroupSchedule(null);
+                    }}
+                    className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
                   >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
-                    {/* COLUMNA IZQUIERDA: Bloques e hilos de horas */}
-                    <div className="relative border-r border-purple-100 bg-gray-50/50">
-                      {hourLabels.map((hour) => (
-                        <div
-                          key={hour}
-                          className="absolute left-0 right-0 border-b border-gray-100 flex items-start justify-center pt-1"
-                          style={{
-                            top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
-                            height: `${PIXELS_PER_HOUR}px`
-                          }}
-                        >
-                          <span className="text-[#5e0472] font-bold text-[11px] font-questrial">
-                            {String(hour).padStart(2, "0")}:00
-                          </span>
-                        </div>
-                      ))}
+                {/* Cuerpo del Modal: Vista de Agenda por Píxeles */}
+                <div className="p-6 overflow-auto bg-purple-50/10 flex-1">
+                  <div className="min-w-[850px] border border-purple-100 bg-white shadow-xs flex flex-col">
+
+                    {/* Cabecera Fija de Días (1 columna para horas + 7 para los días) */}
+                    <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] bg-purple-50 text-[#5e0472] font-questrial font-bold text-xs uppercase tracking-wider text-center py-3 border-b border-purple-100 sticky top-0 z-10">
+                      <div className="text-purple-900/60 font-semibold">Hora</div>
+                      <div>Lun</div>
+                      <div>Mar</div>
+                      <div>Mié</div>
+                      <div>Jue</div>
+                      <div>Vie</div>
+                      <div>Sáb</div>
+                      <div>Dom</div>
                     </div>
 
-                    {/* COLUMNAS DE DÍAS: Mapeo y posicionamiento absoluto */}
-                    {daysOfWeek.map((day) => {
-                      const daySlots = selectedGroupSchedule.days[day] || [];
+                    {/* Contenedor del canvas del Horario */}
+                    <div
+                      className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] relative"
+                      style={{ height: `${TOTAL_HEIGHT}px` }}
+                    >
 
-                      return (
-                        <div
-                          key={day}
-                          className="relative border-r last:border-r-0 border-purple-50/50 h-full"
-                        >
-                          {/* Líneas guía horizontales de fondo por cada hora para mejorar legibilidad */}
-                          {hourLabels.map((hour) => (
-                            <div
-                              key={`line-${hour}`}
-                              className="absolute left-0 right-0 border-b border-dashed border-gray-100 pointer-events-none"
-                              style={{
-                                top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
-                                height: `${PIXELS_PER_HOUR}px`
-                              }}
-                            />
-                          ))}
+                      {/* COLUMNA IZQUIERDA: Bloques e hilos de horas */}
+                      <div className="relative border-r border-purple-100 bg-gray-50/50">
+                        {hourLabels.map((hour) => (
+                          <div
+                            key={hour}
+                            className="absolute left-0 right-0 border-b border-gray-100 flex items-start justify-center pt-1"
+                            style={{
+                              top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
+                              height: `${PIXELS_PER_HOUR}px`
+                            }}
+                          >
+                            <span className="text-[#5e0472] font-bold text-[11px] font-questrial">
+                              {String(hour).padStart(2, "0")}:00
+                            </span>
+                          </div>
+                        ))}
+                      </div>
 
-                          {/* Render de las clases del día sobre la cuadrícula */}
-                          {daySlots.map((slot: any) => {
-                            const styles = getSlotStyles(slot.startTime, slot.endTime);
+                      {/* COLUMNAS DE DÍAS: Mapeo y posicionamiento absoluto */}
+                      {daysOfWeek.map((day) => {
+                        const daySlots = selectedGroupSchedule.days[day] || [];
 
-                            return (
+                        return (
+                          <div
+                            key={day}
+                            className="relative border-r last:border-r-0 border-purple-50/50 h-full"
+                          >
+                            {/* Líneas guía horizontales de fondo por cada hora para mejorar legibilidad */}
+                            {hourLabels.map((hour) => (
                               <div
-                                key={slot.id}
-                                className="absolute left-1 right-1 bg-purple-100/90 border border-purple-300 p-1.5 shadow-2xs overflow-hidden flex flex-col justify-between transition-all hover:bg-purple-200/90 hover:z-20 group"
+                                key={`line-${hour}`}
+                                className="absolute left-0 right-0 border-b border-dashed border-gray-100 pointer-events-none"
                                 style={{
-                                  top: styles.top,
-                                  height: styles.height,
+                                  top: `${(hour - GRID_START_TIME) * PIXELS_PER_HOUR}px`,
+                                  height: `${PIXELS_PER_HOUR}px`
                                 }}
-                              >
-                                <div className="flex flex-col h-full justify-start overflow-hidden">
-                                  <span
-                                    className="font-questrial font-bold text-[#5e0472] text-[10px] sm:text-[11px] leading-tight line-clamp-2"
-                                    title={slot.label}
-                                  >
-                                    {slot.label}
-                                  </span>
-                                  <span className="text-purple-700/80 text-[9px] font-semibold mt-0.5 whitespace-nowrap">
-                                    {slot.startTime} - {slot.endTime}
-                                  </span>
+                              />
+                            ))}
+
+                            {/* Render de las clases del día sobre la cuadrícula */}
+                            {daySlots.map((slot: any) => {
+                              const styles = getSlotStyles(slot.startTime, slot.endTime);
+
+                              return (
+                                <div
+                                  key={slot.id}
+                                  className="absolute left-1 right-1 bg-purple-100/90 border border-purple-300 p-1.5 shadow-2xs overflow-hidden flex flex-col justify-between transition-all hover:bg-purple-200/90 hover:z-20 group"
+                                  style={{
+                                    top: styles.top,
+                                    height: styles.height,
+                                  }}
+                                >
+                                  <div className="flex flex-col h-full justify-start overflow-hidden">
+                                    <span
+                                      className="font-questrial font-bold text-[#5e0472] text-[10px] sm:text-[11px] leading-tight line-clamp-2"
+                                      title={slot.label}
+                                    >
+                                      {slot.label}
+                                    </span>
+                                    <span className="text-purple-700/80 text-[9px] font-semibold mt-0.5 whitespace-nowrap">
+                                      {slot.startTime} - {slot.endTime}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+
+                    </div>
 
                   </div>
-
                 </div>
-              </div>
 
-              {/* Botonera de Acción */}
-              <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeScheduleModal();
-                    setSelectedGroupSchedule(null);
-                  }}
-                     className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
-            >
-                  Cerrar vista
-                </button>
-              </div>
+                {/* Botonera de Acción */}
+                <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeScheduleModal();
+                      setSelectedGroupSchedule(null);
+                    }}
+                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                  >
+                    Cerrar vista
+                  </button>
+                </div>
 
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
       </MacDockModal>
       <MacDockModal
         isOpen={isStudentsModalOpen}
@@ -934,90 +933,90 @@ export default function GroupsListPage() {
         title={"Estudiantes"}
         size={"lg"}
       >
-      {/* 👥 MODAL DE VISUALIZACIÓN DE ALUMNOS INSCRITOS */}
+        {/* 👥 MODAL DE VISUALIZACIÓN DE ALUMNOS INSCRITOS */}
         {
           selectedGroupStudents && (
-<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
 
-            {/* Encabezado del Modal */}
-            <div className="bg-gradient-to-r from-[#5e0472] to-purple-700 p-4 text-white flex justify-between items-center shrink-0">
-              <div>
-                <h3 className="font-questrial font-bold text-lg">
-                  {selectedGroupStudents.name || "Lista de Alumnos"}
-                </h3>
-                <p className="text-xs text-purple-200 font-medium">
-                  👥 Total inscritos: {selectedGroupStudents.students?.length || 0} alumnos
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  closeStudentsModal();
-                  setSelectedGroupStudents(null);
-                }}
-                className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Cuerpo del Modal: Lista de Alumnos */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-purple-50/10 generic-scrollbar">
-              {selectedGroupStudents.students && selectedGroupStudents.students.length > 0 ? (
-                selectedGroupStudents.students.map((student: any) => (
-                  <div
-                    key={student.id}
-                    className="p-3 bg-white border border-purple-100/70 shadow-2xs flex items-center justify-between hover:border-purple-200 rounded-sm transition-all"
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      {student.clients[0] && (<p className="font-bold text-gray-800 text-xs">
-                        {student.clients[0]?.firstName} {student.clients[0]?.lastName}
-                      </p>)}
-                      
-                      <p className="text-[10px] text-gray-400 font-medium">
-                        Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
-                        {student.hasExperience && (
-                          <span className="text-purple-600 font-semibold"> • Con Experiencia</span>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-[#5e0472] border border-purple-100 px-2 py-0.5">
-                        {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
-                      </span>
-                    </div>
+                {/* Encabezado del Modal */}
+                <div className="bg-gradient-to-r from-[#5e0472] to-purple-700 p-4 text-white flex justify-between items-center shrink-0">
+                  <div>
+                    <h3 className="font-questrial font-bold text-lg">
+                      {selectedGroupStudents.name || "Lista de Alumnos"}
+                    </h3>
+                    <p className="text-xs text-purple-200 font-medium">
+                      👥 Total inscritos: {selectedGroupStudents.students?.length || 0} alumnos
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="py-12 flex flex-col items-center justify-center text-center text-gray-400">
-                  <Users className="w-10 h-10 text-gray-300 stroke-[1.5] mb-2" />
-                  <p className="font-medium text-xs font-questrial text-gray-500">No hay alumnos inscritos</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Este grupo todavía no registra estudiantes.</p>
+                  <button
+                    onClick={() => {
+                      closeStudentsModal();
+                      setSelectedGroupStudents(null);
+                    }}
+                    className="text-purple-200 hover:text-white cursor-pointer bg-white/10 hover:bg-white/20 p-1.5 rounded transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </div>
 
-            {/* Botonera de Acción / Footer */}
-            <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  closeStudentsModal();
-                  setSelectedGroupStudents(null);
-                }}
-                 className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
-            >
-                Cerrar lista
-              </button>
-            </div>
+                {/* Cuerpo del Modal: Lista de Alumnos */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-purple-50/10 generic-scrollbar">
+                  {selectedGroupStudents.students && selectedGroupStudents.students.length > 0 ? (
+                    selectedGroupStudents.students.map((student: any) => (
+                      <div
+                        key={student.id}
+                        className="p-3 bg-white border border-purple-100/70 shadow-2xs flex items-center justify-between hover:border-purple-200 rounded-sm transition-all"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          {student.clients[0] && (<p className="font-bold text-gray-800 text-xs">
+                            {student.clients[0]?.firstName} {student.clients[0]?.lastName}
+                          </p>)}
 
-          </div>
-        </div>
+                          <p className="text-[10px] text-gray-400 font-medium">
+                            Camisa: <span className="font-bold text-gray-600">{student.shirtSize || "N/A"}</span>
+                            {student.hasExperience && (
+                              <span className="text-purple-600 font-semibold"> • Con Experiencia</span>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-[#5e0472] border border-purple-100 px-2 py-0.5">
+                            {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-12 flex flex-col items-center justify-center text-center text-gray-400">
+                      <Users className="w-10 h-10 text-gray-300 stroke-[1.5] mb-2" />
+                      <p className="font-medium text-xs font-questrial text-gray-500">No hay alumnos inscritos</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Este grupo todavía no registra estudiantes.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Botonera de Acción / Footer */}
+                <div className="border-t border-purple-100 bg-gray-50 px-6 py-3 flex justify-start shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeStudentsModal();
+                      setSelectedGroupStudents(null);
+                    }}
+                    className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                  >
+                    Cerrar lista
+                  </button>
+                </div>
+
+              </div>
+            </div>
           )
         }
-        
-      
+
+
       </MacDockModal>
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal

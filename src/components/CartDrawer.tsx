@@ -55,7 +55,6 @@ export function CartDrawer() {
             setIsLoadingUsers(true);
             try {
                 const res = await getAllClientsAction({});
-                console.log({ res })
                 setClientsList(res.success && res.data ? res.data : []);
                 setFilteredClients(res.success && res.data ? res.data : []);
             } catch (error) {

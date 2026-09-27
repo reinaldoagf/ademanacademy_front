@@ -219,8 +219,12 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
       onSeleccionChange(newSelection);
     }
   };
-
+  // Sincronizar el estado interno si el prop 'seatsOccupied' cambia desde el padre
+  useEffect(() => {
+    setOccupiedSeatsState(seatsOccupied);
+  }, [seatsOccupied]);
   // Socket.IO
+  // Escuchar cambios de Socket.IO en tiempo real
   useEffect(() => {
     if (!eventData?.id) return;
 
@@ -236,14 +240,36 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
         seats: Array<{ seatingMapElementId: string; status: string }>;
       }) => {
         if (data.eventId !== eventData.id) return;
-        setOccupiedSeatsState((prevOccupied) => {
-          const freedIds = new Set(
-            data.seats
-              .filter((s) => s.status === "available")
-              .map((s) => s.seatingMapElementId)
-          );
-          return prevOccupied.filter((id) => !freedIds.has(id));
-        });
+        // Extraer IDs liberados
+        const freedIds = new Set(
+          data.seats
+            .filter((s) => s.status === "available" || s.status === "AVAILABLE")
+            .map((s) => s.seatingMapElementId)
+        );
+
+        // Actualizar ocupados: comprobamos contra seatingMapElementId e id
+        setOccupiedSeatsState((prevOccupied) =>
+          prevOccupied.filter((seatId) => {
+            // Si el seatId almacenado coincide directamente con alguno liberado
+            if (freedIds.has(seatId)) return false;
+
+            // Si el estado guarda el id del elemento o itemID en el objeto del mapa
+            const matchingElement = seatingMap.elements.find(
+              (el) => el.id === seatId || el.itemID === seatId
+            );
+
+            if (matchingElement && freedIds.has(matchingElement.itemID)) {
+              return false;
+            }
+
+            return true;
+          })
+        );
+
+        // Deseleccionar asientos si el usuario los tenía marcados en su UI
+        setSelected((prevSelected) =>
+          prevSelected.filter((el) => !freedIds.has(el.itemID))
+        );
       }
     );
 
@@ -251,7 +277,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
       socket.emit("leaveEventRoom", { eventId: eventData.id });
       socket.disconnect();
     };
-  }, [eventData?.id]);
+  }, [eventData?.id, seatingMap]);
 
   useEffect(() => {
     setOccupiedSeatsState(seatsOccupied);

@@ -74,10 +74,10 @@ export default function AdminEventsPage() {
     openModal: openModalForm,
     closeModal: closeModalForm,
   } = useModal();
-  const { 
-    isOpen: isFeedbackAlertOpen, 
-    openModal: openFeedbackAlertModal, 
-    closeModal: closeFeedbackAlertModal 
+  const {
+    isOpen: isFeedbackAlertOpen,
+    openModal: openFeedbackAlertModal,
+    closeModal: closeFeedbackAlertModal
   } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -312,6 +312,7 @@ export default function AdminEventsPage() {
           //toast.success(res.data.message || "Asientos procesados correctamente");
           window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
           closeModalSeatingMap();
+          fetchData(currentPage, itemsPerPage);
           // Opcional: Recargar o revalidar datos del mapa
         } else {
           toast.error(`Ocurrió un problema: ${res.message}`);
@@ -782,32 +783,6 @@ export default function AdminEventsPage() {
               {/* COLUMNA DERECHA: PANEL DE CONTROL Y RESUMEN (~20% del ancho) */}
               <div className="md:col-span-3">
                 <div className="font-questrial space-y-4">
-                  {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
-                  <div className="bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
-                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-
-                    <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
-                      <DollarSign className="w-4 h-4 text-emerald-400" />
-                      <span>Monto a Liquidar</span>
-                    </div>
-
-                    <div className="flex items-baseline gap-1 my-1">
-                      <span className="text-3xl font-black tracking-tight">
-                        ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
-                      </span>
-                      <span className="text-xs font-semibold text-purple-200">USD</span>
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-purple-100">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Ticket className="w-3.5 h-3.5 text-purple-300" />
-                        Asientos elegidos:
-                      </span>
-                      <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
-                        {selectedChairs?.length || 0}
-                      </span>
-                    </div>
-                  </div>
 
                   {/* TARJETA DE BÚSQUEDA Y ASIGNACIÓN DE CLIENTE */}
                   <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm space-y-3 text-xs">
@@ -881,6 +856,32 @@ export default function AdminEventsPage() {
                         />
                       </div>
                     )}
+                  </div>
+                  {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
+                  <div className="bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+                    <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
+                      <span>Monto a Liquidar</span>
+                    </div>
+
+                    <div className="flex items-baseline gap-1 my-1">
+                      <span className="text-3xl font-black tracking-tight">
+                        ${totalCashAmount.toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-xs font-semibold text-purple-200">USD</span>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-purple-100">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Ticket className="w-3.5 h-3.5 text-purple-300" />
+                        Asientos elegidos:
+                      </span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold text-white">
+                        {selectedChairs?.length || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1078,50 +1079,51 @@ export default function AdminEventsPage() {
       <MacDockModal
         isOpen={isFeedbackAlertOpen}
         onClose={closeFeedbackAlertModal}
-        title={showFeedbackAlert.title || "¡Operación Completada!"}
+        title={"¡Operación Completada!"}
         size={"md"}
       >
-      {showFeedbackAlert && (
-        <FeedbackAlert
-          title={showFeedbackAlert.title}
-          description={showFeedbackAlert.description}
-          onClose={() => {
-          closeFeedbackAlertModal(); setShowFeedbackAlert(false)}}
-          extraActions={[
-            // Accion 1: Copiar Enlace
-            {
-              label: "Compartir a Cliente",
-              variant: "success",
-              onClick: () => {
-                if (showFeedbackAlert.data?.paymentOrderId) {
-                  handleCopyPaymentOrderLink(showFeedbackAlert.data.paymentOrderId);
-                }
+        {showFeedbackAlert && (
+          <FeedbackAlert
+            title={showFeedbackAlert.title}
+            description={showFeedbackAlert.description}
+            onClose={() => {
+              closeFeedbackAlertModal(); setShowFeedbackAlert(false)
+            }}
+            extraActions={[
+              // Accion 1: Copiar Enlace
+              {
+                label: "Compartir a Cliente",
+                variant: "success",
+                onClick: () => {
+                  if (showFeedbackAlert.data?.paymentOrderId) {
+                    handleCopyPaymentOrderLink(showFeedbackAlert.data.paymentOrderId);
+                  }
+                },
               },
-            },
-            // Acción 2: Ir a la Orden
-            {
-              label: "Ver Orden",
-              variant: "primary",
-              onClick: () => {
-                if (showFeedbackAlert.data?.paymentOrderId) {
-                  router.push(`/admin/payment-orders/${showFeedbackAlert.data.paymentOrderId}`);
-                  closeFeedbackAlertModal();
-                  setShowFeedbackAlert(false);
-                }
+              // Acción 2: Ir a la Orden
+              {
+                label: "Ver Orden",
+                variant: "primary",
+                onClick: () => {
+                  if (showFeedbackAlert.data?.paymentOrderId) {
+                    router.push(`/admin/payment-orders/${showFeedbackAlert.data.paymentOrderId}`);
+                    closeFeedbackAlertModal();
+                    setShowFeedbackAlert(false);
+                  }
+                },
               },
-            },
-          ]}
-        >
-          {/* Contenido dinámico si existe la orden de pago */}
-          {showFeedbackAlert.data?.paymentOrderId && (
-            <div className="space-y-1">
-              <p>
-                <strong>Orden ID:</strong> #{showFeedbackAlert.data.paymentOrderId}
-              </p>
-            </div>
-          )}
-        </FeedbackAlert>
-      )}
+            ]}
+          >
+            {/* Contenido dinámico si existe la orden de pago */}
+            {showFeedbackAlert.data?.paymentOrderId && (
+              <div className="space-y-1">
+                <p>
+                  <strong>Orden ID:</strong> #{showFeedbackAlert.data.paymentOrderId}
+                </p>
+              </div>
+            )}
+          </FeedbackAlert>
+        )}
       </MacDockModal>
     </>
   );

@@ -38,8 +38,6 @@ export async function updateClassroomAction(formData: Classroom, id: string) {
         const url = `${BACKEND_URL}/classrooms/${id}`;
         const headers = await getAuthHeaders();
 
-        console.log({ formData })
-
         // 🎯 Ejecutamos la petición de Axios dinámicamente según la existencia del ID
         const response = await axios.patch(url, formData, { headers });
 

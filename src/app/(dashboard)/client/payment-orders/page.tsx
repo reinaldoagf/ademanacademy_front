@@ -2,22 +2,23 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     Search,
     User,
     ChevronRight
 } from "lucide-react";
+import { io, Socket } from "socket.io-client";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import { getMyPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
+import { useAuthStore } from "@/store/authStore";
 
 export default function PaymentOrdersPage() {
-    const router = useRouter();
+    const user = useAuthStore((state) => state.user);
     // Mock Data alineado con tu esquema prisma nuevo
     const [orders, setOrders] = useState<PaymentOrder[]>([]);
     const [meta, setMeta] = useState({
@@ -173,6 +174,31 @@ export default function PaymentOrdersPage() {
 
         return () => clearTimeout(handler);
     }, [searchTerm, statusFilter, filterConcept, currentPage, itemsPerPage]);
+
+
+    // Socket.IO
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const socket: Socket = io(socketUrl);
+
+        socket.emit("joinUserRoom", { targetId: user.id });
+
+        socket.on(
+            "userPaymentOrdersUpdated",
+            (data: { action: "DELETED" | "UPDATED" | "CREATED"; paymentOrderIds: string[] }) => {
+                console.log("Notificación en tiempo real recibida:", data);
+                // Ejecutamos la recarga con la página y límite vigentes
+                fetchData(currentPage, itemsPerPage);
+            }
+        );
+
+        return () => {
+            socket.emit("leaveUserRoom", { targetId: user.id });
+            socket.disconnect();
+        };
+    }, [user?.id]); // Escucha limpia ligada solo a la vida útil del usuario
     return (
         <>
             {/* TOPBAR / HERO */}
