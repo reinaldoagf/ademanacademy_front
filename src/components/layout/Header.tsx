@@ -373,11 +373,11 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
                     onChange={(e) => setFilterNivel(e.target.value)}
                     className="w-full font-questrial p-2 bg-slate-50 border border-purple-100 text-xs focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 text-gray-700"
                   >
-                    <option value="">Todos los niveles</option>
-                    <option value="pre_ballet">Pre-Ballet</option>
-                    <option value="basico_1">Básico I</option>
-                    <option value="intermedio">Intermedio</option>
-                    <option value="avanzado">Avanzado / Elenco</option>
+                    <option value="" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los niveles</option>
+                    <option value="pre_ballet" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pre-Ballet</option>
+                    <option value="basico_1" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Básico I</option>
+                    <option value="intermedio" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Intermedio</option>
+                    <option value="avanzado" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Avanzado / Elenco</option>
                   </select>
                 </div>
 

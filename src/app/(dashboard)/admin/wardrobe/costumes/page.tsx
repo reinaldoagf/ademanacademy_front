@@ -423,22 +423,22 @@ export default function CostumesPage() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
               >
-                <option value="all">Todas las categorías</option>
-                <option value="baby">Baby</option>
-                <option value="childrens">Infantil</option>
-                <option value="youth">Juvenil</option>
-                <option value="adult">Adulto</option>
+                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todas las categorías</option>
+                <option value="baby" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
+                <option value="childrens" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
+                <option value="youth" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
+                <option value="adult" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
               </select>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
               >
-                <option value="all">Todos los estados</option>
-                <option value="payment_pending">Pendiente por pago</option>
-                <option value="making">Confeccionando</option>
-                <option value="available">Disponible</option>
-                <option value="retired">Retirado</option>
+                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los estados</option>
+                <option value="payment_pending" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendiente por pago</option>
+                <option value="making" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Confeccionando</option>
+                <option value="available" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Disponible</option>
+                <option value="retired" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Retirado</option>
               </select>
             </div>
 

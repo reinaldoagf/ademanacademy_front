@@ -18,19 +18,19 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }: OnboardingWizardProps) {
-  const router = useRouter();
-  const { 
-    isOpen: isFeedbackAlertOpen, 
-    openModal: openFeedbackAlertModal, 
-    closeModal: closeFeedbackAlertModal 
-  } = useModal();
-  const [showFeedbackAlert, setShowFeedbackAlert] = useState<{
-    title: string;
-    description: string;
-    data: {
-      paymentOrderId?: string | null;
-    };
-  } | false>(false);
+    const router = useRouter();
+    const {
+        isOpen: isFeedbackAlertOpen,
+        openModal: openFeedbackAlertModal,
+        closeModal: closeFeedbackAlertModal
+    } = useModal();
+    const [showFeedbackAlert, setShowFeedbackAlert] = useState<{
+        title: string;
+        description: string;
+        data: {
+            paymentOrderId?: string | null;
+        };
+    } | false>(false);
     const user = useAuthStore((state) => state.user);
     const setUser = useAuthStore((state) => state.setUser);
     const [userResponse, setUserResponse] = useState<User | null>(null);
@@ -75,7 +75,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         : students.length * REGISTRATION_FEE;
 
     const handleOkFeedbackMessage = () => {
-        if(userResponse) {
+        if (userResponse) {
             closeFeedbackAlertModal();
             setShowFeedbackAlert(false);
             setUser(userResponse);
@@ -171,7 +171,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                     data: null
                 })
                 setUserResponse({ ...user, ...res.data.user })
-            
+
             } else {
                 setError(typeof res.error === "string" ? res.error : "Error crítico al procesar la solicitud.");
             }
@@ -256,10 +256,10 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                         onChange={(e) => setClassroomData({ ...classroomData, type: e.target.value })}
                                         className="p-2.5 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white w-full"
                                     >
-                                        <option value="mirrors">Área Espejos</option>
-                                        <option value="urban">Área Urbano</option>
-                                        <option value="free">Estudio Libre</option>
-                                        <option value="teorias">Aula de Teorías</option>
+                                        <option value="mirrors" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Espejos</option>
+                                        <option value="urban" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Urbano</option>
+                                        <option value="free" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Estudio Libre</option>
+                                        <option value="teorias" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Aula de Teorías</option>
                                     </select>
                                 </div>
 
@@ -725,33 +725,33 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             </div>
         </div>
         {/* MODAL DETALLE DE SILLAS CON CANVAS */}
-      <MacDockModal
-        isOpen={isFeedbackAlertOpen}
-        onClose={handleOkFeedbackMessage}
-        title={showFeedbackAlert.title || "¡Operación Completada!"}
-        size={"md"}
-      >
-      {showFeedbackAlert && (
-        <FeedbackAlert
-          title={showFeedbackAlert.title}
-          description={showFeedbackAlert.description}
-          onClose={handleOkFeedbackMessage}
-          extraActions={[{
-              label: "Ok →",
-              variant: "purple",
-              onClick: () => {
-                handleOkFeedbackMessage()
-              },
-            }]}
+        <MacDockModal
+            isOpen={isFeedbackAlertOpen}
+            onClose={handleOkFeedbackMessage}
+            title={showFeedbackAlert.title || "¡Operación Completada!"}
+            size={"md"}
         >
-            <div className="space-y-1">
-              <p>
-                Nuestro equipo estará validando su pago dentro de las próximas <strong>24 horas</strong> para completar la afiliación.
-               
-              </p>
-            </div>
-        </FeedbackAlert>
-      )}
-      </MacDockModal>
+            {showFeedbackAlert && (
+                <FeedbackAlert
+                    title={showFeedbackAlert.title}
+                    description={showFeedbackAlert.description}
+                    onClose={handleOkFeedbackMessage}
+                    extraActions={[{
+                        label: "Ok →",
+                        variant: "purple",
+                        onClick: () => {
+                            handleOkFeedbackMessage()
+                        },
+                    }]}
+                >
+                    <div className="space-y-1">
+                        <p>
+                            Nuestro equipo estará validando su pago dentro de las próximas <strong>24 horas</strong> para completar la afiliación.
+
+                        </p>
+                    </div>
+                </FeedbackAlert>
+            )}
+        </MacDockModal>
     </>);
 }

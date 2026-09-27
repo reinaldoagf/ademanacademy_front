@@ -229,22 +229,22 @@ export default function PaymentOrdersPage() {
                             onChange={(e) => setFilterConcept(e.target.value)}
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
-                            <option value="all">Todos los conceptos</option>
-                            <option value="monthly_payment">Mensualidades</option>
-                            <option value="tuition">Matrículas</option>
-                            <option value="locker_room">Tienda / Uniformes</option>
-                            <option value="ticket">Entradas de Eventos</option>
+                            <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los conceptos</option>
+                            <option value="monthly_payment" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Mensualidades</option>
+                            <option value="tuition" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Matrículas</option>
+                            <option value="locker_room" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Tienda / Uniformes</option>
+                            <option value="ticket" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Entradas de Eventos</option>
                         </select>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
-                            <option value="all">Todos los estados</option>
-                            <option value="pending">Pendiente</option>
-                            <option value="paid">Pagada</option>
-                            <option value="defeated">Vencida</option>
-                            <option value="annulled">Anulada</option>
+                            <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los estados</option>
+                            <option value="pending" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendiente</option>
+                            <option value="paid" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagada</option>
+                            <option value="defeated" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Vencida</option>
+                            <option value="annulled" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Anulada</option>
                         </select>
 
                     </div>

@@ -29,7 +29,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
             containerClassName={containerClassName}
         >
             <select
-                className={`${BASE_INPUT_STYLES} ${className}`.trim()}
+                className={`cursor-pointer ${BASE_INPUT_STYLES} ${className}`.trim()}
                 {...props}
             >
                 {options.map((opt, index) => (
@@ -37,7 +37,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
                         key={index}
                         value={opt.value}
                         disabled={opt.disabled}
-                        className="font-bold cursor-pointer text-purple-700 bg-purple-50"
+                        className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans"
                     >
                         {opt.label}
                     </option>

@@ -769,9 +769,9 @@ export default function SchedulePage() {
                     <div>
                         <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
                         <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors">
-                            <option value="">-- Elige un grupo --</option>
+                            <option value="" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">-- Elige un grupo --</option>
                             {activeClassroom?.groups.map((g, index) => (
-                                <option key={g.id + '-' + index} value={g.id}>{g.name}</option>
+                                <option key={g.id + '-' + index} value={g.id} className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">{g.name}</option>
                             ))}
                         </select>
                     </div>
@@ -941,7 +941,7 @@ export default function SchedulePage() {
                                         <div className="flex flex-col gap-0.5">
                                             {
                                                 student.clients[0] && (<p className="font-bold text-gray-800 text-xs">
-                                                {student.clients[0].firstName} {student.clients[0].lastName}
+                                                    {student.clients[0].firstName} {student.clients[0].lastName}
                                                 </p>)
                                             }
                                             <p className="text-[9px] text-gray-400 font-medium">

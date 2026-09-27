@@ -484,12 +484,12 @@ export default function AdminEventsPage() {
               onChange={(e) => setTypeFilter(e.target.value)}
               className="p-2 w-full sm:w-auto font-questrial border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="all">Todos los formatos</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="annual_gala">Galas Anuales</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="competence">Competencias</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="masterclass">Masterclasses / Talleres</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="sample">Muestras de Aula</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
+              <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los formatos</option>
+              <option value="annual_gala" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Galas Anuales</option>
+              <option value="competence" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Competencias</option>
+              <option value="masterclass" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Masterclasses / Talleres</option>
+              <option value="sample" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Muestras de Aula</option>
+              <option value="other" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Otro</option>
 
             </select>
           </div>

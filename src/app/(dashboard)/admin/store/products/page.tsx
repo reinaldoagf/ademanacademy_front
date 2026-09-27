@@ -400,9 +400,9 @@ export default function ProductsPage() {
                 onChange={(e) => setIsActiveFilter(e.target.value)}
                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
               >
-                <option value="all">Todos los productos</option>
-                <option value="true">Activos</option>
-                <option value="false">No activos</option>
+                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los productos</option>
+                <option value="true" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Activos</option>
+                <option value="false" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">No activos</option>
               </select>
 
             </div>
