@@ -6,12 +6,13 @@ import { Armchair, Info, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import { SeatingMapElement, SeatingMap } from "@/types/seating-map";
 import { EventData } from "@/types/event";
+import { useAuthStore } from "@/store/authStore";
 
 interface SeatingMapProps {
   eventData: EventData;
   seatingMap: SeatingMap;
   seatsOccupied?: string[]; // IDs de asientos vendidos ej: ["silla-1234"]
-  onSeleccionChange: (asientosSeleccionados: SeatingMapElement[]) => void;
+  onSeleccionChange: (selectedSeats: SeatingMapElement[]) => void;
 }
 
 export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
@@ -20,6 +21,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
   seatsOccupied = [],
   onSeleccionChange,
 }) => {
+  const user = useAuthStore((state) => state.user);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +88,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
       const el = seatingMap.elements[i];
       if (el.type === "platform") continue;
+      if (!user?.isAdmin && el.itemType === "sponsor_chair") continue;
 
       if (checkIntersection(mouseX, mouseY, el)) {
         foundElement = el;
@@ -200,6 +203,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
       const el = seatingMap.elements[i];
       if (el.type === "platform") continue;
+      if (!user?.isAdmin && el.itemType === "sponsor_chair") continue;
       if (el.id && occupiedSeatsState.includes(el.id)) continue;
 
       if (checkIntersection(clickX, clickY, el)) {
