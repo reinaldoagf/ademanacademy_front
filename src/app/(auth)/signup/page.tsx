@@ -36,6 +36,7 @@ export default function RegisterPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
 
     // 🎯 NUEVOS ESTADOS PARA WHATSAPP
+    const [dniPrefix, setDniPrefix] = useState("V");
     const [countryCode, setCountryCode] = useState("+58"); // Código por defecto (ej: Venezuela)
     const [phone, setPhone] = useState("");
 
@@ -49,7 +50,14 @@ export default function RegisterPage() {
         { code: "+34", label: "ES" },
         { code: "+1", label: "US" },
     ];
-
+    const DNIPrefixes = [
+        { code: "V", label: "V" },
+        { code: "E", label: "E" },
+        { code: "P", label: "P" },
+        { code: "C", label: "C" },
+        { code: "J", label: "J" },
+        { code: "G", label: "G" },
+    ];
     // Estados de Validaciones y Visibilidad
     const [error, setError] = useState<string | null>(null);
     const [errorEmail, setErrorEmail] = useState("");
@@ -99,6 +107,7 @@ export default function RegisterPage() {
         const fullPhone = `${countryCode}${phone.replace(/\s+/g, "")}`;
 
         const payload = new FormData();
+        payload.append("IDNumberPrefix", dniPrefix);
         payload.append("dni", dni);
         payload.append("firstName", firstName);
         payload.append("lastName", lastName);
@@ -259,16 +268,29 @@ export default function RegisterPage() {
                                 <div className="relative group">
                                     <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
-                                    <input
-                                        type="text"
-                                        id="dni"
-                                        name="dni" // 💡 Agregado
-                                        required
-                                        value={dni}
-                                        onChange={(e) => setDni(e.target.value)}
-                                        placeholder="Ej: 12345678"
-                                        className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
-                                    />
+                                    <div className="flex relative group">{/* Selector de Código de País */}
+                                        <select
+                                            value={dniPrefix}
+                                            onChange={(e) => setDniPrefix(e.target.value)}
+                                            className="bg-white/10 text-[#5e0472] pl-11 pr-2 py-4 border-y border-l border-purple-200 focus:outline-none focus:border-purple-400 rounded-l transition-all text-xs font-sans appearance-none cursor-pointer"
+                                            style={{ borderRight: 'none' }}
+                                        >
+                                            {DNIPrefixes.map((c) => (
+                                                <option key={c.code} value={c.code} className="bg-neutral-900 text-white">
+                                                    {c.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="text"
+                                            id="dni"
+                                            name="dni" // 💡 Agregado
+                                            required
+                                            value={dni}
+                                            onChange={(e) => setDni(e.target.value)}
+                                            placeholder="Ej: 12345678"
+                                            className={`border-y border-r p-4  w-full border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded-r transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
+                                        /></div>
                                 </div>
                             </div>
 
@@ -347,7 +369,7 @@ export default function RegisterPage() {
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} // Previene letras
                                         placeholder="4121234567"
-                                        className={` border-y border-r p-4  w-full border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded-r transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
+                                        className={`border-y border-r p-4  w-full border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded-r transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
                                     />
                                 </div>
                             </div>

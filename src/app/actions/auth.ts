@@ -55,6 +55,7 @@ export async function handleLogin(formData: FormData) {
 }
 
 export async function handleRegister(formData: FormData) {
+  const IDNumberPrefix = formData.get("IDNumberPrefix");
   const dni = formData.get("dni");
   const firstName = formData.get("firstName");
   const lastName = formData.get("lastName");
@@ -62,7 +63,7 @@ export async function handleRegister(formData: FormData) {
   const phone = formData.get("phone");
   const password = formData.get("password");
 
-  if (!dni || !firstName || !lastName || !email || !phone || !password) {
+  if (!IDNumberPrefix || !dni || !firstName || !lastName || !email || !phone || !password) {
     return { success: false, error: "Todos los campos obligatorios son requeridos" };
   }
 
@@ -70,7 +71,7 @@ export async function handleRegister(formData: FormData) {
     const response = await fetch(`${BACKEND_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dni, firstName, lastName, email, phone, password }),
+      body: JSON.stringify({ IDNumberPrefix, dni, firstName, lastName, email, phone, password }),
     });
 
     const data = await response.json();
