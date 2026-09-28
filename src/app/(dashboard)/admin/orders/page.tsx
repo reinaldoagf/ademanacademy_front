@@ -13,6 +13,7 @@ import DataTable, { Column } from "@/components/common/DataTable";
 import DatePipe from "@/components/pipes/DatePipe";
 import { getAllOrdersAction } from "@/app/actions/order";
 import { Order } from "@/types/order";
+import { APP_KEYS } from "@/consts/app";
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -122,6 +123,7 @@ export default function OrdersPage() {
         },
     ];
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_ORDERS_COUNT));
         startTransition(async () => {
             const res = await getAllOrdersAction({
                 page: pageToFetch,
