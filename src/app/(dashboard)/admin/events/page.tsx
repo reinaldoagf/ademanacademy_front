@@ -1,7 +1,7 @@
 // src/app/(dashboard)/events/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {

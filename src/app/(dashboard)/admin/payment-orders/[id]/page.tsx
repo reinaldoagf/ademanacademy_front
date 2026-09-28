@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/payment-orders/[id]/page.tsx
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { FormEvent, useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     User,
@@ -454,7 +454,7 @@ export default function PaymentOrderDetailsPage() {
                             type="number"
                             step="0.01"
                             required
-                            max={paymentOrder && totalPaid ? paymentOrder.amount - totalPaid : 0}
+                            max={paymentOrder ? (paymentOrder.amount - totalPaid) : 0}
                             value={formData.amount}
                             onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
                             placeholder="0.00"

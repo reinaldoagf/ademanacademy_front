@@ -236,6 +236,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { event: APP_KEYS.REFRESH_MY_AFFILIATES_COUNT, action: getMyRepresentedAction, key: APP_KEYS.MY_AFFILIATES },
     { event: APP_KEYS.REFRESH_PAYMENTS_COUNT, action: getMyTransactionsAction, key: APP_KEYS.PAYMENTS },
     { event: APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT, action: getMyPaymentOrdersAction, key: APP_KEYS.PAYMENT_ORDERS },
+    { event: APP_KEYS.REFRESH_EVENTS_COUNT, action: getAllEventsAction, key: APP_KEYS.EVENTS },
+
   ];
 
   // Función auxiliar para renderizar los enlaces y reutilizar los estilos

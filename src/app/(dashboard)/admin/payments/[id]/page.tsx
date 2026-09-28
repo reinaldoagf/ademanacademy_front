@@ -14,7 +14,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import HeroSection from '@/components/layout/HeroSection';
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
@@ -45,16 +45,24 @@ export default function PaymentDetailsPage() {
         if (!id) return;
 
         const fetchTransactionDetails = async () => {
-            try {
-                startTransition(async () => {
+            startTransition(async () => {
+                try {
                     const res = await getTransactionByIdAction(id);
+
+                    console.log({ res });
                     if (res.success && res.data) {
                         setTransaction(res.data);
+                        setError(null);
+                    } else {
+                        // Si el backend no encuentra la transacción o devuelve error
+                        setError(res.error || "No se pudo encontrar la transacción solicitada.");
+                        toast.error("La transacción no existe o no fue encontrada.");
                     }
-                });
-            } catch (error) {
-                console.error("Error al obtener los detalles de la orden de pago:", error);
-            }
+                } catch (err: any) {
+                    console.error("Error al obtener los detalles de la transacción:", err);
+                    setError("Ocurrió un error al cargar la información del pago.");
+                }
+            });
         };
 
         fetchTransactionDetails();
@@ -243,8 +251,31 @@ export default function PaymentDetailsPage() {
 
                             {/* Auditoría de Pago */}
                             <div className="glass-card p-6 shadow-sm">
+
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-anton mb-1">Auditoría de Pago</h3>
+                                    </div>
+                                    {
+                                        transaction.concept === "ticket" && transaction.status === "pending" && (
+                                            <div>
+                                                <button
+                                                    type="button"
+                                                    disabled={!!(isPending || !transaction.id)}
+                                                    onClick={handleApprove}
+                                                    className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                                                >
+                                                    <Check className="w-4 h-4" /> {isPending
+                                                        ? "Guardando..."
+                                                        : "Aprobar →"}
+                                                </button>
+                                            </div>
+                                        )
+                                    }
+
+                                </div>
                                 <h3 className="text-lg font-anton mb-4">
-                                    Auditoría de Pago
+
                                 </h3>
                                 <div className="space-y-2">
                                     <div className="space-y-3">
