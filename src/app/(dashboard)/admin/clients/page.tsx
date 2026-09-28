@@ -126,7 +126,7 @@ export default function ClientsPage() {
             lastName: client.lastName || "",
             IDNumberPrefix: client.IDNumberPrefix || "V",
             dni: client.dni || "",
-            email: client.user?.email || "",
+            email: client.email || "",
             phone: client.phone || "",
             countryCode: client.countryCode || "+58",
             address: client.address || "",

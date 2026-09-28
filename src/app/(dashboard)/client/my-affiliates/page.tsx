@@ -10,7 +10,7 @@ import {
     Calendar,
     Sparkles,
     Trash2,
-    Edit2,
+    Pencil,
     Loader2,
     MapPin,
     Phone,
@@ -20,6 +20,8 @@ import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { ActionButton } from "@/components/ui/ActionButton";
+import { TextInput, TextArea, SelectInput, RadioGroup, PhoneInput, DNIInput, DateInput, EmailInput } from '@/components/ui/forms';
 import { RepresentedFormData } from "@/types/student";
 import {
     getMyRepresentedAction,
@@ -30,19 +32,42 @@ import { useAuthStore } from "@/store/authStore";
 import { useModal } from "@/hooks/useModal";
 import { Client } from "@/types/client";
 import { APP_KEYS } from "@/consts/app";
+import { formatDateForInput } from "@/helpers/dates";
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: RepresentedFormData = {
+    IDNumberPrefix: "V",
     dni: "",
     firstName: "",
+    email: "",
     lastName: "",
     birthDate: null,
     kinship: "son",
     medicalObservations: "",
     address: "",
+    countryCode: "+58",
     phone: "",
     shirtSize: "",
     hasExperience: false, // Operador de coalescencia nula para booleanos
 };
+
+const DNIPrefixs = [
+    { code: "V", label: "V" },
+    { code: "E", label: "E" },
+    { code: "P", label: "P" },
+    { code: "C", label: "C" },
+    { code: "J", label: "J" },
+    { code: "G", label: "G" },
+];
+
+const countries = [
+    { code: "+58", label: "VE" },
+    { code: "+57", label: "CO" },
+    { code: "+51", label: "PE" },
+    { code: "+56", label: "CL" },
+    { code: "+54", label: "AR" },
+    { code: "+34", label: "ES" },
+    { code: "+1", label: "US" },
+];
 export default function MyAffiliatesPage() {
     const { isOpen, openModal, closeModal } = useModal();
     const user = useAuthStore((state) => state.user);
@@ -64,8 +89,6 @@ export default function MyAffiliatesPage() {
         title: "",
         description: "",
     });
-    // ✅ CORRECT: Format the Date to "YYYY-MM-DD"
-    const formatDateForInput = (date: Date) => date.toISOString().split('T')[0];
 
     const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
@@ -130,15 +153,18 @@ export default function MyAffiliatesPage() {
 
     const handleEditModal = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
         setFormData({
+            IDNumberPrefix: client.IDNumberPrefix || "V",
             dni: client.dni || "",
             firstName: client.firstName,
             lastName: client.lastName,
-            birthDate: client.birthDate ? client.birthDate.split("T")[0] : "",
+            email: client.email,
+            birthDate: formatDateForInput(client.birthDate),
             kinship: client.student?.kinship || "son",
             medicalObservations: client.student?.medicalObservations || "",
 
             // 🎯 NUEVOS CAMPOS DEL ESTUDIANTE CARGADOS AL EDITAR
             address: client.address || "",
+            countryCode: client.countryCode || "",
             phone: client.phone || "",
             shirtSize: client.student?.shirtSize || "",
             hasExperience: client.student?.hasExperience ?? false, // Operador de coalescencia nula para booleanos
@@ -192,11 +218,11 @@ export default function MyAffiliatesPage() {
                         {clients.map((item: Client) => (
                             <div
                                 key={item.id}
-                                className="glass-card p-5 border border-purple-50 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow duration-300"
+                                className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
                             >
-                                <div>
-                                    {/* Cabecera: Nombre, DNI y Parentesco */}
-                                    <div className="flex justify-between items-start gap-2">
+                                {/* Cabecera de la tarjeta */}
+                                <div className="p-5 space-y-3">
+                                    <div className="flex justify-between items-start">
                                         <div>
                                             <span className="font-questrial text-[9px] text-gray-400 block uppercase tracking-wider">
                                                 DNI: {item.dni || "No registrado"}
@@ -205,82 +231,77 @@ export default function MyAffiliatesPage() {
                                                 {item.firstName} {item.lastName}
                                             </h3>
                                         </div>
-                                        {item.student?.kinship && (
-                                            <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold capitalize shrink-0">
-                                                {item.student.kinship}
-                                            </span>
-                                        )}
+                                        <div className="flex items-center">
+                                            {item.student?.kinship && (
+                                                <span className="font-questrial text-[10px] bg-purple-100 text-[#5e0472] px-2.5 py-0.5 font-bold capitalize shrink-0">
+                                                    {item.student.kinship}
+                                                </span>
+                                            )}</div>
                                     </div>
 
-                                    {/* Bloque de Información del Alumno */}
-                                    <div className="mt-4 space-y-2 font-questrial text-xs text-gray-600">
-                                        {/* Grupo asignado */}
-                                        <div className="flex items-center gap-1.5 bg-purple-50/50 px-2 py-1 border border-purple-100/50 text-[#5e0472] font-semibold rounded">
-                                            <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                                            <span className="capitalize">
-                                                Grupo: {item.group?.name ? item.group.name.replace("_", " ") : "Por definir"}
-                                            </span>
+                                    {/* Sub-métricas vectoriales del plano */}
+                                    <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Grupo
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {item.group?.name ? item.group.name.replace("_", " ") : "Por definir"}
+                                            </p>
+                                        </div><div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Teléfono
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {item.countryCode && item.phone ? item.countryCode + " " + item.phone : 'Sin télefono de contacto'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Talla uniforme
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {item.student?.shirtSize || 'Sin talla de uniforme'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Experiencia
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-2 justify-center">
+
+
+                                                <p className="text-xs font-questrial font-bold text-gray-700">
+                                                    {item.student?.hasExperience ? "Sí, posee experiencia previa" : "No, nivel principiante"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Dirección
+                                            </p>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {item.address || 'Sin dirección registrada'}
+                                            </p>
                                         </div>
 
-                                        {/* Teléfono de contacto (si existe) */}
-                                        {item.phone && (
-                                            <p className="flex items-center gap-1.5 px-1">
-                                                <Phone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                                                <span><strong>Teléfono:</strong> {item.phone}</span>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Salud
                                             </p>
-                                        )}
-
-                                        {/* Talla de Franela */}
-                                        {item.student?.shirtSize && (
-                                            <p className="flex items-center gap-1.5 px-1">
-                                                <Shirt className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                                                <span><strong>Talla uniforme:</strong> {item.student.shirtSize}</span>
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {item.student?.medicalObservations || 'Sin observaciones medicas registrada'}
                                             </p>
-                                        )}
-
-
-                                        {/* Experiencia en baile */}
-
-                                        <p className="flex items-center gap-1.5 px-1">
-                                            <Users className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                                            <span>
-                                                <strong>Experiencia:</strong>{" "}
-                                                {item.student?.hasExperience ? "Sí, posee experiencia previa" : "No, nivel principiante"}
-                                            </span>
-                                        </p>
-
-
-
-                                        {/* Dirección de habitación */}
-                                        <div className="flex items-start gap-1.5 px-1 pt-1 border-t border-gray-100 mt-1">
-                                            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                                            <span className="text-[11px] text-gray-500 leading-normal">
-                                                <strong>Dirección:</strong> {item.address}
-                                            </span>
                                         </div>
                                     </div>
-
-                                    {/* Alertas médicas / Patologías */}
-                                    {item.student?.medicalObservations && (
-                                        <p className="mt-3 font-questrial text-xs bg-pink-50/50 p-2 text-pink-700 flex items-start gap-1.5 rounded border border-pink-100/30">
-                                            <Heart className="w-3.5 h-3.5 text-pink-500 shrink-0 mt-0.5" />
-                                            <span className="leading-normal">
-                                                <strong>Salud:</strong> {item.student.medicalObservations}
-                                            </span>
-                                        </p>
-                                    )}
                                 </div>
 
-                                {/* Botones de acción */}
-                                <div className="mt-5 pt-3 border-t border-purple-50/60 flex justify-end gap-2">
-                                    <button
-                                        onClick={() => handleEditModal(item)}
-                                        className="p-1.5 text-gray-400 hover:text-purple-600 cursor-pointer transition-colors"
-                                        title="Editar datos del alumno"
-                                    >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
+                                {/* Acciones y Footer de la tarjeta */}
+                                <div className="px-5 py-3 bg-slate-50 border-t border-gray-100 w-full flex items-center justify-between gap-1.5">
+                                    <ActionButton
+                                        variant="danger"
+                                        icon={Trash2}
+                                        tooltip="Eliminar"
                                         onClick={() => {
                                             setModalConfig({
                                                 isOpen: true,
@@ -290,11 +311,20 @@ export default function MyAffiliatesPage() {
                                                 id: item.id,
                                             });
                                         }}
-                                        className="p-1.5 text-gray-400 hover:text-pink-600 cursor-pointer transition-colors"
-                                        title="Eliminar alumno"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
+                                        Eliminar
+                                    </ActionButton>
+                                    <div className="flex w-full justify-end gap-1.5">
+                                        <ActionButton
+                                            variant="success"
+                                            icon={Pencil}
+                                            tooltip="Editar"
+                                            onClick={() => handleEditModal(item)}
+                                        >
+                                            Editar
+                                        </ActionButton>
+                                    </div>
+
                                 </div>
                             </div>
                         ))}
@@ -314,7 +344,7 @@ export default function MyAffiliatesPage() {
                 isOpen={isOpen}
                 onClose={closeModal}
                 title={editingId ? "Actualizar información de Afiliado" : "Registrar información de Afiliado"}
-                size={"lg"}
+                size={"2xl"}
             >
                 {/* Formulario */}
 
@@ -325,212 +355,131 @@ export default function MyAffiliatesPage() {
                     {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
                     {/* Fila 1: DNI y Teléfono */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                DNI <span className="text-gray-400 font-normal">(Opcional)</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.dni}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, dni: e.target.value })
-                                }
-                                placeholder="DNI"
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Teléfono del Alumno <span className="text-gray-400 font-normal">(Opcional)</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.phone}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, phone: e.target.value })
-                                }
-                                placeholder="Ej: +58 412..."
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Fila 2: Nombre y Apellido */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Nombre
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                value={formData.firstName}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, firstName: e.target.value })
-                                }
-                                placeholder="Nombre"
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Apellido
-                            </label>
-                            <input
-                                required
-                                type="text"
-                                value={formData.lastName}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, lastName: e.target.value })
-                                }
-                                placeholder="Apellido"
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Fila 3: Fecha de Nacimiento y Parentesco */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                F. de Nacimiento
-                            </label>
-                            <input
-                                required
-                                type="date"
-                                value={
-                                    formData.birthDate
-                                        ? formData.birthDate instanceof Date
-                                            ? formatDateForInput(formData.birthDate)
-                                            : formData.birthDate
-                                        : ''
-                                }
-                                onChange={(e) =>
-                                    setFormData({ ...formData, birthDate: e.target.value })
-                                }
-                                placeholder="F. de Nacimiento"
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Parentesco
-                            </label>
-                            <select
-                                value={formData.kinship}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        kinship: e.target.value as any,
-                                    })
-                                }
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            >
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="son">Hijo</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="daughter">Hija</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="nephew">Sobrino</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="niece">Sobrina</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="tutored">Tutorado</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Fila 4: Talla de Uniforme e Inscripción de Grupo */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-gray-700 font-bold mb-1">
-                                Talla de Franela
-                            </label>
-                            <select
-                                required
-                                value={formData.shirtSize}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, shirtSize: e.target.value })
-                                }
-                                className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                            >
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="" disabled>Selecciona una talla</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="2">Talla 2</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="4">Talla 4</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="6">Talla 6</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="8">Talla 8</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="10">Talla 10</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="12">Talla 12</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="14">Talla 14</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="16">Talla 16</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="S">S (Adulto)</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="M">M (Adulto)</option>
-                                <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="L">L (Adulto)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Fila 5: Experiencia Previa (Radio Buttons Inline) */}
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            ¿Tiene experiencia previa en baile?
-                        </label>
-                        <div className="flex gap-4 items-center mt-1.5 p-1">
-                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="hasExperience"
-                                    checked={formData.hasExperience === true}
-                                    onChange={() => setFormData({ ...formData, hasExperience: true })}
-                                    className="accent-purple-600 w-3.5 h-3.5"
-                                />
-                                <span>Sí, posee experiencia</span>
-                            </label>
-                            <label className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="hasExperience"
-                                    checked={formData.hasExperience === false}
-                                    onChange={() => setFormData({ ...formData, hasExperience: false })}
-                                    className="accent-purple-600 w-3.5 h-3.5"
-                                />
-                                <span>No, es principiante</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Fila 6: Dirección Completa */}
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Dirección de Habitación
-                        </label>
-                        <input
+                    <div className="grid grid-cols-3 gap-3">
+                        <DNIInput
+                            label="DNI / Identificación *"
                             required
-                            type="text"
-                            placeholder="Calle, Avenida, Edificio / Casa..."
-                            value={formData.address}
-                            onChange={(e) =>
-                                setFormData({ ...formData, address: e.target.value })
-                            }
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            prefix={formData.IDNumberPrefix || "V"}
+                            onPrefixChange={(code) => setFormData({ ...formData, IDNumberPrefix: code })}
+                            prefixes={DNIPrefixs}
+                            dni={formData.dni}
+                            onDniChange={(dni) => setFormData({ ...formData, dni })}
+                            placeholder="Ej: 1098765432"
+                        />
+                        <PhoneInput
+                            label="Teléfono de Contacto"
+                            countryCode={formData.countryCode || "+58"}
+                            onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                            countries={countries}
+                            phoneNumber={formData.phone || ""}
+                            onPhoneNumberChange={(phone) => setFormData({ ...formData, phone })}
+                            phonePlaceholder="Ej: 412 123 4567"
+                        />
+                        <DateInput
+                            label="Fecha de Nacimiento"
+                            value={formatDateForInput(formData.birthDate)}
+                            onChange={(val) => setFormData({ ...formData, birthDate: val })}
                         />
                     </div>
 
-                    {/* Fila 7: Observaciones Médicas */}
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-1">
-                            Observaciones Médicas o Alergias
-                        </label>
-                        <textarea
-                            rows={2}
-                            value={formData.medicalObservations}
-                            onChange={(e) =>
-                                setFormData({ ...formData, medicalObservations: e.target.value })
-                            }
-                            placeholder="Ej: Alérgico a la penicilina, asma, ninguna, etc."
-                            className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                        ></textarea>
+                    {/* Fila 2: Nombre y Apellido */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <TextInput
+                            label="Nombres *"
+                            required
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            placeholder="Ej: Maria Paula"
+                        />
+                        <TextInput
+                            label="Apellidos *"
+                            required
+                            type="text"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            placeholder="Ej: González"
+                        />
+                        <EmailInput
+                            label="Correo Electrónico"
+                            placeholder="ejemplo@correo.com"
+                            value={formData.email || ""}
+                            onChange={(val) => setFormData({ ...formData, email: val })}
+                        />
+
+
                     </div>
+
+
+                    {/* Fila 4: Talla de Uniforme e Inscripción de Grupo */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <SelectInput
+                            label="Parentesco"
+                            value={formData.kinship}
+                            onChange={(e) => setFormData({ ...formData, kinship: e.target.value as any, })}
+                            options={[
+                                { label: "Selecciona un parentesco", value: "", disabled: true },
+                                { label: "Hijo", value: "son" },
+                                { label: "Hija", value: "daughter" },
+                                { label: "Sobrino", value: "nephew" },
+                                { label: "Sobrina", value: "niece" },
+                                { label: "Tutorado", value: "tutored" },
+                                { label: "Otro", value: "other" },
+                            ]}
+                        />
+                        <SelectInput
+                            label="Talla de Franela"
+                            value={formData.shirtSize}
+                            onChange={(e) => setFormData({ ...formData, shirtSize: e.target.value as string })}
+                            options={[
+                                { label: "Selecciona una talla", value: "", disabled: true },
+                                { label: "Talla 2", value: "2" },
+                                { label: "Talla 4", value: "4" },
+                                { label: "Talla 6", value: "6" },
+                                { label: "Talla 8", value: "8" },
+                                { label: "Talla 10", value: "10" },
+                                { label: "Talla 12", value: "12" },
+                                { label: "Talla 14", value: "14" },
+                                { label: "Talla 16", value: "16" },
+                                { label: "Talla S", value: "S" },
+                                { label: "Talla M", value: "M" },
+                                { label: "Talla L", value: "L" },
+                            ]}
+                        />
+
+
+                        {/* Fila 5: Experiencia Previa (Radio Buttons Inline) */}
+                        {/* Experiencia Previa */}
+                        <RadioGroup<boolean>
+                            label="¿Tiene experiencia previa en baile?"
+                            name="hasExperience"
+                            value={formData.hasExperience}
+                            onChange={(val) => setFormData({ ...formData, hasExperience: val })}
+                            options={[
+                                { label: "Sí, posee experiencia", value: true },
+                                { label: "No, es principiante", value: false },
+                            ]}
+                        />
+
+                    </div>
+                    {/* Fila 6: Dirección Completa */}
+                    <TextArea
+                        label="Dirección"
+                        placeholder="Ej. Calle Principal #123..."
+                        required
+                        rows={3}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
+
+                    {/* Fila 7: Observaciones Médicas */}
+                    <TextArea
+                        label="Observaciones Médicas o Alergias"
+                        placeholder="Ej: Alérgico a la penicilina, asma, etc."
+                        rows={3}
+                        value={formData.medicalObservations}
+                        onChange={(e) => setFormData({ ...formData, medicalObservations: e.target.value })}
+                    />
 
                     {/* Botonera */}
                     <div className="pt-2 flex justify-between">

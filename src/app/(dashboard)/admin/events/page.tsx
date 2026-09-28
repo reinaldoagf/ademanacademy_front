@@ -684,10 +684,10 @@ export default function AdminEventsPage() {
                           variant="gradient_purple"
                           icon={DollarSign}
                           disabled={event.productionStatus === "Sold Out" || !event.seatingMap}
-                          tooltip={event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                          tooltip={event.productionStatus === "Sold Out" ? "Sold Out" : "Vender Boleto"}
                           onClick={() => openTicketOfficeMap(event)}
                         >
-                          {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender e Imprimir Boleto"}
+                          {event.productionStatus === "Sold Out" ? "Sold Out" : "Vender Boleto"}
                         </ActionButton>
                       </div>
 

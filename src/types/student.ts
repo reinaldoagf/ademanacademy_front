@@ -1,5 +1,6 @@
 import { User } from "@/types/user";
 import { Group } from "@/types/group";
+import { Client } from "./client";
 
 export interface Student {
     id: string;
@@ -21,16 +22,19 @@ export interface Student {
 }
 
 export interface RepresentedFormData {
-    dni: string,
-    firstName: string,
-    lastName: string,
-    birthDate: Date | string | null,
-    kinship: Student["kinship"],
-    phone: string,
-    address: string,
-    shirtSize: string,
-    hasExperience: boolean,
-    medicalObservations: string,
+    IDNumberPrefix: string;
+    dni: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    birthDate: Date | string | null;
+    kinship: Student["kinship"];
+    countryCode: string;
+    phone: string;
+    address: string;
+    shirtSize: string;
+    hasExperience: boolean;
+    medicalObservations: string;
 }
 
 export interface FetchStudentsParams {
