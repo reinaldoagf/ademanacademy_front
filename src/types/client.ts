@@ -4,6 +4,7 @@ import { User } from "./user";
 
 export interface Client {
     id: string;
+    IDNumberPrefix: string;
     dni: string;
     firstName: string;
     lastName: string;
@@ -32,6 +33,7 @@ export interface FetchClientsParams {
 export interface CustomerFormData {
     firstName: string;
     lastName: string;
+    IDNumberPrefix: string;
     dni: string;
     email: string;
     countryCode: string;

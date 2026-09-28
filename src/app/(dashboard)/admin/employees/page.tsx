@@ -218,7 +218,7 @@ export default function EmployeesPage() {
                 {employee.firstName} {employee.lastName}
               </p>
               <p className="text-[10px] text-gray-400 font-questrial">
-                DNI: {`${employee.IDNumberPrefix} ${employee.dni}`}
+                DNI: {`${employee.IDNumberPrefix}${employee.dni}`}
               </p>
             </div>
           </div>

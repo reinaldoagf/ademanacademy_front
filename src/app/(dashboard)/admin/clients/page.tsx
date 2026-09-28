@@ -1,6 +1,6 @@
 // src/app/(dashboard)/admin/clients/page.tsx
 "use client";
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, FormEvent } from "react";
 import {
     Plus,
     Search,
@@ -21,7 +21,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from '@/components/ui/ActionButton';
-import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DateInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, PhoneInput, DNIInput, DateInput } from '@/components/ui/forms';
 import { Client, CustomerFormData } from "@/types/client";
 import { User } from "@/types/user";
 import { formatDateForInput } from "@/helpers/dates";
@@ -31,6 +31,7 @@ import { saveClientAction, getAllClientsAction, deleteClientAction } from "@/app
 const initialFormState: CustomerFormData = {
     firstName: "",
     lastName: "",
+    IDNumberPrefix: "V",
     dni: "",
     email: "",
     countryCode: "+58",
@@ -52,6 +53,14 @@ const countries = [
     { code: "+54", label: "AR" },
     { code: "+34", label: "ES" },
     { code: "+1", label: "US" },
+];
+const DNIPrefixs = [
+    { code: "V", label: "V" },
+    { code: "E", label: "E" },
+    { code: "P", label: "P" },
+    { code: "C", label: "C" },
+    { code: "J", label: "J" },
+    { code: "G", label: "G" },
 ];
 export default function ClientsPage() {
 
@@ -115,6 +124,7 @@ export default function ClientsPage() {
         setFormData({
             firstName: client.firstName || "",
             lastName: client.lastName || "",
+            IDNumberPrefix: client.IDNumberPrefix || "V",
             dni: client.dni || "",
             email: client.user?.email || "",
             phone: client.phone || "",
@@ -148,7 +158,7 @@ export default function ClientsPage() {
             return;
         }
 
-        if (!formData.dni.trim()) {
+        if (!formData.IDNumberPrefix.trim() || !formData.dni.trim()) {
             setErrorMsg("El DNI / documento de identidad es obligatorio.");
             return;
         }
@@ -354,7 +364,7 @@ export default function ClientsPage() {
                                                 DNI / Cedula
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {client.dni || 'No registrado'}
+                                                {`${client.IDNumberPrefix}${client.dni}`}
                                             </p>
                                         </div>
                                         <div className="bg-slate-50 p-2">
@@ -599,14 +609,17 @@ export default function ClientsPage() {
 
                     {/* Fila 2: DNI / Identificación y Fecha de Nacimiento */}
                     <div className="grid grid-cols-2 gap-3">
-                        <TextInput
+                        <DNIInput
                             label="DNI / Identificación *"
                             required
-                            type="text"
-                            value={formData.dni}
-                            onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+                            prefix={formData.IDNumberPrefix || "V"}
+                            onPrefixChange={(code) => setFormData({ ...formData, IDNumberPrefix: code })}
+                            prefixes={DNIPrefixs}
+                            dni={formData.dni}
+                            onDniChange={(dni) => setFormData({ ...formData, dni })}
                             placeholder="Ej: 1098765432"
                         />
+
                         <DateInput
                             label="Fecha de Nacimiento"
                             value={formData.birthDate}
