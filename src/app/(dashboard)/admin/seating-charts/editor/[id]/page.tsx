@@ -27,6 +27,7 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
   // Referencia al componente hijo
   const editorRef = useRef<SeatingMapEditorRef>(null);
 
+  const isEventSeatsExist = initialData?.events.find((event: any) => !!event.isActive && event.eventSeats.length > 0);
   // Carga de datos del mapa
   useEffect(() => {
     let isMounted = true;
@@ -56,7 +57,6 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
 
   // Ejecuta el método 'save' expuesto por el hijo
   const handleSavePlan = () => {
-    console.log('handleSavePlan')
     editorRef.current?.save();
   };
   const handleBack = () => {
@@ -66,7 +66,10 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
     <>
       <HeroSection
         htmlTitle={`Mapa de <em class="text-[#5e0472]">Asientos</em>`}
-        htmlSubTitle="Manejo dinámico vectorial con herramientas de alineación y leyes métricas."
+        htmlSubTitle={isEventSeatsExist ? ` <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span class="animate-ping mr-1.5 w-2 h-2 rounded-full bg-red-400"></span>
+          No se puede editar el mapa de asientos porque tiene eventos activos.
+        </span>` : `Manejo dinámico vectorial con herramientas de alineación y leyes métricas.`}
         actions={[
           {
             label: "Volver al listado",
@@ -78,7 +81,7 @@ export default function EditSeatingMapBuilderPage({ params }: PageProps) {
             onClick: handleSavePlan,
             icon: <Save className="w-4 h-4" />,
             variant: "primary",
-            isDisabled: !isLocationValid || saving,
+            isDisabled: !isLocationValid || isEventSeatsExist || saving,
           },
         ]}
       />
