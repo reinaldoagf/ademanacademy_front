@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/employees/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, FormEvent } from "react";
 import {
   Plus,
   Search,
@@ -16,7 +16,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { TextInput, TextArea, SelectInput, SearchInput, PhoneInput, DateInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, SearchInput, PhoneInput, DNIInput, DateInput } from '@/components/ui/forms';
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
@@ -29,6 +29,7 @@ import { APP_KEYS } from "@/consts/app";
 const initialFormState: EmployeeFormData = {
   firstName: "",
   lastName: "",
+  IDNumberPrefix: "V",
   dni: "",
   countryCode: "+58",
   phone: "",
@@ -50,6 +51,15 @@ const countries = [
   { code: "+54", label: "AR" },
   { code: "+34", label: "ES" },
   { code: "+1", label: "US" },
+];
+
+const DNIPrefixs = [
+  { code: "V", label: "V" },
+  { code: "E", label: "E" },
+  { code: "P", label: "P" },
+  { code: "C", label: "C" },
+  { code: "J", label: "J" },
+  { code: "G", label: "G" },
 ];
 export default function EmployeesPage() {
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
@@ -102,7 +112,7 @@ export default function EmployeesPage() {
       return;
     }
 
-    if (!formData.dni.trim()) {
+    if (!formData.IDNumberPrefix.trim() || !formData.dni.trim()) {
       setErrorMsg("El DNI / documento de identidad es obligatorio.");
       return;
     }
@@ -158,6 +168,7 @@ export default function EmployeesPage() {
     setFormData({
       firstName: employee.firstName || "",
       lastName: employee.lastName || "",
+      IDNumberPrefix: employee.IDNumberPrefix || "V",
       dni: employee.dni || "",
       countryCode: employee.countryCode || "+58",
       phone: employee.phone || "",
@@ -207,7 +218,7 @@ export default function EmployeesPage() {
                 {employee.firstName} {employee.lastName}
               </p>
               <p className="text-[10px] text-gray-400 font-questrial">
-                DNI: {employee.dni || "Sin DNI"}
+                DNI: {`${employee.IDNumberPrefix} ${employee.dni}`}
               </p>
             </div>
           </div>
@@ -237,7 +248,7 @@ export default function EmployeesPage() {
       header: "Contacto",
       render: (employee) => (
         <span className="text-xs text-gray-600 font-questrial">
-          {employee.phone || "Sin teléfono"}
+          {employee.countryCode && employee.phone ? `${employee.countryCode} ${employee.phone}` : "Sin teléfono"}
         </span>
       ),
     },
@@ -567,12 +578,16 @@ export default function EmployeesPage() {
 
           {/* Fila 2: DNI y Fecha de Nacimiento */}
           <div className="grid grid-cols-2 gap-3">
-            <TextInput
+
+
+            <DNIInput
               label="DNI / Identificación *"
               required
-              type="text"
-              value={formData.dni}
-              onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+              prefix={formData.IDNumberPrefix || "V"}
+              onPrefixChange={(code) => setFormData({ ...formData, IDNumberPrefix: code })}
+              prefixes={DNIPrefixs}
+              dni={formData.dni}
+              onDniChange={(dni) => setFormData({ ...formData, dni })}
               placeholder="Ej: 1098765432"
             />
 

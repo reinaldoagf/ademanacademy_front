@@ -6,6 +6,7 @@ export * from './FileInput';
 export * from './SearchInput';
 export * from './RadioGroup';
 export * from './PhoneInput';
+export * from './DNIInput';
 export * from './InputGroup';
 export * from './EmailInput';
 export * from './DateInput';

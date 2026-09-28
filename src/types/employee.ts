@@ -8,6 +8,7 @@ export type PayrollStatus = 'pending' | 'paid' | string; // Ajusta los valores a
 // 👔 Interfaz Principal del Empleado (Employee)
 export interface Employee {
     id: string;
+    IDNumberPrefix?: string | null;
     dni?: string | null;
     firstName: string;
     lastName: string;
@@ -40,6 +41,7 @@ export type UpdateEmployeeInput = Partial<CreateEmployeeInput>;
 export interface EmployeeFormData {
     firstName: string;
     lastName: string;
+    IDNumberPrefix: string;
     dni: string;
     countryCode: string;
     phone: string;

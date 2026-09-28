@@ -53,7 +53,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
                         <option
                             key={c.code}
                             value={c.code}
-                            className="bg-white text-gray-800"
+                            className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans"
                         >
                             {c.label} ({c.code})
                         </option>
