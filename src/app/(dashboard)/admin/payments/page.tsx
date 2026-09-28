@@ -9,7 +9,7 @@ import {
     TrendingUp,
     AlertCircle,
     ChevronRight,
-    User
+    User as UserIcon
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -104,12 +104,11 @@ export default function PaymentsPage() {
         {
             header: "Registrado por",
             render: (transaction) => {
-                const initials = transaction.registeringUser ? `${transaction.registeringUser.firstName[0] || ""}${transaction.registeringUser.lastName[1] || ""}`.toUpperCase() : "";
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                        {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {initials}
-                        </div>}
+                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            <UserIcon className="w-3.5 h-3.5 shrink-0" />
+                        </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">
                                 {transaction.registeringUser?.firstName} {transaction.registeringUser?.lastName}
@@ -129,7 +128,7 @@ export default function PaymentsPage() {
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            <User className="w-4 h-4" />
+                            <UserIcon className="w-4 h-4" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">{transaction.client.firstName} {transaction.client.lastName}</span>

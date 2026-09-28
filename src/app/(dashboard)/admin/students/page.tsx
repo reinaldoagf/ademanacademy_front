@@ -12,6 +12,7 @@ import {
   Award,
   UserCheck2,
   AlertCircle,
+  User as UserIcon
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -303,11 +304,10 @@ export default function StudentsPage() {
     {
       header: "Bailarín / DNI",
       render: (client) => {
-        const initials = `${client.firstName[0] || ""}${client.lastName[0] || ""}`.toUpperCase();
         return (
           <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
             <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {initials}
+              <UserIcon className="w-3.5 h-3.5 shrink-0" />
             </div>
             <div className="hidden md:flex flex-col text-left font-questrial">
               <span className="text-xs font-bold text-gray-700 leading-tight">
@@ -325,11 +325,10 @@ export default function StudentsPage() {
         if (!client.user) {
           return <p className="text-[11px] text-gray-400 mt-0.5">Sin representante</p>;
         }
-        const userInitials = client.user.firstName[0] + client.user.lastName[0];
         return (
           <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
             <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {userInitials}
+              <UserIcon className="w-3.5 h-3.5 shrink-0" />
             </div>
             <div className="hidden md:flex flex-col text-left font-questrial">
               <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.firstName} {client.user.lastName}</span>
@@ -345,11 +344,10 @@ export default function StudentsPage() {
         if (!client.student?.group) {
           return <p className="text-[11px] text-gray-400 mt-0.5">Sin grupo asignado</p>;
         }
-        const userInitials = client.student.group.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
         return (
           <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
             <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {userInitials}
+              <UserIcon className="w-3.5 h-3.5 shrink-0" />
             </div>
             <div className="hidden md:flex flex-col text-left font-questrial">
               <span className="text-xs font-bold text-gray-700 leading-tight">{client.student?.group.name}</span>

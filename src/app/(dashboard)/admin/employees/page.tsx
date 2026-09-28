@@ -9,6 +9,7 @@ import {
   Briefcase,
   Pencil,
   Trash2,
+  User as UserIcon,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -207,11 +208,10 @@ export default function EmployeesPage() {
     {
       header: "Empleado",
       render: (employee) => {
-        const initials = `${employee.firstName?.[0] || ""}${employee.lastName?.[0] || ""}`.toUpperCase();
         return (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {initials || "EM"}
+              <UserIcon className="w-3.5 h-3.5 shrink-0" />
             </div>
             <div>
               <p className="font-bold text-gray-800 font-questrial">

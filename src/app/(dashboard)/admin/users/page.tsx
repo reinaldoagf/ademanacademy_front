@@ -2,13 +2,8 @@
 "use client";
 import React, { useState, useEffect, useTransition } from "react";
 import {
-    Wallet,
-    ArrowUpRight,
-    Plus,
     Search,
-    TrendingUp,
-    CreditCard,
-    AlertCircle
+    User as UserIcon
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
@@ -85,12 +80,11 @@ export default function UsersPage() {
         {
             header: "Usuario",
             render: (user) => {
-                const initials = `${user.firstName[0] || ""}${user.lastName[0] || ""}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                        {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            {initials}
-                        </div>}
+                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            <UserIcon className="w-3.5 h-3.5 shrink-0" />
+                        </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">
                                 {user?.firstName} {user?.lastName}
