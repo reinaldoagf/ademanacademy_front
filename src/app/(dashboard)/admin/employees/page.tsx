@@ -134,11 +134,6 @@ export default function EmployeesPage() {
             : "Empleado registrado con éxito"
         );
 
-        // Reactividad: refrescar listado o badges si aplica
-        if (!editingId) {
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_EMPLOYEES_COUNT));
-        }
-
         fetchData(currentPage, itemsPerPage);
         closeModal();
       });
@@ -369,6 +364,7 @@ export default function EmployeesPage() {
   ];
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_EMPLOYEES_COUNT));
     startTransition(async () => {
       const res = await getAllEmployeesAction({
         page: pageToFetch,

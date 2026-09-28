@@ -135,8 +135,6 @@ export default function AdminEventsPage() {
           if (res.success) {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
-            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
           }
         }
       });
@@ -243,12 +241,6 @@ export default function AdminEventsPage() {
             ? "Evento actualizado correctamente"
             : "Evento registrado con éxito"
         );
-
-        // Reactividad: refrescar listado, conteos o métricas si aplica
-        if (!editingId) {
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
-        }
-
         fetchData(currentPage, itemsPerPage);
         closeModalForm();
       });
@@ -310,7 +302,6 @@ export default function AdminEventsPage() {
             data: { paymentOrderId: res.data.paymentOrderId || null }
           })
           //toast.success(res.data.message || "Asientos procesados correctamente");
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
           closeModalSeatingMap();
           fetchData(currentPage, itemsPerPage);
           // Opcional: Recargar o revalidar datos del mapa
@@ -366,6 +357,9 @@ export default function AdminEventsPage() {
   }, [isOpenModalSeatingMap, clientSearch]);
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
     startTransition(async () => {
       const res0 = await getAllSeatingMapsAction({
         page: pageToFetch,

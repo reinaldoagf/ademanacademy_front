@@ -74,9 +74,7 @@ export default function ClassroomsPage() {
                     const res = await deleteClassroomAction(modalConfig.id);
                     if (res.success) {
                         toast.success("Operación exitosa");
-                        setClassrooms(classrooms.filter((item) => item.id !== modalConfig.id));
-                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
+                        fetchData(currentPage, itemsPerPage);
                     }
                 }
             });
@@ -93,14 +91,7 @@ export default function ClassroomsPage() {
                 return;
             }
             toast.success("Operación exitosa");
-            // Sincronizar estado local
-            if (editingId) {
-                setClassrooms(classrooms.map((item) => (item.id === editingId ? res.data! : item)));
-            } else {
-                setClassrooms([res.data!, ...classrooms]);
-                // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-                window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
-            }
+            fetchData(currentPage, itemsPerPage);
             // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
             closeModal();
         });
@@ -122,6 +113,7 @@ export default function ClassroomsPage() {
     };
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
         startTransition(async () => {
             const res = await getAllClassroomsAction({
                 page: pageToFetch,

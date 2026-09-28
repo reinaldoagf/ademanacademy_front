@@ -63,8 +63,6 @@ export default function ProductCategoriesPage() {
                     if (res.success) {
                         toast.success("Operación exitosa");
                         fetchData(currentPage, itemsPerPage);
-                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT));
                     }
                 }
             });
@@ -190,19 +188,14 @@ export default function ProductCategoriesPage() {
                 return;
             }
             toast.success("Operación exitosa");
-            // Sincronizar estado local
-            if (editingId) {
-                setCategories(categories.map((item) => (item.id === editingId ? res.data! : item)));
-            } else {
-                setCategories([res.data!, ...categories]);
-                // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-                window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT));
-            }
+            fetchData(currentPage, itemsPerPage);
             closeModal();
         });
 
     };
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT));
         startTransition(async () => {
             const res1 = await getAllProductCategoriesAction({
                 page: pageToFetch,

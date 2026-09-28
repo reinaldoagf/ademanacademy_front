@@ -74,8 +74,6 @@ export default function SeatingMapListPage() {
           if (res.success) {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
-            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
           }
         }
       });
@@ -84,6 +82,8 @@ export default function SeatingMapListPage() {
 
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
     startTransition(async () => {
       const res = await getAllSeatingMapsAction({
         page: pageToFetch,
@@ -91,7 +91,6 @@ export default function SeatingMapListPage() {
         search: searchTerm || undefined,
       });
       if (res.success && res.data) {
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
         setSeatingsMaps(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
       }

@@ -120,8 +120,6 @@ export default function CostumesPage() {
           if (res.success) {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
-            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
           }
         }
       });
@@ -297,6 +295,8 @@ export default function CostumesPage() {
   };
   // 4. Carga e integración de datos
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
     startTransition(async () => {
 
       // Petición del resumen por estado

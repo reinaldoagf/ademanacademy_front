@@ -669,7 +669,7 @@ export default function StudentsPage() {
 
           {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
           <SearchInput
-            label="Asignación de representante académico"
+            label="Asignación de usuario"
             placeholder="Escribe para buscar o selecciona de la lista..."
             value={userSearch}
             isLoading={isLoadingUsers}

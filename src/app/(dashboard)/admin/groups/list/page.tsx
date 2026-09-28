@@ -100,8 +100,6 @@ export default function GroupsListPage() {
           const res = await deleteGroupAction(modalConfig.id);
           if (res.success) {
             toast.success("Operación exitosa");
-            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event(APP_KEYS.REFRESH_GROUPS_COUNT));
             fetchData(currentPage, itemsPerPage);
           }
         }
@@ -265,11 +263,6 @@ export default function GroupsListPage() {
         }
 
         toast.success("Operación exitosa");
-        // Sincronizar estado local
-        if (!editingId) {
-          // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_GROUPS_COUNT));
-        }
         fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
         closeFormModal();
@@ -285,6 +278,7 @@ export default function GroupsListPage() {
     }
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_GROUPS_COUNT));
     startTransition(async () => {
       const res1 = await getAllGroupCategoriesAction({
         page: pageToFetch,
@@ -433,11 +427,11 @@ export default function GroupsListPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
             >
-              <option value="all"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los grupos</option>
-              <option value="baby"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
-              <option value="childrens"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
-              <option value="youth"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
-              <option value="adult"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
+              <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los grupos</option>
+              <option value="baby" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
+              <option value="childrens" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
+              <option value="youth" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
+              <option value="adult" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
             </select>
           </div>
         </div>

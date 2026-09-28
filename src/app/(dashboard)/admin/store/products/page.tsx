@@ -88,8 +88,6 @@ export default function ProductsPage() {
           if (res.success) {
             toast.success("Operación exitosa");
             fetchData(currentPage, itemsPerPage);
-            // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-            window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
           }
         }
       });
@@ -260,10 +258,6 @@ export default function ProductsPage() {
           return;
         }
         toast.success("Operación exitosa");
-        // Sincronizar estado local
-        if (!editingId) {
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
-        }
         fetchData(currentPage, itemsPerPage);
         // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
         closeModal();
@@ -274,6 +268,8 @@ export default function ProductsPage() {
     });
   };
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_PRODUCTS_COUNT));
     startTransition(async () => {
       const res1 = await getAllProductsAction({
         page: pageToFetch,

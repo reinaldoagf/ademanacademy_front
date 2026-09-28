@@ -110,10 +110,7 @@ export default function ClientsPage() {
                     const res = await deleteClientAction(modalConfig.id);
                     if (res.success) {
                         toast.success("Operación exitosa");
-                        setClients(clients.filter((item) => item.id !== modalConfig.id));
-                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
+                        fetchData(currentPage, itemsPerPage);
                     }
                 }
             });
@@ -183,11 +180,6 @@ export default function ClientsPage() {
                         : "Cliente registrado con éxito"
                 );
 
-                // Refrescar conteo o eventos
-                if (!editingId) {
-                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
-                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
-                }
 
                 fetchData(currentPage, itemsPerPage);
                 closeModal();
@@ -201,6 +193,9 @@ export default function ClientsPage() {
         }
     };
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
+        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
+        window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
         startTransition(async () => {
             const res = await getAllClientsAction({
                 page: pageToFetch,
@@ -557,7 +552,7 @@ export default function ClientsPage() {
 
                     {/* ✨ SECCIÓN SELECTOR DE USUARIO (OPCIONAL) */}
                     <SearchInput
-                        label="Asignación de representante académico"
+                        label="Asignación de usuario"
                         placeholder="Escribe para buscar o selecciona de la lista..."
                         value={userSearch}
                         isLoading={isLoadingUsers}

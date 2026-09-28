@@ -141,7 +141,6 @@ export default function ClientEventsPage() {
             data: { paymentOrderId: res.data.paymentOrderId || null },
           });
 
-          window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
           closeModalSeatingMap();
           fetchData(currentPage, itemsPerPage);
         } else {
@@ -155,6 +154,7 @@ export default function ClientEventsPage() {
   };
   // 5. Limpiar o resetear el formulario al cerrar el modal o al terminar de guardar
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
+    window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
     startTransition(async () => {
       const res0 = await getAllEventsAction({
         page: pageToFetch,
