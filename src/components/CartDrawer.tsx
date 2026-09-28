@@ -17,6 +17,7 @@ import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
 import { getAllClientsAction } from "@/app/actions/client"; // Ajusta la ruta a tu action
 import { createOrderAction } from "@/app/actions/order"; // Ajusta la ruta a tu action
 import { useAuthStore } from "@/store/authStore";
+import type { Client } from "@/types/client";
 
 export function CartDrawer() {
     const user = useAuthStore((state) => state.user);
@@ -114,10 +115,10 @@ export function CartDrawer() {
         setFilteredClients(filtered);
     };
 
-    const handleSelectUser = (user: any) => {
+    const handleSelectClient = (client: Client) => {
         const displayName =
-            `${user.client?.firstName || ""} ${user.client?.lastName || ""}`.trim() || user.client?.email;
-        setClientId(user.client?.id);
+            `${client.firstName || ""} ${client.lastName || ""}`.trim() || client.email;
+        setClientId(client.id);
         setSelectedUserName(displayName);
         setClientSearch(displayName);
         setShowClientDropdown(false);
@@ -313,7 +314,7 @@ export function CartDrawer() {
                                             filteredClients.map((u: any) => (
                                                 <li
                                                     key={u.id}
-                                                    onClick={() => handleSelectUser(u)}
+                                                    onClick={() => handleSelectClient(u)}
                                                     className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
                                                 >
                                                     <div className="flex flex-col">
