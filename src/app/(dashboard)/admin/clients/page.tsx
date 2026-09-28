@@ -111,7 +111,7 @@ export default function ClientsPage() {
         }
     };
     const handleEditModal = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
-        setUserSearch(client.user?.name || "");
+        setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""}`);
         setFormData({
             firstName: client.firstName || "",
             lastName: client.lastName || "",
@@ -208,7 +208,15 @@ export default function ClientsPage() {
     // --- EFFECT PARA usuarios (Vía Server Action) ---
     useEffect(() => {
         // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
-        if (filteredUsers.find(c => c.id === formData.userId)?.name === userSearch) {
+        if (filteredUsers.find(c => {
+            const result = c.id === formData.userId ? c : null;
+            if (!result) return false;
+            if (`${result?.firstName} ${result?.lastName}` === userSearch) {
+                return true;
+            }
+            return false;
+        }
+        )) {
             return;
         }
 
@@ -409,7 +417,7 @@ export default function ClientsPage() {
 
                                             {client.user ? (
                                                 <div className="hidden md:flex flex-col text-left font-questrial">
-                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.name}</span>
+                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.firstName}</span>
                                                     <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.user.email}</span>
                                                 </div>) : (
                                                 <div className="hidden md:flex flex-col text-left font-questrial">
@@ -545,7 +553,7 @@ export default function ClientsPage() {
                         isLoading={isLoadingUsers}
                         options={filteredUsers.map((user: any) => ({
                             id: user.id,
-                            label: user.name,
+                            label: `${user.firstName} ${user.lastName}`,
                             subLabel: `Email: ${user.email}`,
                             data: user, // Guardamos el objeto completo si hace falta
                         }))}

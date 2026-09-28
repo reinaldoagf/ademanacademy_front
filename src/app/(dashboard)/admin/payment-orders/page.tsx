@@ -104,7 +104,7 @@ export default function PaymentOrdersPage() {
                             <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.user.name}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.user.firstName} {order.client.user.lastName}</span>
                             <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.user.email}</span>
                         </div>
                     </div>

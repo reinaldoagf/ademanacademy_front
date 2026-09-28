@@ -35,14 +35,14 @@ export default function ClientDashboardPage() {
     // Lógica para que el cliente reporte un pago de mensualidad o evento
   };
 
-  const nombreUsuario = isClient && user ? user.name.split(" ")[0] : "Estudiante";
+  const userName = isClient && user ? `${user.firstName[0]} ${user.lastName[0]}` : "Estudiante";
 
   return (
     <>
       {/* SUB-TOPBAR (Saludos Personalizados y Acción del Alumno) */}
       <HeroSection
         htmlTitle={`Mi Panel <em class="text-[#5e0472]">Académico</em>`}
-        htmlSubTitle={`¡Hola, ${nombreUsuario}! Revisa tu estatus, horarios y asignaciones para hoy.`}
+        htmlSubTitle={`¡Hola, ${userName}! Revisa tu estatus, horarios y asignaciones para hoy.`}
         actions={[{
           label: "Reportar Pago Realizado →",
           onClick: handleReportPayment,

@@ -98,25 +98,25 @@ export default function PaymentOrderDetailsPage() {
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <User className="w-4 h-4 text-purple-500" /> Cliente
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.name || paymentOrder.client?.firstName || "Sin Nombre"}</span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.client?.firstName + " " + paymentOrder.client?.lastName}</span>
                                         </div>
-                                        {(paymentOrder.user?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(paymentOrder.client?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <User className="w-4 h-4 text-pink-500" /> DNI / Cédula
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user.dni}</span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.client.dni}</span>
                                         </div>)}
-                                        {(paymentOrder.user?.email || paymentOrder.client?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(paymentOrder.client?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <Ticket className="w-4 h-4 text-indigo-500" /> Email
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.email || paymentOrder.client?.email}</span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.client?.email}</span>
                                         </div>)}
-                                        {(paymentOrder.user?.phone || paymentOrder.client?.phone) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(paymentOrder.client?.phone) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <Phone className="w-4 h-4 text-green-500" /> Teléfono
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.user?.phone || paymentOrder.client?.phone}</span>
+                                            <span className="text-sm font-anton text-gray-800">{paymentOrder.client?.phone}</span>
                                         </div>)}
                                     </div>
 

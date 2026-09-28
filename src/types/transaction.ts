@@ -1,6 +1,6 @@
 import { User } from "@/types/user";
 import { Client } from "@/types/client";
-
+import { PaymentOrder } from "@/types/payment-order";
 export interface Transaction {
     id: string;
     concept: "monthly_payment" | "tuition" | "locker_room" | "ticket" | "product";
@@ -10,10 +10,12 @@ export interface Transaction {
     referenceNumber: string;
     amount: number;
     receiptPath?: string;
-    userId?: string;
-    user?: User;
+    registeringUserId?: string;
+    registeringUser?: User;
     clientId?: string;
     client?: Client;
+    paymentOrderId?: string;
+    paymentOrder?: PaymentOrder;
     createdAt: string;
     updatedAt: string;
 }

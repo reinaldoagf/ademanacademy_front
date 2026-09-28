@@ -171,7 +171,7 @@ export default function EmployeesPage() {
     })
     setEditingId(employee.id);
     setErrorMsg(null);
-    setUserSearch(employee.user ? `${employee.user.name} (${employee.user.email || 'Usuario'})` : '');
+    setUserSearch(employee.user ? `${employee.user.firstName} ${employee.user.lastNames} (${employee.user.email || 'Usuario'})` : '');
     openModal();
   };
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -220,14 +220,13 @@ export default function EmployeesPage() {
         if (!employee.user) {
           return <p className="text-[11px] text-gray-400 mt-0.5">Sin cuenta registrada</p>;
         }
-        const userInitials = employee.user?.name?.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
         return (
           <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
             <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-              {userInitials}
+              {employee.user?.firstName[0] + employee.user?.lastName[0]}
             </div>
             <div className="hidden md:flex flex-col text-left font-questrial">
-              <span className="text-xs font-bold text-gray-700 leading-tight">{employee.user.name}</span>
+              <span className="text-xs font-bold text-gray-700 leading-tight">{employee.user.firstName}</span>
               <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{employee.user.email}</span>
             </div>
           </div>
@@ -377,7 +376,15 @@ export default function EmployeesPage() {
   // --- EFFECT PARA usuarios (Vía Server Action) ---
   useEffect(() => {
     // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
-    if (filteredUsers.find(c => c.id === formData.userId)?.name === userSearch) {
+    if (filteredUsers.find(c => {
+      const result = c.id === formData.userId ? c : null;
+      if (!result) return false;
+      if (`${result?.firstName} ${result?.lastName}` === userSearch) {
+        return true;
+      }
+      return false;
+    }
+    )) {
       return;
     }
 
@@ -496,7 +503,7 @@ export default function EmployeesPage() {
             isLoading={isLoadingUsers}
             options={filteredUsers.map((user: any) => ({
               id: user.id,
-              label: user.name,
+              label: `${user.firstName} ${user.lastName}`,
               subLabel: `Email: ${user.email}`,
               data: user, // Guardamos el objeto completo si hace falta
             }))}
@@ -515,10 +522,16 @@ export default function EmployeesPage() {
                   dni: option.data.dni,
                 })
               }
-              if (option.data?.name) {
+              if (option.data?.firstName) {
                 setFormData({
                   ...formData,
-                  firstName: option.data.name,
+                  firstName: option.data.firstName,
+                })
+              }
+              if (option.data?.lastName) {
+                setFormData({
+                  ...formData,
+                  lastName: option.data.lastName,
                 })
               }
               setFormData({

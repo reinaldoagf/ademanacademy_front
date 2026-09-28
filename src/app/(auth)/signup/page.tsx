@@ -29,7 +29,8 @@ export default function RegisterPage() {
     const [avatar, setAvatar] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [email, setEmail] = useState("");
-    const [name, setName] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -99,7 +100,8 @@ export default function RegisterPage() {
 
         const payload = new FormData();
         payload.append("dni", dni);
-        payload.append("name", name);
+        payload.append("firstName", firstName);
+        payload.append("lastName", lastName);
         payload.append("email", email);
         payload.append("password", password);
         payload.append("phone", fullPhone); // 🎯 NUEVO CAMPO EN PAYLOAD
@@ -124,7 +126,8 @@ export default function RegisterPage() {
             // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
             setUser({
                 id: result.user.id,
-                name: result.user.name,
+                firstName: result.user.firstName,
+                lastName: result.user.lastName,
                 email: result.user.email,
                 isAdmin: result.user.isAdmin,
                 profileOnboarding: result.user.profileOnboarding,
@@ -148,7 +151,8 @@ export default function RegisterPage() {
     const isStep2Valid =
         !errorEmail &&
         email &&
-        name &&
+        firstName &&
+        lastName &&
         password &&
         confirmPassword &&
         password === confirmPassword;
@@ -268,25 +272,44 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
-                            {/* Input: NAME */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Input: FIRSTNAME */}
 
-                            <div className="space-y-2">
-                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="name">Nombre Completo</label>
+                                <div className="space-y-2">
+                                    <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="firstName">Nombres</label>
+                                    <div className="relative group">
+                                        <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
+                                        <input
+                                            type="text"
+                                            id="firstName"
+                                            name="firstName" // 💡 Agregado
+                                            required
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            placeholder="Valentina"
+                                            className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Input: LASTNAME */}
 
-                                <div className="relative group">
-                                    <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                                <div className="space-y-2">
+                                    <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="lastName">Apellidos</label>
+                                    <div className="relative group">
+                                        <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name" // 💡 Agregado
-                                        required
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Valentina Birrot"
-                                        className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
-                                    />
+                                        <input
+                                            type="text"
+                                            id="lastName"
+                                            name="lastName" // 💡 Agregado
+                                            required
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            placeholder="Birrot"
+                                            className={`py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none  focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 placeholder:text-gray-600 `}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

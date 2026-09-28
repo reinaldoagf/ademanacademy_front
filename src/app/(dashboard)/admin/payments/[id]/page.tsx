@@ -193,19 +193,19 @@ export default function PaymentDetailsPage() {
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <User className="w-4 h-4 text-purple-500" /> Nombre completo
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.user?.name}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.firstName} {transaction.client?.user?.lastName}</span>
                                         </div>
-                                        {(transaction.user?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(transaction.client?.user?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <User className="w-4 h-4 text-pink-500" /> DNI / Cédula
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.user?.dni}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.dni}</span>
                                         </div>)}
-                                        {(transaction.user?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(transaction.client?.user?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <Ticket className="w-4 h-4 text-indigo-500" /> Email
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.user?.email}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.email}</span>
                                         </div>)}
                                     </div>
                                 </div>

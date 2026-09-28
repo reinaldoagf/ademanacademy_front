@@ -4,7 +4,8 @@ import { Client } from "@/types/client";
 
 interface User {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     isAdmin: boolean;
     profileOnboarding: boolean;

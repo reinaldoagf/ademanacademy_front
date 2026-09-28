@@ -17,7 +17,8 @@ import {
   Sparkles,
   Check,
   SlidersHorizontal,
-  GraduationCap
+  GraduationCap,
+  User as UserIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
@@ -268,11 +269,11 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
                 className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
               >
                 <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider">
-                  {user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()}
+                  <UserIcon className="w-4 h-4" />
                 </div>
 
                 <div className="hidden md:flex flex-col text-left font-questrial">
-                  <span className="text-xs font-bold text-gray-700 leading-tight">{user.name}</span>
+                  <span className="text-xs font-bold text-gray-700 leading-tight">{user.firstName + " " + user.lastName}</span>
                   <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{user.email}</span>
                 </div>
 
@@ -282,7 +283,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-purple-100 shadow-xl rounded-none py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="p-3 border-b border-purple-50 md:hidden bg-purple-50/30">
-                    <p className="text-xs font-anton text-gray-800">{user.name}</p>
+                    <p className="text-xs font-anton text-gray-800">{user.firstName} {user.lastName}</p>
                     <p className="text-[10px] font-questrial text-gray-400 truncate">{user.email}</p>
                   </div>
 

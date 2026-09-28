@@ -1,14 +1,17 @@
 
 import { Student } from "@/types/student";
+import { Client } from "./client";
 export interface User {
     id: string;
     dni: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
     password?: string;
     isAdmin: boolean;
     students: Student[]
+    client: Client;
     profileOnboarding: boolean;
     createdAt: string;
     updatedAt: string;

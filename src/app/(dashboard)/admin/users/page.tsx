@@ -85,7 +85,7 @@ export default function UsersPage() {
         {
             header: "Usuario",
             render: (user) => {
-                const initials = `${user.name[0] || ""}${user.name[1] || ""}`.toUpperCase();
+                const initials = `${user.firstName[0] || ""}${user.lastName[0] || ""}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
@@ -93,7 +93,7 @@ export default function UsersPage() {
                         </div>}
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">
-                                {user?.name}
+                                {user?.firstName} {user?.lastName}
                             </span>
                             <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{user?.email}</span>
                         </div>

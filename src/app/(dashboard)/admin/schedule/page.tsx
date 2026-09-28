@@ -573,13 +573,13 @@ export default function SchedulePage() {
                                 Todo el Horario (General)
                             </button>
 
-                            {activeClassroom?.groups?.map((grupo: Group) => {
-                                const colorMeta = getGroupColor(grupo.id);
-                                const isTargetActive = activeGroupFilter === grupo.id;
+                            {activeClassroom?.groups?.map((group: Group) => {
+                                const colorMeta = getGroupColor(group.id);
+                                const isTargetActive = activeGroupFilter === group.id;
                                 return (
                                     <button
-                                        key={grupo.id}
-                                        onClick={() => setActiveGroupFilter(grupo.id)}
+                                        key={group.id}
+                                        onClick={() => setActiveGroupFilter(group.id)}
                                         className={`px-3 py-2 font-questrial font-semibold text-xs transition flex items-center gap-2 border-b-2 whitespace-nowrap cursor-pointer ${isTargetActive
                                             ? "border-purple-600 text-purple-700 bg-purple-50/40 font-bold"
                                             : "border-transparent text-gray-500 hover:bg-gray-50"
@@ -587,7 +587,7 @@ export default function SchedulePage() {
                                     >
                                         {/* Indicador esférico de color del grupo */}
                                         <span className={`w-2.5 h-2.5 rounded-full ${colorMeta.rawBorder} border-2`} style={{ backgroundColor: "currentColor" }} />
-                                        {grupo.name}
+                                        {group.name}
                                     </button>
                                 );
                             })}
@@ -868,7 +868,7 @@ export default function SchedulePage() {
                                 <User className="w-4 h-4 text-gray-400" />
                                 <div>
                                     <p className="text-[9px] text-gray-400 font-bold">Profesor</p>
-                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor?.name || "Sin asignar"}</p>
+                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor?.firstName} {selectedElement.group.instructor?.lastNames}</p>
                                 </div>
                             </div>
                         </div>

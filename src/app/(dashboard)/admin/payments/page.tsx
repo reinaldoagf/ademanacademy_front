@@ -104,7 +104,7 @@ export default function PaymentsPage() {
         {
             header: "Registrado por",
             render: (transaction) => {
-                const initials = transaction.user ? `${transaction.user.name[0] || ""}${transaction.user.name[1] || ""}`.toUpperCase() : "";
+                const initials = transaction.registeringUser ? `${transaction.registeringUser.firstName[0] || ""}${transaction.registeringUser.lastName[1] || ""}`.toUpperCase() : "";
                 return (
                     <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
                         {initials && <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
@@ -112,9 +112,9 @@ export default function PaymentsPage() {
                         </div>}
                         <div className="hidden md:flex flex-col text-left font-questrial">
                             <span className="text-xs font-bold text-gray-700 leading-tight">
-                                {transaction.user?.name}
+                                {transaction.registeringUser?.firstName} {transaction.registeringUser?.lastName}
                             </span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.user?.email}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{transaction.registeringUser?.email}</span>
                         </div>
                     </div>
                 );

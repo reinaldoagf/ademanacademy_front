@@ -49,7 +49,8 @@ export default function OtpAuthPage() {
             // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
             setUser({
                 id: res.user.id,
-                name: res.user.name,
+                firstName: res.user.firstName,
+                lastName: res.user.lastName,
                 phone: res.user.phone,
                 email: res.user.email,
                 isAdmin: res.user.isAdmin,

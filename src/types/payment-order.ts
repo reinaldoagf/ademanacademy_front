@@ -12,9 +12,12 @@ export interface PaymentOrder {
     status: string;
     createdAt: string | Date;
     updatedAt: string | Date;
-    user?: User | null;
+    registeringUser?: User | null;
+    registeringUserId?: string;
     client?: Client | null;
+    clientId?: string;
     order?: Order | null;
+    orderId?: string;
     transactions?: Array<Transaction>;
     eventSeats?: Array<{
         id: string;
