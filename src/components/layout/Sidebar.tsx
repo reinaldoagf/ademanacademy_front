@@ -159,7 +159,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet, badge: 0 },
     { key: APP_KEYS.PAYMENT_ORDERS, name: 'Mis Órdenes de Pago', href: '/client/payment-orders', icon: Package, badge: 0 },
     { key: APP_KEYS.CLOTHING, name: 'Mi Vestuario', href: '/client/clothing', icon: Shirt },
-    { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 }, // Tu otro badge estático
+    { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 },
+    { key: APP_KEYS.STORE, name: 'Tienda', href: '/client/store', icon: ShoppingBag },
   ]);
 
   const fetchAdminBadge = useCallback(

@@ -7,8 +7,8 @@ import { useCartStore } from "@/store/cartStore";
 interface ProductCardProps {
     product: Product;
     backendUrl: string;
-    onEdit: (product: Product) => void;
-    onDelete: (product: Product) => void;
+    onEdit?: (product: Product) => void | null;
+    onDelete?: (product: Product) => void | null;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -240,24 +240,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 )}
 
                 {/* Botones de acción */}
-                <div className="w-full flex items-center justify-between gap-1.5 sm:gap-2 pt-3 border-t border-purple-50/50 mt-3">
-                    <ActionButton
+                <div className="w-full flex flex-col gap-1.5 lg:flex-row md:items-center md:justify-between gap-1.5 sm:gap-2 pt-3 border-t border-purple-50/50 mt-3">
+                    {onDelete && (<ActionButton
                         variant="danger"
                         icon={Trash2}
                         tooltip=""
                         onClick={() => onDelete(product)}
+                        className="w-full sm:w-auto"
                     >
                         Eliminar
-                    </ActionButton>
-                    <div className="flex w-full justify-end gap-1.5">
-                        <ActionButton
+                    </ActionButton>)}
+                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end sm:gap-2">
+                        {onEdit && (<ActionButton
                             variant="success"
                             icon={Pencil}
                             tooltip=""
                             onClick={() => onEdit(product)}
+                            className="w-full sm:w-auto"
                         >
                             Editar
-                        </ActionButton>
+                        </ActionButton>)}
 
                         <ActionButton
                             variant="gradient_purple"
@@ -265,6 +267,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             tooltip=""
                             onClick={handleAddToCart}
                             disabled={isOutOfStock}
+                            className="w-full sm:w-auto"
                         >
                             Agregar a Carrito
                         </ActionButton>

@@ -257,7 +257,7 @@ export default function PaymentDetailsPage() {
                                         <h3 className="text-lg font-anton mb-1">Auditoría de Pago</h3>
                                     </div>
                                     {
-                                        transaction.concept === "ticket" && transaction.status === "pending" && (
+                                        (transaction.concept === "ticket" || transaction.concept === "product") && transaction.status === "pending" && (
                                             <div>
                                                 <button
                                                     type="button"

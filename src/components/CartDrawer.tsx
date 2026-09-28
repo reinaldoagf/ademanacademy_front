@@ -12,13 +12,14 @@ import {
     Search,
     Loader2,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
 import { getAllClientsAction } from "@/app/actions/client"; // Ajusta la ruta a tu action
 import { createOrderAction } from "@/app/actions/order"; // Ajusta la ruta a tu action
-import toast from "react-hot-toast";
-import { CleanOrderItem, OrderPayload } from "@/types/order";
+import { useAuthStore } from "@/store/authStore";
 
 export function CartDrawer() {
+    const user = useAuthStore((state) => state.user);
     const {
         items,
         isOpen,
@@ -71,6 +72,11 @@ export function CartDrawer() {
 
     // Evento para cerrar el desplegable al hacer clic fuera del componente
     useEffect(() => {
+        const displayName =
+            `${user?.client?.firstName || ""} ${user?.client?.lastName || ""}`.trim() || user?.client?.email;
+        setClientId(user?.client?.id || "");
+        setSelectedUserName(displayName || "");
+
         const handleClickOutside = (event: MouseEvent) => {
             if (userRef.current && !userRef.current.contains(event.target as Node)) {
                 setShowClientDropdown(false);
@@ -110,8 +116,8 @@ export function CartDrawer() {
 
     const handleSelectUser = (user: any) => {
         const displayName =
-            `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
-        setClientId(user.id);
+            `${user.client?.firstName || ""} ${user.client?.lastName || ""}`.trim() || user.client?.email;
+        setClientId(user.client?.id);
         setSelectedUserName(displayName);
         setClientSearch(displayName);
         setShowClientDropdown(false);
@@ -257,76 +263,79 @@ export function CartDrawer() {
                 <div className="p-4 border-t border-purple-100 bg-purple-50/20 space-y-3 font-questrial">
                     {/* Campo de Búsqueda de Cliente */}
                     <div className="relative" ref={userRef}>
-                        <label className="block text-gray-600 font-bold mb-1 text-xs">
-                            Asignar Cliente *
-                        </label>
+                        {
+                            user?.isAdmin && (<><label className="block text-gray-600 font-bold mb-1 text-xs">
+                                Asignar Cliente *
+                            </label>
 
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Buscar usuario por nombre, email o DNI..."
-                                value={clientSearch}
-                                onFocus={() => setShowClientDropdown(true)}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                className={`w-full p-2 pl-8 pr-7 border rounded-lg bg-white text-xs focus:outline-none transition ${clientId
-                                    ? "border-emerald-400 bg-emerald-50/20 text-emerald-900 font-medium"
-                                    : "border-purple-200 focus:border-purple-400"
-                                    }`}
-                            />
-                            <Search className="w-3.5 h-3.5 text-purple-400 absolute left-2.5 top-2.5" />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar usuario por nombre, email o DNI..."
+                                        value={clientSearch}
+                                        onFocus={() => setShowClientDropdown(true)}
+                                        onChange={(e) => handleSearchChange(e.target.value)}
+                                        className={`w-full p-2 pl-8 pr-7 border rounded-lg bg-white text-xs focus:outline-none transition ${clientId
+                                            ? "border-emerald-400 bg-emerald-50/20 text-emerald-900 font-medium"
+                                            : "border-purple-200 focus:border-purple-400"
+                                            }`}
+                                    />
+                                    <Search className="w-3.5 h-3.5 text-purple-400 absolute left-2.5 top-2.5" />
 
-                            {isLoadingUsers && (
-                                <div className="absolute right-2.5 top-2.5 w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                            )}
+                                    {isLoadingUsers && (
+                                        <div className="absolute right-2.5 top-2.5 w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                                    )}
 
-                            {clientId && (
-                                <button
-                                    type="button"
-                                    onClick={handleClearUserSelection}
-                                    className="absolute right-2 top-2 p-0.5 text-gray-400 hover:text-rose-600 transition"
-                                    title="Cambiar usuario"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Desplegable emergente superior */}
-                        {showClientDropdown && !clientId && (
-                            <ul className="absolute z-50 left-0 right-0 bottom-full mb-1 max-h-44 overflow-y-auto bg-white border border-purple-100 shadow-xl rounded-lg divide-y divide-gray-50 text-xs">
-                                {isLoadingUsers ? (
-                                    <li className="p-2.5 text-gray-400 italic">
-                                        Cargando clientes...
-                                    </li>
-                                ) : filteredClients.length === 0 ? (
-                                    <li className="p-2.5 text-rose-500 bg-rose-50/40">
-                                        No se encontraron clientes coincidentes
-                                    </li>
-                                ) : (
-                                    filteredClients.map((u: any) => (
-                                        <li
-                                            key={u.id}
-                                            onClick={() => handleSelectUser(u)}
-                                            className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                                    {clientId && (
+                                        <button
+                                            type="button"
+                                            onClick={handleClearUserSelection}
+                                            className="absolute right-2 top-2 p-0.5 text-gray-400 hover:text-rose-600 transition"
+                                            title="Cambiar usuario"
                                         >
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-gray-800">
-                                                    {u.firstName} {u.lastName}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400">
-                                                    {u.email}
-                                                </span>
-                                            </div>
-                                            {u.dni && (
-                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-sans">
-                                                    {u.dni}
-                                                </span>
-                                            )}
-                                        </li>
-                                    ))
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Desplegable emergente superior */}
+                                {showClientDropdown && !clientId && (
+                                    <ul className="absolute z-50 left-0 right-0 bottom-full mb-1 max-h-44 overflow-y-auto bg-white border border-purple-100 shadow-xl rounded-lg divide-y divide-gray-50 text-xs">
+                                        {isLoadingUsers ? (
+                                            <li className="p-2.5 text-gray-400 italic">
+                                                Cargando clientes...
+                                            </li>
+                                        ) : filteredClients.length === 0 ? (
+                                            <li className="p-2.5 text-rose-500 bg-rose-50/40">
+                                                No se encontraron clientes coincidentes
+                                            </li>
+                                        ) : (
+                                            filteredClients.map((u: any) => (
+                                                <li
+                                                    key={u.id}
+                                                    onClick={() => handleSelectUser(u)}
+                                                    className="p-2 hover:bg-purple-50 cursor-pointer transition-colors flex justify-between items-center"
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-800">
+                                                            {u.firstName} {u.lastName}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400">
+                                                            {u.email}
+                                                        </span>
+                                                    </div>
+                                                    {u.dni && (
+                                                        <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-sans">
+                                                            {u.dni}
+                                                        </span>
+                                                    )}
+                                                </li>
+                                            ))
+                                        )}
+                                    </ul>
                                 )}
-                            </ul>
-                        )}
+                            </>)}
+
 
                         {/* Badge de Selección */}
                         {clientId && (

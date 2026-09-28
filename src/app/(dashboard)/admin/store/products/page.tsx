@@ -131,6 +131,7 @@ export default function ProductsPage() {
   const handleEdit = (product: Product) => {
     openModal();
     setEditingId(product.id);
+    setNewFiles([]);
 
     // 1. Procesamos las imágenes primero
     let imagesParsed: any[] = [];

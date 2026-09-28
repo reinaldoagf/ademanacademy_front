@@ -47,7 +47,6 @@ export default function PaymentOrderDetailsPage() {
         ?.filter((t) => t.status === "approved")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
-    // const pendingAmount = Math.max(0, Number(paymentOrder?.amount || 0) - totalPaid);
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrorMsg(null)
