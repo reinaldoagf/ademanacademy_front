@@ -20,9 +20,11 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { TextInput, TextArea, SelectInput } from "@/components/ui/forms";
 import { saveClassroomAction, getAllClassroomsAction, deleteClassroomAction } from "@/app/actions/classroom";
 import { Classroom } from "@/types/classroom";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function ClassroomsPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);
     const { isOpen, openModal, closeModal } = useModal();
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -113,7 +115,6 @@ export default function ClassroomsPage() {
     };
 
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLASSROOMS_COUNT));
         startTransition(async () => {
             const res = await getAllClassroomsAction({
                 page: pageToFetch,
@@ -126,6 +127,10 @@ export default function ClassroomsPage() {
             if (res.success && res.data) {
                 setClassrooms(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.CLASSROOMS, res.meta.totalItems);
+                }
             }
         });
     };

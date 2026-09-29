@@ -31,7 +31,6 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { useModal } from "@/hooks/useModal";
 import { Client } from "@/types/client";
-import { APP_KEYS } from "@/consts/app";
 import { formatDateForInput } from "@/helpers/dates";
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: RepresentedFormData = {
@@ -100,8 +99,6 @@ export default function MyAffiliatesPage() {
                     if (res.success) {
                         toast.success("Operación exitosa");
                         setClients(clients.filter((item) => item.id !== modalConfig.id));
-                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_MY_AFFILIATES_COUNT));
                     }
                 }
             });
@@ -143,8 +140,6 @@ export default function MyAffiliatesPage() {
                     setClients(clients.map((item) => (item.id === editingId ? res.data! : item)));
                 } else {
                     setClients([res.data!, ...clients]);
-                    // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_MY_AFFILIATES_COUNT));
                 }
                 closeModal();
             });

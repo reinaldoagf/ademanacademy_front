@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     Search,
@@ -13,12 +12,13 @@ import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
-import { ActionButton } from "@/components/ui/ActionButton";
 import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
 import { PaymentOrder } from "@/types/payment-order";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function PaymentOrdersPage() {
-    const router = useRouter();
+    const setBadge = useSidebarStore((state) => state.setBadge);
     // Mock Data alineado con tu esquema prisma nuevo
     const [orders, setOrders] = useState<PaymentOrder[]>([]);
     const [meta, setMeta] = useState({
@@ -176,6 +176,9 @@ export default function PaymentOrdersPage() {
             if (res.success && res.data) {
                 setOrders(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.PAYMENT_ORDERS, res.meta.totalItems);
+                }
             }
         });
     };

@@ -22,7 +22,8 @@ import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch } fr
 import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
@@ -68,6 +69,7 @@ const initialCostumeFormState = {
   existingImages: [],
 };
 export default function CostumesPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
   const clothingFormReference = useRef<HTMLFormElement>(null);
   const policyFormReference = useRef<HTMLFormElement>(null);
@@ -317,6 +319,9 @@ export default function CostumesPage() {
       if (res2?.success && res2.data) {
         setCostumes(res2.data);
         setMeta(res2.meta);
+        if (res2.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.WARDROBE_COSTUMES, res2.meta.totalItems);
+        }
       }
     });
   };

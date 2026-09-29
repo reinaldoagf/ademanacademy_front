@@ -33,8 +33,8 @@ import {
   deleteProductAction
 } from "@/app/actions/product";
 import { TextInput, TextArea, SelectInput, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
-import { APP_KEYS } from "@/consts/app";
-
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: SaveProductPayload = {
@@ -50,6 +50,7 @@ const initialFormState: SaveProductPayload = {
   existingImages: [],
 };
 export default function ProductsPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
   const productFormReference = useRef<HTMLFormElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -283,6 +284,9 @@ export default function ProductsPage() {
       if (res1.success && res1.data) {
         setProducts(res1.data);
         setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        if (res1.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.PRODUCTS, res1.meta.totalItems);
+        }
       }
       const res2 = await getAllProductCategoriesAction({
         page: 1,

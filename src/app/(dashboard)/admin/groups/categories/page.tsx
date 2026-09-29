@@ -1,6 +1,6 @@
 // src/app/(dashboard)/admin/groups/categories/page.tsx
 "use client";
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, FormEvent } from "react";
 
 import {
     Plus,
@@ -18,6 +18,8 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { TextInput, RangeSliderInput } from "@/components/ui/forms";
 import { getAllGroupCategoriesAction, saveGroupCategoryAction, deleteGroupCategoryAction } from "@/app/actions/group-category";
 import { GroupCategory } from "@/types/group-category";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<GroupCategory, "id">;
 
@@ -29,6 +31,7 @@ const initialFormState: GroupFormData = {
 };
 
 export default function GroupsCategroiesPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [groupCategories, setGroupCategories] = useState<GroupCategory[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [modalConfig, setModalConfig] = useState<{
@@ -131,6 +134,10 @@ export default function GroupsCategroiesPage() {
             if (res.success && res.data) {
                 setGroupCategories(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.GROUPS_CATEGORIES, res.meta.totalItems);
+                }
             }
         });
     };

@@ -12,23 +12,17 @@ import {
     User as UserIcon
 } from "lucide-react";
 import Link from "next/link";
-import { toast } from "react-hot-toast";
 import HeroSection from '@/components/layout/HeroSection';
 import DataTable, { Column } from "@/components/common/DataTable";
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
-import { getAllTransactionsAction, approveTransactionAction } from "@/app/actions/transaction";
+import { getAllTransactionsAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
-import { useModal } from "@/hooks/useModal";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function PaymentsPage() {
-    const [error, setError] = useState<string | null>(null);
-    // Estados para Modales
-    const {
-        isOpen: isModalOpen,
-        openModal: openModal,
-        closeModal: closeModal
-    } = useModal();
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
@@ -60,7 +54,10 @@ export default function PaymentsPage() {
             });
             if (res.success && res.data) {
                 setTransactions(res.data);
-                setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                setMeta(res.meta);
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.PAYMENTS, res.meta.totalItems);
+                }
             }
         });
     };

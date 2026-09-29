@@ -19,7 +19,8 @@ import {
     getAllProductCategoriesAction,
     deleteProductCategoryAction
 } from "@/app/actions/product-category";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 type ProductCategoryFormData = {
     name: string,
@@ -28,6 +29,7 @@ const initialFormState: ProductCategoryFormData = {
     name: "",
 };
 export default function ProductCategoriesPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [isPending, startTransition] = useTransition();
     const [categories, setCategories] = useState<ProductCategory[]>([]);
     const { isOpen, openModal, closeModal } = useModal();
@@ -205,6 +207,9 @@ export default function ProductCategoriesPage() {
             if (res1.success && res1.data) {
                 setCategories(res1.data);
                 setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                if (res1.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.PRODUCT_CATEGORIES, res1.meta.totalItems);
+                }
             }
         });
     };

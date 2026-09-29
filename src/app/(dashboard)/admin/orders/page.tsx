@@ -13,9 +13,11 @@ import DataTable, { Column } from "@/components/common/DataTable";
 import DatePipe from "@/components/pipes/DatePipe";
 import { getAllOrdersAction } from "@/app/actions/order";
 import { Order } from "@/types/order";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function OrdersPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [orders, setOrders] = useState<Order[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
@@ -123,7 +125,6 @@ export default function OrdersPage() {
         },
     ];
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_ORDERS_COUNT));
         startTransition(async () => {
             const res = await getAllOrdersAction({
                 page: pageToFetch,
@@ -133,7 +134,10 @@ export default function OrdersPage() {
 
             if (res.success && res.data) {
                 setOrders(res.data);
-                setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta// 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.ORDERS, res.meta.totalItems);
+                }
             }
         });
     };

@@ -1,56 +1,24 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
-import { useEffect, useState, useCallback, ForwardRefExoticComponent, RefAttributes } from "react";
+import { useEffect, useState, ForwardRefExoticComponent, RefAttributes } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  ChartPie,
-  HeartPulse,
   ChevronDown,
-  CalendarDays,
-  ReceiptText,
-  Package,
-  Banknote,
-  Wallet,
-  Contact,
-  Shirt,
-  ShoppingBag,
-  Armchair,
-  Star,
-  UserPlus,
-  Users2,
-  UsersIcon,
-  Calendar,
-  House,
-  UserPlus2,
   LucideProps,
-  PersonStanding
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
-import { getAllUsersAction } from "@/app/actions/user";
-import { getAllClassroomsAction } from "@/app/actions/classroom";
+import { useBadgeStore } from '@/store/useBadgeStore';
 import {
-  getMyRepresentedAction,
-  getAllStudentsAction
-} from "@/app/actions/student";
-import { getMyTransactionsAction } from "@/app/actions/transaction";
-import { getMyPaymentOrdersAction } from "@/app/actions/payment-order";
-import { getAllGroupsAction } from "@/app/actions/group";
-import { getAllTransactionsAction } from "@/app/actions/transaction";
-import { getAllPaymentOrdersAction } from "@/app/actions/payment-order";
-import { getAllOrdersAction } from "@/app/actions/order";
-import { getAllEventsAction } from "@/app/actions/event";
-import { getAllCostumesAction } from "@/app/actions/costume";
-import { getAllEmployeesAction } from "@/app/actions/employee";
-import { getAllUniformsAction } from "@/app/actions/uniform";
-import { getAllProductCategoriesAction } from "@/app/actions/product-category";
-import { getAllProductsAction } from "@/app/actions/product";
-import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
-import { getAllClientsAction } from "@/app/actions/client";
-import { APP_KEYS } from "@/consts/app";
-
+  ADMIN_SYSTEM_MENU,
+  ADMIN_ACADEMIC_MENU,
+  ADMIN_OPERATIONAL_MENU,
+  ADMIN_MARKETING_MENU,
+  CLIENT_PERSONAL_MENU,
+  MenuItem
+} from "@/config/sidebar-menu";
 interface SidebarProps {
   isOpen: boolean;
 }
@@ -64,195 +32,31 @@ export interface SidebarMenuItem {
   badge?: number;
   children?: SidebarMenuItem[];
 }
-const updateBadgeInItems = (
-  items: SidebarMenuItem[],
-  targetKey: string,
-  badgeValue: number,
-  parentKey?: string
-): SidebarMenuItem[] => {
-  return items.map((item) => {
-    // Si buscamos actualizar un item raíz
-    if (!parentKey && item.key === targetKey) {
-      return { ...item, badge: badgeValue };
-    }
-    // Si buscamos actualizar un hijo dentro de un padre específico
-    if (parentKey && item.key === parentKey) {
-      const updatedChildren = item.children?.map((child) =>
-        child.key === targetKey ? { ...child, badge: badgeValue } : child
-      );
 
-      // Recalcular el badge del padre sumando los de sus hijos
-      const totalParentBadge = updatedChildren?.reduce(
-        (acc, curr) => acc + (Number(curr.badge) || 0),
-        0
-      );
-
-      return {
-        ...item,
-        badge: totalParentBadge ?? badgeValue,
-        children: updatedChildren,
-      };
-    }
-
-    return item;
-  });
-};
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
+  // Determinamos qué paneles mostrar basándonos en la ruta actual
+  const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
+  const isClientView = pathname.startsWith('/client');
   const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
-
-  // Secciones modulares del software (Administrador)
-  const [systemAdministration, setSystemAdministration] = useState<SidebarMenuItem[]>([
-    { key: APP_KEYS.USERS, name: 'Usuarios', href: '/admin/users', icon: UsersIcon, badge: 0 },
-  ]);
-
-  const [academicManagement, setAcademicManagement] = useState<SidebarMenuItem[]>([
-    { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/admin/dashboard', icon: ChartPie },
-    { key: APP_KEYS.SCHEDULE, name: 'Horario de Clases', href: '/admin/schedule', icon: Calendar },
-    { key: APP_KEYS.CLIENTS, name: 'Clientes', href: '/admin/clients', icon: PersonStanding, badge: 0 },
-    { key: APP_KEYS.STUDENTS, name: 'Alumnos y Progreso', href: '/admin/students', icon: HeartPulse, badge: 0 },
-    { key: APP_KEYS.CLASSROOMS, name: 'Salones de Clases', href: '/admin/classrooms', icon: House, badge: 0 },
-    {
-      key: APP_KEYS.GROUPS, name: 'Grupos de Clases', href: '/admin/groups', icon: CalendarDays,
-      // 🎯 Submenú añadido
-      children: [
-        { key: APP_KEYS.GROUPS_CATEGORIES, name: 'Categorías', href: '/admin/groups/categories' },
-        { key: APP_KEYS.GROUPS_LIST, name: 'Lista de Grupos', href: '/admin/groups/list', badge: 0 },
-      ]
-    },
-    { key: APP_KEYS.REGISTRATIONS, name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
-  ]);
-
-  const [operationalManagement, setOperationalManagement] = useState<SidebarMenuItem[]>([
-    { key: APP_KEYS.ORDERS, name: 'Pedidos', href: '/admin/orders', icon: ReceiptText, badge: 0 },
-    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package, badge: 0 },
-    { key: APP_KEYS.PAYMENTS, name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet, badge: 0 },
-    { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
-    { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact, badge: 0 },
-    {
-      key: APP_KEYS.WARDROBE, name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
-      // 🎯 Submenú añadido
-      children: [
-        { key: APP_KEYS.WARDROBE_COSTUMES, name: 'Vestuarios', href: '/admin/wardrobe/costumes', badge: 0 },
-        { key: APP_KEYS.WARDROBE_UNIFORMS, name: 'Uniformes', href: '/admin/wardrobe/uniforms', badge: 0 },
-      ]
-    }, {
-      key: APP_KEYS.STORE, name: 'Tienda e Inventario', href: '/admin/store', icon: ShoppingBag,
-      // 🎯 Submenú añadido
-      children: [
-        { key: APP_KEYS.STORE_CATEGORIES, name: 'Categorías', href: '/admin/store/categories', badge: 0 },
-        { key: APP_KEYS.STORE_PRODUCTS, name: 'Productos', href: '/admin/store/products', badge: 0 },
-      ]
-    },
-  ]);
-  const [marketingEventManagement, setMarketingEventManagement] = useState<SidebarMenuItem[]>([
-    { key: APP_KEYS.SEATING_CHARTS, name: 'Mapas de asientos', href: '/admin/seating-charts', icon: Armchair, badge: 0 },
-    { key: APP_KEYS.EVENTS, name: 'Eventos Especiales', href: '/admin/events', icon: Star, badge: 0 },
-  ]);
-
-  const [personalManagement, setPersonalManagement] = useState<SidebarMenuItem[]>([
-    { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/client/dashboard', icon: ChartPie },
-    { key: APP_KEYS.MY_AFFILIATES, name: 'Mis Afiliaciones', href: '/client/my-affiliates', icon: Users2, badge: 0 }, // 👈 Inicializamos en 0
-    { key: APP_KEYS.CLASSES, name: 'Mis Clases', href: '/client/classes', icon: CalendarDays },
-    { key: APP_KEYS.PAYMENTS, name: 'Mis Pagos', href: '/client/payments', icon: Wallet, badge: 0 },
-    { key: APP_KEYS.PAYMENT_ORDERS, name: 'Mis Órdenes de Pago', href: '/client/payment-orders', icon: Package, badge: 0 },
-    { key: APP_KEYS.CLOTHING, name: 'Mi Vestuario', href: '/client/clothing', icon: Shirt },
-    { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star, badge: 0 },
-    { key: APP_KEYS.STORE, name: 'Tienda', href: '/client/store', icon: ShoppingBag },
-  ]);
-
-  const fetchAdminBadge = useCallback(
-    async (
-      actionFn: (params: any) => Promise<any>,
-      targetKey: string,
-      parentKey?: string
-    ) => {
-      try {
-        const res = await actionFn({ page: 1, limit: 1 });
-        if (res?.success && res?.meta?.totalItems !== undefined) {
-          const total = res.meta.totalItems;
-          setSystemAdministration((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
-          setAcademicManagement((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
-          setOperationalManagement((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
-          setMarketingEventManagement((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
-        }
-      } catch (error) {
-        console.error(`Error al actualizar badge para [${targetKey}]:`, error);
-      }
-    },
-    []
-  );
-  const fetchClientBadge = useCallback(
-    async (
-      actionFn: (params: any) => Promise<any>,
-      targetKey: string,
-      parentKey?: string
-    ) => {
-      try {
-        const res = await actionFn({ page: 1, limit: 1 });
-        if (res?.success && res?.meta?.totalItems !== undefined) {
-          const total = res.meta.totalItems;
-          setPersonalManagement((prev: any) =>
-            updateBadgeInItems(prev, targetKey, total, parentKey)
-          );
-        }
-      } catch (error) {
-        console.error(`Error al actualizar badge para [${targetKey}]:`, error);
-      }
-    },
-    []
-  );
-  // 3. Configuración centralizada de badges y sus eventos
-  const adminBadgeConfigs = [
-    { event: APP_KEYS.REFRESH_USERS_COUNT, action: getAllUsersAction, key: APP_KEYS.USERS },
-    { event: APP_KEYS.REFRESH_CLIENTS_COUNT, action: getAllClientsAction, key: APP_KEYS.CLIENTS },
-    { event: APP_KEYS.REFRESH_STUDENTS_COUNT, action: getAllStudentsAction, key: APP_KEYS.STUDENTS },
-    { event: APP_KEYS.REFRESH_CLASSROOMS_COUNT, action: getAllClassroomsAction, key: APP_KEYS.CLASSROOMS },
-    { event: APP_KEYS.REFRESH_PAYMENTS_COUNT, action: getAllTransactionsAction, key: APP_KEYS.PAYMENTS },
-    { event: APP_KEYS.REFRESH_EMPLOYEES_COUNT, action: getAllEmployeesAction, key: APP_KEYS.EMPLOYEES },
-    { event: APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT, action: getAllPaymentOrdersAction, key: APP_KEYS.PAYMENT_ORDERS },
-    { event: APP_KEYS.REFRESH_ORDERS_COUNT, action: getAllOrdersAction, key: APP_KEYS.ORDERS },
-    { event: APP_KEYS.REFRESH_EVENTS_COUNT, action: getAllEventsAction, key: APP_KEYS.EVENTS },
-    { event: APP_KEYS.REFRESH_SEATING_CHARTS_COUNT, action: getAllSeatingMapsAction, key: APP_KEYS.SEATING_CHARTS },
-
-    // Submódulos (hijos)
-    { event: APP_KEYS.REFRESH_GROUPS_COUNT, action: getAllGroupsAction, key: APP_KEYS.GROUPS_LIST, parentKey: APP_KEYS.GROUPS },
-    { event: APP_KEYS.REFRESH_COSTUMES_COUNT, action: getAllCostumesAction, key: APP_KEYS.WARDROBE_COSTUMES, parentKey: APP_KEYS.WARDROBE },
-    { event: APP_KEYS.REFRESH_UNIFORMS_COUNT, action: getAllUniformsAction, key: APP_KEYS.WARDROBE_UNIFORMS, parentKey: APP_KEYS.WARDROBE },
-    { event: APP_KEYS.REFRESH_PRODUCTS_COUNT, action: getAllProductsAction, key: APP_KEYS.STORE_PRODUCTS, parentKey: APP_KEYS.STORE },
-    { event: APP_KEYS.REFRESH_PRODUCT_CATEGORIES_COUNT, action: getAllProductCategoriesAction, key: APP_KEYS.STORE_CATEGORIES, parentKey: APP_KEYS.STORE },
-  ];
-
-  const clientBadgeConfigs = [
-    { event: APP_KEYS.REFRESH_MY_AFFILIATES_COUNT, action: getMyRepresentedAction, key: APP_KEYS.MY_AFFILIATES },
-    { event: APP_KEYS.REFRESH_PAYMENTS_COUNT, action: getMyTransactionsAction, key: APP_KEYS.PAYMENTS },
-    { event: APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT, action: getMyPaymentOrdersAction, key: APP_KEYS.PAYMENT_ORDERS },
-    { event: APP_KEYS.REFRESH_EVENTS_COUNT, action: getAllEventsAction, key: APP_KEYS.EVENTS },
-
-  ];
-
-  // Función auxiliar para renderizar los enlaces y reutilizar los estilos
-  // Función auxiliar para renderizar enlaces simples o padres con submenús
-  const renderLink = (item: any) => {
+  const { badges, fetchBadges } = useBadgeStore();
+  // Función recursiva o helper para renderizar un item e inyectar su badge
+  const renderMenuItem = (item: MenuItem) => {
     const Icon = item.icon;
     const hasChildren = Boolean(item.children && item.children.length > 0);
     const isSubmenuOpen = openSubmenus[item.key];
 
-    // Un elemento hijo está activo si su href coincide exactamente
-    const isChildActive = hasChildren && item.children.some((child: any) => pathname === child.href);
+    // Cálculo dinámico de Badges mediante Zustand
+    const childBadgeSum = item.children?.reduce((acc, child) => acc + (badges[child.key] || 0), 0) || 0;
+    const badgeCount = badges[item.key] ?? (hasChildren ? childBadgeSum : 0);
+
+    // Verificación de estado activo (Link actual o uno de sus hijos activos)
+    const isChildActive = hasChildren && item.children?.some((child) => pathname === child.href);
     const isActive = pathname === item.href || isChildActive;
 
-    // Si tiene hijos, renderizamos el botón desplegable con la lista de subrutas
+    // 1. Ítem con submenú desplegable
     if (hasChildren) {
       return (
         <div key={item.key} className="flex flex-col">
@@ -262,57 +66,64 @@ export function Sidebar({ isOpen }: SidebarProps) {
             className={`font-questrial flex items-center justify-between cursor-pointer px-4 py-2.5 text-sm font-medium transition group relative w-full ${isActive
               ? 'border-l-4 border-l-[#5e0472] bg-purple-50 text-[#5e0472]'
               : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
-              } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
+              } ${!isOpen ? 'md:justify-center md:px-0 md:h-11' : ''}`}
           >
             <div className="flex items-center gap-3">
-              <Icon className="w-5 h-5 shrink-0" />
+              {Icon && <Icon className="w-5 h-5 shrink-0" />}
               <span className={`transition-all duration-200 ${!isOpen ? 'md:hidden' : ''}`}>
                 {item.name}
               </span>
             </div>
 
             <div className={`flex items-center gap-1 ${!isOpen ? 'md:hidden' : ''}`}>
-              {!hasChildren && item.badge !== undefined && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 shrink-0 ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
-                  }`}>
-                  {item.badge}
+              {/* Badge acumulado de los hijos */}
+              {badgeCount > 0 && (
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 shrink-0 rounded-full ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
+                    }`}
+                >
+                  {badgeCount}
                 </span>
               )}
+
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180 text-[#5e0472]' : 'text-gray-400'
                   }`}
               />
             </div>
 
+            {/* Tooltip cuando el sidebar está colapsado en MD */}
             {!isOpen && (
-              <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap">
+              <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap rounded shadow-md">
                 {item.name}
               </div>
             )}
           </button>
 
-          {/* Submenú desplegable (se oculta cuando el sidebar se colapsa en vista md) */}
+          {/* Submenú desplegable */}
           {isSubmenuOpen && (
             <div className={`flex flex-col pl-9 pr-2 space-y-1 my-1 ${!isOpen ? 'md:hidden' : ''}`}>
-              {item.children.map((child: any) => {
+              {item.children?.map((child) => {
                 const isSubActive = pathname === child.href;
+                const childBadge = badges[child.key] || 0;
+
                 return (
                   <Link
-                    key={child.href}
+                    key={child.key}
                     href={child.href}
-                    className={`font-questrial text-xs font-medium py-1.5 px-3 transition flex items-center justify-between ${isSubActive
+                    className={`font-questrial text-xs font-medium py-1.5 px-3 transition flex items-center justify-between rounded ${isSubActive
                       ? 'bg-[#5e0472] text-white font-semibold'
                       : 'text-gray-500 hover:bg-purple-100 hover:text-[#5e0472]'
                       }`}
                   >
+                    <span>{child.name}</span>
 
-                    <div className="flex items-center gap-3">
-                      {child.name}
-                    </div>
-                    {child.badge !== undefined && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 shrink-0 ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
-                        }`}>
-                        {child.badge}
+                    {childBadge > 0 && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 shrink-0 rounded-full ${isSubActive ? 'bg-white text-[#5e0472]' : 'bg-purple-200 text-[#6e0372]'
+                          }`}
+                      >
+                        {childBadge}
                       </span>
                     )}
                   </Link>
@@ -324,35 +135,39 @@ export function Sidebar({ isOpen }: SidebarProps) {
       );
     }
 
-    // Renderizado estándar para ítems sin submenú
+    // 2. Ítem simple (sin submenú)
     return (
       <Link
-        key={item.href || item.key}
+        key={item.key}
         href={item.href || '#'}
         className={`font-questrial flex items-center justify-between px-4 py-2.5 text-sm font-medium transition group relative ${isActive
           ? 'border-l-4 border-l-[#5e0472] bg-purple-100 text-[#5e0472]'
           : 'text-gray-400 hover:bg-purple-50 hover:text-[#5e0472]'
-          } ${!isOpen && 'md:justify-center md:px-0 md:h-11'}`}
+          } ${!isOpen ? 'md:justify-center md:px-0 md:h-11' : ''}`}
       >
         <div className="flex items-center gap-3">
-          <Icon className="w-5 h-5 shrink-0" />
+          {Icon && <Icon className="w-5 h-5 shrink-0" />}
           <span className={`transition-all duration-200 ${!isOpen ? 'md:hidden' : ''}`}>
             {item.name}
           </span>
         </div>
 
-        {item.badge !== undefined && (
-          <span className={`
-            text-[10px] font-bold px-2 py-0.5 shrink-0
-            ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'}
-            ${!isOpen ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[15px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]' : ''}
-          `}>
-            {item.badge}
+        {/* Badge con posicionamiento absoluto si el sidebar está colapsado */}
+        {badgeCount > 0 && (
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 shrink-0 rounded-full ${isActive ? 'bg-purple-200 text-purple-800' : 'bg-purple-200 text-[#6e0372]'
+              } ${!isOpen
+                ? 'md:absolute md:top-1.5 md:right-1.5 md:px-1 md:min-w-[15px] md:h-4 md:flex md:items-center md:justify-center md:text-[9px]'
+                : ''
+              }`}
+          >
+            {badgeCount}
           </span>
         )}
 
+        {/* Tooltip cuando el sidebar está colapsado en MD */}
         {!isOpen && (
-          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap">
+          <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity hidden md:block z-50 whitespace-nowrap rounded shadow-md">
             {item.name}
           </div>
         )}
@@ -360,66 +175,13 @@ export function Sidebar({ isOpen }: SidebarProps) {
     );
   };
 
-  // Determinamos qué paneles mostrar basándonos en la ruta actual
-  const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
-  const isClientView = pathname.startsWith('/client');
-
-  useEffect(() => {
-    if (!isAdminView) return;
-
-    // A. Función para refrescar todos los badges en paralelo al inicio
-    const fetchAllBadges = () => {
-      Promise.all(
-        adminBadgeConfigs.map((cfg) => fetchAdminBadge(cfg.action, cfg.key, cfg.parentKey))
-      );
-    };
-
-    fetchAllBadges();
-
-    // B. Mapeo dinámico de Listeners para Custom Events
-    const handlers = adminBadgeConfigs.map((cfg) => {
-      const handler = () => fetchAdminBadge(cfg.action, cfg.key, cfg.parentKey);
-      window.addEventListener(cfg.event, handler);
-      return { event: cfg.event, handler };
-    });
-
-    // C. Limpieza automática y libre de bugs
-    return () => {
-      handlers.forEach(({ event, handler }) => {
-        window.removeEventListener(event, handler);
-      });
-    };
-  }, [isAdminView, orderCreatedFlag, fetchAdminBadge]);
-
-  // useEffect para cargar la data real al montar el Sidebar por primera vez
-  useEffect(() => {
-    if (!isClientView) return;
-    // A. Función para refrescar todos los badges en paralelo al inicio
-    const fetchAllBadges = () => {
-      Promise.all(
-        clientBadgeConfigs.map((cfg) => fetchClientBadge(cfg.action, cfg.key))
-      );
-    };
-
-    fetchAllBadges();
-
-    // B. Mapeo dinámico de Listeners para Custom Events
-    const handlers = clientBadgeConfigs.map((cfg) => {
-      const handler = () => fetchClientBadge(cfg.action, cfg.key);
-      window.addEventListener(cfg.event, handler);
-      return { event: cfg.event, handler };
-    });
-
-    // C. Limpieza automática y libre de bugs
-    return () => {
-      handlers.forEach(({ event, handler }) => {
-        window.removeEventListener(event, handler);
-      });
-    };
-  }, [isClientView, fetchClientBadge]);
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+  // 🚀 Se ejecuta una única vez cuando el Sidebar se monta en el DOM
+  useEffect(() => {
+    fetchBadges();
+  }, [fetchBadges, orderCreatedFlag]);
   // Abrir automáticamente el submenú si la ruta actual coincide con alguna de sus subrutas
   useEffect(() => {
     if (pathname.startsWith('/admin/groups')) {
@@ -447,14 +209,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
                   Academia
                 </p>
               </div>
-              {academicManagement.map(renderLink)}
+              {ADMIN_ACADEMIC_MENU.map(renderMenuItem)}
             </div>
             {/* BLOQUE 2: SISTEMA */}
             <div className="space-y-1">
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Sistema
               </p>
-              {systemAdministration.map(renderLink)}
+              {ADMIN_SYSTEM_MENU.map(renderMenuItem)}
             </div>
 
             {/* BLOQUE 3: OPERACIONES */}
@@ -462,7 +224,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Finanzas y Logística
               </p>
-              {operationalManagement.map(renderLink)}
+              {ADMIN_OPERATIONAL_MENU.map(renderMenuItem)}
             </div>
 
             {/* BLOQUE 4: CRECIMIENTO */}
@@ -470,7 +232,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest px-4 mb-2 transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
                 Eventos y Leads
               </p>
-              {marketingEventManagement.map(renderLink)}
+              {ADMIN_MARKETING_MENU.map(renderMenuItem)}
             </div>
           </>
         )}
@@ -483,7 +245,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 Mi Cuenta
               </p>
             </div>
-            {personalManagement.map(renderLink)}
+            {CLIENT_PERSONAL_MENU.map(renderMenuItem)}
           </div>
         )}
 

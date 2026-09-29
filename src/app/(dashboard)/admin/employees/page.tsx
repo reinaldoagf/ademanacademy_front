@@ -24,7 +24,8 @@ import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from 
 import { EmployeeFormData, Employee } from "@/types/employee";
 import { User } from "@/types/user";
 import { formatDateForInput } from "@/helpers/dates";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: EmployeeFormData = {
@@ -63,6 +64,7 @@ const DNIPrefixs = [
   { code: "G", label: "G" },
 ];
 export default function EmployeesPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [userSearch, setUserSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -364,7 +366,6 @@ export default function EmployeesPage() {
   ];
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
-    window.dispatchEvent(new Event(APP_KEYS.REFRESH_EMPLOYEES_COUNT));
     startTransition(async () => {
       const res = await getAllEmployeesAction({
         page: pageToFetch,
@@ -375,6 +376,10 @@ export default function EmployeesPage() {
       if (res.success && res.data) {
         setEmployees(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+        if (res.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.EMPLOYEES, res.meta.totalItems);
+        }
       }
     });
   };

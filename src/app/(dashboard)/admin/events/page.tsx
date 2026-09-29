@@ -45,7 +45,8 @@ import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 import { Client } from "@/types/client";
 import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
 import { getAllClientsAction } from "@/app/actions/client";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
@@ -59,6 +60,7 @@ const initialFormState: EventFormData = {
   seatingMapId: "",
 };
 export default function AdminEventsPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const router = useRouter();
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
   const [clientSearch, setClientSearch] = useState("");
@@ -380,6 +382,10 @@ export default function AdminEventsPage() {
       if (res1.success && res1.data) {
         setEvents(res1.data);
         setMeta(res1.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+        if (res1.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.EVENTS, res1.meta.totalItems);
+        }
       }
     });
   };

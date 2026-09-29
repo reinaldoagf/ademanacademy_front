@@ -31,7 +31,8 @@ import { clientPurchaseSeatsAction } from "@/app/actions/event-seat";
 import DatePipe from "@/components/pipes/DatePipe";
 import { SeatingMapElement } from "@/types/seating-map";
 import { useModal } from "@/hooks/useModal";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // Importar el mapa asegurando que solo se cargue en el cliente para evitar problemas de hidratación
 const CanvasSeatingMap = dynamic(
@@ -43,6 +44,7 @@ const initialFormState = {
   bankName: "",
 };
 export default function ClientEventsPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const router = useRouter();
   const {
     isOpen: isOpenModalSeatingMap,
@@ -166,6 +168,9 @@ export default function ClientEventsPage() {
       if (res0.success && res0.data) {
         setEvents(res0.data);
         setMeta(res0.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        if (res0.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.EVENTS, res0.meta.totalItems);
+        }
       }
     });
   };

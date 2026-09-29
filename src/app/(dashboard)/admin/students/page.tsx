@@ -23,7 +23,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from '@/components/ui/ActionButton';
-import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, SearchInput, DateInput, EmailInput, DNIInput } from '@/components/ui/forms';
 import { Student } from "@/types/student";
 import {
   saveStudentAction,
@@ -35,8 +35,11 @@ import { getAllUsersAction } from "@/app/actions/user";
 import { Group } from "@/types/group";
 import { User } from "@/types/user";
 import { Client } from "@/types/client";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 type StudentFormData = {
+  IDNumberPrefix: string,
   dni: string,
   firstName: string,
   lastName: string,
@@ -46,12 +49,14 @@ type StudentFormData = {
   medicalObservations: string,
   address: string,
   shirtSize: string,
+  countryCode: string,
   phone: string,
   hasExperience: boolean,
   groupId: string | undefined,
   userId: string | undefined,
 };
 const initialFormState: StudentFormData = {
+  IDNumberPrefix: "V",
   dni: "",
   firstName: "",
   lastName: "",
@@ -61,12 +66,31 @@ const initialFormState: StudentFormData = {
   medicalObservations: "",
   address: "",
   shirtSize: "M",
+  countryCode: "+58",
   phone: "",
   hasExperience: true,
   groupId: "",
   userId: "",
 };
+const countries = [
+  { code: "+58", label: "VE" },
+  { code: "+57", label: "CO" },
+  { code: "+51", label: "PE" },
+  { code: "+56", label: "CL" },
+  { code: "+54", label: "AR" },
+  { code: "+34", label: "ES" },
+  { code: "+1", label: "US" },
+];
+const DNIPrefixs = [
+  { code: "V", label: "V" },
+  { code: "E", label: "E" },
+  { code: "P", label: "P" },
+  { code: "C", label: "C" },
+  { code: "J", label: "J" },
+  { code: "G", label: "G" },
+];
 export default function StudentsPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const [students, setStudents] = useState<Client[]>([]);
   const { isOpen, openModal, closeModal } = useModal();
   const [meta, setMeta] = useState({
@@ -142,6 +166,10 @@ export default function StudentsPage() {
       if (res.success && res.data) {
         setStudents(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        if (res.meta?.totalItems !== undefined) {
+          console.log({ res, key: APP_KEYS.STUDENTS })
+          setBadge(APP_KEYS.STUDENTS, res.meta.totalItems);
+        }
       }
     });
   };
@@ -267,13 +295,7 @@ export default function StudentsPage() {
       }
       toast.success("Operación exitosa");
       // Sincronizar estado local
-      if (editingId) {
-        setStudents(students.map((item) => (item.id === editingId ? res.data! : item)));
-      } else {
-        setStudents([res.data!, ...students]);
-        // 🎯 REACTIVIDAD: Si era una creación (id nuevo), el badge debe subir
-        window.dispatchEvent(new Event('refresh-students-count'));
-      }
+      fetchTableData(currentPage, itemsPerPage);
       closeModal();
     });
 
@@ -391,6 +413,7 @@ export default function StudentsPage() {
               }
 
               setFormData({
+                IDNumberPrefix: client.IDNumberPrefix,
                 dni: client.dni,
                 firstName: client.firstName,
                 lastName: client.lastName,
@@ -400,6 +423,7 @@ export default function StudentsPage() {
                 medicalObservations: client.student?.medicalObservations || "",
                 address: client.address,
                 shirtSize: client.student?.shirtSize || "M",
+                countryCode: client.countryCode || "+58",
                 phone: client.phone,
                 hasExperience: client.student?.hasExperience || false,
                 groupId: client.groupId || "",
@@ -561,15 +585,17 @@ export default function StudentsPage() {
           {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
 
           <div className="grid grid-cols-2 gap-3">
-
-            <TextInput
-              label="DNI"
+            <DNIInput
+              label="DNI / Identificación *"
               required
-              type="text"
-              value={formData.dni}
-              onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
-              placeholder="DNI"
+              prefix={formData.IDNumberPrefix || "V"}
+              onPrefixChange={(code) => setFormData({ ...formData, IDNumberPrefix: code })}
+              prefixes={DNIPrefixs}
+              dni={formData.dni}
+              onDniChange={(dni) => setFormData({ ...formData, dni })}
+              placeholder="Ej: 1098765432"
             />
+
             <EmailInput
               label="Correo Electrónico"
               placeholder="ejemplo@correo.com"

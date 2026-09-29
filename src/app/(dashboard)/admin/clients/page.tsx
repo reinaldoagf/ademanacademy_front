@@ -25,9 +25,10 @@ import { TextInput, TextArea, SelectInput, EmailInput, SearchInput, RadioGroup, 
 import { Client, CustomerFormData } from "@/types/client";
 import { User } from "@/types/user";
 import { formatDateForInput } from "@/helpers/dates";
-import { APP_KEYS } from "@/consts/app";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveClientAction, getAllClientsAction, deleteClientAction } from "@/app/actions/client";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 const initialFormState: CustomerFormData = {
     firstName: "",
     lastName: "",
@@ -63,7 +64,7 @@ const DNIPrefixs = [
     { code: "G", label: "G" },
 ];
 export default function ClientsPage() {
-
+    const setBadge = useSidebarStore((state) => state.setBadge);
     // --- ESTADOS PARA BÚSQUEDA DE grupos ---
     const [userSearch, setUserSearch] = useState("");
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -193,9 +194,6 @@ export default function ClientsPage() {
         }
     };
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
-        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_CLIENTS_COUNT));
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_STUDENTS_COUNT));
         startTransition(async () => {
             const res = await getAllClientsAction({
                 page: pageToFetch,
@@ -204,8 +202,13 @@ export default function ClientsPage() {
             });
 
             if (res.success && res.data) {
+
                 setClients(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.CLIENTS, res.meta.totalItems);
+                }
             }
         });
     };

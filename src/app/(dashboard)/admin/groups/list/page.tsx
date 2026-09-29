@@ -35,7 +35,8 @@ import { getAllInstructorsAction } from "@/app/actions/instructor";
 import { Group } from "@/types/group";
 import { GroupCategory } from "@/types/group-category";
 import { Employee } from "@/types/employee";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // 1. Tipado preciso para los datos que controla el formulario
 type GroupFormData = Omit<Group, "id" | "classroom" | "instructor" | "schedules"> & {
@@ -52,6 +53,7 @@ const initialFormState: GroupFormData = {
   instructorId: ""
 };
 export default function GroupsListPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const [groupCategories, setGroupCategories] = useState<GroupCategory[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const {
@@ -299,6 +301,10 @@ export default function GroupsListPage() {
       if (res2.success && res2.data) {
         setGroups(res2.data);
         setMeta(res2.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+        if (res2.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.GROUPS_LIST, res2.meta.totalItems);
+        }
       }
     });
   };

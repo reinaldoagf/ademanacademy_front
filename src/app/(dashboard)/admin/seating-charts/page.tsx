@@ -21,9 +21,11 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import HeroSection from "@/components/layout/HeroSection";
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function SeatingMapListPage() {
+  const setBadge = useSidebarStore((state) => state.setBadge);
   const router = useRouter();
   const [seatingsMaps, setSeatingsMaps] = useState<SeatingMap[]>([]);
   const [meta, setMeta] = useState({
@@ -83,7 +85,6 @@ export default function SeatingMapListPage() {
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-    window.dispatchEvent(new Event(APP_KEYS.REFRESH_SEATING_CHARTS_COUNT));
     startTransition(async () => {
       const res = await getAllSeatingMapsAction({
         page: pageToFetch,
@@ -93,6 +94,9 @@ export default function SeatingMapListPage() {
       if (res.success && res.data) {
         setSeatingsMaps(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+        if (res.meta?.totalItems !== undefined) {
+          setBadge(APP_KEYS.SEATING_CHARTS, res.meta.totalItems);
+        }
       }
     });
   };

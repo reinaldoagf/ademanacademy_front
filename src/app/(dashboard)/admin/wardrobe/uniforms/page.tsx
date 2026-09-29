@@ -21,7 +21,8 @@ import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } 
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
-import { APP_KEYS } from "@/consts/app";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
@@ -59,6 +60,7 @@ const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
     },
 };
 export default function UniformsPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
     const uniformFormReference = useRef<HTMLFormElement>(null);
 
@@ -300,6 +302,9 @@ export default function UniformsPage() {
             if (res2?.success && res2.data) {
                 setUniforms(res2.data);
                 setMeta(res2.meta);
+                if (res2.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.WARDROBE_UNIFORMS, res2.meta.totalItems);
+                }
             }
         });
     };
