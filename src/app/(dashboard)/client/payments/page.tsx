@@ -18,8 +18,11 @@ import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import { getMyTransactionsAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
+import { useSidebarStore } from "@/store/useSidebarStore";
+import { APP_KEYS } from "@/config/app-keys";
 
 export default function ClientPaymentsPage() {
+    const setBadge = useSidebarStore((state) => state.setBadge);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
@@ -49,6 +52,10 @@ export default function ClientPaymentsPage() {
             if (res.success && res.data) {
                 setTransactions(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                // 🎯 Cero peticiones extras: actualizamos el badge con el meta.totalItems recibido
+                if (res.meta?.totalItems !== undefined) {
+                    setBadge(APP_KEYS.MY_PAYMENTS, res.meta.totalItems);
+                }
             }
         });
     };
