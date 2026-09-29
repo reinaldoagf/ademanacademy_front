@@ -159,7 +159,7 @@ export default function MyAffiliatesPage() {
 
             // 🎯 NUEVOS CAMPOS DEL ESTUDIANTE CARGADOS AL EDITAR
             address: client.address || "",
-            countryCode: client.countryCode || "",
+            countryCode: client.countryCode || "+58",
             phone: client.phone || "",
             shirtSize: client.student?.shirtSize || "",
             hasExperience: client.student?.hasExperience ?? false, // Operador de coalescencia nula para booleanos
@@ -248,7 +248,7 @@ export default function MyAffiliatesPage() {
                                                 Teléfono
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {item.countryCode && item.phone ? item.countryCode + " " + item.phone : 'Sin télefono de contacto'}
+                                                {item.countryCode && item.phone ? item.countryCode + item.phone : 'Sin télefono de contacto'}
                                             </p>
                                         </div>
                                         <div className="bg-slate-50 p-2">

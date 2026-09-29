@@ -245,7 +245,7 @@ export default function EmployeesPage() {
       header: "Contacto",
       render: (employee) => (
         <span className="text-xs text-gray-600 font-questrial">
-          {employee.countryCode && employee.phone ? `${employee.countryCode} ${employee.phone}` : "Sin teléfono"}
+          {employee.countryCode && employee.phone ? `${employee.countryCode}${employee.phone}` : "Sin teléfono"}
         </span>
       ),
     },
