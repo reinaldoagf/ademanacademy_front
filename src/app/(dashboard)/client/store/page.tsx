@@ -24,9 +24,7 @@ export default function StorePage() {
     const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
     const [products, setProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [isActiveFilter, setIsActiveFilter] = useState("all");
     const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
-
     const [meta, setMeta] = useState({
         currentPage: 1,
         totalPages: 1,
@@ -50,7 +48,8 @@ export default function StorePage() {
                 page: pageToFetch,
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined,
-                ...(isActiveFilter !== "all" ? { isActive: isActiveFilter } : {}),
+                isActive: true,
+                stockStatus: 'in_stock',
             });
             if (res1.success && res1.data) {
                 setProducts(res1.data);
@@ -75,7 +74,7 @@ export default function StorePage() {
         }, 300);
 
         return () => clearTimeout(handler);
-    }, [searchTerm, isActiveFilter, currentPage, itemsPerPage]);
+    }, [searchTerm, currentPage, itemsPerPage]);
     return (
         <>
             {/* HERO SECTION DE LA SECCIÓN */}
@@ -158,18 +157,7 @@ export default function StorePage() {
                             />
                         </div>
 
-                        <div className="flex gap-2">
-                            <select
-                                value={isActiveFilter}
-                                onChange={(e) => setIsActiveFilter(e.target.value)}
-                                className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-                            >
-                                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los productos</option>
-                                <option value="true" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Activos</option>
-                                <option value="false" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">No activos</option>
-                            </select>
 
-                        </div>
                     </div>
 
 

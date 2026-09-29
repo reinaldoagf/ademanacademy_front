@@ -55,6 +55,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "in_stock" | "out_of_stock">("all");
   const { isOpen, openModal, closeModal } = useModal();
   const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -276,6 +277,8 @@ export default function ProductsPage() {
         limit: limitToFetch, // 🎯 Enviamos el límite dinámico
         search: searchTerm || undefined,
         ...(isActiveFilter !== "all" ? { isActive: isActiveFilter } : {}),
+        // 🎯 Enviamos el stockStatus solo si es distinto de "all"
+        ...(stockFilter !== "all" ? { stockStatus: stockFilter } : {}),
       });
       if (res1.success && res1.data) {
         setProducts(res1.data);
@@ -308,7 +311,7 @@ export default function ProductsPage() {
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchTerm, isActiveFilter, currentPage, itemsPerPage]);
+  }, [searchTerm, isActiveFilter, stockFilter, currentPage, itemsPerPage]);
   return (
     <>
       {/* HERO SECTION DE LA SECCIÓN */}
@@ -379,8 +382,11 @@ export default function ProductsPage() {
 
           {/* FILTROS DE CATEGORÍAS */}
 
-          <div className="glass-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
-            <div className="relative w-full sm:w-80">
+          {/* FILTROS DE PRODUCTOS */}
+          <div className="glass-card p-4 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between">
+
+            {/* Buscador */}
+            <div className="relative w-full lg:w-80">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -391,16 +397,107 @@ export default function ProductsPage() {
               />
             </div>
 
-            <div className="flex gap-2">
-              <select
-                value={isActiveFilter}
-                onChange={(e) => setIsActiveFilter(e.target.value)}
-                className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-              >
-                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los productos</option>
-                <option value="true" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Activos</option>
-                <option value="false" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">No activos</option>
-              </select>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto justify-end">
+
+              {/* 🎯 RADIO GROUP PARA STOCK */}
+              <div className="flex items-center gap-1 bg-gray-50/80 p-1 border border-purple-100 rounded-md text-xs font-questrial">
+                <span className="text-gray-500 font-medium px-2 text-[11px]">Stock:</span>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${stockFilter === "all"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="stockFilter"
+                    value="all"
+                    checked={stockFilter === "all"}
+                    onChange={(e) => setStockFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  Todos
+                </label>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${stockFilter === "in_stock"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="stockFilter"
+                    value="in_stock"
+                    checked={stockFilter === "in_stock"}
+                    onChange={(e) => setStockFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  Con Stock
+                </label>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${stockFilter === "out_of_stock"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="stockFilter"
+                    value="out_of_stock"
+                    checked={stockFilter === "out_of_stock"}
+                    onChange={(e) => setStockFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  Sin Stock
+                </label>
+              </div>
+
+              {/* Filtro de Activo/Inactivo */}
+              <div className="flex items-center gap-1 bg-gray-50/80 p-1 border border-purple-100 rounded-md text-xs font-questrial">
+                <span className="text-gray-500 font-medium px-2 text-[11px]">Status:</span>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${isActiveFilter === "all"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="isActiveFilter"
+                    value="all"
+                    checked={isActiveFilter === "all"}
+                    onChange={(e) => setIsActiveFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  Todos
+                </label>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${isActiveFilter === "true"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="isActiveFilter"
+                    value="true"
+                    checked={isActiveFilter === "true"}
+                    onChange={(e) => setIsActiveFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  Activos
+                </label>
+
+                <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${isActiveFilter === "false"
+                  ? "gradient-purple text-white font-medium shadow-xs"
+                  : "text-gray-600 hover:text-purple-700"
+                  }`}>
+                  <input
+                    type="radio"
+                    name="isActiveFilter"
+                    value="false"
+                    checked={isActiveFilter === "false"}
+                    onChange={(e) => setIsActiveFilter(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  No Activos
+                </label>
+              </div>
 
             </div>
           </div>

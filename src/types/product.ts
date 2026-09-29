@@ -31,7 +31,8 @@ export interface FetchProductsParams {
     limit?: number;
     search?: string;
     categoryId?: string;
-    isActive?: boolean | string;
+    isActive?: string | boolean;
+    stockStatus?: 'all' | 'in_stock' | 'out_of_stock';
 }
 
 // 🎯 Payload serializable para Crear / Editar Producto
