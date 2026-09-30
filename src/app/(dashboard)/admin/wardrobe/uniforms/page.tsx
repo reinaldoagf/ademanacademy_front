@@ -261,7 +261,7 @@ export default function UniformsPage() {
 
             if (res.success) {
                 fetchData(currentPage, itemsPerPage);
-                toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
+                toast.success(editingId ? "Uniforme actualizado correctamente." : "Uniforme guardado correctamente.");
 
                 // Limpieza de estados tras el guardado exitoso
                 setNewFiles([]);
@@ -313,11 +313,8 @@ export default function UniformsPage() {
         setErrorMsg(null);
 
         const res = await assignUniformAction(uniformAssignmentForm);
-
-
-
         if (res.success) {
-            toast.success("Vestuario asignado satisfactoriamente.");
+            toast.success("Uniforme asignado satisfactoriamente.");
             closeModalUniformForAssign();
             fetchData(currentPage, itemsPerPage);
         } else {
