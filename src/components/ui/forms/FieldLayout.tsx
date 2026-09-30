@@ -3,6 +3,7 @@ import React from 'react';
 export interface FieldLayoutProps {
     label?: string;
     labelColor?: string;
+    validSelection?: boolean;
     containerClassName?: string;
     children: React.ReactNode;
 }

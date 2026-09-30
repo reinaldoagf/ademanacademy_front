@@ -1,4 +1,7 @@
 import React, { useState, useRef, ReactNode } from 'react';
+import {
+    CheckCheck
+} from "lucide-react";
 import { FieldLayout, FieldLayoutProps } from './FieldLayout';
 import { BASE_INPUT_STYLES } from '@/consts/formStyles';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -27,6 +30,7 @@ export interface SearchInputProps<T = any>
 export function SearchInput<T = any>({
     label,
     labelColor,
+    validSelection = false,
     containerClassName,
     value,
     onChangeText,
@@ -71,13 +75,18 @@ export function SearchInput<T = any>({
                             onChangeText(e.target.value);
                             setIsOpen(true);
                         }}
-                        className={`${BASE_INPUT_STYLES} pr-8`}
+                        className={`w-full p-2 border  bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-sm text-gray-800 placeholder-gray-400 pr-8 ${!!validSelection ? 'border-green-400' : 'border-purple-100'}`}
                     />
 
                     {/* Spinner de Carga */}
-                    {isLoading && (
+                    {isLoading ? (
                         <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                    )}
+                    ) : (!!validSelection && (
+                        <div className="absolute right-2 top-2 w-5 h-5 rounded-full  flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
+                            <CheckCheck className="text-green-400 shrink-0" />
+                        </div>
+
+                    ))}
                 </div>
 
                 {/* Desplegable de Resultados */}

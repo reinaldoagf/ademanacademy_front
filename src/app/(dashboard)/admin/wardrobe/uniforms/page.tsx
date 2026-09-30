@@ -18,11 +18,15 @@ import {
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
 import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
+import { Student } from "@/types/student";
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
+import { getAllStudentsAction } from "@/app/actions/student";
+import { assignUniformAction } from "@/app/actions/uniform";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, SelectInput, ImageGalleryPicker } from '@/components/ui/forms';
+import { TextInput, SelectInput, ImageGalleryPicker, TextArea, SearchInput } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { APP_KEYS } from "@/config/app-keys";
+/* import { AssignUniformModal } from "@/components/AssignUniformModal"; */
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
@@ -63,6 +67,7 @@ export default function UniformsPage() {
     const setBadge = useSidebarStore((state) => state.setBadge);
     const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
     const uniformFormReference = useRef<HTMLFormElement>(null);
+    const assignUniformFormReference = useRef<HTMLFormElement>(null);
 
     // 3. Estado enfocado puramente en los totales numéricos
     const [statusCounts, setStatusCounts] = useState<Record<UniformStatus, number>>({
@@ -73,11 +78,27 @@ export default function UniformsPage() {
     });
 
     const [uniforms, setUniforms] = useState<Uniform[]>([]);
+    const [selectedUniform, setSelectedUniform] = useState<Uniform | null>(null);
     const {
         isOpen: isModalFormOpen,
         openModal: openModalForm,
         closeModal: closeModalForm
     } = useModal();
+    const {
+        isOpen: isModalUniformForAssignOpen,
+        openModal: openModalUniformForAssign,
+        closeModal: closeModalUniformForAssign
+    } = useModal();
+    // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+    const [studentSearch, setStudentSearch] = useState("");
+    const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+    const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+    const [uniformAssignmentForm, setUniformAssignmentForm] = useState({
+        uniformId: '',
+        studentId: '',
+        assignedSize: '',
+        observations: '',
+    });
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("all");
@@ -105,8 +126,6 @@ export default function UniformsPage() {
                     if (res.success) {
                         toast.success("Operación exitosa");
                         fetchData(currentPage, itemsPerPage);
-                        // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-                        window.dispatchEvent(new Event(APP_KEYS.REFRESH_UNIFORMS_COUNT));
                     }
                 }
             });
@@ -280,6 +299,32 @@ export default function UniformsPage() {
             });
         }
     };
+    const assignUniform = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!uniformAssignmentForm.studentId.trim()) {
+            setErrorMsg('Debes ingresar o seleccionar un estudiante.');
+            return;
+        }
+        if (!uniformAssignmentForm.assignedSize) {
+            setErrorMsg('Selecciona una talla disponible.');
+            return;
+        }
+
+        setErrorMsg(null);
+
+        const res = await assignUniformAction(uniformAssignmentForm);
+
+
+
+        if (res.success) {
+            toast.success("Vestuario asignado satisfactoriamente.");
+            closeModalUniformForAssign();
+            fetchData(currentPage, itemsPerPage);
+        } else {
+            setErrorMsg(res.error || 'Ocurrió un error al asignar el uniforme.');
+        }
+    };
+
     // 4. Carga e integración de datos
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
@@ -315,6 +360,46 @@ export default function UniformsPage() {
 
         return () => clearTimeout(handler);
     }, [searchTerm, statusFilter, categoryFilter, currentPage, itemsPerPage]);
+    // --- EFFECT PARA estudiantes (Vía Server Action) ---
+    useEffect(() => {
+        // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
+        /* if (filteredStudents.find(c => c.id === formData.groupId)?.name === groupSearch) {
+          return;
+        } */
+
+        setIsLoadingStudents(true);
+
+        const isSearchEmpty = !studentSearch.trim();
+        const delay = isSearchEmpty ? 0 : 400;
+
+        const delayDebounce = setTimeout(async () => {
+            try {
+                // Construimos los parámetros requeridos por FetchGroupsParams
+                const params = isSearchEmpty
+                    ? { limit: 5 }
+                    : { search: studentSearch.trim() };
+
+                // Llamada directa al Server Action
+                const result = await getAllStudentsAction(params);
+
+                if (result.success && result.data) {
+                    // Axios mapea la respuesta en result.data. data.data suele ser el array
+                    // Si tu backend anida los estudiantes en 'estudiantes', úsalo; de lo contrario asigna result.data
+                    setFilteredStudents(result.data.students || result.data);
+                } else {
+                    console.error("Error en Server Action (estudiantes):", result.error);
+                    setFilteredStudents([]);
+                }
+            } catch (error) {
+                console.error("Error crítico buscando estudiantes:", error);
+                setFilteredStudents([]);
+            } finally {
+                setIsLoadingStudents(false);
+            }
+        }, delay);
+
+        return () => clearTimeout(delayDebounce);
+    }, [isModalUniformForAssignOpen, studentSearch]);
     return (
         <>
             {/* HERO SECTION COMPONENTE REFACTORIZADO */}
@@ -427,6 +512,17 @@ export default function UniformsPage() {
                                 element={uniform}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
+                                onAssign={(element) => {
+                                    setSelectedUniform(element)
+                                    setStudentSearch('')
+                                    setUniformAssignmentForm({
+                                        uniformId: element.id,
+                                        studentId: '',
+                                        assignedSize: '',
+                                        observations: '',
+                                    })
+                                    openModalUniformForAssign()
+                                }}
                             />
                         })}
                     </div>) : (
@@ -671,6 +767,107 @@ export default function UniformsPage() {
                         {editingId
                             ? "Actualizar uniforme →"
                             : "Registrar uniforme →"}
+                    </button>
+                </div>
+            </MacDockModal>
+            <MacDockModal
+                isOpen={isModalUniformForAssignOpen}
+                onClose={closeModalUniformForAssign}
+                title={"Asignación de Uniforme"}
+                size={"md"}
+            >
+
+
+                {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
+                <form
+                    ref={assignUniformFormReference}
+                    id="assign-form" // <-- Añadimos este ID
+                    onSubmit={assignUniform}
+                    className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin"
+                >
+                    {errorMsg && (
+                        <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
+                            {errorMsg}
+                        </p>
+                    )}
+
+                    {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+                    <SearchInput
+                        label="Asignación de alumno"
+                        placeholder="Escribe para buscar o selecciona de la lista..."
+                        validSelection={uniformAssignmentForm.studentId.length > 0 && studentSearch.length > 0}
+                        value={studentSearch}
+                        isLoading={isLoadingStudents}
+                        options={filteredStudents.map((student: any) => ({
+                            id: student.id,
+                            label: `${student.firstName} ${student.lastName}`,
+                            subLabel: `Email: ${student.email}`,
+                            data: student, // Guardamos el objeto completo si hace falta
+                        }))}
+                        emptyMessage="No se encontraron estudiantes coincidentes"
+                        onChangeText={(text: string) => {
+                            setUniformAssignmentForm({
+                                ...uniformAssignmentForm,
+                                studentId: '',
+                            });
+                            setStudentSearch(text);
+                        }}
+                        onSelectOption={(option: any) => {
+                            if (option.data?.student?.shirtSize) {
+                                setUniformAssignmentForm({
+                                    ...uniformAssignmentForm,
+                                    assignedSize: option.data.student.shirtSize as string,
+                                });
+                            }
+                            if (option.data?.student) {
+                                setUniformAssignmentForm({
+                                    ...uniformAssignmentForm,
+                                    studentId: option.data.student.id as string,
+                                });
+                            }
+                            setStudentSearch(`${option.label} (${option.data?.email || 'Estudiante'})`);
+                        }}
+                    />
+                    <SelectInput
+                        label="Talla Disponible *"
+                        value={uniformAssignmentForm.assignedSize}
+                        onChange={(e) => setUniformAssignmentForm({ ...uniformAssignmentForm, assignedSize: e.target.value as string })}
+                        options={[
+                            { label: "Selecciona una talla", value: "", disabled: true },
+                            ...selectedUniform?.availableSizes.map((item) => ({
+                                label: `Talla ${item.size}`,
+                                value: item.size,
+                            })) || [],
+                        ]}
+                    />
+                    {/*  */}
+                    <TextArea
+                        label="Observaciones (Opcional)"
+                        placeholder="Ej. Se entrega completo, sin detalles..."
+                        value={uniformAssignmentForm.observations}
+                        onChange={(e) => setUniformAssignmentForm({ ...uniformAssignmentForm, observations: e.target.value })}
+                        required
+                        rows={3}
+
+                    />
+                </form>
+                {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
+                <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+                    <button
+                        type="button"
+                        onClick={() => closeModalUniformForAssign()}
+                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        form="assign-form" // <-- Apunta al ID del formulario
+                        onClick={(e) => { }}
+                        className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                    >
+                        Confirmar asignación →
                     </button>
                 </div>
             </MacDockModal>

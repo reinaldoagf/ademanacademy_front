@@ -5,7 +5,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Trash2,
-    Pencil
+    Pencil,
+    UserPlus
 } from "lucide-react";
 import { ActionButton } from "@/components/ui/ActionButton";
 // Props tipadas (puedes cambiar 'any' por tu interfaz si lo prefieres)
@@ -13,8 +14,9 @@ interface WardrobeCardProps {
     element: any;
     onEdit?: (element: any) => void;
     onDelete?: (element: any) => void;
+    onAssign?: (element: any) => void;
 }
-export function WardrobeCard({ element, onEdit, onDelete }: WardrobeCardProps) {
+export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
 
@@ -212,40 +214,46 @@ export function WardrobeCard({ element, onEdit, onDelete }: WardrobeCardProps) {
             </div>
 
             {/* Status de Almacén e Indicador */}
-            <div className="p-4 space-y-2 border-t border-purple-50/50 pt-3">
-
-
-
-
-
+            <div className="p-4 space-y-3 border-t border-purple-50/50 pt-3">
                 {/* Botones de acción */}
-                <div className="flex gap-2 pt-3 border-t border-purple-50/50 mt-3 w-full justify-between">
-                    <ActionButton
-                        variant="danger"
-                        icon={Trash2}
-                        tooltip=""
-                        onClick={handleDelete}
-                    >
-                        Eliminar
-                    </ActionButton>
-                    <ActionButton
-                        variant="success"
-                        icon={Pencil}
-                        tooltip=""
-                        onClick={handleEdit}
-                    >
-                        Editar
-                    </ActionButton>
-                    {/* <button
-                                onClick={handleAddToCart}
-                                disabled={isOutOfStock}
-                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl transition-all ${!isOutOfStock
-                                    ? "cursor-pointer text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:scale-95"
-                                    : "cursor-not-allowed text-gray-400 bg-gray-100 opacity-70"
-                                    }`}
-                            >
-                                <Plus className="w-3.5 h-3.5" /> Agregar
-                            </button> */}
+                <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-2 pt-2">
+
+                    {/* Botón secundario/peligro (Eliminar) */}
+                    <div className="w-full sm:w-auto">
+                        <ActionButton
+                            variant="danger"
+                            icon={Trash2}
+                            tooltip=""
+                            onClick={handleDelete}
+                            className="w-full sm:w-auto"
+                        >
+                            Eliminar
+                        </ActionButton>
+                    </div>
+
+                    {/* Acciones principales (Editar y Asignar) */}
+                    <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
+                        <ActionButton
+                            variant="success"
+                            icon={Pencil}
+                            tooltip=""
+                            onClick={handleEdit}
+                            className="w-full sm:w-auto"
+                        >
+                            Editar
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="gradient_purple"
+                            icon={UserPlus}
+                            tooltip=""
+                            onClick={() => onAssign?.(element)}
+                            className="w-full sm:w-auto"
+                        >
+                            Asignar
+                        </ActionButton>
+                    </div>
+
                 </div>
             </div>
         </div>

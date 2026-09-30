@@ -147,3 +147,61 @@ export async function deleteUniformAction(id: string): Promise<{ success: boolea
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+
+export async function assignUniformAction({
+    studentId,
+    uniformId,
+    assignedSize,
+    observations,
+}: {
+    studentId: string;
+    uniformId: string;
+    assignedSize: string;
+    observations?: string;
+    clientId?: string;
+}) {
+    try {
+        const url = `${BACKEND_URL}/uniforms/assign`;
+        const headers = await getAuthHeaders();
+
+
+
+        const response = await axios.post(url, {
+            studentId,
+            uniformId,
+            assignedSize,
+            observations,
+        }, { headers: headers });
+        return { success: true, data: response.data };
+
+    } catch (error: any) {
+        console.error("Error en saveUniformAction:", error?.response?.data || error);
+        if (error.response) {
+            const backendMessage = error.response.data?.message;
+
+            if (
+                typeof backendMessage === 'string' &&
+                backendMessage.includes('Unique constraint failed on the constraint: `uniforms_name_key`')
+            ) {
+                return {
+                    success: false,
+                    error: "El nombre de este vestuario ya está registrado. Por favor, elige otro."
+                };
+            }
+
+            if (Array.isArray(backendMessage)) {
+                return {
+                    success: false,
+                    error: backendMessage.join(', ')
+                };
+            }
+
+            return {
+                success: false,
+                error: backendMessage || "Error al procesar el elemento."
+            };
+        }
+
+        return { success: false, error: "Error crítico de red en el servidor." };
+    }
+}

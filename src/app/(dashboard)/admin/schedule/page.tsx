@@ -868,7 +868,7 @@ export default function SchedulePage() {
                                 <User className="w-4 h-4 text-gray-400" />
                                 <div>
                                     <p className="text-[9px] text-gray-400 font-bold">Profesor</p>
-                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor?.firstName} {selectedElement.group.instructor?.lastNames}</p>
+                                    <p className="font-medium text-gray-800">{selectedElement.group.instructor?.firstName} {selectedElement.group.instructor?.lastName}</p>
                                 </div>
                             </div>
                         </div>
