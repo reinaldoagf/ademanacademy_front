@@ -44,5 +44,6 @@ export const APP_KEYS: Record<string, string> = {
     REFRESH_MY_AFFILIATES_COUNT: 'refresh-my-affiliates-count',
     REFRESH_PRODUCT_CATEGORIES_COUNT: 'refresh-product-categories-count',
     CLASSES: 'classes',
-    CLOTHING: 'clothing'
+    CLOTHING: 'clothing',
+    MY_UNIFORMS: 'myUniforms'
 };

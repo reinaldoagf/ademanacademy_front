@@ -176,3 +176,16 @@ export async function assignUniformAction(data: AssignUniformActionParams) {
         };
     }
 }
+
+export async function getMyUniformAssignmentsAction(params: FetchUniformsParams) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.get(`${BACKEND_URL}/uniforms/my-assignments`, { headers, params });
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}

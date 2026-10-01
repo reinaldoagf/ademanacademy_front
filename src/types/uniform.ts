@@ -2,6 +2,7 @@
 import {
     LucideIcon
 } from "lucide-react";
+import { Client } from "./client";
 // Enums del esquema (puedes importarlos de @prisma/client si los usas en Node.js,
 // o mantenerlos aquí si es para el Frontend)
 export type UniformCategory = 'baby' | string; // Ajusta con tus valores del Enum real
@@ -11,6 +12,8 @@ export type AssignmentStatus = 'assigned' | 'returned' | 'damaged' | 'lost' | st
 // Interface para el modelo StudentUniform
 export interface StudentUniform {
     id: string;
+    clientId: string;
+    client: Client;
     studentId: string;
     student?: any; // Reemplaza 'any' por tu interfaz 'Student' si la tienes
     uniformId: string;
