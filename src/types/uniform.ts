@@ -77,3 +77,11 @@ export interface SaveUniformPayload {
     images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
     existingImages: string[]; // 🚀 'type' agregado aquí
 }
+
+export interface StudentTableItem {
+    studentId: string;
+    fullName: string;
+    email: string;
+    assignedSize: string;
+    observations?: string;
+}

@@ -3,7 +3,16 @@
 import axios from "axios";
 import { FetchUniformsParams, SaveUniformPayload } from "@/types/uniform";
 import { getAuthHeaders } from "@/helpers/auth-headers";
+export interface StudentAssignmentPayload {
+    studentId: string;
+    assignedSize: string;
+    observations?: string;
+}
 
+export interface AssignUniformActionParams {
+    uniformId: string;
+    assignments: StudentAssignmentPayload[];
+}
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 export async function getAllUniformsAction(params: FetchUniformsParams) {
     try {
@@ -148,60 +157,22 @@ export async function deleteUniformAction(id: string): Promise<{ success: boolea
     }
 }
 
-export async function assignUniformAction({
-    studentId,
-    uniformId,
-    assignedSize,
-    observations,
-}: {
-    studentId: string;
-    uniformId: string;
-    assignedSize: string;
-    observations?: string;
-    clientId?: string;
-}) {
+export async function assignUniformAction(data: AssignUniformActionParams) {
     try {
-        const url = `${BACKEND_URL}/uniforms/assign`;
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
         const headers = await getAuthHeaders();
+        const response = await axios.post(`${API_URL}/uniforms/assign`, data, { headers });
 
 
-
-        const response = await axios.post(url, {
-            studentId,
-            uniformId,
-            assignedSize,
-            observations,
-        }, { headers: headers });
+        // revalidatePath('/admin/wardrobe/uniforms');
         return { success: true, data: response.data };
 
+
     } catch (error: any) {
-        console.error("Error en saveUniformAction:", error?.response?.data || error);
-        if (error.response) {
-            const backendMessage = error.response.data?.message;
-
-            if (
-                typeof backendMessage === 'string' &&
-                backendMessage.includes('Unique constraint failed on the constraint: `uniforms_name_key`')
-            ) {
-                return {
-                    success: false,
-                    error: "El nombre de este vestuario ya está registrado. Por favor, elige otro."
-                };
-            }
-
-            if (Array.isArray(backendMessage)) {
-                return {
-                    success: false,
-                    error: backendMessage.join(', ')
-                };
-            }
-
-            return {
-                success: false,
-                error: backendMessage || "Error al procesar el elemento."
-            };
-        }
-
-        return { success: false, error: "Error crítico de red en el servidor." };
+        return {
+            success: false,
+            error: error.message || 'Error de comunicación con el servidor.',
+        };
     }
 }

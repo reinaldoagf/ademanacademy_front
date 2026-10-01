@@ -13,15 +13,20 @@ import {
     CheckCircle2,
     Shirt,
     Wrench,
-    ArchiveX
+    ArchiveX,
+    Trash2,
+    Info,
+    UserPlus
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
-import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig } from "@/types/uniform";
+import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig, StudentTableItem } from "@/types/uniform";
 import { Student } from "@/types/student";
+import { Client } from "@/types/client";
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { getAllStudentsAction } from "@/app/actions/student";
 import { assignUniformAction } from "@/app/actions/uniform";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, ImageGalleryPicker, TextArea, SearchInput } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -99,6 +104,12 @@ export default function UniformsPage() {
         assignedSize: '',
         observations: '',
     });
+    // Estados para la asignación masiva
+    const [selectedStudentsList, setSelectedStudentsList] = useState<StudentTableItem[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState("all");
@@ -162,8 +173,8 @@ export default function UniformsPage() {
     const [existingImages, setExistingImages] = useState<string[]>([]);
     // 1. Definimos las funciones que recibirán el elemento capturado
     const handleEdit = (uniform: Uniform) => {
-
         openModalForm();
+        setErrorMsg('')
         setEditingId(uniform.id);
         setUniformFormData({
             name: uniform.name ?? '',
@@ -267,20 +278,8 @@ export default function UniformsPage() {
                 setNewFiles([]);
                 setExistingImages([]);
                 setEditingId(null); // Reset del ID de edición
-
-                // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
-                if (!editingId) {
-                    window.dispatchEvent(new Event(APP_KEYS.REFRESH_UNIFORMS_COUNT));
-                    setUniformFormData({
-                        name: '',
-                        price: 0,
-                        category: 'childrens' as UniformCategory,
-                        status: 'payment_pending' as UniformStatus,
-                        availableSizes: [...DEFAULT_SIZES]
-                    });
-                }
-
                 closeModalForm();
+                fetchData(currentPage, itemsPerPage);
             } else {
                 toast.error(res.error);
                 setErrorMsg(res.error);
@@ -299,29 +298,93 @@ export default function UniformsPage() {
             });
         }
     };
-    const assignUniform = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!uniformAssignmentForm.studentId.trim()) {
-            setErrorMsg('Debes ingresar o seleccionar un estudiante.');
+    // Handler para agregar estudiante a la tabla
+    const handleAddStudentToList = (option: any) => {
+        const client: Client = option.data;
+        if (!client.student) return;
+
+        // Verificar duplicados en la lista
+        if (selectedStudentsList.some((s) => s.studentId === client?.student?.id)) {
+            toast.error('El estudiante ya está agregado a la lista.');
+            setStudentSearch('');
             return;
         }
-        if (!uniformAssignmentForm.assignedSize) {
-            setErrorMsg('Selecciona una talla disponible.');
+
+        // Asignar talla por defecto (talla guardada del alumno o la primera disponible del uniforme)
+        const defaultSize =
+            client.student?.shirtSize ||
+            selectedUniform?.availableSizes?.find((s: any) => s.quantity > 0)?.size ||
+            '';
+
+        const newItem: StudentTableItem = {
+            studentId: client.student.id,
+            fullName: `${client.firstName} ${client.lastName}`,
+            email: client.email || 'Sin correo',
+            assignedSize: defaultSize,
+            observations: '',
+        };
+
+        setSelectedStudentsList((prev) => [...prev, newItem]);
+        setStudentSearch('');
+        setErrorMsg(null);
+    };
+
+    // Modificar campo de un estudiante de la lista (ej. Talla u Observación)
+    const handleUpdateStudentInList = (
+        studentId: string,
+        field: 'assignedSize' | 'observations',
+        value: string
+    ) => {
+        setSelectedStudentsList((prev) =>
+            prev.map((item) =>
+                item.studentId === studentId ? { ...item, [field]: value } : item
+            )
+        );
+    };
+    // Eliminar estudiante de la lista
+    const handleRemoveStudentFromList = (studentId: string) => {
+        setSelectedStudentsList((prev) => prev.filter((item) => item.studentId !== studentId));
+    };
+    // Submit del formulario
+    const assignUniform = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!selectedUniform) return;
+
+        if (selectedStudentsList.length === 0) {
+            setErrorMsg('Debes agregar al menos un estudiante a la lista.');
+            return;
+        }
+
+        const hasEmptySize = selectedStudentsList.some((item) => !item.assignedSize);
+        if (hasEmptySize) {
+            setErrorMsg('Todos los estudiantes de la lista deben tener una talla seleccionada.');
             return;
         }
 
         setErrorMsg(null);
+        // setIsSubmitting(true);
 
-        const res = await assignUniformAction(uniformAssignmentForm);
+        const res = await assignUniformAction({
+            uniformId: selectedUniform.id,
+            assignments: selectedStudentsList.map((item) => ({
+                studentId: item.studentId,
+                assignedSize: item.assignedSize,
+                observations: item.observations,
+            })),
+        });
+
+        //setIsSubmitting(false);
+
         if (res.success) {
-            toast.success("Uniforme asignado satisfactoriamente.");
+            toast.success('Uniformes asignados satisfactoriamente.');
+            setSelectedStudentsList([]);
             closeModalUniformForAssign();
             fetchData(currentPage, itemsPerPage);
         } else {
-            setErrorMsg(res.error || 'Ocurrió un error al asignar el uniforme.');
+            setErrorMsg(res.error || 'Ocurrió un error al asignar los uniformes.');
         }
     };
-
     // 4. Carga e integración de datos
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
@@ -490,11 +553,11 @@ export default function UniformsPage() {
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                             >
-                                <option value="all">Todos los estados</option>
-                                <option value="payment_pending">Pendiente por pago</option>
-                                <option value="making">Confeccionando</option>
-                                <option value="available">Disponible</option>
-                                <option value="retired">Retirado</option>
+                                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los estados</option>
+                                <option value="payment_pending" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendiente por pago</option>
+                                <option value="making" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Confeccionando</option>
+                                <option value="available" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Disponible</option>
+                                <option value="retired" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Retirado</option>
                             </select>
                         </div>
 
@@ -518,6 +581,7 @@ export default function UniformsPage() {
                                         assignedSize: '',
                                         observations: '',
                                     })
+                                    setErrorMsg('')
                                     openModalUniformForAssign()
                                 }}
                             />
@@ -759,8 +823,9 @@ export default function UniformsPage() {
                         type="submit"
                         form="uniform-form" // <-- Apunta al ID del formulario
                         onClick={(e) => { }}
-                        className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
-                    >
+                        disabled={!!errorMsg || !uniformFormData.name || !uniformFormData.price}
+                        className={` group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs ${!!errorMsg || !uniformFormData.name || !uniformFormData.price ? "bg-gray-200 text-gray-400" : "cursor-pointer text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90"
+                            }`}>
                         {editingId
                             ? "Actualizar uniforme →"
                             : "Registrar uniforme →"}
@@ -771,100 +836,183 @@ export default function UniformsPage() {
                 isOpen={isModalUniformForAssignOpen}
                 onClose={closeModalUniformForAssign}
                 title={"Asignación de Uniforme"}
-                size={"md"}
+                size={"4xl"}
             >
 
 
                 {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
                 <form
                     ref={assignUniformFormReference}
-                    id="assign-form" // <-- Añadimos este ID
+                    id="assign-form"
                     onSubmit={assignUniform}
-                    className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin"
+                    className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin p-1"
                 >
                     {errorMsg && (
-                        <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
+                        <p className="text-red-500 bg-red-50 p-2.5 rounded text-xs text-center border border-red-200">
                             {errorMsg}
                         </p>
                     )}
 
-                    {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+                    {/* Info General del Uniforme */}
+                    {selectedUniform && (
+                        <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100 flex justify-between items-center text-xs">
+                            <div>
+                                <span className="font-bold text-purple-900">{selectedUniform.name}</span>
+                                <p className="text-gray-500 text-[11px]">
+                                    Precio unitario: ${selectedUniform.price ?? '0.00'}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-[11px] text-gray-500 block">Tallas disponibles:</span>
+                                <div className="flex gap-1.5 mt-0.5">
+                                    {selectedUniform.availableSizes?.map((s: any) => (
+                                        <span
+                                            key={s.size}
+                                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${s.quantity > 0
+                                                ? 'bg-purple-100 text-purple-700'
+                                                : 'bg-gray-100 text-gray-400 line-through'
+                                                }`}
+                                        >
+                                            {s.size}: {s.quantity}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Selector/Buscador para agregar estudiantes */}
                     <SearchInput
-                        label="Asignación de alumno"
-                        placeholder="Escribe para buscar o selecciona de la lista..."
-                        validSelection={uniformAssignmentForm.studentId.length > 0 && studentSearch.length > 0}
+                        label="Buscar Estudiante para Agregar"
+                        placeholder="Escribe el nombre o correo del estudiante..."
+                        validSelection={false}
                         value={studentSearch}
                         isLoading={isLoadingStudents}
                         options={filteredStudents.map((student: any) => ({
                             id: student.id,
                             label: `${student.firstName} ${student.lastName}`,
-                            subLabel: `Email: ${student.email}`,
-                            data: student, // Guardamos el objeto completo si hace falta
+                            subLabel: `Email: ${student.email || 'N/A'}`,
+                            data: student,
                         }))}
-                        emptyMessage="No se encontraron estudiantes coincidentes"
-                        onChangeText={(text: string) => {
-                            setUniformAssignmentForm({
-                                ...uniformAssignmentForm,
-                                studentId: '',
-                            });
-                            setStudentSearch(text);
-                        }}
-                        onSelectOption={(option: any) => {
-                            if (option.data?.student?.shirtSize) {
-                                setUniformAssignmentForm({
-                                    ...uniformAssignmentForm,
-                                    assignedSize: option.data.student.shirtSize as string,
-                                });
-                            }
-                            if (option.data?.student) {
-                                setUniformAssignmentForm({
-                                    ...uniformAssignmentForm,
-                                    studentId: option.data.student.id as string,
-                                });
-                            }
-                            setStudentSearch(`${option.label} (${option.data?.email || 'Estudiante'})`);
-                        }}
+                        emptyMessage="No se encontraron estudiantes"
+                        onChangeText={(text: string) => setStudentSearch(text)}
+                        onSelectOption={(option: any) => handleAddStudentToList(option)}
                     />
-                    <SelectInput
-                        label="Talla Disponible *"
-                        value={uniformAssignmentForm.assignedSize}
-                        onChange={(e) => setUniformAssignmentForm({ ...uniformAssignmentForm, assignedSize: e.target.value as string })}
-                        options={[
-                            { label: "Selecciona una talla", value: "", disabled: true },
-                            ...selectedUniform?.availableSizes.map((item) => ({
-                                label: `Talla ${item.size}`,
-                                value: item.size,
-                            })) || [],
-                        ]}
-                    />
-                    {/*  */}
-                    <TextArea
-                        label="Observaciones (Opcional)"
-                        placeholder="Ej. Se entrega completo, sin detalles..."
-                        value={uniformAssignmentForm.observations}
-                        onChange={(e) => setUniformAssignmentForm({ ...uniformAssignmentForm, observations: e.target.value })}
-                        required
-                        rows={3}
 
-                    />
+                    {/* Tabla con lista de asignación */}
+                    <div className="mt-4 border rounded-md overflow-hidden border-purple-100">
+                        <div className="bg-purple-50/80 px-3 py-2 font-semibold text-purple-900 flex justify-between items-center text-xs">
+                            <span>Estudiantes a Asignar <span className="text-[10px] font-bold p-1 px-1.5 shrink-0 rounded-full bg-purple-900 text-white">{selectedStudentsList.length}</span></span>
+                            {selectedStudentsList.length > 0 && (
+                                <span className="text-[11px] font-normal text-purple-700">
+                                    Total estimado: ${(selectedStudentsList.length * (selectedUniform?.price || 0)).toFixed(2)}
+                                </span>
+                            )}
+                        </div>
+
+                        {selectedStudentsList.length === 0 ? (
+                            <div className="p-6 text-center text-gray-400 flex flex-col items-center gap-1">
+                                <Info className="w-5 h-5 text-gray-300" />
+                                <p className="text-xs">No hay estudiantes seleccionados.</p>
+                                <p className="text-[11px]">Usa el buscador superior para agregar alumnos a la lista.</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0">
+                                        <tr>
+                                            <th className="p-2.5">Estudiante</th>
+                                            <th className="p-2.5 w-32">Talla *</th>
+                                            <th className="p-2.5">Observación</th>
+                                            <th className="p-2.5 w-10 text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {selectedStudentsList.map((item) => (
+                                            <tr key={item.studentId} className="hover:bg-purple-50/20">
+                                                <td className="p-2.5">
+                                                    <p className="font-semibold text-gray-800">{item.fullName}</p>
+                                                    <p className="text-[10px] text-gray-400">{item.email}</p>
+                                                </td>
+
+                                                <td className="p-2.5">
+                                                    <SelectInput
+                                                        label=""
+                                                        value={item.assignedSize}
+                                                        onChange={(e) =>
+                                                            handleUpdateStudentInList(item.studentId, 'assignedSize', e.target.value)
+                                                        }
+                                                        options={[
+                                                            { label: "Selecciona una talla", value: "", disabled: true },
+                                                            ...(selectedUniform?.availableSizes?.map((sizeItem: any) => ({
+                                                                label: `Talla ${sizeItem.size} (${sizeItem.quantity})`,
+                                                                value: sizeItem.size,
+                                                                disabled: sizeItem.quantity <= 0,
+                                                            })) || []),
+                                                        ]}
+                                                    />
+
+                                                </td>
+
+                                                <td className="p-2.5">
+                                                    <TextArea
+                                                        label=""
+                                                        placeholder="Opcional..."
+
+                                                        rows={1}
+                                                        value={item.observations || ''}
+                                                        onChange={(e) =>
+                                                            handleUpdateStudentInList(item.studentId, 'observations', e.target.value)
+                                                        }
+                                                    />
+
+                                                </td>
+
+                                                <td className="p-2.5 text-center">
+                                                    <ActionButton
+                                                        variant="danger"
+                                                        icon={Trash2}
+                                                        tooltip="Quitar"
+                                                        onClick={() => handleRemoveStudentFromList(item.studentId)}
+                                                    >
+                                                        Quitar
+                                                    </ActionButton>
+
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </form>
-                {/* Botonera (Anclada al fondo y con sombra sutil divisoria) */}
-                <div className="pt-5 border-t border-purple-100 bg-purple-50/20 flex justify-between shrink-0">
+                {/* Botonera inferior */}
+                <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between items-center shrink-0 mt-4">
                     <button
                         type="button"
-                        onClick={() => closeModalUniformForAssign()}
-                        className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                        onClick={() => {
+                            setSelectedStudentsList([]);
+                            closeModalUniformForAssign();
+                        }}
+                        className="cursor-pointer font-questrial px-4 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition rounded-md"
                     >
                         Cancelar
                     </button>
 
                     <button
                         type="submit"
-                        form="assign-form" // <-- Apunta al ID del formulario
-                        onClick={(e) => { }}
-                        className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                        form="assign-form"
+                        disabled={isSubmitting || selectedStudentsList.length === 0}
+                        className={`group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs rounded-md ${isSubmitting || selectedStudentsList.length === 0
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'cursor-pointer text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90'
+                            }`}
                     >
-                        Confirmar asignación →
+                        <UserPlus className="w-4 h-4" />
+                        {isSubmitting
+                            ? 'Procesando...'
+                            : `Confirmar Asignación${selectedStudentsList.length > 1 ? 'es' : ''} →`}
                     </button>
                 </div>
             </MacDockModal>
