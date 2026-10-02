@@ -88,3 +88,21 @@ export interface StudentTableItem {
     assignedSize: string;
     observations?: string;
 }
+
+export interface UniformAssignment {
+    id: string;
+    clientId: string;
+    client: Client;
+    studentId: string;
+    student?: any; // Se puede tipar como Student si existe
+    uniformId: string;
+    uniform?: Uniform; // Se puede tipar como Uniform si existe
+    assignedSize: string;
+    status: AssignmentStatus;
+    observations?: string | null;
+    assignedAt: Date | string;
+    returnedAt?: Date | string | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    costumeId?: string | null;
+}

@@ -56,8 +56,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
     const buttonClasses = `
     flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-questrial font-bold rounded-xl
-    transition-all duration-150 cursor-pointer select-none
-    ${disabled ? DISABLED_STYLES : VARIANT_STYLES[variant]}
+    transition-all duration-150 select-none
+    ${disabled ? DISABLED_STYLES : `${VARIANT_STYLES[variant]} cursor-pointer hover:cursor-pointer`}
     ${className}
   `.trim();
 

@@ -7,8 +7,6 @@ import {
   Shirt,
   Search,
   AlertTriangle,
-  FileText,
-  Users,
   CheckCircle2,
   ChevronRight,
   ChevronLeft
@@ -17,6 +15,7 @@ import { getMyUniformAssignmentsAction } from "@/app/actions/uniform";
 import { StudentUniform } from "@/types/uniform";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { APP_KEYS } from "@/config/app-keys";
+import { UniformAssignmentCard } from "@/components/UniformAssignmentCard";
 
 export default function ClientClothingPage() {
   const setBadge = useSidebarStore((state) => state.setBadge);
@@ -147,100 +146,13 @@ export default function ClientClothingPage() {
             />
           </div>
 
-          {/* <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
-            <div className="flex items-center gap-2 w-full sm:w-auto border border-purple-100 px-2 bg-white/50">
-              <Users className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="p-2 w-full sm:w-auto font-questrial text-xs bg-white/50 text-gray-700 focus:outline-none"
-              >
-                <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los estados</option>
-                <option value="assigned" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Entregado al alumno</option>
-                <option value="returned" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Devuelto en buen estado</option>
-                <option value="damaged" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Devuelto con daños</option>
-                <option value="lost" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Extraviado</option>
-              </select>
-            </div>
-
-          </div> */}
         </div>
 
-        {/* LISTADO */}
         {/* LISTADO DE UNIFORMES ASIGNADOS */}
         {myUniformAssignments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myUniformAssignments.map((item: StudentUniform) => (
-              <div
-                key={item.id}
-                className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
-              >
-                {/* Cabecera de la tarjeta */}
-                <div className="p-5 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-questrial text-[9px] text-gray-400 block uppercase tracking-wider">
-                        Estudiante: {item.client?.type == "student" ? `${item.client.firstName} ${item.client.lastName}` : "No especificado"}
-                      </span>
-                      <h3 className="font-anton text-gray-800 text-base tracking-wide mt-0.5">
-                        {item.uniform?.name || "Uniforme sin nombre"}
-                      </h3>
-                    </div>
-                    <div className="flex items-center">
-                      {item.status && (
-                        <span className={`font-questrial text-[10px] px-2.5 py-0.5 font-bold capitalize shrink-0 ${item.status === 'ASSIGNED' || item.status === 'DELIVERED'
-                          ? 'bg-purple-100 text-[#5e0472]'
-                          : item.status === 'RETURNED'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-amber-100 text-amber-700'
-                          }`}>
-                          {item.status}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Sub-métricas del uniforme */}
-                  <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
-                    <div className="bg-slate-50 p-2">
-                      <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                        Talla Asignada
-                      </p>
-                      <p className="text-xs font-questrial font-bold text-gray-700">
-                        {item.assignedSize || "Sin talla"}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-50 p-2">
-                      <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                        Asignado El
-                      </p>
-                      <p className="text-xs font-questrial font-bold text-gray-700">
-                        {item.assignedAt ? new Date(item.assignedAt).toLocaleDateString() : 'Sin fecha'}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-50 p-2">
-                      <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                        Devuelto El
-                      </p>
-                      <p className="text-xs font-questrial font-bold text-gray-700">
-                        {item.returnedAt ? new Date(item.returnedAt).toLocaleDateString() : 'Pendiente'}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-50 p-2 col-span-3">
-                      <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                        Observaciones
-                      </p>
-                      <p className="text-xs font-questrial font-bold text-gray-700 truncate">
-                        {item.observations || 'Sin observaciones'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
+              <UniformAssignmentCard key={item.id} item={item} />
             ))}
           </div>
         ) : (

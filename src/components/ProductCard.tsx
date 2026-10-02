@@ -250,7 +250,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     >
                         Eliminar
                     </ActionButton>)}
-                    <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end sm:gap-2">
+                    <div className="flex w-full flex-col lg:flex-row gap-2  sm:justify-end sm:gap-2">
                         {onEdit && (<ActionButton
                             variant="success"
                             icon={Pencil}
