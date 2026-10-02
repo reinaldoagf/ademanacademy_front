@@ -68,5 +68,5 @@ export const CLIENT_PERSONAL_MENU: MenuItem[] = [
     { key: APP_KEYS.MY_PAYMENT_ORDERS, name: 'Mis Órdenes de Pago', href: '/client/payment-orders', icon: Package },
     { key: APP_KEYS.MY_UNIFORMS, name: 'Mis Uniformes', href: '/client/uniforms', icon: Shirt },
     { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star },
-    { key: APP_KEYS.STORE, name: 'Tienda', href: '/client/store', icon: ShoppingBag },
+    { key: APP_KEYS.STORE_PRODUCTS, name: 'Tienda', href: '/client/store', icon: ShoppingBag },
 ];
