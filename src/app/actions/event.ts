@@ -23,7 +23,7 @@ export async function getAllEventsAction(params: FetchEventsParams) {
     }
 }
 
-export async function saveEventAction(formData: EventFormData, id?: string | null) {
+export async function saveEventAction(formData: FormData, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/events/${id}` : `${BACKEND_URL}/events`;
         const headers = await getAuthHeaders();

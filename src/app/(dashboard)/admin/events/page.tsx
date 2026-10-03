@@ -1,7 +1,7 @@
-// src/app/(dashboard)/events/page.tsx
+// src/app/(dashboard)/admin/events/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect, FormEvent } from "react";
+import { useState, useTransition, useEffect, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -21,14 +21,15 @@ import {
   UserCheck,
   Ticket,
   ListStart,
-  Clock
+  Clock,
+  ImageIcon
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { FeedbackAlert } from "@/components/ui/FeedbackAlert";
-import { TextInput, TextArea, SelectInput, DateInput, SearchInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, DateInput, SearchInput, ImageGalleryPicker } from '@/components/ui/forms';
 import DatePipe from "@/components/pipes/DatePipe";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 // Importar el mapa asegurando que solo se cargue en el cliente
@@ -50,14 +51,18 @@ import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
-  code: "",
   name: "",
-  type: "sample", // Coincide con EventType.sample en tu Schema Prisma
-  startDate: new Date().toISOString().split("T")[0], // YYYY-MM-DD
-  endDate: new Date().toISOString().split("T")[0],   // YYYY-MM-DD
-  productionStatus: "planning", // Coincide con ProductionStatus.planning
+  type: "sample",
+  productionStatus: "planning",
+  startDate: "",
+  endDate: "",
   description: "",
   seatingMapId: "",
+  isPresaleActive: false,
+  presaleStartDate: "",
+  presaleEndDate: "",
+  images: [],
+  sponsors: [],
 };
 export default function AdminEventsPage() {
   const setBadge = useSidebarStore((state) => state.setBadge);
@@ -82,6 +87,8 @@ export default function AdminEventsPage() {
     closeModal: closeFeedbackAlertModal
   } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState("all");
@@ -161,6 +168,7 @@ export default function AdminEventsPage() {
         setFormData(initialFormState);
         setEditingId(null);
         setErrorMsg(null);
+        setNewFiles([]);
         openModalForm()
       },
       icon: <Plus className="w-4 h-4" />,
@@ -175,12 +183,87 @@ export default function AdminEventsPage() {
   const eventosProximos = 0;
   // 5. Limpiar o resetear el formulario al cerrar el modal o al terminar de guardar
 
+  // Manejo de cambio de campos de texto/select
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
+  // 🎯 Manejador para Selección de Imágenes
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...selectedFiles],
+      }));
+
+      // Generar Vistas Previas de las imágenes
+      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  // Eliminar imagen seleccionada antes de guardar
+  const removeImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // 🎯 Gestión Dinámica de Patrocinadores
+  const addSponsor = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sponsors: [
+        ...prev.sponsors,
+        { name: "", logoUrl: "", tier: "silver", websiteUrl: "", socialLinks: { instagram: "", twitter: "" } },
+      ],
+    }));
+  };
+
+  const updateSponsor = (index: number, field: string, value: any) => {
+    setFormData((prev) => {
+      const updatedSponsors = [...prev.sponsors];
+      if (field.startsWith("social.")) {
+        const socialField = field.split(".")[1];
+        updatedSponsors[index] = {
+          ...updatedSponsors[index],
+          socialLinks: {
+            ...updatedSponsors[index].socialLinks,
+            [socialField]: value,
+          },
+        };
+      } else {
+        updatedSponsors[index] = {
+          ...updatedSponsors[index],
+          [field]: value,
+        };
+      }
+      return { ...prev, sponsors: updatedSponsors };
+    });
+  };
+
+  const removeSponsor = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sponsors: prev.sponsors.filter((_, i) => i !== index),
+    }));
+  };
   // 6. Cargar datos cuando entras en modo edición
-  const openEditModal = (eventToEdit: EventFormData & { id: string }) => {
+  const openEditModal = (eventToEdit: EventData) => {
+    if (!eventToEdit.id) return;
     setEditingId(eventToEdit.id);
     setFormData({
-      code: eventToEdit.code || "",
       name: eventToEdit.name || "",
       type: eventToEdit.type || "sample",
       startDate: eventToEdit.startDate
@@ -192,60 +275,95 @@ export default function AdminEventsPage() {
       productionStatus: eventToEdit.productionStatus || "planning",
       description: eventToEdit.description || "",
       seatingMapId: eventToEdit.seatingMapId || "",
+      isPresaleActive: eventToEdit.isPresaleActive || false,
+      presaleStartDate: eventToEdit.presaleStartDate
+        ? new Date(eventToEdit.presaleStartDate).toISOString().split("T")[0]
+        : "",
+      presaleEndDate: eventToEdit.presaleEndDate
+        ? new Date(eventToEdit.presaleEndDate).toISOString().split("T")[0]
+        : "",
+      images: [],
+      sponsors: eventToEdit.sponsors || [],
     });
     openModalForm();
   };
+  // 🎯 Manejo del Envío del Formulario
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    // 1. Validaciones preventivas en el cliente para Eventos
+    // 1. Validaciones preventivas
     if (!formData.name.trim()) {
       setErrorMsg("El nombre del evento es obligatorio.");
-      return;
-    }
-
-    if (!formData.seatingMapId.trim()) {
-      setErrorMsg("El mapa de asientos es obligatorio.");
       return;
     }
     if (!formData.startDate) {
       setErrorMsg("La fecha de inicio es obligatoria.");
       return;
     }
-
     if (!formData.endDate) {
       setErrorMsg("La fecha de fin es obligatoria.");
       return;
     }
-
-    // Validación de orden de fechas
     if (new Date(formData.endDate) < new Date(formData.startDate)) {
       setErrorMsg("La fecha de fin no puede ser anterior a la fecha de inicio.");
       return;
     }
 
+    // Validaciones de Preventa si está activa
+    if (formData.isPresaleActive) {
+      if (!formData.presaleStartDate || !formData.presaleEndDate) {
+        setErrorMsg("Debes especificar el inicio y fin de la preventa.");
+        return;
+      }
+      if (new Date(formData.presaleEndDate) < new Date(formData.presaleStartDate)) {
+        setErrorMsg("La fecha de fin de preventa no puede ser anterior al inicio.");
+        return;
+      }
+    }
 
+    // 2. Preparar FormData para enviar archivos e información multipart
+    const bodyPayload = new FormData();
+    bodyPayload.append("name", formData.name);
+    bodyPayload.append("type", formData.type);
+    bodyPayload.append("productionStatus", formData.productionStatus);
+    bodyPayload.append("startDate", formData.startDate);
+    bodyPayload.append("endDate", formData.endDate);
+    bodyPayload.append("description", formData.description || "");
+    bodyPayload.append("seatingMapId", formData.seatingMapId);
+    bodyPayload.append("isPresaleActive", String(formData.isPresaleActive));
 
+    if (formData.isPresaleActive) {
+      bodyPayload.append("presaleStartDate", formData.presaleStartDate);
+      bodyPayload.append("presaleEndDate", formData.presaleEndDate);
+    }
+
+    // Adjuntar Sponsors como JSON Stringified
+    if (formData.sponsors.length > 0) {
+      bodyPayload.append("sponsors", JSON.stringify(formData.sponsors));
+    }
+
+    // Adjuntar Archivos de Imágenes
+    formData.images.forEach((file) => {
+      bodyPayload.append("images", file);
+    });
 
     try {
-      startTransition(async () => {
-        // 🎯 Acción de servidor / API para guardar el evento (crear o actualizar)
-        const res = await saveEventAction(formData, editingId);
+      // 🎯 Llamada a Server Action o API Endpoint pasándole el FormData
+      const res = await saveEventAction(bodyPayload, editingId);
 
-        if (!res.success) {
-          setErrorMsg(res.error || "Ocurrió un error al guardar el evento.");
-          return;
-        }
+      if (!res.success) {
+        setErrorMsg(res.error || "Ocurrió un error al guardar el evento.");
+        return;
+      }
 
-        toast.success(
-          editingId
-            ? "Evento actualizado correctamente"
-            : "Evento registrado con éxito"
-        );
-        fetchData(currentPage, itemsPerPage);
-        closeModalForm();
-      });
+      toast.success(
+        editingId
+          ? "Evento actualizado correctamente"
+          : "Evento registrado con éxito"
+      );
+      fetchData(currentPage, itemsPerPage);
+      closeModalForm();
     } catch (error: any) {
       console.error("Error detectado en handleSave (Events):", error);
       setErrorMsg(
@@ -254,7 +372,7 @@ export default function AdminEventsPage() {
       );
     }
   };
-  const handleInputChange = (
+  /* const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = e.target;
@@ -263,7 +381,7 @@ export default function AdminEventsPage() {
       ...prev,
       [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
     }));
-  };
+  }; */
   const handleCopyPaymentOrderLink = async (paymentOrderId: string) => {
     const link = `${window.location.origin}/client/payment-orders/${paymentOrderId}`;
 
@@ -507,13 +625,6 @@ export default function AdminEventsPage() {
                         bg: 'bg-amber-50 text-amber-700 border-amber-200/80',
                         dot: 'bg-amber-500',
                       };
-                    case 'in_production':
-                    case 'en_produccion':
-                      return {
-                        label: 'En Producción',
-                        bg: 'bg-purple-50 text-[#5e0472] border-purple-200/80',
-                        dot: 'bg-purple-600',
-                      };
                     case 'published':
                     case 'publicado':
                       return {
@@ -577,13 +688,6 @@ export default function AdminEventsPage() {
                       {/* Sub-métricas vectoriales del plano */}
                       <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
                         <div className="bg-slate-50 p-2">
-                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                            Código
-                          </p>
-                          <p className="text-xs font-questrial font-bold text-gray-700">
-                            {event.code || 'Sin código'}
-                          </p>
-                        </div><div className="bg-slate-50 p-2">
                           <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
                             Ubicación
                           </p>
@@ -676,7 +780,7 @@ export default function AdminEventsPage() {
                           variant="success"
                           icon={Pencil}
                           tooltip="Editar"
-                          onClick={() => openEditModal(event as EventFormData & { id: string })}
+                          onClick={() => openEditModal(event)}
                         >
                           Editar
                         </ActionButton>
@@ -925,7 +1029,7 @@ export default function AdminEventsPage() {
         isOpen={isOpenModalForm}
         onClose={closeModalForm}
         title={editingId ? "Actualizar Evento" : "Registrar Evento"}
-        size={"lg"}
+        size={"xl"}
       ><>
           {/* Formulario */}
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin">
@@ -936,29 +1040,17 @@ export default function AdminEventsPage() {
             )}
 
             {/* Fila 1: Código (Opcional) y Nombre (Requerido) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <TextInput
-                label="Código (Opcional)"
-                name="code" // 👈 Necesario si handleInputChange usa e.target.name
-                required
-                type="text"
-                value={formData.code || ""}
-                placeholder="Ej: Maria Paula"
-                onChange={handleInputChange}
-              />
-              <div className="md:col-span-2">
-                <TextInput
-                  label="Nombre del Evento *"
-                  name="name" // 👈 Necesario si handleInputChange usa e.target.name
-                  required
-                  type="text"
-                  value={formData.name || ""}
-                  placeholder="Ej: Muestra Anual de Danza"
-                  onChange={handleInputChange}
-                />
 
-              </div>
-            </div>
+            <TextInput
+              label="Nombre del Evento *"
+              name="name" // 👈 Necesario si handleInputChange usa e.target.name
+              required
+              type="text"
+              value={formData.name || ""}
+              placeholder="Ej: Muestra Anual de Danza"
+              onChange={handleInputChange}
+            />
+
             <SelectInput
               label="Mapa de Asiento"
               name="seatingMapId"
@@ -996,8 +1088,8 @@ export default function AdminEventsPage() {
                 onChange={handleInputChange}
                 options={[
                   { label: "Selecciona el Estado de Producción", value: "", disabled: true },
+                  { label: "Planificación", value: "planning", },
                   { label: "Ensayos Generales", value: "essays", },
-                  { label: "En Producción", value: "in_production", },
                   { label: "Agotado", value: "sold_out", },
                   { label: "Completado", value: "completed", },
                   { label: "Cancelado", value: "cancelled", },
@@ -1025,7 +1117,150 @@ export default function AdminEventsPage() {
 
             </div>
 
+            {/* 🎯 SECCIÓN: PREVENTA DE ENTRADAS */}
+            <div className="bg-purple-50/50 p-3 rounded-md border border-purple-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-purple-900 cursor-pointer flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="isPresaleActive"
+                    checked={formData.isPresaleActive}
+                    onChange={handleInputChange}
+                    className="accent-purple-700 w-4 h-4 rounded cursor-pointer"
+                  />
+                  Habilitar Preventa de Entradas
+                </label>
+              </div>
 
+              {formData.isPresaleActive && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <DateInput
+                    label="Inicio de Preventa *"
+                    name="presaleStartDate"
+                    value={formData.presaleStartDate || ""}
+                    onChange={(val) => setFormData({ ...formData, presaleStartDate: val })}
+                  />
+                  <DateInput
+                    label="Fin de Preventa *"
+                    name="presaleEndDate"
+                    value={formData.presaleEndDate || ""}
+                    onChange={(val) => setFormData({ ...formData, presaleEndDate: val })}
+                  />
+                </div>
+              )}
+            </div>
+            {/* 🎯 SECCIÓN: IMÁGENES DEL EVENTO */}
+            <ImageGalleryPicker
+              label="Imágenes del Evento (Flyers, Banners, Galería)"
+              existingImages={imagePreviews || []}
+              onRemoveExistingImage={removeImage}
+              files={newFiles}
+              onFilesChange={setNewFiles}
+              buttonText="Añadir foto"
+            />
+            {/* <div className="space-y-2">
+              <label className="block font-medium text-gray-700"></label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition text-gray-700 text-xs font-medium">
+                  <ImageIcon size={16} />
+                  Seleccionar Imágenes
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/webp"
+                    multiple
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-gray-400 text-[11px]">Formatos: JPG, PNG, WEBP</span>
+              </div>
+
+              {/.* Vista previa de imágenes *./}
+              {imagePreviews.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {imagePreviews.map((src, index) => (
+                    <div key={index} className="relative w-16 h-16 rounded border overflow-hidden group">
+                      <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div> */}
+
+            {/* 🎯 SECCIÓN: MARCAS PATROCINANTES */}
+            <div className="space-y-3 border-t border-gray-100 pt-3">
+              <div className="flex justify-between items-center">
+                <label className="font-semibold text-gray-800">Marcas Patrocinantes (Opcional)</label>
+                <button
+                  type="button"
+                  onClick={addSponsor}
+                  className="flex items-center gap-1 text-xs text-purple-700 hover:text-purple-900 font-medium"
+                >
+                  <Plus size={14} /> Agregar Patrocinador
+                </button>
+              </div>
+
+              {formData.sponsors.map((sponsor, index) => (
+                <div key={index} className="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-2 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeSponsor(index)}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <TextInput
+                      label="Nombre Patrocinador"
+                      value={sponsor.name}
+                      onChange={(e) => updateSponsor(index, "name", e.target.value)}
+                      placeholder="Ej: Banco Nacional"
+                    />
+                    <TextInput
+                      label="URL del Logo"
+                      value={sponsor.logoUrl}
+                      onChange={(e) => updateSponsor(index, "logoUrl", e.target.value)}
+                      placeholder="https://..."
+                    />
+                    <SelectInput
+                      label="Nivel (Tier)"
+                      value={sponsor.tier}
+                      onChange={(e) => updateSponsor(index, "tier", e.target.value)}
+                      options={[
+                        { label: "Principal (Main)", value: "main" },
+                        { label: "Oro (Gold)", value: "gold" },
+                        { label: "Plata (Silver)", value: "silver" },
+                        { label: "Bronce (Bronze)", value: "bronze" },
+                      ]}
+                    />
+                  </div>
+
+                  {/* Redes Sociales del Patrocinador */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                    <TextInput
+                      label="Sitio Web"
+                      value={sponsor.websiteUrl || ""}
+                      onChange={(e) => updateSponsor(index, "websiteUrl", e.target.value)}
+                      placeholder="https://marca.com"
+                    />
+                    <TextInput
+                      label="Instagram"
+                      value={sponsor.socialLinks?.instagram || ""}
+                      onChange={(e) => updateSponsor(index, "social.instagram", e.target.value)}
+                      placeholder="@marca"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
             {/* Fila 4: Descripción */}
             <TextArea
               label="Descripción (Opcional)"
