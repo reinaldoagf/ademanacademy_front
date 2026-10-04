@@ -10,60 +10,11 @@ export async function saveProductAction(payload: SaveProductPayload, id?: string
         const url = id ? `${BACKEND_URL}/products/${id}` : `${BACKEND_URL}/products`;
         const headers = await getAuthHeaders();
 
-        const apiFormData = new FormData();
-
-        // Campos de texto y numéricos
-        apiFormData.append('name', payload.name.trim());
-        apiFormData.append('description', payload.description || '');
-        apiFormData.append('salePrice', `${payload.salePrice ?? 0}`);
-        apiFormData.append('cost', `${payload.cost ?? 0}`);
-        apiFormData.append('currentStock', `${payload.currentStock ?? 1}`);
-        apiFormData.append('minimumStockAlert', `${payload.minimumStockAlert ?? 1}`);
-
-        // Booleano enviado explícitamente como string 'true' o 'false'
-        apiFormData.append('isActive', payload.isActive ? 'true' : 'false');
-
-        // Solo adjuntar categoryId si contiene un valor válido (no "")
-        if (payload.categoryId && payload.categoryId.trim() !== '') {
-            apiFormData.append('categoryId', payload.categoryId);
-        }
-
-        // Procesar imágenes existentes
-        if (id && payload.existingImages && payload.existingImages.length > 0) {
-            const cleanBackendUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-
-            const relativeExistingImages = payload.existingImages.map((urlStr) => {
-                if (urlStr.startsWith(cleanBackendUrl)) {
-                    return urlStr.replace(cleanBackendUrl, '');
-                }
-                return urlStr;
-            });
-
-            apiFormData.append('existingImages', JSON.stringify(relativeExistingImages));
-        }
-
-        // Reconstruir archivos binarios desde Base64
-        if (payload.images && payload.images.length > 0) {
-            for (const img of payload.images) {
-                const cleanBase64 = img.base64.replace(/^data:image\/\w+;base64,/, "");
-                const buffer = Buffer.from(cleanBase64, 'base64');
-
-                const fileFromBuffer = new File([buffer], img.name, {
-                    type: img.type || 'image/jpeg'
-                });
-
-                apiFormData.append('images', fileFromBuffer);
-            }
-        }
-
-        const requestHeaders = { ...headers };
-        delete requestHeaders['Content-Type']; // Permite a Axios / FormData establecer el boundary automáticamente
         const response = id
-            ? await axios.patch(url, apiFormData, { headers: requestHeaders })
-            : await axios.post(url, apiFormData, { headers: requestHeaders });
+            ? await axios.patch(url, payload, { headers })
+            : await axios.post(url, payload, { headers });
 
         return { success: true, data: response.data };
-
     } catch (error: any) {
         console.error("Error en saveProductAction:", error?.response?.data || error);
 

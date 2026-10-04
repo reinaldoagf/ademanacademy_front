@@ -8,7 +8,6 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { ProductCard } from "@/components/ProductCard";
 import {
   Search,
-  ImagePlus,
   Plus,
   ShoppingBag,
   PackageCheck,
@@ -16,12 +15,12 @@ import {
   Layers,
   ChevronLeft,
   ChevronRight,
-  X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCartStore } from "@/store/cartStore";
-import { Product, SaveProductPayload } from "@/types/product";
+import { Product, SaveProductPayload, ProductFormData } from "@/types/product";
 import { ProductCategory } from "@/types/product-category";
+import { S3Image } from "@/types/s3-image";
 import { useModal } from "@/hooks/useModal";
 import {
   getAllProductCategoriesAction,
@@ -34,10 +33,11 @@ import {
 } from "@/app/actions/product";
 import { TextInput, TextArea, SelectInput, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { uploadFileToS3 } from "@/helpers/s3";
 import { APP_KEYS } from "@/config/app-keys";
 
 // Estado inicial limpio del formulario para Empleados
-const initialFormState: SaveProductPayload = {
+const initialFormState: ProductFormData = {
   name: "",
   description: "",
   salePrice: 0,
@@ -46,6 +46,7 @@ const initialFormState: SaveProductPayload = {
   minimumStockAlert: 1,
   categoryId: "",
   isActive: true,
+  featured: true,
   images: [],
   existingImages: [],
 };
@@ -62,7 +63,7 @@ export default function ProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // Definición del estado del formulario
-  const [formData, setFormData] = useState<SaveProductPayload>(initialFormState);
+  const [formData, setFormData] = useState<ProductFormData>(initialFormState);
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: "simple" | "word" | "email";
@@ -135,7 +136,7 @@ export default function ProductsPage() {
 
     // 1. Procesamos las imágenes primero
     let imagesParsed: any[] = [];
-    let formattedImages: string[] = [];
+    let formattedImages: S3Image[] = [];
 
     try {
       if (typeof product.images === 'string') {
@@ -146,20 +147,41 @@ export default function ProductsPage() {
 
       const cleanBackendUrl = backendUrl.replace(/\/$/, '');
 
-      formattedImages = imagesParsed
-        .map((img: any) => {
-          const path = typeof img === 'object' && img !== null ? img.url || img.path : img;
+      // 1. Mapeamos y limpiamos las imágenes
+      const mappedImages = imagesParsed
+        .map((img: any): S3Image | null => {
+          if (!img) return null;
+
+          const path = typeof img === 'object' ? img.url || img.path : img;
 
           if (!path || typeof path !== 'string') return null;
 
-          if (path.startsWith('http://') || path.startsWith('https://')) {
-            return path;
-          }
+          const fullUrl =
+            path.startsWith('http://') || path.startsWith('https://')
+              ? path
+              : `${cleanBackendUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
-          const cleanPath = path.startsWith('/') ? path : `/${path}`;
-          return `${cleanBackendUrl}${cleanPath}`;
+          return {
+            url: fullUrl,
+            key: typeof img === 'object' ? img.key || '' : '',
+            altText: typeof img === 'object' ? img.altText || '' : '',
+            type: typeof img === 'object' ? img.type || 'cover' : 'cover',
+            order: typeof img === 'object' ? img.order ?? 0 : 0,
+          };
         })
-        .filter((url): url is string => Boolean(url));
+        .filter((img): img is S3Image => img !== null);
+
+      // 2. DESDUPLICAR mediante un Set basándonos en la identificador único (url o key)
+      const seen = new Set<string>();
+      formattedImages = mappedImages.filter((img) => {
+        const identifier = img.key ? img.key : img.url;
+        if (seen.has(identifier)) {
+          return false; // Es duplicada, la ignoramos
+        }
+        seen.add(identifier);
+        return true;
+      });
+
     } catch (e) {
       console.error("Error al procesar las imágenes del producto:", e);
       formattedImages = [];
@@ -174,6 +196,7 @@ export default function ProductsPage() {
       minimumStockAlert: Number(product.minimumStockAlert) || 0,
       categoryId: product.categoryId ?? (typeof product.category === 'object' ? (product.category as any)?.id : product.category) ?? '',
       isActive: product.isActive ?? true,
+      featured: product.featured ?? true,
       description: product.description ?? '',
       existingImages: formattedImages,
       images: [], // Resetea las nuevas imágenes de cargas anteriores
@@ -195,65 +218,48 @@ export default function ProductsPage() {
     }));
     // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
   };
-  // 📷 Manejador actualizado para cargar y convertir imágenes
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // 🌟 Validación estricta para garantizar que el tipo sea 'string'
-        if (typeof reader.result === "string") {
-          const base64String: string = reader.result;
-
-          setFormData((prev) => ({
-            ...prev,
-            images: [
-              ...(prev.images || []),
-              {
-                name: file.name,
-                type: file.type,
-                base64: base64String, // TypeScript reconoce que es un string estricto
-              },
-            ],
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Manejo de inserción de nuevo salón
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file); // Lee el archivo como Data URL (contiene base64)
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
   // Manejo de inserción de nuevo salón
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     startTransition(async () => {
       try {
-        // 1. Procesar los archivos nuevos cargados localmente a Base64
-        const imagesPromises = newFiles.map(async (file) => {
-          const base64String = await fileToBase64(file);
-          return {
-            name: file.name,
-            type: file.type, // 'image/png', 'image/jpeg', etc.
-            base64: base64String,
-          };
-        });
+        // 1. Subir archivos nuevos a S3
+        const newlyUploadedImages = await Promise.all(
+          newFiles.map((file) => uploadFileToS3(file))
+        );
 
-        const newImagesPayload = await Promise.all(imagesPromises);
-        const payload = {
-          ...formData,
-          images: newImagesPayload, // Nuevas imágenes Base64
+        // 2. Unificar y DESDUPLICAR las imágenes finales
+        const combinedImages: S3Image[] = [
+          ...formData.existingImages,
+          ...newlyUploadedImages,
+        ];
+
+        const seenUrlsOrKeys = new Set<string>();
+        const finalImages = combinedImages.filter((img) => {
+          // Usamos key como identificador prioritario, si no existe usamos url
+          const identifier = img.key && img.key.trim() !== '' ? img.key : img.url;
+
+          if (!identifier || seenUrlsOrKeys.has(identifier)) {
+            return false;
+          }
+          seenUrlsOrKeys.add(identifier);
+          return true;
+        });
+        const payload: SaveProductPayload = {
+          name: formData.name,
+          description: formData.description,
+          salePrice: formData.salePrice,
+          cost: formData.cost,
+          currentStock: formData.currentStock,
+          minimumStockAlert: formData.minimumStockAlert,
+          categoryId: formData.categoryId,
+          featured: formData.featured,
+          isActive: formData.isActive,
+          images: finalImages,
         };
+
         const res = await saveProductAction(payload, editingId);
         if (!res.success) {
           setErrorMsg(res.error || "Ocurrió un error.");
@@ -587,7 +593,7 @@ export default function ProductsPage() {
         isOpen={isOpen}
         onClose={closeModal}
         title={editingId ? "Actualizar Producto" : "Registrar Nuevo Producto"}
-        size={"lg"}
+        size={"2xl"}
       >
         <form
           ref={productFormReference}
@@ -601,15 +607,26 @@ export default function ProductsPage() {
             </p>
           )}
 
-          {/* Toggle de Activación / Visibilidad */}
-          <ToggleSwitch
-            label="Estado del Producto"
-            description={formData.isActive
-              ? "El producto está activo y visible en la tienda"
-              : "El producto está oculto / inactivado"}
-            checked={formData.isActive}
-            onChange={(active) => setFormData({ ...formData, isActive: active })}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Toggle de Activación / Visibilidad */}
+            <ToggleSwitch
+              label="Estado del Producto"
+              description={formData.isActive
+                ? "El producto está activo y visible en la tienda"
+                : "El producto está oculto / inactivado"}
+              checked={formData.isActive}
+              onChange={(active) => setFormData({ ...formData, isActive: active })}
+            />
+
+            <ToggleSwitch
+              label="Destacar producto"
+              description={formData.featured
+                ? "El producto está activo y visible en la tienda"
+                : "El producto está oculto / inactivado"}
+              checked={formData.featured}
+              onChange={(active) => setFormData({ ...formData, featured: active })}
+            />
+          </div>
           {/* Nombre del Producto */}
           <TextInput
             label="Nombre del Producto *"
@@ -717,7 +734,7 @@ export default function ProductsPage() {
             {/* Grid adaptable de imágenes */}
             <ImageGalleryPicker
               label="Fotografías del Producto"
-              existingImages={formData.existingImages || []}
+              existingImages={formData.existingImages.map((e: S3Image) => e.url) || []}
               onRemoveExistingImage={handleRemoveExisting}
               files={newFiles}
               onFilesChange={setNewFiles}

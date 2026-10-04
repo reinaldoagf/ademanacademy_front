@@ -35,7 +35,7 @@ export default function ClientDashboardPage() {
     // Lógica para que el cliente reporte un pago de mensualidad o evento
   };
 
-  const userName = isClient && user ? `${user.firstName[0]} ${user.lastName[0]}` : "Estudiante";
+  const userName = isClient && user ? `${user.firstName} ${user.lastName}` : "Estudiante";
 
   return (
     <>

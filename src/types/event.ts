@@ -1,4 +1,5 @@
 import { SeatingMap } from "./seating-map";
+import { S3Image } from "./s3-image";
 
 export interface EventSeat {
     id: string;
@@ -78,16 +79,8 @@ export interface EventFormData {
     presaleStartDate: string;
     presaleEndDate: string;
     images?: { name: string; type: string; base64: string }[];
-    existingImages: EventImagePayload[];
+    existingImages: S3Image[];
     sponsors: SponsorInput[]; // Lista dinámica de patrocinadores
-}
-
-export interface EventImagePayload {
-    url: string;
-    key: string;
-    altText?: string;
-    type?: string;
-    order?: number;
 }
 
 export interface SaveEventPayload {
@@ -102,5 +95,5 @@ export interface SaveEventPayload {
     presaleStartDate?: string;
     presaleEndDate?: string;
     sponsors?: any[];
-    images: EventImagePayload[];
+    images: S3Image[];
 }

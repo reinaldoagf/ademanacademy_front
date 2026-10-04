@@ -1,5 +1,6 @@
 // /src/types/product.ts
 import { LucideIcon } from "lucide-react";
+import { S3Image } from "./s3-image";
 
 // 📦 Categoria básica para relación desplegable o select
 export interface ProductCategory {
@@ -17,8 +18,9 @@ export interface Product {
     cost: number;
     currentStock: number;
     minimumStockAlert: number;
-    images?: string[];
+    images?: S3Image[];
     isActive: boolean;
+    featured: boolean;
     categoryId?: string | null;
     category?: ProductCategory | null;
     createdAt?: string;
@@ -34,7 +36,20 @@ export interface FetchProductsParams {
     isActive?: string | boolean;
     stockStatus?: 'all' | 'in_stock' | 'out_of_stock';
 }
-
+// Interfaz para el estado del formulario
+export interface ProductFormData {
+    name: string;
+    description?: string;
+    salePrice: number;
+    cost: number;
+    currentStock?: number;
+    minimumStockAlert?: number;
+    categoryId?: string;
+    featured: boolean;
+    isActive: boolean;
+    images: S3Image[];
+    existingImages: S3Image[];
+}
 // 🎯 Payload serializable para Crear / Editar Producto
 export interface SaveProductPayload {
     name: string;
@@ -44,9 +59,9 @@ export interface SaveProductPayload {
     currentStock?: number;
     minimumStockAlert?: number;
     categoryId?: string;
+    featured: boolean;
     isActive: boolean;
-    images?: { name: string; type: string; base64: string }[];
-    existingImages?: string[];
+    images: S3Image[];
 }
 
 // 📊 Respuesta Paginada del Servidor

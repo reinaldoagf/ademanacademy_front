@@ -39,14 +39,16 @@ const CanvasSeatingMap = dynamic(
 );
 
 import { useModal } from "@/hooks/useModal";
-import { saveEventAction, getAllEventsAction, deleteEventAction, getPresignedUrlAction } from "@/app/actions/event";
+import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/actions/event";
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
-import { EventData, EventFormData, EventImagePayload, SaveEventPayload } from "@/types/event";
+import { EventData, EventFormData, SaveEventPayload } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 import { Client } from "@/types/client";
+import { S3Image } from "@/types/s3-image";
 import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
 import { getAllClientsAction } from "@/app/actions/client";
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { uploadFileToS3 } from "@/helpers/s3";
 import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Valores por defecto para crear un evento nuevo
@@ -253,7 +255,7 @@ export default function AdminEventsPage() {
     setErrorMsg(null);
 
     let imagesParsed: any[] = [];
-    let formattedImages: EventImagePayload[] = [];
+    let formattedImages: S3Image[] = [];
 
     try {
       if (typeof eventToEdit.images === 'string') {
@@ -266,7 +268,7 @@ export default function AdminEventsPage() {
 
       // 1. Mapeamos y limpiamos las imágenes
       const mappedImages = imagesParsed
-        .map((img: any): EventImagePayload | null => {
+        .map((img: any): S3Image | null => {
           if (!img) return null;
 
           const path = typeof img === 'object' ? img.url || img.path : img;
@@ -286,7 +288,7 @@ export default function AdminEventsPage() {
             order: typeof img === 'object' ? img.order ?? 0 : 0,
           };
         })
-        .filter((img): img is EventImagePayload => img !== null);
+        .filter((img): img is S3Image => img !== null);
 
       // 2. DESDUPLICAR mediante un Set basándonos en la identificador único (url o key)
       const seen = new Set<string>();
@@ -336,24 +338,7 @@ export default function AdminEventsPage() {
     const d = new Date(dateStr);
     return d instanceof Date && !isNaN(d.getTime());
   };
-  // 🎯 Manejo del Envío del Formulario
-  const uploadFileToS3 = async (file: File): Promise<{ url: string; key: string }> => {
-    const presignedRes = await getPresignedUrlAction(file.type);
-    if (!presignedRes.success) throw new Error(presignedRes.error);
 
-    const { uploadUrl, fileUrl, key } = presignedRes.data;
-
-    // Carga binaria limpia vía HTTP PUT directo
-    const uploadResponse = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-
-    if (!uploadResponse.ok) throw new Error("Error al subir archivo a S3");
-
-    return { url: fileUrl, key };
-  };
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -369,7 +354,7 @@ export default function AdminEventsPage() {
       );
 
       // 2. Unificar y DESDUPLICAR las imágenes finales
-      const combinedImages: EventImagePayload[] = [
+      const combinedImages: S3Image[] = [
         ...formData.existingImages,
         ...newlyUploadedImages,
       ];
@@ -1195,7 +1180,7 @@ export default function AdminEventsPage() {
             {/* 🎯 SECCIÓN: IMÁGENES DEL EVENTO */}
             <ImageGalleryPicker
               label="Imágenes del Evento (Flyers, Banners, Galería)"
-              existingImages={formData.existingImages.map((e: EventImagePayload) => e.url) || []}
+              existingImages={formData.existingImages.map((e: S3Image) => e.url) || []}
               onRemoveExistingImage={removeImage}
               files={newFiles}
               onFilesChange={setNewFiles}

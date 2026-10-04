@@ -22,19 +22,7 @@ export async function getAllEventsAction(params: FetchEventsParams) {
         };
     }
 }
-export async function getPresignedUrlAction(fileType: string) {
-    try {
-        const headers = await getAuthHeaders();
-        const response = await axios.post(
-            `${BACKEND_URL}/events/presigned-url`,
-            { fileType },
-            { headers }
-        );
-        return { success: true, data: response.data };
-    } catch (error: any) {
-        return { success: false, error: "No se pudo obtener la URL de subida." };
-    }
-}
+
 export async function saveEventAction(payload: SaveEventPayload, id?: string | null) {
     try {
         const url = id ? `${BACKEND_URL}/events/${id}` : `${BACKEND_URL}/events`;

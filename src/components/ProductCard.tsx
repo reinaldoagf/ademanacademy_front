@@ -3,7 +3,7 @@ import { TrendingUp, Pencil, Trash2, ChevronLeft, ChevronRight, Image as ImageIc
 import { ActionButton } from "@/components/ui/ActionButton";
 import { Product } from "@/types/product";
 import { useCartStore } from "@/store/cartStore";
-
+import { S3Image } from "@/types/s3-image";
 interface ProductCardProps {
     product: Product;
     backendUrl: string;
@@ -44,14 +44,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const availableStock = (product.currentStock ?? 0) - currentInCart;
     const isOutOfStock = availableStock <= 0;
     // Procesamiento de URLs de imágenes
-    const formattedImages = (product.images || [])
-        .map((img) => {
-            if (!img) return null;
-            return img.startsWith('http')
-                ? img
-                : `${backendUrl.replace(/\/$/, '')}/${img.replace(/^\//, '')}`;
-        })
-        .filter((img): img is string => img !== null);
+    const formattedImages: S3Image[] = (product.images || [])
 
     const hasImages = formattedImages.length > 0;
 
@@ -110,7 +103,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     {hasImages ? (
                         <>
                             <img
-                                src={formattedImages[currentImageIndex]}
+                                src={formattedImages[currentImageIndex].url}
                                 alt={`${product.name} - ${currentImageIndex + 1}`}
                                 className="w-full h-full object-cover transition-all duration-300"
                             />
