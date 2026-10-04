@@ -32,6 +32,7 @@ export interface EventData {
     ticketsSold?: number;
     totalTickets?: number;
     ticketPrice?: number;
+    publishToHome: boolean;
     productionStatus: string;
     seatingMapId?: string;
     seatingMap?: SeatingMap;
@@ -72,9 +73,34 @@ export interface EventFormData {
     description: string;
     seatingMapId: string;
     // 🎯 Campos Nuevos
+    publishToHome: boolean;
     isPresaleActive: boolean;
     presaleStartDate: string;
     presaleEndDate: string;
-    images: File[]; // Para almacenar los archivos seleccionados
+    images?: { name: string; type: string; base64: string }[];
+    existingImages: EventImagePayload[];
     sponsors: SponsorInput[]; // Lista dinámica de patrocinadores
+}
+
+export interface EventImagePayload {
+    url: string;
+    key: string;
+    altText?: string;
+    type?: string;
+    order?: number;
+}
+
+export interface SaveEventPayload {
+    name: string;
+    type: string;
+    productionStatus: string;
+    startDate: string;
+    endDate: string;
+    description?: string;
+    seatingMapId?: string;
+    isPresaleActive: boolean;
+    presaleStartDate?: string;
+    presaleEndDate?: string;
+    sponsors?: any[];
+    images: EventImagePayload[];
 }

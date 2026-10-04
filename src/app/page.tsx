@@ -1,7 +1,7 @@
 // src/app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
+import EventsCarouselSection from "@/components/home/EventsCarouselSection";
+import { getHomeEvents } from "@/app/actions/event";
 // --- DATOS DE LOS SLIDES ---
 const SLIDES = [
   {
@@ -41,8 +42,19 @@ const SLIDES = [
 export default function LandingPage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
-
+  const [homeEvents, setHomeEvents] = useState([]);
+  const [isPending, startTransition] = useTransition();
+  // 🎯 Consulta de datos desde el Server Component
+  const fetchData = () => {
+    startTransition(async () => {
+      const res: any = await getHomeEvents();
+      if (res.success && res.data) {
+        setHomeEvents(res.data || [])
+      }
+    });
+  };
   useEffect(() => {
+    fetchData();
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
     }, 6000);
@@ -200,7 +212,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
+      {/* 🎯 NUEVA SECCIÓN DE EVENTOS EN CARRUSEL */}
+      {homeEvents.length > 0 && <EventsCarouselSection events={homeEvents} />}
       {/* --- SECCIÓN: DISCIPLINAS --- */}
       <section id="disciplinas" className="py-24 bg-neutral-50 px-6 md:px-12">
         <div className="max-w-7xl mx-auto">

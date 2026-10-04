@@ -167,7 +167,6 @@ export default function StudentsPage() {
         setStudents(res.data);
         setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
         if (res.meta?.totalItems !== undefined) {
-          console.log({ res, key: APP_KEYS.STUDENTS })
           setBadge(APP_KEYS.STUDENTS, res.meta.totalItems);
         }
       }

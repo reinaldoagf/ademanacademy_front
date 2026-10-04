@@ -39,9 +39,9 @@ const CanvasSeatingMap = dynamic(
 );
 
 import { useModal } from "@/hooks/useModal";
-import { saveEventAction, getAllEventsAction, deleteEventAction } from "@/app/actions/event";
+import { saveEventAction, getAllEventsAction, deleteEventAction, getPresignedUrlAction } from "@/app/actions/event";
 import { getAllSeatingMapsAction } from "@/app/actions/seating-map";
-import { EventData, EventFormData } from "@/types/event";
+import { EventData, EventFormData, EventImagePayload, SaveEventPayload } from "@/types/event";
 import { SeatingMap, SeatingMapElement } from "@/types/seating-map";
 import { Client } from "@/types/client";
 import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
@@ -58,13 +58,16 @@ const initialFormState: EventFormData = {
   endDate: "",
   description: "",
   seatingMapId: "",
+  publishToHome: true,
   isPresaleActive: false,
   presaleStartDate: "",
   presaleEndDate: "",
   images: [],
+  existingImages: [],
   sponsors: [],
 };
 export default function AdminEventsPage() {
+  const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
   const setBadge = useSidebarStore((state) => state.setBadge);
   const router = useRouter();
   // --- ESTADOS PARA BÚSQUEDA DE grupos ---
@@ -87,7 +90,6 @@ export default function AdminEventsPage() {
     closeModal: closeFeedbackAlertModal
   } = useModal();
   const [formData, setFormData] = useState<EventFormData>(initialFormState);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -196,28 +198,12 @@ export default function AdminEventsPage() {
     }
   };
 
-  // 🎯 Manejador para Selección de Imágenes
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...selectedFiles],
-      }));
-
-      // Generar Vistas Previas de las imágenes
-      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
-    }
-  };
-
   // Eliminar imagen seleccionada antes de guardar
   const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index),
+      existingImages: prev.existingImages?.filter((_, i) => i !== index),
     }));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   // 🎯 Gestión Dinámica de Patrocinadores
@@ -263,6 +249,61 @@ export default function AdminEventsPage() {
   const openEditModal = (eventToEdit: EventData) => {
     if (!eventToEdit.id) return;
     setEditingId(eventToEdit.id);
+    setNewFiles([]);
+    setErrorMsg(null);
+
+    let imagesParsed: any[] = [];
+    let formattedImages: EventImagePayload[] = [];
+
+    try {
+      if (typeof eventToEdit.images === 'string') {
+        imagesParsed = JSON.parse(eventToEdit.images);
+      } else if (Array.isArray(eventToEdit.images)) {
+        imagesParsed = eventToEdit.images;
+      }
+
+      const cleanBackendUrl = backendUrl.replace(/\/$/, '');
+
+      // 1. Mapeamos y limpiamos las imágenes
+      const mappedImages = imagesParsed
+        .map((img: any): EventImagePayload | null => {
+          if (!img) return null;
+
+          const path = typeof img === 'object' ? img.url || img.path : img;
+
+          if (!path || typeof path !== 'string') return null;
+
+          const fullUrl =
+            path.startsWith('http://') || path.startsWith('https://')
+              ? path
+              : `${cleanBackendUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
+          return {
+            url: fullUrl,
+            key: typeof img === 'object' ? img.key || '' : '',
+            altText: typeof img === 'object' ? img.altText || '' : '',
+            type: typeof img === 'object' ? img.type || 'cover' : 'cover',
+            order: typeof img === 'object' ? img.order ?? 0 : 0,
+          };
+        })
+        .filter((img): img is EventImagePayload => img !== null);
+
+      // 2. DESDUPLICAR mediante un Set basándonos en la identificador único (url o key)
+      const seen = new Set<string>();
+      formattedImages = mappedImages.filter((img) => {
+        const identifier = img.key ? img.key : img.url;
+        if (seen.has(identifier)) {
+          return false; // Es duplicada, la ignoramos
+        }
+        seen.add(identifier);
+        return true;
+      });
+
+    } catch (e) {
+      console.error("Error al procesar las imágenes del producto:", e);
+      formattedImages = [];
+    }
+
     setFormData({
       name: eventToEdit.name || "",
       type: eventToEdit.type || "sample",
@@ -273,6 +314,7 @@ export default function AdminEventsPage() {
         ? new Date(eventToEdit.endDate).toISOString().split("T")[0]
         : "",
       productionStatus: eventToEdit.productionStatus || "planning",
+      publishToHome: eventToEdit.publishToHome ?? true,
       description: eventToEdit.description || "",
       seatingMapId: eventToEdit.seatingMapId || "",
       isPresaleActive: eventToEdit.isPresaleActive || false,
@@ -282,106 +324,109 @@ export default function AdminEventsPage() {
       presaleEndDate: eventToEdit.presaleEndDate
         ? new Date(eventToEdit.presaleEndDate).toISOString().split("T")[0]
         : "",
+      existingImages: formattedImages,
       images: [],
       sponsors: eventToEdit.sponsors || [],
     });
+
     openModalForm();
   };
+
+  const isValidDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d instanceof Date && !isNaN(d.getTime());
+  };
   // 🎯 Manejo del Envío del Formulario
+  const uploadFileToS3 = async (file: File): Promise<{ url: string; key: string }> => {
+    const presignedRes = await getPresignedUrlAction(file.type);
+    if (!presignedRes.success) throw new Error(presignedRes.error);
+
+    const { uploadUrl, fileUrl, key } = presignedRes.data;
+
+    // Carga binaria limpia vía HTTP PUT directo
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) throw new Error("Error al subir archivo a S3");
+
+    return { url: fileUrl, key };
+  };
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    // 1. Validaciones preventivas
-    if (!formData.name.trim()) {
-      setErrorMsg("El nombre del evento es obligatorio.");
-      return;
-    }
-    if (!formData.startDate) {
-      setErrorMsg("La fecha de inicio es obligatoria.");
-      return;
-    }
-    if (!formData.endDate) {
-      setErrorMsg("La fecha de fin es obligatoria.");
-      return;
-    }
-    if (new Date(formData.endDate) < new Date(formData.startDate)) {
-      setErrorMsg("La fecha de fin no puede ser anterior a la fecha de inicio.");
-      return;
-    }
-
-    // Validaciones de Preventa si está activa
-    if (formData.isPresaleActive) {
-      if (!formData.presaleStartDate || !formData.presaleEndDate) {
-        setErrorMsg("Debes especificar el inicio y fin de la preventa.");
-        return;
-      }
-      if (new Date(formData.presaleEndDate) < new Date(formData.presaleStartDate)) {
-        setErrorMsg("La fecha de fin de preventa no puede ser anterior al inicio.");
-        return;
-      }
-    }
-
-    // 2. Preparar FormData para enviar archivos e información multipart
-    const bodyPayload = new FormData();
-    bodyPayload.append("name", formData.name);
-    bodyPayload.append("type", formData.type);
-    bodyPayload.append("productionStatus", formData.productionStatus);
-    bodyPayload.append("startDate", formData.startDate);
-    bodyPayload.append("endDate", formData.endDate);
-    bodyPayload.append("description", formData.description || "");
-    bodyPayload.append("seatingMapId", formData.seatingMapId);
-    bodyPayload.append("isPresaleActive", String(formData.isPresaleActive));
-
-    if (formData.isPresaleActive) {
-      bodyPayload.append("presaleStartDate", formData.presaleStartDate);
-      bodyPayload.append("presaleEndDate", formData.presaleEndDate);
-    }
-
-    // Adjuntar Sponsors como JSON Stringified
-    if (formData.sponsors.length > 0) {
-      bodyPayload.append("sponsors", JSON.stringify(formData.sponsors));
-    }
-
-    // Adjuntar Archivos de Imágenes
-    formData.images.forEach((file) => {
-      bodyPayload.append("images", file);
-    });
+    if (!formData.name.trim()) return setErrorMsg("El nombre del evento es obligatorio.");
+    if (!formData.startDate || !isValidDate(formData.startDate)) return setErrorMsg("Fecha de inicio no válida.");
+    if (!formData.endDate || !isValidDate(formData.endDate)) return setErrorMsg("Fecha de fin no válida.");
 
     try {
-      // 🎯 Llamada a Server Action o API Endpoint pasándole el FormData
-      const res = await saveEventAction(bodyPayload, editingId);
+      // 1. Subir archivos nuevos a S3
+      const newlyUploadedImages = await Promise.all(
+        newFiles.map((file) => uploadFileToS3(file))
+      );
+
+      // 2. Unificar y DESDUPLICAR las imágenes finales
+      const combinedImages: EventImagePayload[] = [
+        ...formData.existingImages,
+        ...newlyUploadedImages,
+      ];
+
+      const seenUrlsOrKeys = new Set<string>();
+      const finalImages = combinedImages.filter((img) => {
+        // Usamos key como identificador prioritario, si no existe usamos url
+        const identifier = img.key && img.key.trim() !== '' ? img.key : img.url;
+
+        if (!identifier || seenUrlsOrKeys.has(identifier)) {
+          return false;
+        }
+        seenUrlsOrKeys.add(identifier);
+        return true;
+      });
+
+      // 3. Crear el Payload
+      const payload: SaveEventPayload = {
+        name: formData.name,
+        type: formData.type,
+        productionStatus: formData.productionStatus,
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+        description: formData.description || "",
+        seatingMapId: formData.seatingMapId || undefined,
+        isPresaleActive: formData.isPresaleActive,
+        presaleStartDate: formData.isPresaleActive && formData.presaleStartDate
+          ? new Date(formData.presaleStartDate).toISOString()
+          : undefined,
+        presaleEndDate: formData.isPresaleActive && formData.presaleEndDate
+          ? new Date(formData.presaleEndDate).toISOString()
+          : undefined,
+        sponsors: formData.sponsors?.map(e => ({
+          name: e.name,
+          logoUrl: e.logoUrl,
+          tier: e.tier,
+          websiteUrl: e.websiteUrl,
+          socialLinks: e.socialLinks,
+        })),
+        images: finalImages,
+      };
+
+      const res = await saveEventAction(payload, editingId);
 
       if (!res.success) {
-        setErrorMsg(res.error || "Ocurrió un error al guardar el evento.");
+        setErrorMsg(res.error);
         return;
       }
 
-      toast.success(
-        editingId
-          ? "Evento actualizado correctamente"
-          : "Evento registrado con éxito"
-      );
+      toast.success(editingId ? "Evento actualizado" : "Evento creado");
       fetchData(currentPage, itemsPerPage);
       closeModalForm();
     } catch (error: any) {
-      console.error("Error detectado en handleSave (Events):", error);
-      setErrorMsg(
-        error.message ||
-        "Ocurrió un problema de red al intentar guardar el evento."
-      );
+      console.error("Error en handleSave:", error);
+      setErrorMsg(error.message || "Error al procesar la solicitud.");
     }
   };
-  /* const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-
-    setFormData((prev: any) => ({
-      ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
-    }));
-  }; */
   const handleCopyPaymentOrderLink = async (paymentOrderId: string) => {
     const link = `${window.location.origin}/client/payment-orders/${paymentOrderId}`;
 
@@ -478,8 +523,6 @@ export default function AdminEventsPage() {
 
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
     // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-    window.dispatchEvent(new Event(APP_KEYS.REFRESH_PAYMENT_ORDERS_COUNT));
-    window.dispatchEvent(new Event(APP_KEYS.REFRESH_EVENTS_COUNT));
     startTransition(async () => {
       const res0 = await getAllSeatingMapsAction({
         page: pageToFetch,
@@ -861,14 +904,14 @@ export default function AdminEventsPage() {
             </div>
           )}
         </div>
-      </div>
+      </div >
       {/* MODAL DETALLE DE SILLAS CON CANVAS */}
-      <MacDockModal
+      < MacDockModal
         isOpen={isOpenModalSeatingMap}
         onClose={closeModalSeatingMap}
         title={"Taquilla en Vivo con Mapa Dinámico"}
         size={"5xl"}
-      ><>
+      > <>
           {/* Inyección del mapa interactivo con la data del Payload JSON */}
           {selectedEvent?.seatingMap && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 items-start">
@@ -1023,14 +1066,14 @@ export default function AdminEventsPage() {
 
           </div>
         </>
-      </MacDockModal>
+      </MacDockModal >
       {/* MODAL DETALLE DE SILLAS CON CANVAS */}
-      <MacDockModal
+      < MacDockModal
         isOpen={isOpenModalForm}
         onClose={closeModalForm}
         title={editingId ? "Actualizar Evento" : "Registrar Evento"}
         size={"xl"}
-      ><>
+      > <>
           {/* Formulario */}
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin">
             {errorMsg && (
@@ -1152,47 +1195,13 @@ export default function AdminEventsPage() {
             {/* 🎯 SECCIÓN: IMÁGENES DEL EVENTO */}
             <ImageGalleryPicker
               label="Imágenes del Evento (Flyers, Banners, Galería)"
-              existingImages={imagePreviews || []}
+              existingImages={formData.existingImages.map((e: EventImagePayload) => e.url) || []}
               onRemoveExistingImage={removeImage}
               files={newFiles}
               onFilesChange={setNewFiles}
               buttonText="Añadir foto"
             />
-            {/* <div className="space-y-2">
-              <label className="block font-medium text-gray-700"></label>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition text-gray-700 text-xs font-medium">
-                  <ImageIcon size={16} />
-                  Seleccionar Imágenes
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg, image/webp"
-                    multiple
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
-                <span className="text-gray-400 text-[11px]">Formatos: JPG, PNG, WEBP</span>
-              </div>
 
-              {/.* Vista previa de imágenes *./}
-              {imagePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {imagePreviews.map((src, index) => (
-                    <div key={index} className="relative w-16 h-16 rounded border overflow-hidden group">
-                      <img src={src} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div> */}
 
             {/* 🎯 SECCIÓN: MARCAS PATROCINANTES */}
             <div className="space-y-3 border-t border-gray-100 pt-3">
@@ -1296,9 +1305,9 @@ export default function AdminEventsPage() {
             </div>
           </form>
         </>
-      </MacDockModal>
+      </MacDockModal >
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
-      <ConfirmationModal
+      < ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}
@@ -1311,7 +1320,7 @@ export default function AdminEventsPage() {
         confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
       />
       {/* MODAL DETALLE DE SILLAS CON CANVAS */}
-      <MacDockModal
+      < MacDockModal
         isOpen={isFeedbackAlertOpen}
         onClose={closeFeedbackAlertModal}
         title={"¡Operación Completada!"}
@@ -1358,8 +1367,9 @@ export default function AdminEventsPage() {
               </div>
             )}
           </FeedbackAlert>
-        )}
-      </MacDockModal>
+        )
+        }
+      </MacDockModal >
     </>
   );
 }
