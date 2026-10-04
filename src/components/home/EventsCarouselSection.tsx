@@ -54,8 +54,7 @@ interface EventsCarouselSectionProps {
     events: HomeEventItem[];
 }
 
-export default function EventsCarouselSection({ events }: EventsCarouselSectionProps) {
-    const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
+export const EventsCarouselSection = ({ events }: EventsCarouselSectionProps) => {
 
     const [currentIndex, setCurrentIndex] = useState(0);
 

@@ -99,3 +99,13 @@ export async function deleteProductAction(id: string): Promise<{ success: boolea
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+
+export async function getFeaturedProducts() {
+    try {
+        const response = await axios.get(`${BACKEND_URL}/products/featured`);
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error('Error al obtener los eventos:', error);
+        return { success: false, data: [] };
+    }
+}

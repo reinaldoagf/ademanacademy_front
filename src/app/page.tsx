@@ -15,8 +15,11 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import EventsCarouselSection from "@/components/home/EventsCarouselSection";
+import { EventsCarouselSection } from "@/components/home/EventsCarouselSection";
+import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
 import { getHomeEvents } from "@/app/actions/event";
+import { getFeaturedProducts } from "@/app/actions/product";
+
 // --- DATOS DE LOS SLIDES ---
 const SLIDES = [
   {
@@ -43,13 +46,19 @@ export default function LandingPage() {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [homeEvents, setHomeEvents] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [isPending, startTransition] = useTransition();
   // 🎯 Consulta de datos desde el Server Component
   const fetchData = () => {
     startTransition(async () => {
-      const res: any = await getHomeEvents();
-      if (res.success && res.data) {
-        setHomeEvents(res.data || [])
+      const res0: any = await getHomeEvents();
+      if (res0.success && res0.data) {
+        setHomeEvents(res0.data || [])
+      }
+      const res1: any = await getFeaturedProducts();
+      console.log({ res1 })
+      if (res1.success && res1.data) {
+        setFeaturedProducts(res1.data || [])
       }
     });
   };
@@ -246,6 +255,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      {featuredProducts.length > 0 && <FeaturedProductsSection products={featuredProducts} />}
 
       {/* --- SECCIÓN: CTA --- */}
       <section className="py-24 px-6 md:px-12 text-center bg-[#5e0472] relative overflow-hidden">
