@@ -2,7 +2,6 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
 import {
-    Sparkles,
     Clock,
     MapPin,
     User,
@@ -19,6 +18,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import TimeRangeSlider from "@/components/common/TimeRangeSlider";
 import { MacDockModal } from "@/components/ui/MacDockModal";
+import { TextInput, SelectInput } from '@/components/ui/forms';
 import { Group } from "@/types/group";
 import { Classroom } from "@/types/classroom";
 import { WeekDay, BlockData } from "@/types/schedule";
@@ -765,28 +765,39 @@ export default function SchedulePage() {
                             <span className="font-semibold">{errorMsg}</span>
                         </div>
                     )}
+                    <SelectInput
+                        label="Seleccionar Grupo Asignado *"
+                        value={formData.groupId}
+                        required
+                        onChange={(e) => setFormData({ ...formData, groupId: e.target.value as string })}
+                        options={[
+                            { label: "Selecciona un grupo", value: "", disabled: true },
+                            ...activeClassroom?.groups.map((g: Group) => ({
+                                label: `${g.name}`,
+                                value: g.id
+                            })) || []
+                        ]}
+                    />
 
-                    <div>
-                        <label className="block text-gray-500 font-bold mb-1">Seleccionar Grupo Asignado *</label>
-                        <select required value={formData.groupId} onChange={e => setFormData({ ...formData, groupId: e.target.value })} className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors">
-                            <option value="" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">-- Elige un grupo --</option>
-                            {activeClassroom?.groups.map((g, index) => (
-                                <option key={g.id + '-' + index} value={g.id} className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">{g.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="block text-gray-500 font-bold mb-1">Día de la Semana *</label>
-                            <select value={formData.day} onChange={e => setFormData({ ...formData, day: e.target.value as WeekDay })} className="w-full p-2 border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors">
-                                {DAYS.map((d, index) => <option key={d + '2-' + index} value={d}>{d}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-gray-500 font-bold mb-1">Contenido / Nota</label>
-                            <input type="text" placeholder="Ej: Técnica" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="w-full p-2 border border-purple-100 focus:outline-none focus:border-purple-400" />
-                        </div>
-                    </div>
+                    <SelectInput
+                        label="Día de la Semana *"
+                        value={formData.day}
+                        onChange={(e) => setFormData({ ...formData, day: e.target.value as WeekDay })}
+                        options={[
+                            { label: "Selecciona un día", value: "", disabled: true },
+                            ...DAYS.map((d) => ({
+                                label: `${d}`,
+                                value: `${d}`
+                            }))
+                        ]}
+                    />
+                    <TextInput
+                        label="Contenido / Nota"
+                        type="text"
+                        value={formData.label}
+                        onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                        placeholder="Ej: Técnica, Coreografía, etc..."
+                    />
                     <div className="w-full">
                         <TimeRangeSlider
                             startTime={formData.startTime}
@@ -815,7 +826,9 @@ export default function SchedulePage() {
                             disabled={isPending}
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            Guardar Bloque
+                            {isPending
+                                ? "Guardando..."
+                                : "Guardar Bloque →"}
                         </button>
                     </div>
                 </form>
@@ -906,7 +919,7 @@ export default function SchedulePage() {
                                             type: "word",
                                             title: "Remover Bloque de Horario",
                                             description: `¿Estás seguro de que deseas eliminar este bloque de clase? Para confirmar, escribe la palabra requerida.`,
-                                            requiredWord: "ELIMINAR",
+                                            requiredWord: "confirmar",
                                             id: compositeId,
                                         });
                                         setSelectedElement(null);

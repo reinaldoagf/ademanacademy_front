@@ -14,7 +14,6 @@ import {
   BookmarkCheck,
   Flame,
   UserCheck2,
-  Filter,
   X,
   Calendar,
   Users2,
@@ -424,20 +423,17 @@ export default function GroupsListPage() {
 
           {/* selectores de filtros */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end font-questrial">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Filter className="w-3.5 h-3.5 text-purple-500" />
-              <span className="">Categoría:</span>
-            </div>
+
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
             >
-              <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los grupos</option>
-              <option value="baby" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
-              <option value="childrens" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
-              <option value="youth" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
-              <option value="adult" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
+              <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los grupos</option>
+              <option value="baby" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
+              <option value="childrens" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
+              <option value="youth" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
+              <option value="adult" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
             </select>
           </div>
         </div>

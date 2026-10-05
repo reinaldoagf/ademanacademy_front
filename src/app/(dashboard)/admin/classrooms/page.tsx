@@ -195,33 +195,62 @@ export default function ClassroomsPage() {
                             onChange={(e: any) => setTypeOfRoom(e.target.value)}
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
-                            <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los salones</option>
-                            <option value="mirrors" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Espejos</option>
-                            <option value="urban" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Urbano</option>
-                            <option value="free" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Libre</option>
-                            <option value="theories" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Teorias</option>
+                            <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los salones</option>
+                            <option value="mirrors" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Espejos</option>
+                            <option value="urban" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Urbano</option>
+                            <option value="free" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Libre</option>
+                            <option value="theories" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Teorias</option>
                         </select>
                     </div>
                     {/* Pestañas de Tipo */}
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 justify-end">
-                        <button
-                            onClick={() => setActiveTab("all")}
-                            className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${activeTab === "all" ? "bg-[#5e0472] text-white shadow-sm shadow-purple-100" : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"}`}
-                        >
+                    {/* 🎯 RADIO GROUP PARA Status */}
+                    <div className="flex items-center gap-1 bg-gray-50/80 p-1 border border-purple-100 rounded-md text-xs font-questrial">
+                        <span className="text-gray-500 font-medium px-2 text-[11px]">Status:</span>
+
+                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "all"
+                            ? "gradient-purple text-white font-medium shadow-xs"
+                            : "text-gray-600 hover:text-purple-700"
+                            }`}>
+                            <input
+                                type="radio"
+                                name="activeTab"
+                                value="all"
+                                checked={activeTab === "all"}
+                                onChange={(e) => setActiveTab(e.target.value as any)}
+                                className="sr-only"
+                            />
                             Todos
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("active")}
-                            className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${activeTab === "active" ? "bg-[#5e0472] text-white shadow-sm shadow-purple-100" : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"}`}
-                        >
+                        </label>
+
+                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "active"
+                            ? "gradient-purple text-white font-medium shadow-xs"
+                            : "text-gray-600 hover:text-purple-700"
+                            }`}>
+                            <input
+                                type="radio"
+                                name="activeTab"
+                                value="active"
+                                checked={activeTab === "active"}
+                                onChange={(e) => setActiveTab(e.target.value as any)}
+                                className="sr-only"
+                            />
                             Activo
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("maintenance")}
-                            className={`px-3 py-1.5 text-xs font-questrial font-semibold transition cursor-pointer whitespace-nowrap ${activeTab === "maintenance" ? "bg-[#5e0472] text-white shadow-sm shadow-purple-100" : "bg-white border border-purple-50 text-gray-400 hover:text-[#5e0472]"}`}
-                        >
+                        </label>
+
+                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "maintenance"
+                            ? "gradient-purple text-white font-medium shadow-xs"
+                            : "text-gray-600 hover:text-purple-700"
+                            }`}>
+                            <input
+                                type="radio"
+                                name="activeTab"
+                                value="maintenance"
+                                checked={activeTab === "maintenance"}
+                                onChange={(e) => setActiveTab(e.target.value as any)}
+                                className="sr-only"
+                            />
                             Mantenimiento
-                        </button>
+                        </label>
                     </div>
                 </div>
 

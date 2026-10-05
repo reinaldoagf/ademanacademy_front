@@ -29,7 +29,6 @@ import {
     getAccountPayableByIdAction,
     saveAccountPayableAction,
     addPayablePaymentAction,
-    deleteAccountPayableAction,
 } from "@/app/actions/account-payable";
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: PayableFormData = {
@@ -326,11 +325,11 @@ export default function AccountsPayablePage() {
                             onChange={(e) => setSelectedStatus(e.target.value as PayableStatus | "all")}
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
-                            <option value="all" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos</option>
-                            <option value="pending" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendientes</option>
-                            <option value="partial" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Parcial</option>
-                            <option value="paid" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagado</option>
-                            <option value="cancelled" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cancelado</option>
+                            <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos</option>
+                            <option value="pending" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendientes</option>
+                            <option value="partial" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Parcial</option>
+                            <option value="paid" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagado</option>
+                            <option value="cancelled" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cancelado</option>
                         </select>
 
 

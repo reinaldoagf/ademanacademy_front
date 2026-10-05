@@ -7,7 +7,6 @@ import {
   Pencil,
   Users,
   Search,
-  Filter,
   Plus,
   Award,
   UserCheck2,
@@ -538,22 +537,19 @@ export default function StudentsPage() {
 
           {/* selectores de filtros */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end font-questrial">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Filter className="w-3.5 h-3.5 text-purple-500" />
-              <span className="">Parentesco:</span>
-            </div>
+
             <select
               value={kinshipFilter}
               onChange={(e) => handleFilterChange("kinship", e.target.value)}
               className="p-2 border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="all">Todos</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="son">Hijo</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="daughter">Hija</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="nephew">Sobrino</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="niece">Sobrina</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="tutored">Tutorado</option>
-              <option className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50" value="other">Otro</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="all">Todos</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="son">Hijo</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="daughter">Hija</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="nephew">Sobrino</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="niece">Sobrina</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="tutored">Tutorado</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="other">Otro</option>
             </select>
           </div>
         </div>

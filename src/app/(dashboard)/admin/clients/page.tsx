@@ -306,17 +306,7 @@ export default function ClientsPage() {
                                 className="w-full pl-9 pr-4 py-2 border border-purple-100 font-questrial text-xs bg-white/50 focus:outline-none focus:border-purple-400 transition text-gray-700"
                             />
                         </div>
-                        {/* <select
-                            value={typeOfRoom}
-                            onChange={(e: any) => setTypeOfRoom(e.target.value)}
-                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
-                        >
-                            <option value="all"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los clientes</option>
-                            <option value="mirrors"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Espejos</option>
-                            <option value="urban"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Urbano</option>
-                            <option value="free"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Libre</option>
-                            <option value="theories"  className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Teorias</option>
-                        </select> */}
+
                     </div>
                 </div>
 
