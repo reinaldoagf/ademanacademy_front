@@ -100,7 +100,8 @@ export default function ClientEventsPage() {
   const totalBailarinesEnEscena = 0;
   const eventosProximos = 0;
   //  Calcular el monto total sumando el precio real de cada asiento seleccionado
-  const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
+  const totalCashAmount = selectedEvent ? (selectedEvent?.isPresaleActive && selectedEvent?.presaleStartDate && selectedEvent?.presaleEndDate && new Date(selectedEvent?.presaleStartDate) <= new Date() && new Date(selectedEvent?.presaleEndDate) >= new Date() ?
+    selectedChairs.reduce((total, chair) => total + (chair.presalePrice || 0), 0) : selectedChairs.reduce((total, chair) => total + (chair.salePrice || 0), 0)) : 0;
   const openTicketOfficeMap = (event: EventData) => {
     // console.log({ event })
     setSelectedEvent(event);
@@ -362,13 +363,6 @@ export default function ClientEventsPage() {
                       {/* Sub-métricas vectoriales del plano */}
                       <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
                         <div className="bg-slate-50 p-2">
-                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                            Código
-                          </p>
-                          <p className="text-xs font-questrial font-bold text-gray-700">
-                            {event.code || 'Sin código'}
-                          </p>
-                        </div><div className="bg-slate-50 p-2">
                           <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
                             Ubicación
                           </p>

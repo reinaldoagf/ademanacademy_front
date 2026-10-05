@@ -548,11 +548,17 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
                 {hoveredSeat.element.name || `Asiento ${hoveredSeat.element.chairNumber}`}
               </div>
               <div>Tipo: {hoveredSeat.element.itemType || "Estándar"}</div>
-              {hoveredSeat.element.price !== undefined && (
-                <div style={{ color: "#34d399", fontWeight: "bold", marginTop: "2px" }}>
-                  Precio: ${hoveredSeat.element.price}
-                </div>
-              )}
+              {
+                eventData.isPresaleActive && eventData.presaleStartDate && eventData.presaleEndDate && new Date(eventData.presaleStartDate) <= new Date() && new Date(eventData.presaleEndDate) >= new Date() && hoveredSeat.element.presalePrice !== undefined ? (
+                  <div style={{ color: "#34d399", fontWeight: "bold", marginTop: "2px" }}>
+                    Precio: ${hoveredSeat.element.presalePrice}
+                  </div>
+                ) : hoveredSeat.element.salePrice !== undefined ? (
+                  <div style={{ color: "#34d399", fontWeight: "bold", marginTop: "2px" }}>
+                    Precio: ${hoveredSeat.element.salePrice}
+                  </div>
+                ) : null
+              }
               {occupiedSeatsState.includes(hoveredSeat.element.id || '') && (
                 <div style={{ color: "#f43f5e", marginTop: "2px", fontWeight: "bold" }}>
                   Ocupado

@@ -17,7 +17,8 @@ export interface SeatingMapElement {
     macroGroupId?: string;
     rotation: number;
     groupRotation?: number;
-    price?: number;
+    presalePrice?: number;
+    salePrice?: number;
     xMeters: number;
     yMeters: number;
     widthMeters: number;

@@ -110,9 +110,10 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
     // Configuración de creación por Lote / Grupo
     const [lotRows, setLotRows] = useState(10);
     const [lotColumns, setLotColumns] = useState(20);
-    const [unitPricePerLot, setUnitPricePerLot] = useState(100);
+    const [unitPresalePricePerLot, setUnitPresalePricePerLot] = useState(5);
+    const [unitSalePricePerLot, setUnitSalePricePerLot] = useState(10);
     const [chairTypeLot, setChairTypeLot] = useState("general_chair");
-    const [groupNameLot, setGroupNameLot] = useState("Zona A");
+    const [groupNameLot, setGroupNameLot] = useState("Zona A1");
     const [macroGroupNameLot, setMacroGroupNameLot] = useState("");
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -140,7 +141,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
             groupId: obj.groupId,
             rotation: obj.rotation,
             groupRotation: obj.groupRotation,
-            price: obj.price || 0,
+            presalePrice: Number(obj.presalePrice || 0),
+            salePrice: Number(obj.salePrice || 0),
             x: Math.round(obj.x),
             y: Math.round(obj.y),
             width: Math.round(obj.width),
@@ -149,10 +151,16 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
             yMeters: obj.y / pxPerMeter,
             widthMeters: obj.width / pxPerMeter,
             heightMeters: obj.height / pxPerMeter,
-        }));
-
+        }))
         startTransition(async () => {
-            const res = await saveSeatingMapAction({ ...safeMap, elements: normalizedData }, elementId);
+            const res = await saveSeatingMapAction({
+                location: safeMap.location,
+                totalHeight: safeMap.totalHeight,
+                totalWidth: safeMap.totalWidth,
+                elements: normalizedData
+            },
+                elementId
+            );
 
             onSavingStatusChange?.(false);
             if (!res.success) {
@@ -456,7 +464,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                     width: dim,
                     height: dim,
                     rotation: 0,
-                    price: unitPricePerLot,
+                    salePrice: unitSalePricePerLot,
+                    presalePrice: unitPresalePricePerLot,
                     xMeters: 0,
                     yMeters: 0,
                     widthMeters: 0,
@@ -481,6 +490,28 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
             );
         } else {
             toast.success(`Se agregaron ${newChairs.length} sillas al grupo "${groupId}"`);
+            setGroupNameLot((prevName) => {
+                // Expresión regular que busca dígitos al final del texto
+                const match = prevName.match(/\d+$/);
+
+                if (match) {
+                    // Si ya contiene un número al final (ej: "Zona A1")
+                    const currentNumber = parseInt(match[0], 10);
+                    const nextNumber = currentNumber + 1;
+                    // Reemplaza el número anterior con el nuevo
+                    return prevName.replace(/\d+$/, nextNumber.toString());
+                } else {
+                    // Si no tiene número al final (ej: "Zona A"), le añade el "1"
+                    return `${prevName.trim()}1`;
+                }
+            });
+            setMacroGroupNameLot("");
+            setChairTypeLot("general_chair");
+            setUnitPresalePricePerLot(5);
+            setUnitSalePricePerLot(10);
+            setLotRows(10);
+            setLotColumns(20);
+            setIsStaggeredLot(false);
         }
     };
     const handleUndoLastBatch = () => {
@@ -1039,32 +1070,49 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                                 />
                             </div>
                         </div>
+                        <div className="text-xs">
+                            <label className="text-[10px] text-slate-500 font-medium">
+                                Tipo de Silla
+                            </label>
+                            <select
+                                value={chairTypeLot}
+                                onChange={(e) => {
+                                    setChairTypeLot(e.target.value)
+                                    setUnitPresalePricePerLot(e.target.value == 'sponsor_chair' ? 0 : 5)
+                                    setUnitSalePricePerLot(e.target.value == 'sponsor_chair' ? 0 : 10)
+                                }}
+                                className="w-full p-2 bg-white border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                            >
+                                {CHAIR_TYPES.map((t) => (
+                                    <option key={t.id} value={t.id} className="font-questrial font-bold cursor-pointer text-purple-700 bg-purple-50">
+                                        {t.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div className="text-xs">
                                 <label className="text-[10px] text-slate-500 font-medium">
-                                    Tipo de Silla
-                                </label>
-                                <select
-                                    value={chairTypeLot}
-                                    onChange={(e) => setChairTypeLot(e.target.value)}
-                                    className="w-full p-2 bg-white border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors"
-                                >
-                                    {CHAIR_TYPES.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="text-xs">
-                                <label className="text-[10px] text-slate-500 font-medium">
-                                    Precio ($)
+                                    Precio de Preventa ($)
                                 </label>
                                 <input
                                     type="number"
-                                    value={unitPricePerLot}
-                                    onChange={(e) => setUnitPricePerLot(Number(e.target.value))}
-                                    className="w-full p-2 bg-white border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors"
+                                    disabled={chairTypeLot == 'sponsor_chair'}
+                                    value={unitPresalePricePerLot}
+                                    onChange={(e) => setUnitPresalePricePerLot(Number(e.target.value))}
+                                    className={`w-full p-2  border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors ${chairTypeLot == 'sponsor_chair' ? 'bg-gray-100' : 'bg-white'}`}
+                                />
+                            </div>
+                            <div className="text-xs">
+                                <label className="text-[10px] text-slate-500 font-medium">
+                                    Precio de Venta ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    disabled={chairTypeLot == 'sponsor_chair'}
+                                    value={unitSalePricePerLot}
+                                    onChange={(e) => setUnitSalePricePerLot(Number(e.target.value))}
+                                    className={`w-full p-2  border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors ${chairTypeLot == 'sponsor_chair' ? 'bg-gray-100' : 'bg-white'}`}
                                 />
                             </div>
                         </div>
@@ -1141,17 +1189,37 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
 
                             <div className="text-xs">
                                 <label className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
-                                    <Tag className="w-3 h-3 text-purple-600" /> Precio ($)
+                                    <Tag className="w-3 h-3 text-purple-600" /> Precio de Preventa ($)
                                 </label>
                                 <input
                                     type="number"
-                                    value={selectedObject.price || 0}
+                                    value={selectedObject.presalePrice || 0}
                                     onChange={(e) => {
                                         const p = Number(e.target.value);
                                         setObjects((prev) =>
                                             prev.map((o) =>
                                                 o.itemID === selectedObject.itemID
-                                                    ? { ...o, price: p }
+                                                    ? { ...o, presalePrice: p }
+                                                    : o
+                                            )
+                                        );
+                                    }} className="w-full p-2 bg-white border border-purple-100 focus:outline-none focus:border-purple-400 rounded transition-colors"
+
+                                />
+                            </div>
+                            <div className="text-xs">
+                                <label className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                    <Tag className="w-3 h-3 text-purple-600" /> Precio de Venta ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={selectedObject.salePrice || 0}
+                                    onChange={(e) => {
+                                        const p = Number(e.target.value);
+                                        setObjects((prev) =>
+                                            prev.map((o) =>
+                                                o.itemID === selectedObject.itemID
+                                                    ? { ...o, salePrice: p }
                                                     : o
                                             )
                                         );

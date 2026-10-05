@@ -304,7 +304,20 @@ export default function PaymentOrderDetailsPage() {
                                                 </div>
                                                 <div className="bg-slate-50 p-2">
                                                     <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Precio de Silla</p>
-                                                    <p className="text-xs font-questrial font-bold text-gray-700">${seat.seatingMapElement?.price || ""}</p>
+                                                    {
+                                                        seat.event?.isPresaleActive && seat.event.presaleStartDate && seat.event.presaleEndDate && new Date(seat.event.presaleStartDate) <= new Date() && new Date(seat.event.presaleEndDate) >= new Date() ? (
+
+                                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                                Precio: ${seat.seatingMapElement?.presalePrice}
+                                                            </p>
+                                                        ) : seat.seatingMapElement?.salePrice !== undefined ? (
+                                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                                Precio: ${seat.seatingMapElement?.salePrice}
+                                                            </p>
+                                                        ) : null
+                                                    }
+
+
                                                 </div>
                                             </div>
                                         ))}

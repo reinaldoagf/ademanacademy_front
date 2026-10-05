@@ -212,7 +212,7 @@ export default function ProductsPage() {
       id: product.id,
     });
   };
-  const handleRemoveExisting = async (index: number) => {
+  const handleRemoveExisting = async (image: S3Image, index: number) => {
     const imageToRemove = formData.existingImages![index];
     setFormData((prev) => ({
       ...prev,

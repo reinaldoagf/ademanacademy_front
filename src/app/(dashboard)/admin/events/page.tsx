@@ -155,7 +155,8 @@ export default function AdminEventsPage() {
     }
   };
   //  Calcular el monto total sumando el precio real de cada asiento seleccionado
-  const totalCashAmount = selectedChairs.reduce((total, chair) => total + (chair.price || 0), 0);
+  const totalCashAmount = selectedEvent ? (selectedEvent?.isPresaleActive && selectedEvent?.presaleStartDate && selectedEvent?.presaleEndDate && new Date(selectedEvent?.presaleStartDate) <= new Date() && new Date(selectedEvent?.presaleEndDate) >= new Date() ?
+    selectedChairs.reduce((total, chair) => total + (chair.presalePrice || 0), 0) : selectedChairs.reduce((total, chair) => total + (chair.salePrice || 0), 0)) : 0;
   const openTicketOfficeMap = (event: EventData) => {
     // console.log({ event })
     setSelectedEvent(event);
@@ -202,7 +203,7 @@ export default function AdminEventsPage() {
   };
 
   // Eliminar imagen seleccionada antes de guardar
-  const handleRemoveExisting = async (index: number) => {
+  const handleRemoveExisting = async (image: S3Image, index: number) => {
     const imageToRemove = formData.existingImages![index];
     setFormData((prev) => ({
       ...prev,
@@ -730,21 +731,29 @@ export default function AdminEventsPage() {
                       <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
                         <div className="bg-slate-50 p-2">
                           <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                            Ubicación
+                            Status
                           </p>
-                          <p className="text-xs font-questrial font-bold text-gray-700">
-                            {event.seatingMap?.location || 'Sin mapa de asientos'}
-                          </p>
-                        </div>
-                        <div className="bg-slate-50 p-2">
-                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                            Descripción
-                          </p>
-                          <p className="text-xs font-questrial font-bold text-gray-700">
-                            {event.description || 'Sin descripción'}
-                          </p>
-                        </div>
-                        <div className="bg-slate-50 p-2">
+                          <div className="flex flex-wrap items-center gap-2 justify-center">
+
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-questrial font-bold tracking-wide border shadow-sm transition-all backdrop-blur-md ${event.isActive
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                : 'bg-rose-50 text-rose-700 border-rose-200/80'
+                                }`}
+                            >
+                              <span className="relative flex h-2 w-2">
+                                {event.isActive && (
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                )}
+                                <span
+                                  className={`relative inline-flex rounded-full h-2 w-2 ${event.isActive ? 'bg-emerald-500' : 'bg-rose-500'
+                                    }`}
+                                />
+                              </span>
+                              {event.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+                        </div><div className="bg-slate-50 p-2">
                           <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
                             Tipo
                           </p>
@@ -772,29 +781,23 @@ export default function AdminEventsPage() {
                         </div>
                         <div className="bg-slate-50 p-2">
                           <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
-                            Status
+                            Ubicación
                           </p>
-                          <div className="flex flex-wrap items-center gap-2 justify-center">
-
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-questrial font-bold tracking-wide border shadow-sm transition-all backdrop-blur-md ${event.isActive
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
-                                : 'bg-rose-50 text-rose-700 border-rose-200/80'
-                                }`}
-                            >
-                              <span className="relative flex h-2 w-2">
-                                {event.isActive && (
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                )}
-                                <span
-                                  className={`relative inline-flex rounded-full h-2 w-2 ${event.isActive ? 'bg-emerald-500' : 'bg-rose-500'
-                                    }`}
-                                />
-                              </span>
-                              {event.isActive ? 'Activo' : 'Inactivo'}
-                            </span>
-                          </div>
+                          <p className="text-xs font-questrial font-bold text-gray-700">
+                            {event.seatingMap?.location || 'Sin mapa de asientos'}
+                          </p>
                         </div>
+                        <div className="bg-slate-50 p-2">
+                          <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                            Descripción
+                          </p>
+                          <p className="text-xs font-questrial font-bold text-gray-700">
+                            {event.description || 'Sin descripción'}
+                          </p>
+                        </div>
+
+
+
                       </div>
                     </div>
 
