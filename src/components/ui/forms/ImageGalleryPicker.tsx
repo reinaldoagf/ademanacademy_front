@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { FieldLayout, FieldLayoutProps } from './FieldLayout';
+import { S3Image } from '@/types/s3-image';
 
 export interface ImageGalleryPickerProps extends Omit<FieldLayoutProps, 'children'> {
     /** URLs de las imágenes ya almacenadas en el servidor */
-    existingImages?: string[];
+    existingImages?: S3Image[];
     /** Callback ejecutado al eliminar una imagen existente del servidor */
-    onRemoveExistingImage?: (index: number, url: string) => void;
+    onRemoveExistingImage?: (imageToRemove: S3Image, index: number) => void;
 
     /** Lista de nuevos archivos (File) seleccionados por el usuario */
     files: File[];
@@ -70,9 +71,10 @@ export const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
     };
 
     // Manejar eliminación de una imagen ya existente en el servidor
-    const handleRemoveExistingImage = (indexToRemove: number, url: string) => {
+    const handleRemoveExistingImage = (indexToRemove: number, image: S3Image) => {
+        console.log({ indexToRemove, image })
         if (onRemoveExistingImage) {
-            onRemoveExistingImage(indexToRemove, url);
+            onRemoveExistingImage(image, indexToRemove);
         }
     };
 
@@ -97,13 +99,13 @@ export const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
                 </label>
 
                 {/* 1. RENDERIZADO DE IMÁGENES QUE YA EXISTEN EN EL SERVIDOR */}
-                {existingImages.map((src, index) => (
+                {existingImages.map((img, index) => (
                     <div
-                        key={`existing-${index}-${src}`}
+                        key={`existing-${index}-${img.url}`}
                         className="relative h-20 sm:h-24 border border-purple-100 bg-gray-50 group rounded-lg overflow-hidden"
                     >
                         <img
-                            src={src}
+                            src={img.url}
                             alt={`Guardada ${index + 1}`}
                             className="w-full h-full object-cover"
                         />
@@ -113,7 +115,7 @@ export const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
                         </span>
                         <button
                             type="button"
-                            onClick={() => handleRemoveExistingImage(index, src)}
+                            onClick={() => handleRemoveExistingImage(index, img)}
                             className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
                             title="Eliminar imagen"
                         >

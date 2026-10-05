@@ -2,6 +2,7 @@ import { Student } from "@/types/student";
 import {
     LucideIcon
 } from "lucide-react";
+import { S3Image } from "./s3-image";
 
 // 🎯 Enums del ciclo de vida de la asignación
 export type AssignmentStatus = "assigned" | "returned" | "damaged" | "lost";
@@ -36,8 +37,9 @@ export interface Costume {
     id: string;
     name: string;
     beat: string | null;
+    price: number;
     category: CostumeCategory;
-    availableSizes: SizeStock[];
+    images: string[]; // Representación del campo Json ("[]") en la app
     status: CostumeStatus;
     assignments?: StudentCostume[]; // Historial o alumnos asignados actualmente
     createdAt?: string;
@@ -52,7 +54,16 @@ export interface FetchCostumesParams {
     status?: string;
     category?: string;
 }
-
+// Interfaz para el estado del formulario
+export interface CostumeFormData {
+    name: string;
+    beat?: string;
+    category: string;
+    status: string;
+    price: number;
+    images: S3Image[];
+    existingImages: S3Image[];
+}
 // 🎯 Definimos una interfaz limpia para los datos serializables
 export interface SaveCostumePayload {
     name: string;
@@ -60,9 +71,7 @@ export interface SaveCostumePayload {
     category: string;
     status: string;
     price: number;
-    /* availableSizes: any[]; */
-    images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
-    existingImages: string[]; // 🚀 'type' agregado aquí
+    images: S3Image[];
 }
 
 export interface StatusCardConfig {

@@ -49,6 +49,7 @@ import { reserveOrBuySeatsAction } from "@/app/actions/event-seat";
 import { getAllClientsAction } from "@/app/actions/client";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { uploadFileToS3 } from "@/helpers/s3";
+import { deleteS3Image } from "@/app/actions/s3";
 import { APP_KEYS } from "@/config/app-keys";
 
 // 2. Valores por defecto para crear un evento nuevo
@@ -201,11 +202,23 @@ export default function AdminEventsPage() {
   };
 
   // Eliminar imagen seleccionada antes de guardar
-  const removeImage = (index: number) => {
+  const handleRemoveExisting = async (index: number) => {
+    const imageToRemove = formData.existingImages![index];
     setFormData((prev) => ({
       ...prev,
       existingImages: prev.existingImages?.filter((_, i) => i !== index),
     }));
+    // 2. Eliminar el archivo físico de S3 y DB
+    const response = await deleteS3Image(imageToRemove.key);
+
+    if (!response.success) {
+      toast.error('Ocurrió un error al borrar la imagen en S3');
+      // Revertir cambios en el estado si falló
+      setFormData((prev) => ({
+        ...prev,
+        existingImages: [...prev.existingImages, imageToRemove],
+      }));
+    }
   };
 
   // 🎯 Gestión Dinámica de Patrocinadores
@@ -1180,8 +1193,8 @@ export default function AdminEventsPage() {
             {/* 🎯 SECCIÓN: IMÁGENES DEL EVENTO */}
             <ImageGalleryPicker
               label="Imágenes del Evento (Flyers, Banners, Galería)"
-              existingImages={formData.existingImages.map((e: S3Image) => e.url) || []}
-              onRemoveExistingImage={removeImage}
+              existingImages={formData.existingImages || []}
+              onRemoveExistingImage={handleRemoveExisting}
               files={newFiles}
               onFilesChange={setNewFiles}
               buttonText="Añadir foto"

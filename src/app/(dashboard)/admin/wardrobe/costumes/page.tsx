@@ -19,11 +19,14 @@ import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
-import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus } from "@/types/costume";
+import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus, CostumeFormData, SaveCostumePayload } from "@/types/costume";
 import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { deleteS3Image } from "@/app/actions/s3";
+import { uploadFileToS3 } from "@/helpers/s3";
 import { APP_KEYS } from "@/config/app-keys";
+import { S3Image } from "@/types/s3-image";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
@@ -60,12 +63,13 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     unitLabel: "Unidades",
   },
 };
-const initialCostumeFormState = {
+const initialCostumeFormState: CostumeFormData = {
   name: '',
   price: 0, // 👈 Nuevo campo de precio
   beat: '',
   category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
   status: 'payment_pending' as CostumeStatus,
+  images: [],
   existingImages: [],
 };
 export default function CostumesPage() {
@@ -151,8 +155,23 @@ export default function CostumesPage() {
   // Estados locales exclusivos para la gestión de archivos
   const [newFiles, setNewFiles] = useState<File[]>([]);
   // Almacena el ID del vestuario que se está editando (null si es una creación)
-  const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
-    setCostumeFormData({ ...costumeFormData, existingImages: (costumeFormData.existingImages || []).filter((_, index) => index !== indexToRemove) });
+  const handleRemoveExisting = async (image: S3Image, index: number) => {
+    const imageToRemove = costumeFormData.existingImages![index];
+    setCostumeFormData((prev) => ({
+      ...prev,
+      existingImages: prev.existingImages?.filter((_, i) => i !== index),
+    }));
+    // 2. Eliminar el archivo físico de S3 y DB
+    const response = await deleteS3Image(imageToRemove.key);
+
+    if (!response.success) {
+      toast.error('Ocurrió un error al borrar la imagen en S3');
+      // Revertir cambios en el estado si falló
+      setCostumeFormData((prev) => ({
+        ...prev,
+        existingImages: [...prev.existingImages, imageToRemove],
+      }));
+    }
   };
   // Manejo de inserción de nuevo salón
   const fileToBase64 = (file: File): Promise<string> => {
@@ -163,9 +182,74 @@ export default function CostumesPage() {
       reader.onerror = (error) => reject(error);
     });
   };
+  const handleEdit = (costume: Costume) => {
+    openModalForm();
+    setErrorMsg('')
+    setEditingId(costume.id);
+    // 1. Procesamos las imágenes primero
+    let imagesParsed: any[] = [];
+    let formattedImages: S3Image[] = [];
 
+    try {
+      if (typeof costume.images === 'string') {
+        imagesParsed = JSON.parse(costume.images);
+      } else if (Array.isArray(costume.images)) {
+        imagesParsed = costume.images;
+      }
+
+      const cleanBackendUrl = backendUrl.replace(/\/$/, '');
+
+      // 1. Mapeamos y limpiamos las imágenes
+      const mappedImages = imagesParsed
+        .map((img: any): S3Image | null => {
+          if (!img) return null;
+
+          const path = typeof img === 'object' ? img.url || img.path : img;
+
+          if (!path || typeof path !== 'string') return null;
+
+          const fullUrl =
+            path.startsWith('http://') || path.startsWith('https://')
+              ? path
+              : `${cleanBackendUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
+          return {
+            url: fullUrl,
+            key: typeof img === 'object' ? img.key || '' : '',
+            altText: typeof img === 'object' ? img.altText || '' : '',
+            type: typeof img === 'object' ? img.type || 'cover' : 'cover',
+            order: typeof img === 'object' ? img.order ?? 0 : 0,
+          };
+        })
+        .filter((img): img is S3Image => img !== null);
+
+      // 2. DESDUPLICAR mediante un Set basándonos en la identificador único (url o key)
+      const seen = new Set<string>();
+      formattedImages = mappedImages.filter((img) => {
+        const identifier = img.key ? img.key : img.url;
+        if (seen.has(identifier)) {
+          return false; // Es duplicada, la ignoramos
+        }
+        seen.add(identifier);
+        return true;
+      });
+
+    } catch (e) {
+      console.error("Error al procesar las imágenes del producto:", e);
+      formattedImages = [];
+    }
+    setCostumeFormData({
+      name: costume.name ?? '',
+      price: Number(costume.price) || 0,
+      beat: costume.beat ?? '',
+      category: costume.category as CostumeCategory,
+      status: costume.status as CostumeStatus,
+      existingImages: formattedImages,
+      images: [], // Resetea las nuevas imágenes de cargas anteriores
+    })
+  };
   // 1. Definimos las funciones que recibirán el elemento capturado
-  const handleEdit = (costume: any) => {
+  /* const handleEdit = (costume: any) => {
 
     // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
     let imagesParsed: string[] = [];
@@ -192,8 +276,9 @@ export default function CostumesPage() {
         price: Number(costume.price) || 0,
         beat: costume.beat ?? '',
         category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
-        status: costume.status as CostumeStatus,
-        existingImages: formattedImages as any
+        status: costume.status as CostumeStatus,,
+        existingImages: formattedImages,
+        images: [], // Resetea las nuevas imágenes de cargas anteriores
       })
       setNewFiles([]);
       openModalForm();
@@ -203,7 +288,7 @@ export default function CostumesPage() {
       setNewFiles([]);
     }
 
-  };
+  }; */
 
   const handleDelete = (costume: any) => {
     setModalConfig({
@@ -245,29 +330,36 @@ export default function CostumesPage() {
     e.preventDefault();
     setErrorMsg(null);
     try {
-      // 1. Procesar los archivos nuevos cargados localmente a Base64
-      const imagesPromises = newFiles.map(async (file) => {
-        const base64String = await fileToBase64(file);
-        return {
-          name: file.name,
-          type: file.type, // 'image/png', 'image/jpeg', etc.
-          base64: base64String,
-        };
+      // 1. Subir archivos nuevos a S3
+      const newlyUploadedImages = await Promise.all(
+        newFiles.map((file) => uploadFileToS3(file))
+      );
+
+      // 2. Unificar y DESDUPLICAR las imágenes finales
+      const combinedImages: S3Image[] = [
+        ...costumeFormData.existingImages,
+        ...newlyUploadedImages,
+      ];
+
+      const seenUrlsOrKeys = new Set<string>();
+      const finalImages = combinedImages.filter((img) => {
+        // Usamos key como identificador prioritario, si no existe usamos url
+        const identifier = img.key && img.key.trim() !== '' ? img.key : img.url;
+
+        if (!identifier || seenUrlsOrKeys.has(identifier)) {
+          return false;
+        }
+        seenUrlsOrKeys.add(identifier);
+        return true;
       });
-
-      const newImagesPayload = await Promise.all(imagesPromises);
-
       // 2. Construir el payload definitivo
-      const payload = {
+      const payload: SaveCostumePayload = {
         name: costumeFormData.name,
         beat: costumeFormData.beat || '',
         category: costumeFormData.category,
         status: costumeFormData.status || '',
         price: costumeFormData.price || 0,
-        /* availableSizes: costumeFormData.availableSizes || [], */
-        images: newImagesPayload, // Nuevas imágenes Base64
-        // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
-        existingImages: editingId ? costumeFormData.existingImages : [],
+        images: finalImages,
       };
 
       // saveCostumeAction debe recibir el payload y el editingId (si existe)

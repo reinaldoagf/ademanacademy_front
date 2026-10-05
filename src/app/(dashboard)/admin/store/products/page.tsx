@@ -34,6 +34,7 @@ import {
 import { TextInput, TextArea, SelectInput, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { uploadFileToS3 } from "@/helpers/s3";
+import { deleteS3Image } from "@/app/actions/s3";
 import { APP_KEYS } from "@/config/app-keys";
 
 // Estado inicial limpio del formulario para Empleados
@@ -211,12 +212,23 @@ export default function ProductsPage() {
       id: product.id,
     });
   };
-  const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
+  const handleRemoveExisting = async (index: number) => {
+    const imageToRemove = formData.existingImages![index];
     setFormData((prev) => ({
       ...prev,
-      existingImages: (prev.existingImages || []).filter((_, index) => index !== indexToRemove),
+      existingImages: prev.existingImages?.filter((_, i) => i !== index),
     }));
-    // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
+    // 2. Eliminar el archivo físico de S3 y DB
+    const response = await deleteS3Image(imageToRemove.key);
+
+    if (!response.success) {
+      toast.error('Ocurrió un error al borrar la imagen en S3');
+      // Revertir cambios en el estado si falló
+      setFormData((prev) => ({
+        ...prev,
+        existingImages: [...prev.existingImages, imageToRemove],
+      }));
+    }
   };
 
   // Manejo de inserción de nuevo salón
@@ -734,7 +746,7 @@ export default function ProductsPage() {
             {/* Grid adaptable de imágenes */}
             <ImageGalleryPicker
               label="Fotografías del Producto"
-              existingImages={formData.existingImages.map((e: S3Image) => e.url) || []}
+              existingImages={formData.existingImages || []}
               onRemoveExistingImage={handleRemoveExisting}
               files={newFiles}
               onFilesChange={setNewFiles}

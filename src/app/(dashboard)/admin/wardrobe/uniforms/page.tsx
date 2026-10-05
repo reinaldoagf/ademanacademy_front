@@ -32,6 +32,7 @@ import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, ImageGalleryPicker, TextArea, SearchInput } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { uploadFileToS3 } from "@/helpers/s3";
+import { deleteS3Image } from "@/app/actions/s3";
 import { APP_KEYS } from "@/config/app-keys";
 /* import { AssignUniformModal } from "@/components/AssignUniformModal"; */
 
@@ -234,7 +235,6 @@ export default function UniformsPage() {
             console.error("Error al procesar las imágenes del producto:", e);
             formattedImages = [];
         }
-        console.log({ uniform })
         setUniformFormData({
             name: uniform.name ?? '',
             price: Number(uniform.price) || 0,
@@ -255,13 +255,23 @@ export default function UniformsPage() {
         });
 
     };
-
-    const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
+    const handleRemoveExisting = async (image: S3Image, index: number) => {
+        const imageToRemove = uniformFormData.existingImages![index];
         setUniformFormData((prev) => ({
             ...prev,
-            existingImages: (prev.existingImages || []).filter((_, index) => index !== indexToRemove),
+            existingImages: prev.existingImages?.filter((_, i) => i !== index),
         }));
-        // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
+        // 2. Eliminar el archivo físico de S3 y DB
+        const response = await deleteS3Image(imageToRemove.key);
+
+        if (!response.success) {
+            toast.error('Ocurrió un error al borrar la imagen en S3');
+            // Revertir cambios en el estado si falló
+            setUniformFormData((prev) => ({
+                ...prev,
+                existingImages: [...prev.existingImages, imageToRemove],
+            }));
+        }
     };
 
     // 4. Adaptación del envío del formulario
@@ -836,7 +846,7 @@ export default function UniformsPage() {
                         {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
                         <ImageGalleryPicker
                             label="Fotografías del Uniforme"
-                            existingImages={uniformFormData.existingImages.map((e: S3Image) => e.url) || []}
+                            existingImages={uniformFormData.existingImages || []}
                             onRemoveExistingImage={handleRemoveExisting}
                             files={newFiles}
                             onFilesChange={setNewFiles}
