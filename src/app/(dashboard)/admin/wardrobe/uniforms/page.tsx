@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
-import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig, StudentTableItem } from "@/types/uniform";
+import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig, StudentTableItem, UniformFormData, SaveUniformPayload } from "@/types/uniform";
 import { Student } from "@/types/student";
 import { Client } from "@/types/client";
+import { S3Image } from "@/types/s3-image";
 import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
 import { getAllStudentsAction } from "@/app/actions/student";
 import { assignUniformAction } from "@/app/actions/uniform";
@@ -30,6 +31,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, ImageGalleryPicker, TextArea, SearchInput } from '@/components/ui/forms';
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { uploadFileToS3 } from "@/helpers/s3";
 import { APP_KEYS } from "@/config/app-keys";
 /* import { AssignUniformModal } from "@/components/AssignUniformModal"; */
 
@@ -67,6 +69,23 @@ const STATUS_CONFIG: Record<UniformStatus, StatusCardConfig> = {
         iconTextClass: "text-rose-600",
         unitLabel: "Unidades",
     },
+};
+const DEFAULT_SIZES = [
+    { size: 'XS', quantity: 0 },
+    { size: 'S', quantity: 0 },
+    { size: 'M', quantity: 0 },
+    { size: 'L', quantity: 0 },
+    { size: 'XL', quantity: 0 }
+];
+// Estado inicial limpio del formulario para Empleados
+const initialFormState: UniformFormData = {
+    name: '',
+    price: 0, // 👈 Nuevo campo de precio
+    category: 'childrens' as UniformCategory, // O el valor que prefieras por defecto
+    status: 'payment_pending' as UniformStatus,
+    availableSizes: [...DEFAULT_SIZES] as SizeStock[],
+    images: [],
+    existingImages: [],
 };
 export default function UniformsPage() {
     const setBadge = useSidebarStore((state) => state.setBadge);
@@ -153,63 +172,78 @@ export default function UniformsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(8);
-    const DEFAULT_SIZES = [
-        { size: 'XS', quantity: 0 },
-        { size: 'S', quantity: 0 },
-        { size: 'M', quantity: 0 },
-        { size: 'L', quantity: 0 },
-        { size: 'XL', quantity: 0 }
-    ];
+
     // 1. Estado del formulario interno del modal
-    const [uniformFormData, setUniformFormData] = useState({
-        name: '',
-        price: 0, // 👈 Nuevo campo de precio
-        category: 'childrens' as UniformCategory, // O el valor que prefieras por defecto
-        status: 'payment_pending' as UniformStatus,
-        availableSizes: [...DEFAULT_SIZES] as SizeStock[]
-    });
+    const [uniformFormData, setUniformFormData] = useState<UniformFormData>(initialFormState);
     // Estados locales exclusivos para la gestión de archivos
     const [newFiles, setNewFiles] = useState<File[]>([]);
-    const [existingImages, setExistingImages] = useState<string[]>([]);
     // 1. Definimos las funciones que recibirán el elemento capturado
     const handleEdit = (uniform: Uniform) => {
         openModalForm();
         setErrorMsg('')
         setEditingId(uniform.id);
-        setUniformFormData({
-            name: uniform.name ?? '',
-            price: Number(uniform.price) || 0,
-            category: uniform.category as UniformCategory, // O el valor que prefieras por defecto
-            status: uniform.status as UniformStatus,
-            availableSizes: uniform.availableSizes as SizeStock[]
-        })
-        // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
-        let imagesParsed: string[] = [];
+        // 1. Procesamos las imágenes primero
+        let imagesParsed: any[] = [];
+        let formattedImages: S3Image[] = [];
+
         try {
-            if (typeof uniform.images === "string") {
+            if (typeof uniform.images === 'string') {
                 imagesParsed = JSON.parse(uniform.images);
             } else if (Array.isArray(uniform.images)) {
                 imagesParsed = uniform.images;
             }
 
-            const formattedImages = imagesParsed.map((img: any) => {
-                const path = typeof img === 'object' ? img.url || img.path : img;
-                if (path.startsWith('http://') || path.startsWith('https://')) {
-                    return path;
+            const cleanBackendUrl = backendUrl.replace(/\/$/, '');
+
+            // 1. Mapeamos y limpiamos las imágenes
+            const mappedImages = imagesParsed
+                .map((img: any): S3Image | null => {
+                    if (!img) return null;
+
+                    const path = typeof img === 'object' ? img.url || img.path : img;
+
+                    if (!path || typeof path !== 'string') return null;
+
+                    const fullUrl =
+                        path.startsWith('http://') || path.startsWith('https://')
+                            ? path
+                            : `${cleanBackendUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
+                    return {
+                        url: fullUrl,
+                        key: typeof img === 'object' ? img.key || '' : '',
+                        altText: typeof img === 'object' ? img.altText || '' : '',
+                        type: typeof img === 'object' ? img.type || 'cover' : 'cover',
+                        order: typeof img === 'object' ? img.order ?? 0 : 0,
+                    };
+                })
+                .filter((img): img is S3Image => img !== null);
+
+            // 2. DESDUPLICAR mediante un Set basándonos en la identificador único (url o key)
+            const seen = new Set<string>();
+            formattedImages = mappedImages.filter((img) => {
+                const identifier = img.key ? img.key : img.url;
+                if (seen.has(identifier)) {
+                    return false; // Es duplicada, la ignoramos
                 }
-                const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-                const cleanPath = path.startsWith('/') ? path : `/${path}`;
-                return `${cleanBackendUrl}${cleanPath}`;
+                seen.add(identifier);
+                return true;
             });
 
-            // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
-            setExistingImages(formattedImages);
         } catch (e) {
-            console.error("Error al procesar imágenes existentes para edición", e);
-            setExistingImages([]);
+            console.error("Error al procesar las imágenes del producto:", e);
+            formattedImages = [];
         }
-
-
+        console.log({ uniform })
+        setUniformFormData({
+            name: uniform.name ?? '',
+            price: Number(uniform.price) || 0,
+            category: uniform.category as UniformCategory, // O el valor que prefieras por defecto
+            status: uniform.status as UniformStatus,
+            availableSizes: uniform.availableSizes as SizeStock[],
+            existingImages: formattedImages,
+            images: [], // Resetea las nuevas imágenes de cargas anteriores
+        })
     };
     const handleDelete = (uniform: any) => {
         setModalConfig({
@@ -223,19 +257,12 @@ export default function UniformsPage() {
     };
 
     const handleRemoveExisting = (indexToRemove: number, urlToRemove: string) => {
-        setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+        setUniformFormData((prev) => ({
+            ...prev,
+            existingImages: (prev.existingImages || []).filter((_, index) => index !== indexToRemove),
+        }));
         // Opcional: Registrar IDs o URLs para notificar al backend en la petición de guardado
     };
-    // Manejo de inserción de nuevo salón
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file); // Lee el archivo como Data URL (contiene base64)
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = (error) => reject(error);
-        });
-    };
-
 
     // 4. Adaptación del envío del formulario
     const storeUniform = async (e: React.FormEvent) => {
@@ -243,28 +270,36 @@ export default function UniformsPage() {
         setErrorMsg(null);
 
         try {
-            // 1. Procesar los archivos nuevos cargados localmente a Base64
-            const imagesPromises = newFiles.map(async (file) => {
-                const base64String = await fileToBase64(file);
-                return {
-                    name: file.name,
-                    type: file.type, // 'image/png', 'image/jpeg', etc.
-                    base64: base64String,
-                };
+            // 1. Subir archivos nuevos a S3
+            const newlyUploadedImages = await Promise.all(
+                newFiles.map((file) => uploadFileToS3(file))
+            );
+
+            // 2. Unificar y DESDUPLICAR las imágenes finales
+            const combinedImages: S3Image[] = [
+                ...uniformFormData.existingImages,
+                ...newlyUploadedImages,
+            ];
+
+            const seenUrlsOrKeys = new Set<string>();
+            const finalImages = combinedImages.filter((img) => {
+                // Usamos key como identificador prioritario, si no existe usamos url
+                const identifier = img.key && img.key.trim() !== '' ? img.key : img.url;
+
+                if (!identifier || seenUrlsOrKeys.has(identifier)) {
+                    return false;
+                }
+                seenUrlsOrKeys.add(identifier);
+                return true;
             });
-
-            const newImagesPayload = await Promise.all(imagesPromises);
-
             // 2. Construir el payload definitivo
-            const payload = {
+            const payload: SaveUniformPayload = {
                 name: uniformFormData.name,
                 category: uniformFormData.category,
                 status: uniformFormData.status || '',
                 price: uniformFormData.price || 0,
                 availableSizes: uniformFormData.availableSizes || [],
-                images: newImagesPayload, // Nuevas imágenes Base64
-                // Enviar las imágenes existentes que el usuario no ha eliminado durante la edición
-                existingImages: editingId ? existingImages : [],
+                images: finalImages,
             };
 
             // saveUniformAction debe recibir el payload y el editingId (si existe)
@@ -276,7 +311,6 @@ export default function UniformsPage() {
 
                 // Limpieza de estados tras el guardado exitoso
                 setNewFiles([]);
-                setExistingImages([]);
                 setEditingId(null); // Reset del ID de edición
                 closeModalForm();
                 fetchData(currentPage, itemsPerPage);
@@ -475,12 +509,13 @@ export default function UniformsPage() {
                                 price: 0,
                                 category: 'childrens' as UniformCategory, // O el valor que prefieras por defecto
                                 status: 'payment_pending' as UniformStatus,
-                                availableSizes: [...DEFAULT_SIZES] as SizeStock[]
+                                availableSizes: [...DEFAULT_SIZES] as SizeStock[],
+                                images: [],
+                                existingImages: [],
                             });
                             setEditingId(null);
                             setErrorMsg(null);
                             setNewFiles([]);
-                            setExistingImages([]);
                             openModalForm()
                         },
                         icon: <Plus className="w-4 h-4" />,
@@ -801,7 +836,7 @@ export default function UniformsPage() {
                         {/* Grid adaptable de imágenes (de 3 columnas en móviles a 4 en pantallas medianas) */}
                         <ImageGalleryPicker
                             label="Fotografías del Uniforme"
-                            existingImages={existingImages}
+                            existingImages={uniformFormData.existingImages.map((e: S3Image) => e.url) || []}
                             onRemoveExistingImage={handleRemoveExisting}
                             files={newFiles}
                             onFilesChange={setNewFiles}
@@ -818,18 +853,19 @@ export default function UniformsPage() {
                     >
                         Cancelar
                     </button>
-
                     <button
                         type="submit"
-                        form="uniform-form" // <-- Apunta al ID del formulario
-                        onClick={(e) => { }}
-                        disabled={!!errorMsg || !uniformFormData.name || !uniformFormData.price}
-                        className={` group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs ${!!errorMsg || !uniformFormData.name || !uniformFormData.price ? "bg-gray-200 text-gray-400" : "cursor-pointer text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90"
-                            }`}>
-                        {editingId
-                            ? "Actualizar uniforme →"
-                            : "Registrar uniforme →"}
+                        form="uniform-form"
+                        disabled={isPending}
+                        className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                    >
+                        {isPending
+                            ? "Guardando..."
+                            : editingId
+                                ? "Actualizar uniforme →"
+                                : "Registrar uniforme →"}
                     </button>
+
                 </div>
             </MacDockModal>
             <MacDockModal

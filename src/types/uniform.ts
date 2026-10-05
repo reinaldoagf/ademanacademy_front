@@ -3,6 +3,7 @@ import {
     LucideIcon
 } from "lucide-react";
 import { Client } from "./client";
+import { S3Image } from "./s3-image";
 // Enums del esquema (puedes importarlos de @prisma/client si los usas en Node.js,
 // o mantenerlos aquí si es para el Frontend)
 export type UniformCategory = 'baby' | string; // Ajusta con tus valores del Enum real
@@ -68,7 +69,17 @@ export interface SizeStock {
     size: string;
     quantity: number;
 }
-
+// Interfaz para el estado del formulario
+export interface UniformFormData {
+    name: string;
+    beat?: string;
+    category: string;
+    status: string;
+    price: number;
+    availableSizes: any[];
+    images: S3Image[];
+    existingImages: S3Image[];
+}
 // 🎯 Definimos una interfaz limpia para los datos serializables
 export interface SaveUniformPayload {
     name: string;
@@ -77,8 +88,7 @@ export interface SaveUniformPayload {
     status: string;
     price: number;
     availableSizes: any[];
-    images: { name: string; type: string; base64: string }[]; // 🚀 'type' agregado aquí
-    existingImages: string[]; // 🚀 'type' agregado aquí
+    images: S3Image[];
 }
 
 export interface StudentTableItem {

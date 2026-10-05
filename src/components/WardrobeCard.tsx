@@ -18,63 +18,18 @@ interface WardrobeCardProps {
 }
 export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [isHovered, setIsHovered] = useState(false); // Estado para pausar el Autoplay
-
-    const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
-
-    // 🎯 Normalizar y sanitizar las URLs de las imágenes
-    let images: string[] = [];
-    try {
-        let rawImages: any[] = [];
-
-        if (typeof element.images === "string") {
-            rawImages = JSON.parse(element.images);
-        } else if (Array.isArray(element.images)) {
-            rawImages = element.images;
-        }
-
-        if (rawImages && rawImages.length > 0) {
-            images = rawImages.map((img: any) => {
-                const path = typeof img === 'object' ? img.url || img.path : img;
-
-                // Si la ruta ya es una URL absoluta (comienza con http o https), la dejamos intacta
-                if (path.startsWith('http://') || path.startsWith('https://')) {
-                    return path;
-                }
-
-                // Limpiamos barras duplicadas al concatenar: "http://localhost:3000" + "/uploads/img.jpg"
-                const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-                const cleanPath = path.startsWith('/') ? path : `/${path}`;
-
-                return `${cleanBackendUrl}${cleanPath}`;
-            });
-        } else {
-            images = ["/img/default.png"];
-        }
-    } catch (e) {
-        console.error("Error procesando imágenes de element", e);
-        images = ["/img/default.png"];
-    }
-
-    // Por si el procesamiento anterior devolvió un array vacío
-    if (images.length === 0) {
-        images = ["/img/default.png"];
-    }
+    const images = element.images;
 
     // 🎯 EFECTO DE AUTOPLAY: Cambia de imagen cada 4 segundos si el usuario no tiene el mouse encima
     useEffect(() => {
-        if (images.length <= 1 || isHovered) return;
+        if (images.length <= 1) return;
 
         const interval = setInterval(() => {
             setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
         }, 4000); // 4000ms = 4 segundos
 
         return () => clearInterval(interval); // Limpieza al desmontar el componente
-    }, [images.length, isHovered]);
-
-    const stockReal: number = element.availableSizes?.reduce((acum: number, current: any) => acum + current.quantity, 0) ?? 0;
-    const assigned: number = element.assignments?.filter((e: any) => e.status == "assigned").length ?? 0;
-    const percentageAssigned = assigned && stockReal ? Math.round((assigned / stockReal) * 100) : 0;
+    }, [images.length]);
 
     const nextImage = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -101,6 +56,7 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
         if (onDelete) onDelete(element);
     };
 
+
     return (
         <div className="glass-card shadow-sm border border-purple-50/60 flex flex-col justify-between hover:shadow-md transition bg-white group rounded-2xl">
             <div>
@@ -125,10 +81,10 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
                         </span>
                     </div>
 
-                    {images.length > 1 ? (
+                    {images.length > 0 ? (
                         <>
                             <img
-                                src={images[currentImageIndex]}
+                                src={images[currentImageIndex].url}
                                 alt={`${element.name} - ${currentImageIndex + 1}`}
                                 className="w-full h-full object-cover transition-all duration-300"
                             />
@@ -156,7 +112,7 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
 
                                     {/* Indicadores / Puntos */}
                                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full z-10">
-                                        {images.map((_, index) => (
+                                        {images.map((_: any, index: number) => (
                                             <button
                                                 key={index}
                                                 type="button"

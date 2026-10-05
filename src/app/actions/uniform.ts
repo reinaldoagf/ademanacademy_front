@@ -37,44 +37,6 @@ export async function saveUniformAction(payload: SaveUniformPayload, id?: string
         const url = id ? `${BACKEND_URL}/uniforms/${id}` : `${BACKEND_URL}/uniforms`;
         const headers = await getAuthHeaders();
 
-        // 1. Instanciamos el FormData en el Servidor
-        const apiFormData = new FormData();
-
-        // 2. Adjuntamos los datos planos
-        apiFormData.append('name', payload.name);
-        apiFormData.append('category', payload.category);
-        apiFormData.append('status', payload.status);
-        apiFormData.append('price', `${payload.price || 0}`);
-        apiFormData.append('availableSizes', JSON.stringify(payload.availableSizes || []));
-
-        // 3. Procesamos y limpiamos las imágenes existentes si estamos editando
-        if (id && payload.existingImages) {
-            const cleanBackendUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-
-            const relativeExistingImages = payload.existingImages.map((urlStr) => {
-                // Si la URL contiene el backend URL, lo removemos para dejar solo la ruta relativa
-                if (urlStr.startsWith(cleanBackendUrl)) {
-                    return urlStr.replace(cleanBackendUrl, '');
-                }
-                return urlStr;
-            });
-
-            apiFormData.append('existingImages', JSON.stringify(relativeExistingImages));
-        }
-
-        // 4. Re-construimos los archivos binarios de las nuevas imágenes
-        if (payload.images && payload.images.length > 0) {
-            for (const img of payload.images) {
-                const cleanBase64 = img.base64.replace(/^data:image\/\w+;base64,/, "");
-                const buffer = Buffer.from(cleanBase64, 'base64');
-
-                const fileFromBuffer = new File([buffer], img.name, {
-                    type: img.type || 'image/jpeg'
-                });
-
-                apiFormData.append('images', fileFromBuffer);
-            }
-        }
 
         const requestHeaders = { ...headers };
         if (requestHeaders['Content-Type']) {
@@ -82,8 +44,8 @@ export async function saveUniformAction(payload: SaveUniformPayload, id?: string
         }
 
         const response = id
-            ? await axios.patch(url, apiFormData, { headers: requestHeaders })
-            : await axios.post(url, apiFormData, { headers: requestHeaders });
+            ? await axios.patch(url, payload, { headers: requestHeaders })
+            : await axios.post(url, payload, { headers: requestHeaders });
 
         return { success: true, data: response.data };
 
