@@ -22,6 +22,7 @@ export interface CartItem {
     concept: OrderItemConceptType;
     conceptLabel?: string; // Nombre amigable para mostrar en UI (ej: "Vestuario de Gala")
     description?: string; // Nombre amigable para mostrar en UI (ej: "Vestuario de Gala")
+    image?: string | null;
     price: number;
     quantity: number;
     currentStock: number;

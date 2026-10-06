@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import {
     ShoppingBag,
     X,
@@ -193,6 +194,13 @@ export function CartDrawer() {
 
             {/* Lista de Ítems */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 font-questrial text-xs">
+                {
+                    errorMessage && (
+                        <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+                            <p className="text-red-700 font-medium">{errorMessage}</p>
+                        </div>
+                    )
+                }
                 {items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
                         <ShoppingBag className="w-12 h-12 stroke-1 text-purple-200" />
@@ -204,6 +212,21 @@ export function CartDrawer() {
                             key={item.tempId}
                             className="p-3 bg-purple-50/30 border border-purple-100 rounded-lg flex justify-between items-start gap-2"
                         >
+                            <div>
+                                {item.image ? (
+                                    <Image
+                                        width={80}
+                                        height={80}
+                                        src={item.image}
+                                        alt={item.conceptLabel || item.description || item.concept}
+                                        className="object-cover w-20 h-20 rounded-md"
+                                    />
+                                ) : (
+                                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-200 text-gray-400">
+                                        <ShoppingBag className="w-8 h-8" />
+                                    </div>
+                                )}
+                            </div>
                             <div className="space-y-1 flex-1">
                                 <p className="font-bold text-gray-800">
                                     {item.conceptLabel || item.concept}

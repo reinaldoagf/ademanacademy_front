@@ -56,7 +56,6 @@ export default function LandingPage() {
         setHomeEvents(res0.data || [])
       }
       const res1: any = await getFeaturedProducts();
-      console.log({ res1 })
       if (res1.success && res1.data) {
         setFeaturedProducts(res1.data || [])
       }
