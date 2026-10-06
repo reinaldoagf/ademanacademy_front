@@ -4,6 +4,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Sparkles,
   ArrowRight,
@@ -89,12 +90,13 @@ export default function LandingPage() {
           <a href="#disciplinas" className="text-[#5e0472] hover:text-pink-400 transition-colors">Disciplinas</a>
           <a href="#contacto" className="text-[#5e0472] hover:text-pink-400 transition-colors">Contacto</a>
         </div>
-        <button
-          onClick={() => router.push("/login")}
+        <Link
+          href="/login"
           className="cursor-pointer font-anton uppercase text-xs px-6 py-2.5 bg-white text-[#5e0472] hover:bg-purple-100 transition-all shadow-xl"
         >
           Acceder
-        </button>
+        </Link>
+
       </nav>
 
       {/* --- HERO SLIDER --- */}

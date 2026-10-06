@@ -81,7 +81,6 @@ export default function PaymentDetailsPage() {
 
             // Pasamos el realId junto al groupId (si aplica) al Server Action
             const res = await approveTransactionAction(transaction.id, selectedGroupId || undefined);
-
             if (res.success) {
                 toast.success(res.data.message ?? 'Operación exitosa')
                 setError(null);
