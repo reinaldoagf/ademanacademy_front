@@ -2,7 +2,9 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { getAdminDashboardMetrics } from '@/app/actions/metric';
+import { getGroupSlotsData } from '@/app/actions/group';
 import { DashboardMetricsResponse } from '@/types/metric';
+import { SlotsData } from '@/types/group';
 import dynamic from "next/dynamic";
 import HeroSection from '@/components/layout/HeroSection';
 import { BalanceChart } from "@/components/BalanceChart";
@@ -20,11 +22,15 @@ import {
   TrendingUp,
   ShoppingBag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CheckCircle2,
+  Users
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetricsResponse | null>(null);
+  const [onlyActive, setOnlyActive] = useState(true);
+  const [groupSlotsData, setGroupSlotsData] = useState<SlotsData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const itemsPerPage = 3;
   const [currentPage, setCurrentPage] = useState(0);
@@ -68,18 +74,7 @@ export default function AdminDashboardPage() {
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
-  useEffect(() => {
-    async function loadMetrics() {
-      setIsLoading(true);
-      const res = await getAdminDashboardMetrics();
-      if (res.success && res.data) {
-        setMetrics(res.data);
-      }
-      setIsLoading(false);
-    }
 
-    loadMetrics();
-  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -91,6 +86,52 @@ export default function AdminDashboardPage() {
   const handleNewEvent = async () => {
     console.log('handleNewEvent')
   }
+  const overallOccupancy = groupSlotsData?.overallOccupancyPercentage ?? 0;
+  const groups = groupSlotsData?.groups ?? [];
+  // Carga los datos de cupos cada vez que cambia el estado `onlyActive`
+  useEffect(() => {
+    async function fetchGroupSlots() {
+      setIsLoading(true);
+      try {
+        const res = await getGroupSlotsData({ onlyActive });
+        if (res.success && res.data) {
+          setGroupSlotsData(res.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar cupos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchGroupSlots();
+  }, [onlyActive]);
+  useEffect(() => {
+    async function loadDashboardData() {
+      setIsLoading(true);
+      try {
+        // Ejecutamos ambas peticiones en paralelo de manera limpia
+        const [metricsRes, slotsRes] = await Promise.all([
+          getAdminDashboardMetrics(),
+          getGroupSlotsData({ onlyActive }),
+        ]);
+
+        if (metricsRes.success && metricsRes.data) {
+          setMetrics(metricsRes.data);
+        }
+
+        if (slotsRes.success && slotsRes.data) {
+          setGroupSlotsData(slotsRes.data); // Guardamos directamente 'data' (SlotsData)
+        }
+      } catch (error) {
+        console.error('Error al cargar datos del dashboard:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
   return (
     <>
       {/* SUB-TOPBAR (Saludos y Acción rápida) */}
@@ -277,25 +318,97 @@ export default function AdminDashboardPage() {
           {/* COLUMNA DERECHA */}
           <div className="space-y-6">
             {/* Módulo de Capacidad de Grupos */}
-            <div className="glass-card p-6 shadow-sm text-center">
-              <h3 className="text-lg font-anton mb-4 text-left">Cupos de la Academia</h3>
-              <div className="relative w-32 h-32 mx-auto my-4 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-[10px] border-purple-100"></div>
-                <div className="absolute inset-0 rounded-full border-[10px] border-[#5e0472] border-t-pink-400 rotate-45"></div>
-                <div>
-                  <span className="text-2xl font-questrial font-black text-[#5e0472]">89%</span>
+            <div className="glass-card p-6 shadow-sm text-center flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="text-lg font-anton text-left">Cupos de la Academia</h3>
+
+                {/* Toggle / Pill Buttons para filtrar */}
+                <div className="flex items-center bg-purple-50/80 p-0.5 rounded-lg border border-purple-100 text-[11px] font-questrial font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyActive(true)}
+                    className={`px-2 py-1 rounded-md transition-all flex items-center gap-1 ${onlyActive
+                      ? 'bg-white text-[#5e0472] shadow-sm font-bold'
+                      : 'cursor-pointer text-gray-500 hover:text-gray-800'
+                      }`}
+                  >
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    Activos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyActive(false)}
+                    className={`px-2 py-1 rounded-md transition-all flex items-center gap-1 ${!onlyActive
+                      ? 'bg-white text-[#5e0472] shadow-sm font-bold'
+                      : 'cursor-pointer text-gray-500 hover:text-gray-800'
+                      }`}
+                  >
+                    <Users className="w-3 h-3 text-purple-500" />
+                    Todos
+                  </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-left text-xs">
-                <div className="p-2 bg-white/50 rounded-xl">
-                  <p className="text-gray-400 font-questrial font-medium">Baby Ballet</p>
-                  <p className="font-questrial font-bold text-[#5e0472]">18/20 Cupos</p>
+
+              {isLoading ? (
+                /* Estado de Carga (Skeleton Loader) */
+                <div className="animate-pulse space-y-4 my-2">
+                  <div className="w-32 h-32 rounded-full bg-purple-100/60 mx-auto flex items-center justify-center">
+                    <div className="w-24 h-24 bg-white rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-12 bg-purple-100/50 rounded-xl" />
+                    <div className="h-12 bg-purple-100/50 rounded-xl" />
+                  </div>
                 </div>
-                <div className="p-2 bg-white/50 rounded-xl">
-                  <p className="text-gray-400 font-questrial font-medium">Salsa Casino</p>
-                  <p className="font-questrial font-bold text-[#5e0472]">25/25 <span className="text-red-400 text-[10px]">(Full)</span></p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  {/* Gráfico Circular Dinámico con conic-gradient */}
+                  <div className="relative w-32 h-32 mx-auto my-4 flex items-center justify-center">
+                    <div
+                      className="w-full h-full rounded-full flex items-center justify-center transition-all duration-500"
+                      style={{
+                        background: `conic-gradient(#5e0472 ${overallOccupancy}%, #f3e8ff ${overallOccupancy}% 100%)`,
+                      }}
+                    >
+                      {/* Círculo central (Efecto Dona) */}
+                      <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-inner">
+                        <span className="text-2xl font-questrial font-black text-[#5e0472]">
+                          {overallOccupancy}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Listado de Grupos con Scroll */}
+                  <div className="grid grid-cols-2 gap-2 text-left text-xs max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-purple-200">
+                    {groups.map((group) => (
+                      <div
+                        key={group.id}
+                        className="p-2 bg-white/50 rounded-xl border border-purple-50 flex flex-col justify-center"
+                      >
+                        <p
+                          className="text-gray-400 font-questrial font-medium truncate"
+                          title={group.name}
+                        >
+                          {group.name}
+                        </p>
+                        <p className="font-questrial font-bold text-[#5e0472]">
+                          {group.occupiedSlots}/{group.totalSlots} Cupos{' '}
+                          {group.isFull && (
+                            <span className="text-red-400 text-[10px] ml-0.5">(Full)</span>
+                          )}
+                        </p>
+                      </div>
+                    ))}
+
+                    {groups.length === 0 && (
+                      <p className="col-span-2 text-center text-gray-400 py-4">
+                        No hay grupos registrados
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Agenda de Ensayos + Calendario */}

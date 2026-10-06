@@ -25,3 +25,27 @@ export interface FetchGroupsParams {
     status?: string;
     category?: string;
 }
+export interface GroupSlotMetric {
+    id: string;
+    name: string;
+    occupiedSlots: number;
+    totalSlots: number;
+    availableSlots: number;
+    isFull: boolean;
+    occupancyPercentage: number;
+}
+
+export interface SlotsData {
+    overallOccupancyPercentage: number;
+    totalSlots: number;
+    totalOccupied: number;
+    totalAvailable: number;
+    groups: GroupSlotMetric[];
+}
+
+export interface GroupSlotsDataResponse {
+    success: boolean;
+    data?: SlotsData;
+    error?: string;
+    message?: string;
+}
