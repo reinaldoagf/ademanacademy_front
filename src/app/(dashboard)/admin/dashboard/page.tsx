@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/dashboard/page.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
-import { getAdminDashboardMetrics, getBalanceMetrics } from '@/app/actions/metric';
+import { getAdminDashboardMetrics, getBalanceMetrics, getCostumeInventoryMetrics } from '@/app/actions/metric';
 import { getGroupSlotsData } from '@/app/actions/group';
 import { DashboardMetricsResponse } from '@/types/metric';
 import { SlotsData } from '@/types/group';
@@ -9,6 +9,8 @@ import dynamic from "next/dynamic";
 import HeroSection from '@/components/layout/HeroSection';
 import { BalanceChart } from "@/components/BalanceChart";
 import { DateRangePicker, DateRangeValue } from "@/components/ui/forms/DateRangePicker";
+import { CostumeControlTable } from "@/components/CostumeControlTable";
+
 //  Importación dinámica con SSR desactivado:
 const AcademicCalendar = dynamic(
   () => import("@/components/AcademicCalendar").then((mod) => mod.AcademicCalendar),
@@ -56,6 +58,8 @@ export default function AdminDashboardPage() {
   const [balanceData, setBalanceData] = useState<BalanceChartData | null>(null);
   const itemsPerPage = 3;
   const [currentPage, setCurrentPage] = useState(0);
+
+  const [costumeData, setCostumeData] = useState<any[]>([]);
   // Lista estructurada de ítems
   const concepts = [
     {
@@ -151,13 +155,14 @@ export default function AdminDashboardPage() {
       setIsLoading(true);
       try {
         // Ejecutamos ambas peticiones en paralelo de manera limpia
-        const [metricsRes, slotsRes, /* balanceRes */] = await Promise.all([
+        const [metricsRes, slotsRes, balanceRes, costumeRes] = await Promise.all([
           getAdminDashboardMetrics(),
           getGroupSlotsData({ onlyActive }),
-          /*  getBalanceMetrics({
-             startDate: dateRange.startDate,
-             endDate: dateRange.endDate,
-           }) */
+          getBalanceMetrics({
+            startDate: String(dateRange?.startDate),
+            endDate: String(dateRange?.endDate),
+          }),
+          getCostumeInventoryMetrics()
         ]);
 
         if (metricsRes.success && metricsRes.data) {
@@ -168,9 +173,13 @@ export default function AdminDashboardPage() {
           setGroupSlotsData(slotsRes.data); // Guardamos directamente 'data' (SlotsData)
         }
 
-        /* if (balanceRes.success && balanceRes.data) {
+        if (balanceRes.success && balanceRes.data) {
           setBalanceData(balanceRes.data); // Guardamos directamente 'data' (SlotsData)
-        } */
+        }
+
+        if (costumeRes.success && costumeRes.data) {
+          setCostumeData(costumeRes.data); // Guardamos directamente 'data' (SlotsData)
+        }
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
       } finally {
@@ -324,7 +333,8 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             {/* Tabla de Control de Inventario de Vestuarios */}
-            <div className="glass-card p-6 shadow-sm">
+            <CostumeControlTable data={costumeData} />
+            {/* <div className="glass-card p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-anton mb-4">Control de Vestuarios e Impacto Financiero</h3>
               </div>
@@ -362,7 +372,7 @@ export default function AdminDashboardPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* COLUMNA DERECHA */}

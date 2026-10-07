@@ -62,3 +62,20 @@ export async function getAcademicCalendarEvents(yearParam?: number, monthParam?:
         };
     }
 }
+
+export async function getCostumeInventoryMetrics() {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/metrics/costume-inventory`, {
+            headers: headers,
+        });
+
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
