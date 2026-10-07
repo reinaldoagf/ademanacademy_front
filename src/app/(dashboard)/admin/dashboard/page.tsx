@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/dashboard/page.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
-import { getAdminDashboardMetrics } from '@/app/actions/metric';
+import { getAdminDashboardMetrics, getBalanceMetrics } from '@/app/actions/metric';
 import { getGroupSlotsData } from '@/app/actions/group';
 import { DashboardMetricsResponse } from '@/types/metric';
 import { SlotsData } from '@/types/group';
@@ -26,12 +26,36 @@ import {
   CheckCircle2,
   Users
 } from "lucide-react";
-
+import { BalanceChartData } from '@/types/dashboard';
+// Opciones dinámicas o estáticas para los selectores
+const YEARS = [2026, 2027, 2028, 2029, 2030];
+const MONTHS = [
+  { value: 1, label: 'Enero' },
+  { value: 2, label: 'Febrero' },
+  { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' },
+  { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' },
+  { value: 12, label: 'Diciembre' },
+];
 export default function AdminDashboardPage() {
+  const currentDate = new Date();
+  // Estados para las fechas seleccionadas
+  const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1);
+  // Estado para el indicador de carga exclusivo del gráfico
+  const [isBalanceLoading, setIsBalanceLoading] = useState<boolean>(false);
   const [metrics, setMetrics] = useState<DashboardMetricsResponse | null>(null);
   const [onlyActive, setOnlyActive] = useState(true);
   const [groupSlotsData, setGroupSlotsData] = useState<SlotsData | null>(null);
+  const [isSlotsLoading, setIsSlotsLoading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [balanceData, setBalanceData] = useState<BalanceChartData | null>(null);
   const itemsPerPage = 3;
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -91,7 +115,7 @@ export default function AdminDashboardPage() {
   // Carga los datos de cupos cada vez que cambia el estado `onlyActive`
   useEffect(() => {
     async function fetchGroupSlots() {
-      setIsLoading(true);
+      setIsSlotsLoading(true);
       try {
         const res = await getGroupSlotsData({ onlyActive });
         if (res.success && res.data) {
@@ -100,20 +124,44 @@ export default function AdminDashboardPage() {
       } catch (error) {
         console.error('Error al cargar cupos:', error);
       } finally {
-        setIsLoading(false);
+        setIsSlotsLoading(false);
       }
     }
 
     fetchGroupSlots();
   }, [onlyActive]);
+  // Effect para actualizar el gráfico cuando cambie año o mes
+  useEffect(() => {
+    async function updateBalance() {
+      setIsBalanceLoading(true);
+      try {
+        const balanceRes = await getBalanceMetrics({
+          year: selectedYear,
+          month: selectedMonth
+        });
+
+        if (balanceRes.success && balanceRes.data) {
+          setBalanceData(balanceRes.data);
+        }
+      } catch (error) {
+        console.error('Error al actualizar métricas de balance:', error);
+      } finally {
+        setIsBalanceLoading(false);
+      }
+    }
+
+    // Evita ejecutar este efecto en el primer render general si ya fue cubierto por loadDashboardData
+    updateBalance();
+  }, [selectedYear, selectedMonth]);
   useEffect(() => {
     async function loadDashboardData() {
       setIsLoading(true);
       try {
         // Ejecutamos ambas peticiones en paralelo de manera limpia
-        const [metricsRes, slotsRes] = await Promise.all([
+        const [metricsRes, slotsRes, balanceRes] = await Promise.all([
           getAdminDashboardMetrics(),
           getGroupSlotsData({ onlyActive }),
+          getBalanceMetrics({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 })
         ]);
 
         if (metricsRes.success && metricsRes.data) {
@@ -122,6 +170,10 @@ export default function AdminDashboardPage() {
 
         if (slotsRes.success && slotsRes.data) {
           setGroupSlotsData(slotsRes.data); // Guardamos directamente 'data' (SlotsData)
+        }
+
+        if (balanceRes.success && balanceRes.data) {
+          setBalanceData(balanceRes.data); // Guardamos directamente 'data' (SlotsData)
         }
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
@@ -251,9 +303,9 @@ export default function AdminDashboardPage() {
 
             {/* Gráfico / Balance Mensual (Estilo Ondas SVG) */}
             <div className="glass-card p-6 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div>
-                  <h3 className="text-lg font-anton mb-4">Balance de Ingresos vs Deudas</h3>
+                  <h3 className="text-lg font-anton mb-2">Balance de Ingresos</h3>
                   <div className="flex flex-wrap gap-4 text-xs mt-1">
                     <span className="flex items-center gap-1.5 text-sm font-questrial font-medium text-gray-700">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#5e0472] inline-block"></span> Recaudado
@@ -263,16 +315,43 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                 </div>
-                <span className="bg-purple-100 text-purple-700 font-questrial px-3 py-1 text-xs font-semibold">Mayo 2026</span>
+
+                {/* Seleccionadores Dinámicos de Mes y Año */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="bg-purple-50 text-purple-700 font-questrial px-3 py-1.5 text-xs font-semibold rounded-md border border-purple-200 outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
+                  >
+                    {MONTHS.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="bg-purple-50 text-purple-700 font-questrial px-3 py-1.5 text-xs font-semibold rounded-md border border-purple-200 outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
+                  >
+                    {YEARS.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              {/* Contenedor adaptado para Chart.js */}
+              {/* Contenedor del Gráfico */}
               <div className="h-44 w-full relative mt-2">
-                {/* 2. Insertamos el componente aquí en lugar del SVG plano */}
-                <BalanceChart />
+                <BalanceChart
+                  chartData={balanceData}
+                  isLoading={isLoading || isBalanceLoading}
+                />
               </div>
             </div>
-
             {/* Tabla de Control de Inventario de Vestuarios */}
             <div className="glass-card p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
@@ -349,7 +428,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {isLoading ? (
+              {isLoading || isSlotsLoading ? (
                 /* Estado de Carga (Skeleton Loader) */
                 <div className="animate-pulse space-y-4 my-2">
                   <div className="w-32 h-32 rounded-full bg-purple-100/60 mx-auto flex items-center justify-center">
