@@ -25,8 +25,6 @@ import {
   ChevronRight,
   CheckCircle2,
   Users,
-  Plus,
-  Minus
 } from "lucide-react";
 import { BalanceChartData } from '@/types/dashboard';
 // Convierte Date a string en formato YYYY-MM-DD
@@ -58,7 +56,6 @@ export default function AdminDashboardPage() {
   const [balanceData, setBalanceData] = useState<BalanceChartData | null>(null);
   const itemsPerPage = 3;
   const [currentPage, setCurrentPage] = useState(0);
-
   // Lista estructurada de ítems
   const concepts = [
     {
