@@ -10,6 +10,7 @@ export * from './DNIInput';
 export * from './InputGroup';
 export * from './EmailInput';
 export * from './DateInput';
+export * from './DateRangePicker';
 export * from './RangeSliderInput';
 export * from './ImageGalleryPicker';
 export * from './ToggleSwitch';

@@ -99,3 +99,52 @@ body {
   animation-play-state: paused;
   /* Pausa al pasar el mouse sobre un sponsor */
 }
+
+/* ======================================================
+   react-tailwindcss-datepicker Customization
+   Class: .date-range-picker-container
+====================================================== */
+
+.date-range-picker-container input {
+  @apply !bg-purple-50/80 !bg-purple-100/70 !border !border-purple-200 !text-purple-900 !font-questrial !text-xs !font-semibold !py-1.5 !px-3 !rounded-lg !ring-2 !ring-purple-400 !outline-none !transition-colors !cursor-pointer !shadow-sm;
+}
+
+.date-range-picker-container>div:nth-child(2) {
+  @apply !bg-white !border !border-gray-100 !shadow-xl !rounded-xl !p-2 !z-50;
+}
+
+.date-range-picker-container button,
+.date-range-picker-container h1,
+.date-range-picker-container .font-semibold {
+  font-family: var(--font-anton), sans-serif !important;
+  @apply !text-xs !tracking-wide !uppercase !text-gray-800;
+}
+
+.date-range-picker-container ul li {
+  @apply !font-questrial !text-[15px] !font-semibold !uppercase
+}
+
+.date-range-picker-container .tracking-wide.text-gray-500.text-center {
+  @apply !font-questrial !text-[8px] !font-semibold !text-gray-400 !uppercase !py-1;
+}
+
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10 {
+  @apply !w-full !h-full !text-[13px] !py-1 !px-2
+}
+
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.text-gray-400 {
+  @apply !text-gray-500 !font-questrial !text-[13px] !font-semibold !py-1 !px-2
+}
+
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.bg-purple-500.text-white.font-medium.rounded-l-full {
+  @apply !rounded-l-lg
+}
+
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.bg-purple-500.text-white.font-medium.rounded-r-full {
+  @apply !rounded-r-lg
+}
+
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.bg-purple-500.text-white.font-medium.rounded-l-full,
+.date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.bg-purple-500.text-white.font-medium.rounded-r-full {
+  @apply !bg-[#5e0472] !text-white !w-full !h-full !text-[13px] !font-semibold !py-1 !px-2
+}

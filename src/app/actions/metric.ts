@@ -21,16 +21,16 @@ export async function getAdminDashboardMetrics() {
     }
 }
 
-export async function getBalanceMetrics({ year, month }: { year: number, month: number }) {
+export async function getBalanceMetrics(params?: { startDate?: string; endDate?: string }) {
     try {
         const headers = await getAuthHeaders();
         // Axios limpiará automáticamente las propiedades undefined
         const response = await axios.get(`${BACKEND_URL}/metrics/balance-chart`, {
             headers: headers,
             params: {
-                year: year,
-                month: month
-            }
+                startDate: params?.startDate,
+                endDate: params?.endDate,
+            },
         });
 
         return { success: true, data: response.data.data, meta: response.data.meta };
