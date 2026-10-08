@@ -210,73 +210,76 @@ export function CartDrawer() {
                     items.map((item) => (
                         <div
                             key={item.tempId}
-                            className="p-3 bg-purple-50/30 border border-purple-100 rounded-lg flex justify-between items-start gap-2"
+                            className="bg-purple-50/30 border border-purple-100 rounded-lg flex"
                         >
-                            <div>
+                            <div className="w-1/4">
                                 {item.image ? (
                                     <Image
                                         width={80}
                                         height={80}
                                         src={item.image}
                                         alt={item.conceptLabel || item.description || item.concept}
-                                        className="object-cover w-20 h-20 rounded-md"
+                                        className="object-cover w-25 h-25 rounded-l-md"
                                     />
                                 ) : (
-                                    <div className="w-20 h-20 rounded-md flex items-center justify-center bg-gray-200 text-gray-400">
+                                    <div className="w-30 h-30 rounded-md flex items-center justify-center bg-gray-200 text-gray-400">
                                         <ShoppingBag className="w-8 h-8" />
                                     </div>
                                 )}
                             </div>
-                            <div className="space-y-1 flex-1">
-                                <p className="font-bold text-gray-800">
-                                    {item.conceptLabel || item.concept}
-                                </p>
-                                {item.student && (
-                                    <p className="text-[10px] text-gray-500">
-                                        Alumno: {item.student.firstName} {item.student.lastName}
+                            <div className="w-3/4 p-3 flex justify-between items-start">
+                                <div className="space-y-1 flex-1">
+                                    <p className="font-bold text-gray-800">
+                                        {item.conceptLabel || item.concept}
                                     </p>
-                                )}
-                                <p className="text-purple-700 font-bold">
-                                    ${(item.price ?? 0)}
-                                </p>
+                                    {item.student && (
+                                        <p className="text-[10px] text-gray-500">
+                                            Alumno: {item.student.firstName} {item.student.lastName}
+                                        </p>
+                                    )}
+                                    <p className="text-purple-700 font-bold">
+                                        ${(item.price ?? 0)}
+                                    </p>
 
-                                <div className="flex items-center gap-2 pt-1">
-                                    <button
-                                        onClick={() =>
-                                            updateQuantity(item.tempId, item.quantity - 1)
-                                        }
-                                        className="cursor-pointer bg-red-50 p-1 border border-red-200 rounded hover:bg-red-100"
-                                    >
-                                        <Minus className="w-3 h-3 text-red-700" />
-                                    </button>
-                                    <span className="font-bold text-xs px-1">
-                                        {item.quantity}
-                                    </span>
-                                    <button
-                                        onClick={() =>
-                                            updateQuantity(item.tempId, item.quantity + 1)
-                                        }
-                                        disabled={item.currentStock !== undefined && item.quantity >= item.currentStock}
-                                        className={`p-1 border rounded ${item.currentStock !== undefined && item.quantity >= item.currentStock
-                                            ? "bg-gray-50 border-gray-200"
-                                            : "cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
-                                            }`}
-                                    >
-                                        <Plus className={`w-3 h-3 ${item.currentStock !== undefined && item.quantity >= item.currentStock
-                                            ? "text-gray-700"
-                                            : "text-emerald-700"
-                                            }`} />
-                                    </button>
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <button
+                                            onClick={() =>
+                                                updateQuantity(item.tempId, item.quantity - 1)
+                                            }
+                                            className="cursor-pointer bg-red-50 p-1 border border-red-200 rounded hover:bg-red-100"
+                                        >
+                                            <Minus className="w-3 h-3 text-red-700" />
+                                        </button>
+                                        <span className="font-bold text-xs px-1">
+                                            {item.quantity}
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                updateQuantity(item.tempId, item.quantity + 1)
+                                            }
+                                            disabled={item.currentStock !== undefined && item.quantity >= item.currentStock}
+                                            className={`p-1 border rounded ${item.currentStock !== undefined && item.quantity >= item.currentStock
+                                                ? "bg-gray-50 border-gray-200"
+                                                : "cursor-pointer bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                                                }`}
+                                        >
+                                            <Plus className={`w-3 h-3 ${item.currentStock !== undefined && item.quantity >= item.currentStock
+                                                ? "text-gray-700"
+                                                : "text-emerald-700"
+                                                }`} />
+                                        </button>
 
+                                    </div>
                                 </div>
+
+                                <button
+                                    onClick={() => removeItem(item.tempId)}
+                                    className="cursor-pointer text-red-400 hover:text-red-600 p-1"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
 
-                            <button
-                                onClick={() => removeItem(item.tempId)}
-                                className="cursor-pointer text-red-400 hover:text-red-600 p-1"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
                         </div>
                     ))
                 )}
