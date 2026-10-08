@@ -4,17 +4,19 @@ import React, { useEffect, useState } from 'react';
 import {
     Shirt,
 } from "lucide-react";
-import { getAdminDashboardMetrics } from '@/app/actions/metric';
-import { DashboardMetricsResponse } from '@/types/metric';
+import { getBorrowedCostumes } from '@/app/actions/metric';
+import { BorrowedCostumesResponse } from '@/types/metric';
 export function AssignedChangingRooms() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [metrics, setMetrics] = useState<DashboardMetricsResponse | null>(null);
+    const [metrics, setMetrics] = useState<BorrowedCostumesResponse>({
+        borrowedCostumes: 0
+    });
     useEffect(() => {
         async function loadDashboardData() {
             setIsLoading(true);
             try {
                 // Ejecutamos ambas peticiones en paralelo de manera limpia
-                const res = await getAdminDashboardMetrics()
+                const res = await getBorrowedCostumes()
                 if (res.success && res.data) {
                     setMetrics(res.data);
                 }
@@ -37,7 +39,7 @@ export function AssignedChangingRooms() {
                     <div className="h-8 w-28 bg-white/20 rounded animate-pulse mt-2" />
                 ) : (
                     <h3 className="text-3xl font-questrial font-bold mt-1">
-                        {metrics?.borrowedCostumes ?? 0} Piezas
+                        {metrics.borrowedCostumes ?? 0} Piezas
                     </h3>
                 )}
             </div>

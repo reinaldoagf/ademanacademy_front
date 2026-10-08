@@ -20,11 +20,11 @@ export async function getRevenueByCategoryMetrics() {
         };
     }
 }
-export async function getAdminDashboardMetrics() {
+export async function getActivePreInscriptions() {
     try {
         const headers = await getAuthHeaders();
         // Axios limpiará automáticamente las propiedades undefined
-        const response = await axios.get(`${BACKEND_URL}/metrics/admin-dashboard`, {
+        const response = await axios.get(`${BACKEND_URL}/metrics/active-pre-inscriptions`, {
             headers: headers
         });
 
@@ -36,7 +36,22 @@ export async function getAdminDashboardMetrics() {
         };
     }
 }
+export async function getBorrowedCostumes() {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/metrics/borrowed-costumes`, {
+            headers: headers
+        });
 
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
 export async function getBalanceMetrics(params?: { startDate?: string; endDate?: string }) {
     try {
         const headers = await getAuthHeaders();

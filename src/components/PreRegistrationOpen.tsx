@@ -4,20 +4,22 @@ import React, { useEffect, useState } from 'react';
 import {
     UserCheck,
 } from "lucide-react";
-import { getAdminDashboardMetrics } from '@/app/actions/metric';
-import { DashboardMetricsResponse } from '@/types/metric';
+import { getActivePreInscriptions } from '@/app/actions/metric';
+import { PreRegistrationOpenResponse } from '@/types/metric';
 
 export function PreRegistrationOpen() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [metrics, setMetrics] = useState<DashboardMetricsResponse | null>(null);
+    const [preRegistrationOpen, setPreRegistrationOpen] = useState<PreRegistrationOpenResponse>({
+        activePreInscriptions: 0
+    });
     useEffect(() => {
-        async function loadDashboardData() {
+        async function fetchActivePreInscriptions() {
             setIsLoading(true);
             try {
                 // Ejecutamos ambas peticiones en paralelo de manera limpia
-                const res = await getAdminDashboardMetrics()
+                const res = await getActivePreInscriptions()
                 if (res.success && res.data) {
-                    setMetrics(res.data);
+                    setPreRegistrationOpen(res.data);
                 }
             } catch (error) {
                 console.error('Error al cargar datos del dashboard:', error);
@@ -26,7 +28,7 @@ export function PreRegistrationOpen() {
             }
         }
 
-        loadDashboardData();
+        fetchActivePreInscriptions();
     }, []);
     return (
         <div className="gradient-purple p-5 text-white shadow-lg shadow-purple-200 flex justify-between items-center relative overflow-hidden">
@@ -38,7 +40,7 @@ export function PreRegistrationOpen() {
                     <div className="h-8 w-28 bg-white/20 rounded animate-pulse mt-2" />
                 ) : (
                     <h3 className="text-3xl font-questrial font-bold mt-1">
-                        {metrics?.activePreInscriptions ?? 0} Alumnos
+                        {preRegistrationOpen.activePreInscriptions ?? 0} Alumnos
                     </h3>
                 )}
             </div>
