@@ -1,6 +1,8 @@
 // src/components/CostumeControlTable.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { getCostumeInventoryMetrics } from '@/app/actions/metric';
 export interface CostumeInventoryItem {
     id: string;
     costumeName: string;
@@ -10,11 +12,29 @@ export interface CostumeInventoryItem {
     pendingFee: number;
 }
 
-interface CostumeControlTableProps {
-    data: CostumeInventoryItem[];
-}
 
-export function CostumeControlTable({ data }: CostumeControlTableProps) {
+export function CostumeControlTable() {
+    const [costumeData, setCostumeData] = useState<CostumeInventoryItem[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    useEffect(() => {
+        async function loadCostumeControlData() {
+
+            setIsLoading(true);
+            try {
+                const res = await getCostumeInventoryMetrics();
+
+                if (res.success && res.data) {
+                    setCostumeData(res.data);
+                }
+            } catch (error) {
+                console.error('Error al actualizar métricas de balance:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        loadCostumeControlData();
+    }, []);
     // Helper para renderizar badges de estado según la asignación / vestuario
     const renderStatusBadge = (status: string, pendingFee: number) => {
         if (pendingFee > 0 || status === "delayed" || status === "damaged") {
@@ -47,7 +67,9 @@ export function CostumeControlTable({ data }: CostumeControlTableProps) {
                     Control de Vestuarios e Impacto Financiero
                 </h3>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto">{isLoading ? (
+                <div className="h-8 w-28 bg-white/20 rounded animate-pulse mt-2" />
+            ) : (
                 <table className="w-full text-left text-sm">
                     <thead>
                         <tr className="text-gray-400 border-b border-purple-50">
@@ -60,8 +82,8 @@ export function CostumeControlTable({ data }: CostumeControlTableProps) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-purple-50/50">
-                        {data.length > 0 ? (
-                            data.map((item) => (
+                        {costumeData.length > 0 ? (
+                            costumeData.map((item) => (
                                 <tr key={item.id} className="text-gray-700">
                                     <td className="py-3.5 font-medium flex items-center gap-2 font-questrial">
                                         <span
@@ -78,8 +100,8 @@ export function CostumeControlTable({ data }: CostumeControlTableProps) {
                                     </td>
                                     <td
                                         className={`py-3.5 text-right font-questrial ${item.pendingFee > 0
-                                                ? "font-bold text-red-500"
-                                                : "font-semibold text-gray-400"
+                                            ? "font-bold text-red-500"
+                                            : "font-semibold text-gray-400"
                                             }`}
                                     >
                                         ${item.pendingFee.toFixed(2)}
@@ -97,7 +119,7 @@ export function CostumeControlTable({ data }: CostumeControlTableProps) {
                             </tr>
                         )}
                     </tbody>
-                </table>
+                </table>)}
             </div>
         </div>
     );
