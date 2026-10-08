@@ -7,6 +7,15 @@ import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
+export interface StudentAssignmentPayload {
+    studentId: string;
+    observations?: string;
+}
+
+export interface AssignCostumeActionParams {
+    costumeId: string;
+    assignments: StudentAssignmentPayload[];
+}
 
 export async function getCostumeCountByStatus() {
     try {
@@ -107,5 +116,25 @@ export async function deleteCostumeAction(id: string): Promise<{ success: boolea
             };
         }
         return { success: false, error: "Error al comunicar la baja al servidor." };
+    }
+}
+
+export async function assignCostumeAction(
+    data: AssignCostumeActionParams,
+): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.post(`${BACKEND_URL}/costumes/assign`, data, { headers });
+
+        return { success: true, data: response.data };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo asignar el uniforme."
+            };
+        }
+        return { success: false, error: "Error al comunicar la asignación al servidor." };
     }
 }

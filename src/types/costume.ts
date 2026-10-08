@@ -83,3 +83,10 @@ export interface StatusCardConfig {
     unitLabel: string;
 }
 export type LockerRoomStatus = "payment_pending" | "making" | "available" | "retired";
+
+export interface ElementToBeAssigned {
+    studentId: string;
+    fullName: string;
+    email: string;
+    observations?: string;
+}

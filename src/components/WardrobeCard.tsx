@@ -50,6 +50,12 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
         if (onEdit) onEdit(element);
     };
 
+    const handleAssign = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (onAssign) onAssign(element);
+    };
+
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
@@ -172,39 +178,40 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
             {/* Status de Almacén e Indicador */}
             <div className="p-4 space-y-3 border-t border-purple-50/50 pt-3">
                 {/* Botones de acción */}
-                <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-2 pt-2">
+                <div className="w-full grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-2 pt-1 overflow-x-auto">
 
-                    {/* Botón secundario/peligro (Eliminar) */}
-                    <div className="w-full sm:w-auto">
+                    {/* Botón secundario/peligro (Eliminar) - Ocupa 1 columna en móvil */}
+                    <div className="col-span-1 sm:w-auto">
                         <ActionButton
                             variant="danger"
                             icon={Trash2}
-                            tooltip=""
                             onClick={handleDelete}
-                            className="w-full sm:w-auto"
+                            containerClassName="w-full"
+                            className="w-full"
                         >
                             Eliminar
                         </ActionButton>
                     </div>
 
                     {/* Acciones principales (Editar y Asignar) */}
-                    <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
+                    <div className="col-span-1 sm:w-auto flex flex-col sm:flex-row items-center gap-2 w-full">
                         <ActionButton
                             variant="success"
                             icon={Pencil}
-                            tooltip=""
                             onClick={handleEdit}
-                            className="w-full sm:w-auto"
+                            containerClassName="w-full sm:w-auto"
+                            className="w-full"
                         >
                             Editar
                         </ActionButton>
 
+                        {/* Asignar pasa a ocupar ancho completo en pantallas móviles si es necesario */}
                         <ActionButton
                             variant="gradient_purple"
                             icon={UserPlus}
-                            tooltip=""
-                            onClick={() => onAssign?.(element)}
-                            className="w-full sm:w-auto"
+                            onClick={handleAssign}
+                            containerClassName="col-span-2 sm:col-span-1 w-full sm:w-auto"
+                            className="w-full"
                         >
                             Asignar
                         </ActionButton>

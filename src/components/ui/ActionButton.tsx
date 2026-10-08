@@ -62,7 +62,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   `.trim();
 
     return (
-        <div className={`relative inline-block group ${containerClassName}`.trim()}>
+        <div className={`relative inline-flex group ${containerClassName.includes('w-full') ? 'w-full sm:w-auto' : ''} ${containerClassName}`.trim()}>
             <button disabled={disabled} className={buttonClasses} {...props}>
                 {renderIcon()}
                 {children && (

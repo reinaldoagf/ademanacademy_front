@@ -24,9 +24,14 @@ import { Uniform, UniformCategory, UniformStatus, SizeStock, StatusCardConfig, S
 import { Student } from "@/types/student";
 import { Client } from "@/types/client";
 import { S3Image } from "@/types/s3-image";
-import { getAllUniformsAction, getUniformCountByStatus, saveUniformAction, deleteUniformAction } from "@/app/actions/uniform";
+import {
+    getAllUniformsAction,
+    getUniformCountByStatus,
+    saveUniformAction,
+    deleteUniformAction,
+    assignUniformAction
+} from "@/app/actions/uniform";
 import { getAllStudentsAction } from "@/app/actions/student";
-import { assignUniformAction } from "@/app/actions/uniform";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput, ImageGalleryPicker, TextArea, SearchInput } from '@/components/ui/forms';
@@ -127,8 +132,6 @@ export default function UniformsPage() {
     // Estados para la asignación masiva
     const [selectedStudentsList, setSelectedStudentsList] = useState<StudentTableItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -245,7 +248,7 @@ export default function UniformsPage() {
             images: [], // Resetea las nuevas imágenes de cargas anteriores
         })
     };
-    const handleDelete = (uniform: any) => {
+    const handleDelete = (uniform: Uniform) => {
         setModalConfig({
             isOpen: true,
             type: "word",
@@ -255,6 +258,19 @@ export default function UniformsPage() {
         });
 
     };
+    const handleAssign = (uniform: Uniform) => {
+        setSelectedUniform(uniform)
+        setStudentSearch('')
+        setUniformAssignmentForm({
+            uniformId: uniform.id,
+            studentId: '',
+            assignedSize: '',
+            observations: '',
+        })
+        setErrorMsg('')
+        setSelectedStudentsList([])
+        openModalUniformForAssign()
+    }
     const handleRemoveExisting = async (image: S3Image, index: number) => {
         const imageToRemove = uniformFormData.existingImages![index];
         setUniformFormData((prev) => ({
@@ -407,7 +423,7 @@ export default function UniformsPage() {
         }
 
         setErrorMsg(null);
-        // setIsSubmitting(true);
+        setIsSubmitting(true);
 
         const res = await assignUniformAction({
             uniformId: selectedUniform.id,
@@ -418,7 +434,7 @@ export default function UniformsPage() {
             })),
         });
 
-        //setIsSubmitting(false);
+        setIsSubmitting(false);
 
         if (res.success) {
             toast.success('Uniformes asignados satisfactoriamente.');
@@ -466,11 +482,6 @@ export default function UniformsPage() {
     }, [searchTerm, statusFilter, categoryFilter, currentPage, itemsPerPage]);
     // --- EFFECT PARA estudiantes (Vía Server Action) ---
     useEffect(() => {
-        // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
-        /* if (filteredStudents.find(c => c.id === formData.groupId)?.name === groupSearch) {
-          return;
-        } */
-
         setIsLoadingStudents(true);
 
         const isSearchEmpty = !studentSearch.trim();
@@ -617,18 +628,7 @@ export default function UniformsPage() {
                                 element={uniform}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
-                                onAssign={(element) => {
-                                    setSelectedUniform(element)
-                                    setStudentSearch('')
-                                    setUniformAssignmentForm({
-                                        uniformId: element.id,
-                                        studentId: '',
-                                        assignedSize: '',
-                                        observations: '',
-                                    })
-                                    setErrorMsg('')
-                                    openModalUniformForAssign()
-                                }}
+                                onAssign={handleAssign}
                             />
                         })}
                     </div>) : (
@@ -884,8 +884,6 @@ export default function UniformsPage() {
                 title={"Asignación de Uniforme"}
                 size={"4xl"}
             >
-
-
                 {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
                 <form
                     ref={assignUniformFormReference}

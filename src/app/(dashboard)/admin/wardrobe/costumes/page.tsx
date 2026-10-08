@@ -10,7 +10,10 @@ import {
   ChevronRight,
   CheckCircle2,
   Wrench, ArchiveX,
-  AlertCircle
+  AlertCircle,
+  Info,
+  Trash2,
+  UserPlus
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -18,15 +21,25 @@ import HeroSection from "@/components/layout/HeroSection";
 import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
-import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch } from '@/components/ui/forms';
-import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus, CostumeFormData, SaveCostumePayload } from "@/types/costume";
-import { getAllCostumesAction, getCostumeCountByStatus, saveCostumeAction, deleteCostumeAction } from "@/app/actions/costume";
+import { ActionButton } from "@/components/ui/ActionButton";
+import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch, SearchInput } from '@/components/ui/forms';
+import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus, CostumeFormData, SaveCostumePayload, ElementToBeAssigned } from "@/types/costume";
+import {
+  getAllCostumesAction,
+  getCostumeCountByStatus,
+  saveCostumeAction,
+  deleteCostumeAction,
+  assignCostumeAction
+} from "@/app/actions/costume";
 import { getSettingByKeyAction, saveSettingAction } from "@/app/actions/setting";
+import { getAllStudentsAction } from "@/app/actions/student";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { deleteS3Image } from "@/app/actions/s3";
 import { uploadFileToS3 } from "@/helpers/s3";
 import { APP_KEYS } from "@/config/app-keys";
 import { S3Image } from "@/types/s3-image";
+import { Student } from "@/types/student";
+import { Client } from "@/types/client";
 
 // 2. Configuración visual estática fuera del componente
 const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
@@ -72,13 +85,19 @@ const initialCostumeFormState: CostumeFormData = {
   images: [],
   existingImages: [],
 };
+const initialPolicyFormState = {
+  id: '',
+  key: 'usage_policies',
+  value: '',
+  active: false,
+  price: 0,
+};
 export default function CostumesPage() {
   const setBadge = useSidebarStore((state) => state.setBadge);
   const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
   const clothingFormReference = useRef<HTMLFormElement>(null);
   const policyFormReference = useRef<HTMLFormElement>(null);
-
-
+  const assignmentFormReference = useRef<HTMLFormElement>(null);
   // 3. Estado enfocado puramente en los totales numéricos
   const [statusCounts, setStatusCounts] = useState<Record<LockerRoomStatus, number>>({
     payment_pending: 0,
@@ -86,7 +105,6 @@ export default function CostumesPage() {
     available: 0,
     retired: 0,
   });
-
   const [costumes, setCostumes] = useState<Costume[]>([]);
   const {
     isOpen: isModalFormOpen,
@@ -98,7 +116,12 @@ export default function CostumesPage() {
     openModal: openPoliciesModal,
     closeModal: closePoliciesModal,
   } = useModal();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const {
+    isOpen: isAssignmentModalOpen,
+    openModal: openAssignmentModal,
+    closeModal: closeAssignmentModal,
+  } = useModal();
+  const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -116,6 +139,7 @@ export default function CostumesPage() {
     title: "",
     description: "",
   });
+
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
   // Acción definitiva que se ejecuta al pasar el filtro del Modal
   const handleConfirmAction = async () => {
@@ -143,13 +167,18 @@ export default function CostumesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
 
-  const [policyFormData, setPolicyFormData] = useState({
-    id: '',
-    key: 'usage_policies',
-    value: '',
-    active: false,
-    price: 0,
+  // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+  const [studentSearch, setStudentSearch] = useState("");
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+  const [costumeAssignmentForm, setCostumeAssignmentForm] = useState({
+    costumeId: '',
+    studentId: '',
+    observations: '',
   });
+  const [selectedStudentsList, setSelectedStudentsList] = useState<ElementToBeAssigned[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [policyFormData, setPolicyFormData] = useState(initialPolicyFormState);
   // 1. Estado del formulario interno del modal
   const [costumeFormData, setCostumeFormData] = useState(initialCostumeFormState);
   // Estados locales exclusivos para la gestión de archivos
@@ -173,19 +202,10 @@ export default function CostumesPage() {
       }));
     }
   };
-  // Manejo de inserción de nuevo salón
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file); // Lee el archivo como Data URL (contiene base64)
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
   const handleEdit = (costume: Costume) => {
     openModalForm();
     setErrorMsg('')
-    setEditingId(costume.id);
+    setSelectedCostume(costume);
     // 1. Procesamos las imágenes primero
     let imagesParsed: any[] = [];
     let formattedImages: S3Image[] = [];
@@ -248,49 +268,8 @@ export default function CostumesPage() {
       images: [], // Resetea las nuevas imágenes de cargas anteriores
     })
   };
-  // 1. Definimos las funciones que recibirán el elemento capturado
-  /* const handleEdit = (costume: any) => {
 
-    // 🎯 Procesamos las imágenes existentes para mostrarlas en la previsualización del formulario
-    let imagesParsed: string[] = [];
-    try {
-      if (typeof costume.images === "string") {
-        imagesParsed = JSON.parse(costume.images);
-      } else if (Array.isArray(costume.images)) {
-        imagesParsed = costume.images;
-      }
-
-      const formattedImages = imagesParsed.map((img: any) => {
-        const path = typeof img === 'object' ? img.url || img.path : img;
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-          return path;
-        }
-        const cleanBackendUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${cleanBackendUrl}${cleanPath}`;
-      });
-      // Guardamos estas imágenes en nuestro estado de previsualizaciones existentes
-      setEditingId(costume.id);
-      setCostumeFormData({
-        name: costume.name ?? '',
-        price: Number(costume.price) || 0,
-        beat: costume.beat ?? '',
-        category: costume.category as CostumeCategory, // O el valor que prefieras por defecto
-        status: costume.status as CostumeStatus,,
-        existingImages: formattedImages,
-        images: [], // Resetea las nuevas imágenes de cargas anteriores
-      })
-      setNewFiles([]);
-      openModalForm();
-    } catch (e) {
-      console.error("Error al procesar imágenes existentes para edición", e);
-      setCostumeFormData({ ...costumeFormData, existingImages: [] });
-      setNewFiles([]);
-    }
-
-  }; */
-
-  const handleDelete = (costume: any) => {
+  const handleDelete = (costume: Costume) => {
     setModalConfig({
       isOpen: true,
       type: "word",
@@ -298,9 +277,92 @@ export default function CostumesPage() {
       description: "¿Quieres eliminar el registro de tu vestuario?",
       id: costume.id,
     });
-
+  };
+  const handleAssign = (costume: Costume) => {
+    setSelectedCostume(costume)
+    setStudentSearch('')
+    setCostumeAssignmentForm({
+      costumeId: costume.id,
+      studentId: '',
+      observations: '',
+    })
+    setErrorMsg('')
+    setSelectedStudentsList([])
+    openAssignmentModal()
   };
 
+  // Eliminar estudiante de la lista
+  const handleRemoveStudentFromList = (studentId: string) => {
+    setSelectedStudentsList((prev) => prev.filter((item) => item.studentId !== studentId));
+  };
+  // Modificar campo de un estudiante de la lista (ej. Talla u Observación)
+  const handleUpdateStudentInList = (
+    studentId: string,
+    field: 'observations',
+    value: string
+  ) => {
+    setSelectedStudentsList((prev) =>
+      prev.map((item) =>
+        item.studentId === studentId ? { ...item, [field]: value } : item
+      )
+    );
+  };
+  // Handler para agregar estudiante a la tabla
+  const handleAddStudentToList = (option: any) => {
+    const client: Client = option.data;
+    if (!client.student) return;
+
+    // Verificar duplicados en la lista
+    if (selectedStudentsList.some((s) => s.studentId === client?.student?.id)) {
+      toast.error('El estudiante ya está agregado a la lista.');
+      setStudentSearch('');
+      return;
+    }
+
+    const newItem: ElementToBeAssigned = {
+      studentId: client.student.id,
+      fullName: `${client.firstName} ${client.lastName}`,
+      email: client.email || 'Sin correo',
+      observations: '',
+    };
+
+    setSelectedStudentsList((prev) => [...prev, newItem]);
+    setStudentSearch('');
+    setErrorMsg(null);
+  };
+  // Submit del formulario
+  const assignCostume = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedCostume) return;
+
+    if (selectedStudentsList.length === 0) {
+      setErrorMsg('Debes agregar al menos un estudiante a la lista.');
+      return;
+    }
+
+    setErrorMsg(null);
+    setIsSubmitting(true);
+
+    const res = await assignCostumeAction({
+      costumeId: selectedCostume.id,
+      assignments: selectedStudentsList.map((item) => ({
+        studentId: item.studentId,
+        observations: item.observations,
+      })),
+    });
+
+    setIsSubmitting(false);
+
+    if (res.success) {
+      toast.success('Uniformes asignados satisfactoriamente.');
+      setSelectedStudentsList([]);
+      closeAssignmentModal();
+      fetchData(currentPage, itemsPerPage);
+    } else {
+      setErrorMsg(res.error || 'Ocurrió un error al asignar los uniformes.');
+    }
+  };
   const savePolicies = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -363,20 +425,19 @@ export default function CostumesPage() {
       };
 
       // saveCostumeAction debe recibir el payload y el editingId (si existe)
-      const result = await saveCostumeAction(payload, editingId);
+      const result = await saveCostumeAction(payload, selectedCostume?.id || '');
 
       if (result.success) {
         fetchData(currentPage, itemsPerPage);
-        toast.success(editingId ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
+        toast.success(selectedCostume ? "Vestuario actualizado correctamente." : "Vestuario guardado correctamente.");
 
         // Limpieza de estados tras el guardado exitoso
         setCostumeFormData({ ...costumeFormData, existingImages: [] })
       }
-      setEditingId(null); // Reset del ID de edición
+      setSelectedCostume(null); // Reset del ID de edición
 
       // Solo si es una creación limpiamos el formulario para que quede vacío la próxima vez
-      if (!editingId) {
-        window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
+      if (!selectedCostume?.id) {
         setCostumeFormData(initialCostumeFormState);
       }
 
@@ -389,8 +450,6 @@ export default function CostumesPage() {
   };
   // 4. Carga e integración de datos
   const fetchData = (pageToFetch: number, limitToFetch: number) => {
-    // 🎯 REACTIVIDAD: Notificamos al Sidebar de forma inmediata
-    window.dispatchEvent(new Event(APP_KEYS.REFRESH_COSTUMES_COUNT));
     startTransition(async () => {
 
       // Petición del resumen por estado
@@ -424,7 +483,41 @@ export default function CostumesPage() {
 
     return () => clearTimeout(handler);
   }, [searchTerm, statusFilter, categoryFilter, currentPage, itemsPerPage]);
+  // --- EFFECT PARA estudiantes (Vía Server Action) ---
+  useEffect(() => {
+    setIsLoadingStudents(true);
 
+    const isSearchEmpty = !studentSearch.trim();
+    const delay = isSearchEmpty ? 0 : 400;
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // Construimos los parámetros requeridos por FetchGroupsParams
+        const params = isSearchEmpty
+          ? { limit: 5 }
+          : { search: studentSearch.trim() };
+
+        // Llamada directa al Server Action
+        const result = await getAllStudentsAction(params);
+
+        if (result.success && result.data) {
+          // Axios mapea la respuesta en result.data. data.data suele ser el array
+          // Si tu backend anida los estudiantes en 'estudiantes', úsalo; de lo contrario asigna result.data
+          setFilteredStudents(result.data.students || result.data);
+        } else {
+          console.error("Error en Server Action (estudiantes):", result.error);
+          setFilteredStudents([]);
+        }
+      } catch (error) {
+        console.error("Error crítico buscando estudiantes:", error);
+        setFilteredStudents([]);
+      } finally {
+        setIsLoadingStudents(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(delayDebounce);
+  }, [isAssignmentModalOpen, studentSearch]);
   return (
     <>
       {/* HERO SECTION COMPONENTE REFACTORIZADO */}
@@ -456,7 +549,7 @@ export default function CostumesPage() {
             label: "Agregar Diseño / Traje →",
             onClick: () => {
               setCostumeFormData(initialCostumeFormState);
-              setEditingId(null);
+              setSelectedCostume(null);
               setErrorMsg(null);
               setNewFiles([]);
               openModalForm()
@@ -550,6 +643,7 @@ export default function CostumesPage() {
                 element={costume}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onAssign={handleAssign}
               />
             })}
           </div>) : (
@@ -621,7 +715,7 @@ export default function CostumesPage() {
       <MacDockModal
         isOpen={isModalFormOpen}
         onClose={closeModalForm}
-        title={editingId ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
+        title={selectedCostume ? "Actualizar Vestuario" : "Registrar Nuevo Vestuario"}
         size={"lg"}
       >
 
@@ -735,7 +829,7 @@ export default function CostumesPage() {
           >
             {isPending
               ? "Guardando..."
-              : editingId
+              : selectedCostume
                 ? "Actualizar Vestuario →"
                 : "Registrar Vestuario →"}
           </button>
@@ -808,6 +902,153 @@ export default function CostumesPage() {
         </div>
 
       </MacDockModal>
+
+      <MacDockModal
+        isOpen={isAssignmentModalOpen}
+        onClose={closeAssignmentModal}
+        title={"Asignar Vestuario"}
+        size={"4xl"}
+      >
+        {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
+        <form
+          ref={assignmentFormReference}
+          id="assign-form"
+          onSubmit={assignCostume}
+          className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin p-1"
+        >
+          {errorMsg && (
+            <p className="text-red-500 bg-red-50 p-2.5 rounded text-xs text-center border border-red-200">
+              {errorMsg}
+            </p>
+          )}
+
+          {/* Info General del Uniforme */}
+          {selectedCostume && (
+            <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100 flex justify-between items-center text-xs">
+              <div>
+                <span className="font-bold text-purple-900">{selectedCostume.name}</span>
+                <p className="text-gray-500 text-[11px]">
+                  Precio unitario: ${selectedCostume.price ?? '0.00'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Selector/Buscador para agregar estudiantes */}
+          <SearchInput
+            label="Buscar Estudiante para Agregar"
+            placeholder="Escribe el nombre o correo del estudiante..."
+            validSelection={false}
+            value={studentSearch}
+            isLoading={isLoadingStudents}
+            options={filteredStudents.map((student: any) => ({
+              id: student.id,
+              label: `${student.firstName} ${student.lastName}`,
+              subLabel: `Email: ${student.email || 'N/A'}`,
+              data: student,
+            }))}
+            emptyMessage="No se encontraron estudiantes"
+            onChangeText={(text: string) => setStudentSearch(text)}
+            onSelectOption={(option: any) => handleAddStudentToList(option)}
+          />
+
+          {/* Tabla con lista de asignación */}
+          <div className="mt-4 border rounded-md overflow-hidden border-purple-100">
+            <div className="bg-purple-50/80 px-3 py-2 font-semibold text-purple-900 flex justify-between items-center text-xs">
+              <span>Estudiantes a Asignar <span className="text-[10px] font-bold p-1 px-1.5 shrink-0 rounded-full bg-purple-900 text-white">{selectedStudentsList.length}</span></span>
+              {selectedStudentsList.length > 0 && (
+                <span className="text-[11px] font-normal text-purple-700">
+                  Total estimado: ${(selectedStudentsList.length * (selectedCostume?.price || 0)).toFixed(2)}
+                </span>
+              )}
+            </div>
+
+            {selectedStudentsList.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 flex flex-col items-center gap-1">
+                <Info className="w-5 h-5 text-gray-300" />
+                <p className="text-xs">No hay estudiantes seleccionados.</p>
+                <p className="text-[11px]">Usa el buscador superior para agregar alumnos a la lista.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0">
+                    <tr>
+                      <th className="p-2.5">Estudiante</th>
+                      <th className="p-2.5">Observación</th>
+                      <th className="p-2.5 w-10 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {selectedStudentsList.map((item) => (
+                      <tr key={item.studentId} className="hover:bg-purple-50/20">
+                        <td className="p-2.5">
+                          <p className="font-semibold text-gray-800">{item.fullName}</p>
+                          <p className="text-[10px] text-gray-400">{item.email}</p>
+                        </td>
+                        <td className="p-2.5">
+                          <TextArea
+                            label=""
+                            placeholder="Opcional..."
+
+                            rows={1}
+                            value={item.observations || ''}
+                            onChange={(e) =>
+                              handleUpdateStudentInList(item.studentId, 'observations', e.target.value)
+                            }
+                          />
+
+                        </td>
+
+                        <td className="p-2.5 text-center">
+                          <ActionButton
+                            variant="danger"
+                            icon={Trash2}
+                            tooltip="Quitar"
+                            onClick={() => handleRemoveStudentFromList(item.studentId)}
+                          >
+                            Quitar
+                          </ActionButton>
+
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </form>
+        {/* Botonera inferior */}
+        <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between items-center shrink-0 mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedStudentsList([]);
+              closeAssignmentModal();
+            }}
+            className="cursor-pointer font-questrial px-4 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition rounded-md"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            form="assign-form"
+            disabled={isPending || selectedStudentsList.length === 0}
+            className={`group font-questrial px-4 py-2 flex items-center justify-center gap-2 font-medium transition text-xs rounded-md ${isPending || selectedStudentsList.length === 0
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'cursor-pointer text-white gradient-purple shadow-md shadow-purple-200 hover:opacity-90'
+              }`}
+          >
+            <UserPlus className="w-4 h-4" />
+            {isPending
+              ? 'Procesando...'
+              : `Confirmar Asignación${selectedStudentsList.length > 1 ? 'es' : ''} →`}
+          </button>
+        </div>
+      </MacDockModal>
+
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}
