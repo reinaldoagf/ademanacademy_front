@@ -10,43 +10,50 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
-import { getAdminDashboardMetrics } from '@/app/actions/metric';
-import { DashboardMetricsResponse } from '@/types/metric';
+import { getRevenueByCategoryMetrics } from '@/app/actions/metric';
+import { RevenueByCategoryResponse } from '@/types/metric';
 export function RevenueByCategory() {
     const [currentPage, setCurrentPage] = useState(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [metrics, setMetrics] = useState<DashboardMetricsResponse | null>(null);
+    const [revenueByCategory, setRevenueByCategory] = useState<RevenueByCategoryResponse>({
+        lockerRoom: 0,
+        storeSales: 0,
+        tuition: 0,
+        monthlyPayments: 0,
+        customClasses: 0,
+        specialEvents: 0,
+    });
     // Lista estructurada de ítems
     const concepts = [
         {
             label: 'Vestuario',
             icon: <Shirt className="w-4 h-4 text-purple-500" />,
-            value: metrics?.incomeByConcept.lockerRoom ?? 0,
+            value: revenueByCategory.lockerRoom ?? 0,
         },
         {
             label: 'Tienda',
             icon: <ShoppingBag className="w-4 h-4 text-purple-500" />,
-            value: metrics?.incomeByConcept.storeSales ?? 0,
+            value: revenueByCategory.storeSales ?? 0,
         },
         {
             label: 'Inscripciones',
             icon: <Calendar className="w-4 h-4 text-purple-500" />,
-            value: metrics?.incomeByConcept.tuition ?? 0,
+            value: revenueByCategory.tuition ?? 0,
         },
         {
             label: 'Mensualidades',
             icon: <Calendar className="w-4 h-4 text-purple-500" />,
-            value: metrics?.incomeByConcept.monthlyPayments ?? 0,
+            value: revenueByCategory.monthlyPayments ?? 0,
         },
         {
             label: 'Clases Personalizadas',
             icon: <TrendingUp className="w-4 h-4 text-pink-500" />,
-            value: metrics?.incomeByConcept.customClasses ?? 0,
+            value: revenueByCategory.customClasses ?? 0,
         },
         {
             label: 'Eventos Especiales',
             icon: <Ticket className="w-4 h-4 text-indigo-500" />,
-            value: metrics?.incomeByConcept.specialEvents ?? 0,
+            value: revenueByCategory.specialEvents ?? 0,
         },
     ];
 
@@ -66,22 +73,22 @@ export function RevenueByCategory() {
     };
 
     useEffect(() => {
-        async function loadDashboardData() {
+        async function fetchRevenueByCategoryMetrics() {
             setIsLoading(true);
             try {
                 // Ejecutamos ambas peticiones en paralelo de manera limpia
-                const res = await getAdminDashboardMetrics()
+                const res = await getRevenueByCategoryMetrics()
                 if (res.success && res.data) {
-                    setMetrics(res.data);
+                    setRevenueByCategory(res.data);
                 }
             } catch (error) {
-                console.error('Error al cargar datos del dashboard:', error);
+                console.error('Error al obtener métricas de ingresos por concepto:', error);
             } finally {
                 setIsLoading(false);
             }
         }
 
-        loadDashboardData();
+        fetchRevenueByCategoryMetrics();
     }, []);
     return (
         <div className="glass-card p-6 shadow-sm">
