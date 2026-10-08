@@ -428,7 +428,7 @@ export default function AccountsPayablePage() {
                         >
                             {isPending
                                 ? "Guardando..."
-                                : "Guardar Cuenta"}
+                                : "Registrar Cuenta →"}
                         </button>
                     </div>
                 </form>
@@ -494,9 +494,10 @@ export default function AccountsPayablePage() {
                         </button>
                         <button
                             type="submit"
+                            disabled={isPending}
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            Confirmar Abono
+                            {isPending ? "Guardando..." : "Confirmar Abono →"}
                         </button>
                     </div>
                 </form>)}

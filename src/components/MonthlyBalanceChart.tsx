@@ -34,6 +34,8 @@ export function MonthlyBalanceChart() {
                     endDate: String(dateRange.endDate),
                 });
 
+                console.log({ res })
+
                 if (res.success && res.data) {
                     setBalanceData(res.data);
                 }
@@ -50,13 +52,13 @@ export function MonthlyBalanceChart() {
         <div className="glass-card p-6 shadow-sm relative z-20 overflow-visible">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div>
-                    <h3 className="text-lg font-anton mb-2">Balance de Ingresos</h3>
+                    <h3 className="text-lg font-anton mb-2">Balance de Ingresos vs Egresos</h3>
                     <div className="flex flex-wrap gap-4 text-xs mt-1">
                         <span className="flex items-center gap-1.5 text-sm font-questrial font-medium text-gray-700">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#5e0472] inline-block"></span> Recaudado
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#f472b6] inline-block"></span> Ingresos
                         </span>
                         <span className="flex items-center gap-1.5 text-sm font-questrial font-medium text-gray-700">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#f472b6] inline-block"></span> Cuentas por Cobrar
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#5e0472] inline-block"></span> Egresos
                         </span>
                     </div>
                 </div>

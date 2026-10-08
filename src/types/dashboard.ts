@@ -7,8 +7,8 @@ export interface BalanceChartPoint {
 export interface BalanceChartData {
     monthName: string; // ej. "Mayo 2026"
     labels: string[];
-    recaudadoData: number[];
-    cuentasPorCobrarData: number[];
+    egresosData: number[];
+    ingresosData: number[];
 }
 
 export interface BalanceChartResponse {

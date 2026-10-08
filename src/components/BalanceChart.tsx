@@ -43,15 +43,15 @@ export function BalanceChart({ chartData, isLoading }: BalanceChartProps) {
     );
   }
   const labels = chartData?.labels ?? ["Semana 1", "Semana 2", "Semana 3", "Semana 4"];
-  const recaudado = chartData?.recaudadoData ?? [0, 0, 0, 0];
-  const cuentasPorCobrar = chartData?.cuentasPorCobrarData ?? [0, 0, 0, 0];
+  const egresosData = chartData?.egresosData ?? [0, 0, 0, 0];
+  const ingresosData = chartData?.ingresosData ?? [0, 0, 0, 0];
 
   const data = {
     labels,
     datasets: [
       {
-        label: "Recaudado",
-        data: recaudado,
+        label: "Egresos",
+        data: egresosData,
         borderColor: "#5e0472",
         borderWidth: 2.5,
         tension: 0.35,
@@ -67,8 +67,8 @@ export function BalanceChart({ chartData, isLoading }: BalanceChartProps) {
         },
       },
       {
-        label: "Cuentas por Cobrar",
-        data: cuentasPorCobrar,
+        label: "Ingresos",
+        data: ingresosData,
         borderColor: "#f472b6",
         borderWidth: 2,
         tension: 0.35,
