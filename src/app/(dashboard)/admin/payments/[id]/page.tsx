@@ -19,6 +19,7 @@ import HeroSection from '@/components/layout/HeroSection';
 import Badge from "@/components/common/Badge";
 import DatePipe from "@/components/pipes/DatePipe";
 import { SearchInput } from "@/components/ui/forms";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllGroupsAction } from "@/app/actions/group";
 import { getTransactionByIdAction, approveTransactionAction } from "@/app/actions/transaction";
 import { Transaction } from "@/types/transaction";
@@ -40,7 +41,21 @@ export default function PaymentDetailsPage() {
 
     const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
     const receiptUrl = transaction ? `${backendUrl}/uploads/receipts/${transaction.receiptPath}` : "";
-
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: "simple" | "word" | "email";
+        title: string;
+        description: string;
+        requiredWord?: string;
+        userEmail?: string;
+        id?: string;
+    }>({
+        isOpen: false,
+        type: "word",
+        title: "",
+        description: "",
+    });
+    const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     useEffect(() => {
         if (!id) return;
 
@@ -259,7 +274,16 @@ export default function PaymentDetailsPage() {
                                                 <button
                                                     type="button"
                                                     disabled={!!(isPending || !transaction.id)}
-                                                    onClick={handleApprove}
+                                                    // onClick={handleApprove}
+                                                    onClick={() => {
+                                                        setModalConfig({
+                                                            isOpen: true,
+                                                            type: "word",
+                                                            title: "Confirmar operación",
+                                                            description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber}"?`,
+                                                            id: transaction.id,
+                                                        });
+                                                    }}
                                                     className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                                                 >
                                                     <Check className="w-4 h-4" /> {isPending
@@ -364,7 +388,16 @@ export default function PaymentDetailsPage() {
                                         <button
                                             type="button"
                                             disabled={!!(isPending || !selectedGroupId)}
-                                            onClick={handleApprove}
+                                            //onClick={handleApprove}
+                                            onClick={() => {
+                                                setModalConfig({
+                                                    isOpen: true,
+                                                    type: "word",
+                                                    title: "Confirmar operación",
+                                                    description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber}"?`,
+                                                    id: transaction.id,
+                                                });
+                                            }}
                                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                                         >
                                             <Check className="w-4 h-4" /> {isPending
@@ -379,6 +412,19 @@ export default function PaymentDetailsPage() {
                     )}
                 </div>
             </div>
+            {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={closeConfirmModal}
+                onConfirm={handleApprove}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                description={modalConfig.description}
+                requiredWord={modalConfig.requiredWord}
+                userEmail={modalConfig.userEmail}
+                variant={modalConfig.type === "word" ? "danger" : modalConfig.type === "email" ? "warning" : "primary"}
+                confirmButtonText={"Confirmar"}
+            />
         </>
     );
 }
