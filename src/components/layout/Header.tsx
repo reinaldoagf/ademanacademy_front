@@ -23,6 +23,7 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
 import { useLoadingStore } from "@/store/useLoadingStore";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const INITIAL_NOTIFICATIONS = [
   { id: 1, text: "Vestuario 'Lago de los Cisnes' listo para retirar.", time: "Hace 10 min", read: false },
@@ -42,7 +43,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
 
   // Estados locales
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
   // 💡 NUEVOS ESTADOS PARA EL BUSCADOR AVANZADO
@@ -52,7 +52,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   const [filterEstatus, setFilterEstatus] = useState("");
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
 
   const logoutStore = useAuthStore((state) => state.logout);
   const startLoading = useLoadingStore((state) => state.startLoading);
@@ -62,7 +61,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
 
   const handleRoleTransition = (targetPath: string) => {
     setIsUserMenuOpen(false);
-    setIsNotificationsOpen(false);
     startLoading();
     setTimeout(() => {
       router.push(targetPath);
@@ -72,7 +70,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
 
   const onLogout = async () => {
     setIsUserMenuOpen(false);
-    setIsNotificationsOpen(false);
     startLoading();
     try {
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -107,9 +104,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setIsNotificationsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -163,67 +157,10 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
           </button>
 
           {/* CONTENEDOR DE NOTIFICACIONES */}
-          <div className="relative" ref={notifRef}>
-            <div className="group relative flex justify-center">
-              <button
-                onClick={() => {
-                  setIsNotificationsOpen(!isNotificationsOpen);
-                  setIsUserMenuOpen(false);
-                }}
-                className="w-9 h-9 bg-purple-50 flex items-center justify-center text-purple-600 relative hover:bg-purple-100 transition-colors cursor-pointer"
-              >
-                <Bell className="w-4 h-4" />
-                {hasUnread && (
-                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
-                )}
-              </button>
-              <span className="absolute top-full mt-2 hidden group-hover:block w-auto rounded bg-gray-800 px-2.5 py-1.5 text-[10px] font-questrial text-white shadow-lg whitespace-nowrap z-50">
-                Ver notificaciones
-              </span>
-            </div>
-
-            {/* Menú Desplegable de Notificaciones */}
-            {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-72 md:w-80 bg-white border border-purple-100 shadow-xl rounded-none py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-3 border-b border-purple-50 flex items-center justify-between">
-                  <span className="text-xs font-anton text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-500" /> Notificaciones
-                  </span>
-                  {hasUnread && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-[10px] text-purple-600 hover:text-purple-800 font-questrial font-bold flex items-center gap-0.5 cursor-pointer"
-                    >
-                      <Check className="w-3 h-3" /> Marcar leídas
-                    </button>
-                  )}
-                </div>
-
-                <div className="max-h-64 overflow-y-auto divide-y divide-purple-50">
-                  {notifications.length > 0 ? (
-                    notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`p-3 text-left transition-colors ${notif.read ? 'bg-white' : 'bg-purple-50/40 font-medium'}`}
-                      >
-                        <p className="text-xs text-gray-700 font-questrial leading-normal">
-                          {notif.text}
-                        </p>
-                        <span className="text-[9px] text-gray-400 font-questrial block mt-1">
-                          {notif.time}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-6 text-center text-xs text-gray-400 font-questrial">
-                      No tienes notificaciones nuevas
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
+          {/* Menú Desplegable de Notificaciones */}
+          <NotificationBell
+            userId={user?.id}
+          />
           {/* Botón rápido de Cambio de Rol */}
           {user?.isAdmin && (
             <>
@@ -264,7 +201,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
               <button
                 onClick={() => {
                   setIsUserMenuOpen(!isUserMenuOpen);
-                  setIsNotificationsOpen(false);
                 }}
                 className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm"
               >

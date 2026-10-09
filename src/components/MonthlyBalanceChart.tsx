@@ -34,8 +34,6 @@ export function MonthlyBalanceChart() {
                     endDate: String(dateRange.endDate),
                 });
 
-                console.log({ res })
-
                 if (res.success && res.data) {
                     setBalanceData(res.data);
                 }

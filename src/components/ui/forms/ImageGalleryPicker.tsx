@@ -72,7 +72,6 @@ export const ImageGalleryPicker: React.FC<ImageGalleryPickerProps> = ({
 
     // Manejar eliminación de una imagen ya existente en el servidor
     const handleRemoveExistingImage = (indexToRemove: number, image: S3Image) => {
-        console.log({ indexToRemove, image })
         if (onRemoveExistingImage) {
             onRemoveExistingImage(image, indexToRemove);
         }
