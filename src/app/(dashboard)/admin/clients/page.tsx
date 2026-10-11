@@ -331,7 +331,7 @@ export default function ClientsPage() {
                                 {/* Cabecera de la tarjeta */}
                                 <div className="p-5 space-y-3">
                                     <div className="flex justify-between items-start">
-                                        <h3 className="text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
+                                        <h3 className="uppercase text-sm font-questrial font-bold text-gray-800 hover:text-[#5e0472] transition cursor-pointer">
                                             {client.firstName} {client.lastName}
                                         </h3>
 
@@ -352,7 +352,7 @@ export default function ClientsPage() {
                                                 DNI / Cedula
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {`${client.IDNumberPrefix}${client.dni}`}
+                                                {client.IDNumberPrefix && client.dni ? `${client.IDNumberPrefix}${client.dni}` : 'No registrado'}
                                             </p>
                                         </div>
                                         <div className="bg-slate-50 p-2">
@@ -360,7 +360,7 @@ export default function ClientsPage() {
                                                 Teléfono
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {client.phone || 'No registrado'}
+                                                {client.countryCode && client.phone ? `${client.countryCode}${client.phone}` : 'No registrado'}
                                             </p>
                                         </div>
                                         <div className="bg-slate-50 p-2">
