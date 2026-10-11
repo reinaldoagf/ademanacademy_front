@@ -51,8 +51,8 @@ type StudentFormData = {
   countryCode: string,
   phone: string,
   hasExperience: boolean,
-  groupId: string | undefined,
-  userId: string | undefined,
+  groupId: string | null,
+  userId: string | null,
 };
 const initialFormState: StudentFormData = {
   IDNumberPrefix: "V",
@@ -69,7 +69,7 @@ const initialFormState: StudentFormData = {
   phone: "",
   hasExperience: true,
   groupId: "",
-  userId: "",
+  userId: null,
 };
 const countries = [
   { code: "+58", label: "VE" },
@@ -286,7 +286,7 @@ export default function StudentsPage() {
     e.preventDefault();
     setErrorMsg(null);
     startTransition(async () => {
-      const res = await saveStudentAction(formData, editingId);
+      const res = await saveStudentAction(formData.userId ? formData : { ...formData, userId: null }, editingId);
       if (!res.success) {
         setErrorMsg(res.error || "Ocurrió un error.");
         return;

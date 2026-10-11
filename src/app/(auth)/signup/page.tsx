@@ -141,6 +141,7 @@ export default function RegisterPage() {
                 isAdmin: result.user.isAdmin,
                 profileOnboarding: result.user.profileOnboarding,
                 phone: result.user.phone,
+                dni: result.user.dni,
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.

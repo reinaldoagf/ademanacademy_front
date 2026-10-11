@@ -6,6 +6,7 @@ interface User {
     id: string;
     firstName: string;
     lastName: string;
+    dni: string;
     email: string;
     isAdmin: boolean;
     profileOnboarding: boolean;

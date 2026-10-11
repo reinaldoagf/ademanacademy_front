@@ -8,33 +8,6 @@ import FormDataNode from "form-data";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
-interface OnboardingPayload {
-    profileType: "client" | "representative";
-    representativeOccupation: undefined | string;
-    // Si es representante, enviamos el arreglo de alumnos iniciales
-    representedStudents?: {
-        firstName: string;
-        lastName: string;
-        dni: string | null;
-        birthDate: Date | string | number;
-        kinship: string;
-        address: string;
-        phone: string | null;
-        shirtSize: string;
-        hasExperience: boolean;
-        medicalObservations: string;
-        group: string;
-    }[];
-    // ✨ Cambiamos las propiedades internas a opcionales para admitir solo el monto
-    payment?: {
-        bankName?: string;
-        reference?: string;
-        amount: number
-    };
-    receiptFile?: File | null;
-}
-
-
 export async function completeOnboardingAction(formData: FormData) {
     try {
         const headers = await getAuthHeadersForMultipart();
@@ -42,32 +15,49 @@ export async function completeOnboardingAction(formData: FormData) {
         // 🚀 Creamos una instancia de FormData limpia del lado del servidor de Node.js
         const backendForm = new FormDataNode();
 
-        // 1. Traspasamos los valores stringificados comunes
-        backendForm.append("profileType", formData.get("profileType"));
+        const profileType = formData.get("profileType") as string;
+        const isEnrolled = formData.get("isEnrolled") === "true";
+        const studentId = formData.get("studentId") as string;
 
-        if (formData.get("profileType") === "representative") {
-            backendForm.append("representativeOccupation", formData.get("representativeOccupation"));
-            backendForm.append("representedStudents", formData.get("representedStudents"));
-            backendForm.append("payment", formData.get("payment"));
+        // Añadimos campos básicos de forma segura
+        backendForm.append("profileType", profileType);
+        backendForm.append("isEnrolled", String(isEnrolled));
 
-            // 2. Extraemos el archivo binario real que Next.js recibió temporalmente
+        if (studentId) {
+            backendForm.append("studentId", studentId);
+        }
+
+        if (profileType === "representative") {
+            const occupation = formData.get("representativeOccupation");
+            const students = formData.get("representedStudents");
+            const payment = formData.get("payment");
+
+            if (occupation) backendForm.append("representativeOccupation", occupation);
+            if (students) backendForm.append("representedStudents", students);
+            if (payment) backendForm.append("payment", payment);
+
             const file = formData.get("receiptFile") as File | null;
             if (file && file.size > 0) {
-                const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos el archivo a un Buffer binario de Node
+                const buffer = Buffer.from(await file.arrayBuffer());
                 backendForm.append("receiptFile", buffer, {
                     filename: file.name,
                     contentType: file.type,
                 });
             }
         } else {
-            backendForm.append("payment", formData.get("payment"));
-            const file = formData.get("receiptFile") as File | null;
-            if (file && file.size > 0) {
-                const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos el archivo a un Buffer binario de Node
-                backendForm.append("receiptFile", buffer, {
-                    filename: file.name,
-                    contentType: file.type,
-                });
+            // Si es student y NO está matriculado, procesamos pago y archivo
+            if (!isEnrolled) {
+                const payment = formData.get("payment");
+                if (payment) backendForm.append("payment", payment);
+
+                const file = formData.get("receiptFile") as File | null;
+                if (file && file.size > 0) {
+                    const buffer = Buffer.from(await file.arrayBuffer());
+                    backendForm.append("receiptFile", buffer, {
+                        filename: file.name,
+                        contentType: file.type,
+                    });
+                }
             }
         }
 
@@ -78,14 +68,14 @@ export async function completeOnboardingAction(formData: FormData) {
             {
                 headers: {
                     ...headers,
-                    ...backendForm.getHeaders() // 🔥 Esto inyecta el multipart/form-data con su boundary correcto
+                    ...backendForm.getHeaders() // Inyecta el multipart/form-data con su boundary correcto
                 }
             }
         );
 
         return { success: true, data: response.data };
     } catch (error: any) {
-        console.error("Error en Server Action:", error.response?.data || error.message);
+        console.log("Error en completeOnboardingAction:", error.response?.data || error);
         return {
             success: false,
             error: error.response?.data?.message || "Ocurrió un error al guardar tu perfil."
@@ -107,6 +97,48 @@ export async function getAllUsersAction(params: FetchUsersParams) {
         return {
             success: false,
             error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}
+
+export async function requestAccountLinkingAction(email: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.post(
+            `${BACKEND_URL}/users/request-account-linking`,
+            { email },
+            { headers }
+        );
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        console.error("Error al solicitar vinculación:", error.response?.data || error);
+
+        // 🔥 Esto extrae exactamente el BadRequestException o InternalServerErrorException de NestJS
+        const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Error de conexión al solicitar el código.";
+
+        return {
+            success: false,
+            error: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage
+        };
+    }
+}
+
+export async function confirmAccountLinkingAction(email: string, otpCode: string) {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await axios.post(
+            `${BACKEND_URL}/users/confirm-account-linking`,
+            { email, otpCode },
+            { headers }
+        );
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al confirmar la vinculación de cuenta."
         };
     }
 }
