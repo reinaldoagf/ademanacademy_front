@@ -38,7 +38,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const [userResponse, setUserResponse] = useState<User | null>(null);
     const [isPending, startTransition] = useTransition();
     const [step, setStep] = useState(1);
-    const [profileType, setProfileType] = useState<"student" | "representative" | null>(null);
+    const [profileType, setProfileType] = useState<"Estudiante" | "Representante" | null>(null);
     // Estados adicionales necesarios:
     const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
@@ -79,7 +79,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const REGISTRATION_FEE = 10;
 
     // Cálculo dinámico del total
-    const calculatedTotal = profileType === "student"
+    const calculatedTotal = profileType === "Estudiante"
         ? REGISTRATION_FEE
         : students.length * REGISTRATION_FEE;
 
@@ -120,14 +120,14 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     };
 
     const handleSubmit = (
-        finalRole: "student" | "representative",
+        finalRole: "Estudiante" | "Representante",
         finalStudents: any[],
         occupation?: string,
         paymentData?: { bankName?: string; referenceNumber?: string; amount?: number; isEnrolled?: boolean; studentId?: string },
         receiptFile?: File | null
     ) => {
         // 1. Validaciones para Representative
-        if (finalRole === "representative") {
+        if (finalRole === "Representante") {
             if (finalStudents.length === 0) {
                 setError("Como representante, debes registrar al menos a un estudiante.");
                 return;
@@ -143,7 +143,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         }
 
         // 2. Validaciones para Student
-        if (finalRole === "student") {
+        if (finalRole === "Estudiante") {
             // Si YA está matriculado, omitimos la obligación del comprobante y datos bancarios
             if (!paymentData?.isEnrolled) {
                 if (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile) {
@@ -166,7 +166,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             const formData = new FormData();
             formData.append("profileType", finalRole);
 
-            if (finalRole === "representative") {
+            if (finalRole === "Representante") {
                 formData.append("representativeOccupation", occupation?.trim() || "");
                 formData.append("representedStudents", JSON.stringify(finalStudents));
 
@@ -356,13 +356,13 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto font-questrial">
                                     <button
                                         type="button"
-                                        onClick={() => { setProfileType("student"); setError(null); }}
-                                        className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "student"
+                                        onClick={() => { setProfileType("Estudiante"); setError(null); }}
+                                        className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "Estudiante"
                                             ? "border-purple-500 bg-purple-950/40 shadow-[0_0_15px_rgba(147,51,234,0.3)] text-white"
                                             : "border-white/10 bg-white/5 text-gray-400 hover:border-purple-400 hover:text-white"
                                             }`}
                                     >
-                                        <UserIcon className={`w-8 h-8 mb-4 ${profileType === "student" ? "text-purple-400" : "text-gray-400"}`} />
+                                        <UserIcon className={`w-8 h-8 mb-4 ${profileType === "Estudiante" ? "text-purple-400" : "text-gray-400"}`} />
                                         <div>
                                             <h4 className="font-bold text-sm text-white">Soy Estudiante solo</h4>
                                             <p className="text-[11px] text-gray-400 mt-1 leading-normal">Asistiré a clases de baile yo mismo y controlaré mi propio progreso técnico.</p>
@@ -371,13 +371,13 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
 
                                     <button
                                         type="button"
-                                        onClick={() => { setProfileType("representative"); setError(null); }}
-                                        className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "representative"
+                                        onClick={() => { setProfileType("Representante"); setError(null); }}
+                                        className={`cursor-pointer p-6 border text-left flex flex-col justify-between transition group relative ${profileType === "Representante"
                                             ? "border-pink-500 bg-pink-950/40 shadow-[0_0_15px_rgba(219,39,119,0.3)] text-white"
                                             : "border-white/10 bg-white/5 text-gray-400 hover:border-pink-400 hover:text-white"
                                             }`}
                                     >
-                                        <Users2 className={`w-8 h-8 mb-4 ${profileType === "representative" ? "text-pink-400" : "text-gray-400"}`} />
+                                        <Users2 className={`w-8 h-8 mb-4 ${profileType === "Representante" ? "text-pink-400" : "text-gray-400"}`} />
                                         <div>
                                             <h4 className="font-bold text-sm text-white">Soy Representante</h4>
                                             <p className="text-[11px] text-gray-400 mt-1 leading-normal">Vengo a inscribir y gestionar las mensualidades, vestuarios y eventos de mis representados.</p>
@@ -392,14 +392,14 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     disabled={isPending}
                                     className="cursor-pointer w-full max-w-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white font-questrial font-bold py-3 text-xs tracking-wider uppercase hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2 mx-auto"
                                 >
-                                    {/* {profileType === "student" ? "Completar registro ✓" : "Continuar paso siguiente →"} */}
+                                    {/* {profileType === "Estudiante" ? "Completar registro ✓" : "Continuar paso siguiente →"} */}
                                     Continuar paso siguiente →
                                 </button>
                             </div>
                         )}
 
                         {/* Paso 2: Representante obligatoriamente registra un Alumno */}
-                        {step === 2 && profileType === "representative" && (
+                        {step === 2 && profileType === "Representante" && (
                             <div className="space-y-6 text-left animate-fadeIn">
                                 <div className="text-center space-y-2">
                                     <h3 className="text-2xl font-anton tracking-wide text-white">Registro de Representados</h3>
@@ -646,7 +646,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                         disabled={students.length === 0 || !representativeOccupation || !paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt || isPending}
                                         onClick={() => {
                                             handleSubmit(
-                                                "representative",
+                                                "Representante",
                                                 students,
                                                 representativeOccupation,
                                                 { ...paymentInfo, amount: calculatedTotal },
@@ -661,7 +661,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                             </div>
                         )}
 
-                        {step === 2 && profileType === "student" && (
+                        {step === 2 && profileType === "Estudiante" && (
                             <div className="space-y-6 text-left animate-fadeIn">
                                 <div className="text-center space-y-2">
                                     <h3 className="text-2xl font-anton tracking-wide text-white">Control y cobro de inscripción</h3>
@@ -879,7 +879,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                         disabled={!isEmailVerifiedOtp || (isAlreadyEnrolled ? false : (!paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt || isPending))}
                                         onClick={() => {
                                             handleSubmit(
-                                                "student",
+                                                "Estudiante",
                                                 [],
                                                 "",
                                                 isAlreadyEnrolled
