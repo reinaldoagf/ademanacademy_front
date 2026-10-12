@@ -40,7 +40,7 @@ const initialFormState: RepresentedFormData = {
     email: "",
     lastName: "",
     birthDate: null,
-    kinship: "son",
+    kinship: "Hijo",
     medicalObservations: "",
     address: "",
     countryCode: "+58",
@@ -154,7 +154,7 @@ export default function MyAffiliatesPage() {
             lastName: client.lastName,
             email: client.email,
             birthDate: formatDateForInput(client.birthDate),
-            kinship: client.student?.kinship || "son",
+            kinship: client.student?.kinship || "Hijo",
             medicalObservations: client.student?.medicalObservations || "",
 
             // 🎯 NUEVOS CAMPOS DEL ESTUDIANTE CARGADOS AL EDITAR
@@ -414,12 +414,12 @@ export default function MyAffiliatesPage() {
                             onChange={(e) => setFormData({ ...formData, kinship: e.target.value as any, })}
                             options={[
                                 { label: "Selecciona un parentesco", value: "", disabled: true },
-                                { label: "Hijo", value: "son" },
-                                { label: "Hija", value: "daughter" },
-                                { label: "Sobrino", value: "nephew" },
-                                { label: "Sobrina", value: "niece" },
-                                { label: "Tutorado", value: "tutored" },
-                                { label: "Otro", value: "other" },
+                                { label: "Hijo", value: "Hijo" },
+                                { label: "Hija", value: "Hija" },
+                                { label: "Sobrino", value: "Sobrino" },
+                                { label: "Sobrina", value: "Sobrina" },
+                                { label: "Tutorado", value: "Tutorado" },
+                                { label: "Otro", value: "Otro" },
                             ]}
                         />
                         <SelectInput

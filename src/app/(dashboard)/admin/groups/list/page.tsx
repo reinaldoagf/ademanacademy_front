@@ -979,7 +979,7 @@ export default function GroupsListPage() {
 
                         <div className="text-right">
                           <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-[#5e0472] border border-purple-100 px-2 py-0.5">
-                            {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
+                            {student.kinship === "Hijo" ? "Hijo" : student.kinship || "Alumno"}
                           </span>
                         </div>
                       </div>

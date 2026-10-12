@@ -61,7 +61,7 @@ const initialFormState: StudentFormData = {
   lastName: "",
   birthDate: "",
   email: "",
-  kinship: "son" as Student["kinship"],
+  kinship: "Hijo" as Student["kinship"],
   medicalObservations: "",
   address: "",
   shirtSize: "M",
@@ -544,12 +544,12 @@ export default function StudentsPage() {
               className="p-2 border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
               <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="all">Todos</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="son">Hijo</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="daughter">Hija</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="nephew">Sobrino</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="niece">Sobrina</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="tutored">Tutorado</option>
-              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="other">Otro</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Hijo">Hijo</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Hija">Hija</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Sobrino">Sobrino</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Sobrina">Sobrina</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Tutorado">Tutorado</option>
+              <option className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans" value="Otro">Otro</option>
             </select>
           </div>
         </div>
@@ -633,12 +633,12 @@ export default function StudentsPage() {
               onChange={(e) => setFormData({ ...formData, kinship: e.target.value as Student["kinship"] })}
               options={[
                 { label: "Selecciona un parentesco", value: "", disabled: true },
-                { label: "Hijo", value: "son" },
-                { label: "Hija", value: "daughter" },
-                { label: "Sobrino", value: "nephew" },
-                { label: "Sobrina", value: "niece" },
-                { label: "Tutorado", value: "tutored" },
-                { label: "Otro", value: "other" },
+                { label: "Hijo", value: "Hijo" },
+                { label: "Hija", value: "Hija" },
+                { label: "Sobrino", value: "Sobrino" },
+                { label: "Sobrina", value: "Sobrina" },
+                { label: "Tutorado", value: "Tutorado" },
+                { label: "Otro", value: "Otro" },
               ]}
             />
 

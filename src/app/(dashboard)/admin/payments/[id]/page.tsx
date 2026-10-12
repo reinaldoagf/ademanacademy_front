@@ -86,7 +86,7 @@ export default function PaymentDetailsPage() {
     const handleApprove = () => {
         if (!transaction) return;
         // 🎯 VALIDACIÓN: Si es matrícula, obligar a seleccionar un grupo antes de proceder
-        if (transaction?.concept === "tuition" && !selectedGroupId) {
+        if (transaction?.concept === "Inscripción" && !selectedGroupId) {
             setError("Por favor, selecciona un grupo académico para asignar al estudiante.");
             return;
         }
@@ -269,7 +269,7 @@ export default function PaymentDetailsPage() {
                                         <h3 className="text-lg font-anton mb-1">Auditoría de Pago</h3>
                                     </div>
                                     {
-                                        (transaction.concept === "ticket" || transaction.concept === "product") && transaction.status === "pending" && (
+                                        (transaction.concept === "Entradas_Gala" || transaction.concept === "Producto") && transaction.status === "Pendiente" && (
                                             <div>
                                                 <button
                                                     type="button"
@@ -353,7 +353,7 @@ export default function PaymentDetailsPage() {
                             </div>
 
                             {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-                            {transaction.concept === "tuition" && transaction.status === "pending" && (<>
+                            {transaction.concept === "Inscripción" && transaction.status === "Pendiente" && (<>
 
                                 <div className="glass-card p-6 shadow-sm">
                                     <h3 className="text-lg font-anton mb-4">

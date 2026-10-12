@@ -10,7 +10,6 @@ export async function saveClientAction(formData: Omit<Client, 'id'>, id?: string
     try {
         const url = id ? `${BACKEND_URL}/clients/${id}` : `${BACKEND_URL}/clients`;
         const headers = await getAuthHeaders();
-
         // 🎯 Ejecutamos la petición de Axios dinámicamente según la existencia del ID
         const response = id
             ? await axios.patch(url, formData, { headers })

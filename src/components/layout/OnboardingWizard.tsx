@@ -192,8 +192,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             }
 
             const res = await completeOnboardingAction(formData);
-
-            if (res.success) {
+            if (res.success && res.data?.user) {
                 openFeedbackAlertModal();
                 setShowFeedbackAlert({
                     title: '¡Operación Completada!',
@@ -203,6 +202,18 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                     data: null
                 });
                 setUserResponse({ ...user, ...res.data.user });
+                setUser({
+                    id: res.data.user.id,
+                    firstName: res.data.user.firstName,
+                    lastName: res.data.user.lastName,
+                    phone: res.data.user.phone,
+                    email: res.data.user.email,
+                    isAdmin: res.data.user.isAdmin,
+                    profileOnboarding: res.data.user.profileOnboarding,
+                    client: res.data.user.ownedClients.find((e: Client) => e.userId == res.data.user.id) || null,
+                    dni: res.data.user.dni || '',
+                    profileType: res.data.user.profileType || 'Estudiante',
+                });
             } else {
                 setError(typeof res.error === "string" ? res.error : "Error crítico al procesar la solicitud.");
             }
@@ -496,12 +507,12 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
                                             className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
                                         >
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="son">Hijo</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="daughter">Hija</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="nephew">Sobrino</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="niece">Sobrina</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="tutored">Tutorado</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="other">Otro</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hijo">Hijo</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hija">Hija</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrino">Sobrino</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrina">Sobrina</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Tutorado">Tutorado</option>
+                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1 sm:col-span-2">

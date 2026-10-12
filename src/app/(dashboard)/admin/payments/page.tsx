@@ -245,9 +245,9 @@ export default function PaymentsPage() {
                     >
                         <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los conceptos</option>
                         <option value="monthly_payment" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Mensualidades</option>
-                        <option value="tuition" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Matrículas</option>
+                        <option value="Inscripción" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Matrículas</option>
                         <option value="locker_room" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Tienda / Uniformes</option>
-                        <option value="ticket" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Entradas de Eventos</option>
+                        <option value="Entradas_Gala" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Entradas de Eventos</option>
                     </select>
                 </div>
 

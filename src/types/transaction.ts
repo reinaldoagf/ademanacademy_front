@@ -3,9 +3,9 @@ import { Client } from "@/types/client";
 import { PaymentOrder } from "@/types/payment-order";
 export interface Transaction {
     id: string;
-    concept: "monthly_payment" | "tuition" | "locker_room" | "ticket" | "product";
-    method: "bank_transfer" | "credit_or_debit_card" | "cash" | "mobile_payment" | "check" | "other";
-    status: "approved" | "pending" | "refused";
+    concept: "Clase" | "Mensualidad" | "Inscripción" | "Vestuario" | "Entradas_Gala" | "Producto" | "Otro";
+    method: "Transferencia" | "Tarjeta" | "Efectivo" | "Pago_Movil" | "Cheque" | "Otro";
+    status: "Aprobado" | "Pendiente" | "Rechazado";
     bankName: string;
     referenceNumber: string;
     amount: number;

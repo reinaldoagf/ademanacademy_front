@@ -40,8 +40,9 @@ const initialFormState: CustomerFormData = {
     address: "",
     birthDate: "",
     userId: null,
-    type: "student",
-    kinship: "son",
+    representativeId: null,
+    type: "Estudiante",
+    kinship: "Hijo",
     medicalObservations: "",
     shirtSize: "",
     hasExperience: false, // Operador de coalescencia nula para booleanos
@@ -69,6 +70,10 @@ export default function ClientsPage() {
     const [userSearch, setUserSearch] = useState("");
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+    // --- ESTADOS PARA BÚSQUEDA DE grupos ---
+    const [representativeSearch, setRepresentativeSearch] = useState("");
+    const [filteredRepresentatives, setFilteredRepresentatives] = useState<User[]>([]);
+    const [isLoadingRepresentatives, setIsLoadingRepresentatives] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<CustomerFormData>(initialFormState);
     const [clients, setClients] = useState<Client[]>([]);
@@ -130,8 +135,8 @@ export default function ClientsPage() {
             address: client.address || "",
             birthDate: formatDateForInput(client.birthDate),
             userId: client.userId || null,
-            type: client.type || "student",
-            kinship: client.student?.kinship || "son",
+            type: client.type || "Estudiante",
+            kinship: client.student?.kinship || "Hijo",
             medicalObservations: client.student?.medicalObservations || "",
             shirtSize: client.student?.shirtSize || "",
             hasExperience: client.student?.hasExperience || false,
@@ -161,6 +166,11 @@ export default function ClientsPage() {
             return;
         }
 
+        if (formData.userId?.trim() == formData.representativeId?.trim()) {
+            setErrorMsg("El usuario de representante seleccionado no puede ser igual al usuario vinculado al cliente.");
+            return;
+        }
+
         try {
             startTransition(async () => {
                 // 🎯 Acción de servidor / API para guardar el cliente
@@ -168,6 +178,7 @@ export default function ClientsPage() {
                     ...formData,
                     // Si no se seleccionó un usuario válido de la lista, envía null
                     userId: formData.userId?.trim() ? formData.userId : null,
+                    representativeId: formData.representativeId?.trim() ? formData.representativeId : null,
                 }, editingId);
 
                 if (!res.success) {
@@ -261,6 +272,53 @@ export default function ClientsPage() {
 
         return () => clearTimeout(delayDebounce);
     }, [isOpen, userSearch]);
+    useEffect(() => {
+        // Evitamos re-consultar si el string coincide con el elemento ya seleccionado
+        if (filteredRepresentatives.find(c => {
+            const result = c.id === formData.userId ? c : null;
+            if (!result) return false;
+            if (`${result?.firstName} ${result?.lastName}` === representativeSearch) {
+                return true;
+            }
+            return false;
+        }
+        )) {
+            return;
+        }
+
+        setIsLoadingRepresentatives(true);
+
+        const isSearchEmpty = !representativeSearch.trim();
+        const delay = isSearchEmpty ? 0 : 400;
+
+        const delayDebounce = setTimeout(async () => {
+            try {
+                // Construimos los parámetros requeridos por FetchUsersParams
+                const params = isSearchEmpty
+                    ? { limit: 5 }
+                    : { search: representativeSearch.trim() };
+
+                // Llamada directa al Server Action
+                const result = await getAllUsersAction(params);
+
+                if (result.success && result.data) {
+                    // Axios mapea la respuesta en result.data. data.data suele ser el array
+                    // Si tu backend anida los grupos en 'users', úsalo; de lo contrario asigna result.data
+                    setFilteredRepresentatives(result.data.users || result.data);
+                } else {
+                    console.error("Error en Server Action (usuarios):", result.error);
+                    setFilteredRepresentatives([]);
+                }
+            } catch (error) {
+                console.error("Error crítico buscando usuarios:", error);
+                setFilteredRepresentatives([]);
+            } finally {
+                setIsLoadingRepresentatives(false);
+            }
+        }, delay);
+
+        return () => clearTimeout(delayDebounce);
+    }, [isOpen, representativeSearch]);
     // 🎯 MANEJADORES DE LA TABLA
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -346,7 +404,8 @@ export default function ClientsPage() {
                                     </div>
 
                                     {/* Sub-métricas vectoriales del plano */}
-                                    <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+
+                                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-dashed border-gray-100">
                                         <div className="bg-slate-50 p-2">
                                             <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
                                                 DNI / Cedula
@@ -371,8 +430,88 @@ export default function ClientsPage() {
                                                 {formattedBirthDate}
                                             </p>
                                         </div>
-                                    </div>
+                                    </div><div className="grid grid-cols-2 gap-2 pt-3 border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Tipo
+                                            </p>
 
+                                            <p className="text-xs font-questrial font-bold text-gray-700">
+                                                {client.type}
+                                            </p>
+                                        </div> <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Usuario
+                                            </p>
+                                            <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                                                <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
+                                                    ? "text-white bg-[#5e0472]"
+                                                    : "bg-slate-50"
+                                                    }`}
+
+                                                >
+                                                    <UserLucide className="w-3.5 h-3.5 shrink-0" />
+                                                </div>
+                                                {client.user ? (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.firstName}</span>
+                                                        <span className="text-[10px] text-gray-400 max-w-[100px] truncate">{client.user.email}</span>
+                                                    </div>) : (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">Sin usuario</span>
+                                                    </div>)}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-dashed border-gray-100">
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Estudiante
+                                            </p>
+                                            <div className="flex items-center w-full gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                                                <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
+                                                    ? "text-white bg-[#5e0472]"
+                                                    : "bg-slate-50"
+                                                    }`}
+
+                                                >
+                                                    <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                                                </div>
+                                                {client.student ? (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">{client.firstName} {client.lastName}</span>
+                                                        <span className="text-[10px] text-gray-400 max-w-[100px] truncate">{client.email}</span>
+                                                    </div>) : (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">Sin estudiante</span>
+                                                    </div>)}
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-50 p-2">
+                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                                Representante
+                                            </p>
+                                            <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                                                <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
+                                                    ? "text-white bg-[#5e0472]"
+                                                    : "bg-slate-50"
+                                                    }`}
+
+                                                >
+                                                    <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                                                </div>
+                                                {client.representative ? (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">{client.representative.firstName} {client.representative.lastName}</span>
+                                                        <span className="text-[10px] text-gray-400 max-w-[100px] truncate">{client.representative.email}</span>
+                                                    </div>) : (
+                                                    <div className="hidden md:flex flex-col text-left font-questrial">
+                                                        <span className="text-xs font-bold text-gray-700 leading-tight">Sin Representante</span>
+                                                    </div>)}
+                                            </div>
+                                        </div>
+                                    </div>
 
 
                                     {/* Relaciones opcionales (Estudiante, Usuario, Grupo) */}
@@ -388,51 +527,9 @@ export default function ClientsPage() {
                                     </div>)}
 
 
-                                    <div className="flex justify-between gap-2">
-
-
-                                        <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                                            <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.student
-                                                ? "text-white bg-[#5e0472]"
-                                                : "bg-slate-50"
-                                                }`}
-
-                                            >
-                                                <GraduationCap className="w-3.5 h-3.5 shrink-0" />
-                                            </div>
-                                            {client.student ? (
-                                                <div className="hidden md:flex flex-col text-left font-questrial">
-                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.firstName}</span>
-                                                    <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.lastName}</span>
-                                                </div>) : (
-                                                <div className="hidden md:flex flex-col text-left font-questrial">
-                                                    <span className="text-xs font-bold text-gray-700 leading-tight">Sin estudiante</span>
-                                                </div>)}
-                                        </div>
-
-                                        <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-
-
-                                            {client.user ? (
-                                                <div className="hidden md:flex flex-col text-left font-questrial">
-                                                    <span className="text-xs font-bold text-gray-700 leading-tight">{client.user.firstName}</span>
-                                                    <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{client.user.email}</span>
-                                                </div>) : (
-                                                <div className="hidden md:flex flex-col text-left font-questrial">
-                                                    <span className="text-xs font-bold text-gray-700 leading-tight">Sin usuario</span>
-                                                </div>)}
 
 
 
-                                            <div
-                                                className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${client.user
-                                                    ? "text-white bg-[#5e0472]"
-                                                    : "bg-slate-50"
-                                                    }`}>
-                                                <UserLucide className="w-3.5 h-3.5 shrink-0" />
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 {/* Acciones y Footer de la tarjeta */}
@@ -648,13 +745,13 @@ export default function ClientsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto font-questrial ">
                         <button
                             type="button"
-                            onClick={() => { setFormData({ ...formData, type: "student" }) }}
-                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "student"
+                            onClick={() => { setFormData({ ...formData, type: "Estudiante" }) }}
+                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "Estudiante"
                                 ? "border-purple-500 bg-purple-950/40 shadow-[0_0_15px_rgba(147,51,234,0.3)] text-white"
                                 : "border-purple-100 bg-purple-50/40 hover:border-purple-400"
                                 }`}
                         >
-                            <UserLucide className={`w-6 h-6 ${formData.type === "student" ? "text-white" : "text-gray-400"}`} />
+                            <UserLucide className={`w-6 h-6 ${formData.type === "Estudiante" ? "text-white" : "text-gray-400"}`} />
                             <div>
                                 <h4 className="font-bold text-sm">Estudiante</h4>
                             </div>
@@ -662,13 +759,13 @@ export default function ClientsPage() {
 
                         <button
                             type="button"
-                            onClick={() => { setFormData({ ...formData, type: "representative" }) }}
-                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "representative"
+                            onClick={() => { setFormData({ ...formData, type: "Representante" }) }}
+                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "Representante"
                                 ? "border-pink-500 bg-pink-950/40 shadow-[0_0_15px_rgba(219,39,119,0.3)] text-white"
                                 : "border-purple-100 bg-purple-50/40 hover:border-pink-400"
                                 }`}
                         > <div>
-                                <Users2 className={`w-6 h-6 ${formData.type === "representative" ? "text-white" : "text-gray-400"}`} />
+                                <Users2 className={`w-6 h-6 ${formData.type === "Representante" ? "text-white" : "text-gray-400"}`} />
                             </div> <div>
                                 <h4 className="font-bold text-sm">Representante</h4>
                             </div>
@@ -676,7 +773,7 @@ export default function ClientsPage() {
                     </div>
                     {/* Sección Estudiante (Acordeón Animado) */}
                     <div
-                        className={`grid transition-all duration-300 ease-in-out ${formData.type === "student"
+                        className={`grid transition-all duration-300 ease-in-out ${formData.type === "Estudiante"
                             ? "grid-rows-[1fr] opacity-100 mt-4"
                             : "grid-rows-[0fr] opacity-0 mt-0 pointer-events-none"
                             }`}
@@ -684,7 +781,33 @@ export default function ClientsPage() {
                         {/* ÚNICO CONTENEDOR HIJO OBLIGATORIO PARA LA ANIMACIÓN */}
                         <div className="overflow-hidden">
                             <div className="flex flex-col gap-4 pb-1">
-
+                                <SearchInput
+                                    label="Asignación de usuario del Representante"
+                                    placeholder="Escribe para buscar o selecciona de la lista..."
+                                    value={representativeSearch}
+                                    isLoading={isLoadingRepresentatives}
+                                    options={filteredRepresentatives.map((user: any) => ({
+                                        id: user.id,
+                                        label: `${user.firstName} ${user.lastName}`,
+                                        subLabel: `Email: ${user.email}`,
+                                        data: user, // Guardamos el objeto completo si hace falta
+                                    }))}
+                                    emptyMessage="No se encontraron representantes coincidentes"
+                                    onChangeText={(text) => {
+                                        setRepresentativeSearch(text);
+                                        setFormData({
+                                            ...formData,
+                                            representativeId: text as any,
+                                        });
+                                    }}
+                                    onSelectOption={(option) => {
+                                        setFormData({
+                                            ...formData,
+                                            representativeId: option.id as any,
+                                        });
+                                        setRepresentativeSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+                                    }}
+                                />
                                 {/* Fila: Talla de Uniforme e Experiencia */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <SelectInput

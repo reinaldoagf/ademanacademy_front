@@ -2,13 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 // Tipos basados en tu esquema Prisma
-export type OrderItemConceptType =
-    | "uniform"
-    | "costume"
-    | "ticket"
-    | "merchandise"
-    | "product"
-    | "other"; // Ajusta a los valores de tu Enum en Prisma
+export type OrderItemConceptType = "Clase" | "Mensualidad" | "Inscripción" | "Vestuario" | "Entradas_Gala" | "Producto" | "Otro"; // Ajusta a los valores de tu Enum en Prisma
 
 export interface CartStudent {
     id: string;

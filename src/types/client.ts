@@ -13,11 +13,13 @@ export interface Client {
     address: string;
     countryCode: string;
     phone: string;
-    type?: "student" | "representative";
+    type?: "Estudiante" | "Representante";
     studentId?: string;
     student?: Student;
     userId?: string | null;
     user?: User | null;
+    representativeId?: string | null;
+    representative?: User | null;
     groupId?: string;
     group?: Group;
     createdAt?: string;
@@ -41,7 +43,8 @@ export interface CustomerFormData {
     address: string;
     birthDate: string | Date;
     userId?: string | null; // ID opcional para vincular con un Usuario registrado
-    type: "student" | "representative";
+    representativeId?: string | null;
+    type: "Estudiante" | "Representante";
     kinship: Student["kinship"];
     shirtSize: string;
     hasExperience: boolean;

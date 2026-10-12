@@ -158,7 +158,6 @@ export default function AdminEventsPage() {
   const totalCashAmount = selectedEvent ? (selectedEvent?.isPresaleActive && selectedEvent?.presaleStartDate && selectedEvent?.presaleEndDate && new Date(selectedEvent?.presaleStartDate) <= new Date() && new Date(selectedEvent?.presaleEndDate) >= new Date() ?
     selectedChairs.reduce((total, chair) => total + (chair.presalePrice || 0), 0) : selectedChairs.reduce((total, chair) => total + (chair.salePrice || 0), 0)) : 0;
   const openTicketOfficeMap = (event: EventData) => {
-    // console.log({ event })
     setSelectedEvent(event);
     setSelectedChairs([]);
     setClientSearch("");

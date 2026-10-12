@@ -964,7 +964,7 @@ export default function SchedulePage() {
                                         </div>
                                         <div className="text-right">
                                             <span className="text-[8px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-1.5 py-0.5">
-                                                {student.kinship === "son" ? "Hijo" : student.kinship || "Alumno"}
+                                                {student.kinship === "Hijo" ? "Hijo" : student.kinship || "Alumno"}
                                             </span>
                                         </div>
                                     </div>

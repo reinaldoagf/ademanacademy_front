@@ -62,7 +62,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const handleAddToCart = () => {
         addItem({
             elementId: product.id,
-            concept: "product",
+            concept: "Producto",
             conceptLabel: product.name,
             description: product.description || product.name,
             image: product.images?.[0]?.url || null,

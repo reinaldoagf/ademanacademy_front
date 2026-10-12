@@ -27,7 +27,7 @@ export async function completeOnboardingAction(formData: FormData) {
             backendForm.append("studentId", studentId);
         }
 
-        if (profileType === "representative") {
+        if (profileType === "Representante") {
             const occupation = formData.get("representativeOccupation");
             const students = formData.get("representedStudents");
             const payment = formData.get("payment");

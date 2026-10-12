@@ -8,14 +8,11 @@ import {
   X,
   Menu,
   Search,
-  Bell,
   User,
   ShieldCheck,
   Settings,
   LogOut,
   ChevronDown,
-  Sparkles,
-  Check,
   SlidersHorizontal,
   GraduationCap,
   User as UserIcon,
@@ -23,13 +20,8 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
 import { useLoadingStore } from "@/store/useLoadingStore";
+import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
 import { NotificationBell } from "@/components/NotificationBell";
-
-const INITIAL_NOTIFICATIONS = [
-  { id: 1, text: "Vestuario 'Lago de los Cisnes' listo para retirar.", time: "Hace 10 min", read: false },
-  { id: 2, text: "Pago de mensualidad de Mayo aprobado con éxito.", time: "Hace 2 horas", read: false },
-  { id: 3, text: "Cambio de horario en el ensayo general de la gala.", time: "Hace 1 día", read: true },
-];
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -43,7 +35,9 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
 
   // Estados locales
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([
+
+  ]);
 
   // 💡 NUEVOS ESTADOS PARA EL BUSCADOR AVANZADO
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -52,12 +46,12 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   const [filterEstatus, setFilterEstatus] = useState("");
 
   const menuRef = useRef<HTMLDivElement>(null);
-
+  const clearCartStore = useCartStore((state) => state.clearCart);
   const logoutStore = useAuthStore((state) => state.logout);
   const startLoading = useLoadingStore((state) => state.startLoading);
   const stopLoading = useLoadingStore((state) => state.stopLoading);
 
-  const hasUnread = notifications.some(n => !n.read);
+  // const hasUnread = notifications.some(n => !n.read);
 
   const handleRoleTransition = (targetPath: string) => {
     setIsUserMenuOpen(false);
@@ -73,6 +67,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     startLoading();
     try {
       await new Promise((resolve) => setTimeout(resolve, 1200));
+      clearCartStore();
       logoutStore();
       await handleLogout();
     } catch (error) {
@@ -82,9 +77,9 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     }
   };
 
-  const markAllAsRead = () => {
+  /* const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  }; */
 
   // Manejador para ejecutar la consulta avanzada
   const handleAdvancedSearch = (e: React.FormEvent) => {

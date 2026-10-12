@@ -6,9 +6,9 @@ export type TransactionStatus = "approved" | "pending" | "refused";
 
 export type ConceptType =
     | "monthly_payment"
-    | "tuition"
+    | "Inscripción"
     | "locker_room"
-    | "ticket";
+    | "Entradas_Gala";
 
 export type PaymentMethod =
     | "cash"
