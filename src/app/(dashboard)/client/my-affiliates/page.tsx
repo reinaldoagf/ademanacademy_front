@@ -174,7 +174,7 @@ export default function MyAffiliatesPage() {
             <HeroSection
                 htmlTitle={`Mis <em class="text-[#5e0472]">Afiliados</em>`}
                 htmlSubTitle="Gestiona el perfil familiar en la academia."
-                actions={[
+                actions={user?.profileType == 'Representante' ? [
                     {
                         label: "Registrar Alumno",
                         onClick: () => {
@@ -186,7 +186,7 @@ export default function MyAffiliatesPage() {
                         icon: <UserPlus className="w-4 h-4" />,
                         variant: "primary",
                     },
-                ]}
+                ] : []}
             />
 
             <div className="p-4 md:p-8 w-full space-y-6">

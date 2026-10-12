@@ -117,31 +117,32 @@ export default function RegisterPage() {
         if (avatar) payload.append("avatar", avatar);
 
         // Ejecutamos la Server Action y esperamos la respuesta de la API
-        const result = await handleRegister(payload);
+        const res = await handleRegister(payload);
 
         // 1. Manejo de respuesta errónea
-        if (result?.error || !result?.success) {
-            setError(result?.error || "Ocurrió un error inesperado");
+        if (res?.error || !res?.success) {
+            setError(res?.error || "Ocurrió un error inesperado");
             setIsLoading(false);
             return;
         }
 
         // 2. Manejo de respuesta satisfactoria en formato API
-        if (result.success) {
+        if (res.success) {
             console.log(
                 "Datos del usuario capturados con éxito en el Frontend:",
-                result.user
+                res.user
             );
             // 💡 GUARDAR EN ZUSTAND (Se guarda en memoria y localStorage automáticamente)
             setUser({
-                id: result.user.id,
-                firstName: result.user.firstName,
-                lastName: result.user.lastName,
-                email: result.user.email,
-                isAdmin: result.user.isAdmin,
-                profileOnboarding: result.user.profileOnboarding,
-                phone: result.user.phone,
-                dni: result.user.dni,
+                id: res.user.id,
+                firstName: res.user.firstName,
+                lastName: res.user.lastName,
+                email: res.user.email,
+                isAdmin: res.user.isAdmin,
+                profileOnboarding: res.user.profileOnboarding,
+                phone: res.user.phone,
+                dni: res.user.dni,
+                profileType: res.user.profileType || 'Estudiante',
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
             // Aquí puedes guardar a 'result.user' en tu Contexto global, Zustand, o localStorage si lo requieres.

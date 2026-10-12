@@ -5,6 +5,7 @@ interface JwtPayload {
   sub: string;
   email: string;
   isAdmin: string;
+  profileType?: string; // 👈 Añadimos profileType para identificar el rol
   exp: number;
 }
 
@@ -43,13 +44,20 @@ export async function middleware(req: NextRequest) {
     }
 
     const isAdmin = payload.isAdmin;
+    const profileType = payload.profileType;
 
     // Protección de rutas de Administrador
     if (pathname.startsWith('/admin') && !isAdmin) {
       return NextResponse.redirect(new URL('/403', req.url));
     }
+    // 🛑 Restricción para Estudiantes en rutas de Pagos y Órdenes de Pago
+    const isStudentRoute = pathname.startsWith('/client/payments') || pathname.startsWith('/client/payment-orders');
+    if (isStudentRoute && profileType === 'Estudiante') {
+      return NextResponse.redirect(new URL('/403', req.url)); // O redirigir al dashboard general
+    }
 
   } catch (error) {
+    console.error("Middleware Error:", error);
     // Si el token fue manipulado, está corrupto o expiró, borramos la sesión y mandamos a login
     const response = NextResponse.redirect(new URL('/login', req.url));
     response.cookies.delete('auth_token');
@@ -64,6 +72,8 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/organizador/:path*',
+    '/client/payments/:path*',   // 👈 Ruta de pagos protegida
+    '/client/payment-orders/:path*', // 👈 Ruta de órdenes de pago protegida
     '/403'
   ],
 };

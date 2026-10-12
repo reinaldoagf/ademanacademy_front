@@ -9,6 +9,7 @@ interface User {
     dni: string;
     email: string;
     isAdmin: boolean;
+    profileType: "Representante" | "Estudiante";
     profileOnboarding: boolean;
     phone: string;
     client?: Client;

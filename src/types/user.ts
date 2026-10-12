@@ -10,6 +10,7 @@ export interface User {
     phone: string;
     password?: string;
     isAdmin: boolean;
+    profileType: "Representante" | "Estudiante";
     students: Student[]
     client: Client;
     profileOnboarding: boolean;

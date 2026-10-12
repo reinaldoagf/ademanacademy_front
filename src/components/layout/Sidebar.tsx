@@ -19,6 +19,7 @@ import {
   CLIENT_PERSONAL_MENU,
   MenuItem
 } from "@/config/sidebar-menu";
+import { APP_KEYS } from "@/config/app-keys";
 interface SidebarProps {
   isOpen: boolean;
 }
@@ -44,6 +45,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const { badges, fetchBadges } = useBadgeStore();
   // Función recursiva o helper para renderizar un item e inyectar su badge
   const renderMenuItem = (item: MenuItem) => {
+    if ((item.key === APP_KEYS.MY_PAYMENTS || item.key === APP_KEYS.MY_PAYMENT_ORDERS) &&
+      user?.profileType === 'Estudiante') return null;
+
     const Icon = item.icon;
     const hasChildren = Boolean(item.children && item.children.length > 0);
     const isSubmenuOpen = openSubmenus[item.key];
