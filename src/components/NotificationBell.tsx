@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Sparkles, Check } from 'lucide-react';
+import { Bell, Sparkles, Check, Link as LinkIcon } from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useNotifications } from '@/hooks/useNotifications';
 
 interface NotificationBellProps {
@@ -10,6 +12,7 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBellProps) {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
 
@@ -17,7 +20,15 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
     const { notifications, unreadCount, setUnreadCount, setNotifications } = useNotifications(userId);
 
     const hasUnread = unreadCount > 0;
+    // 🎯 1. Identificar el panel actual a partir de la URL
+    const getDashboardBaseRoute = () => {
+        if (pathname.startsWith('/admin')) return '/admin';
+        if (pathname.startsWith('/client')) return '/client';
+        if (pathname.startsWith('/collaborator')) return '/collaborator';
+        return ''; // Ruta por defecto si está en otra sección
+    };
 
+    const baseRoute = getDashboardBaseRoute();
     // Cerrar el popover al hacer clic fuera del componente
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -81,20 +92,33 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                     {/* Lista de Notificaciones */}
                     <div className="max-h-64 overflow-y-auto divide-y divide-purple-50">
                         {notifications.length > 0 ? (
-                            notifications.map((notif) => {
-                                const isRead = notif.status === 'READ';
+                            notifications.map((notification) => {
+                                const isRead = notification.status === 'READ';
                                 return (
                                     <div
-                                        key={notif.id}
+                                        key={notification.id}
                                         className={`p-3 text-left transition-colors ${isRead ? 'bg-white' : 'bg-purple-50/40 font-medium'
                                             }`}
                                     >
-                                        <p className="text-xs text-gray-700 font-questrial leading-normal">
-                                            <strong className="block font-bold text-gray-800">{notif.title}</strong>
-                                            {notif.message}
-                                        </p>
+                                        {/* 🛠️ Corrección Semántica: Usamos div en lugar de p para contener enlaces */}
+                                        <div className="text-xs text-gray-700 font-questrial leading-normal space-y-1">
+                                            <strong className="block font-bold text-gray-800">{notification.title}</strong>
+                                            <p className="text-gray-600">{notification.message}</p>
+
+                                            {notification.link && (
+                                                <div className="pt-1">
+                                                    <Link
+                                                        href={notification.link}
+                                                        className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 font-questrial font-bold text-[11px]"
+                                                    >
+                                                        <LinkIcon className="w-3 h-3" /> Ver orden de pago
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <span className="text-[9px] text-gray-400 font-questrial block mt-1">
-                                            {new Date(notif.createdAt).toLocaleTimeString('es-ES', {
+                                            {new Date(notification.createdAt).toLocaleTimeString('es-ES', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
                                             })}
@@ -107,6 +131,17 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                                 No tienes notificaciones nuevas
                             </div>
                         )}
+                    </div>
+
+                    {/* 🎯 NUEVO: Pie del menú con enlace "Ver todas" */}
+                    <div className="p-2.5 border-t border-purple-50 text-center bg-purple-50/20">
+                        <Link
+                            href={`${baseRoute}/notifications`}
+                            onClick={() => setIsOpen(false)}
+                            className="text-xs font-bold text-purple-700 hover:text-purple-900 font-questrial uppercase tracking-wider block transition-colors"
+                        >
+                            Ver todas las notificaciones →
+                        </Link>
                     </div>
                 </div>
             )}

@@ -14,6 +14,7 @@ import {
     Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { SelectInput } from '@/components/ui/forms';
 import { useCartStore } from "@/store/cartStore"; // Ajusta la ruta a tu store
 import { getAllClientsAction } from "@/app/actions/client"; // Ajusta la ruta a tu action
 import { createOrderAction } from "@/app/actions/order"; // Ajusta la ruta a tu action
@@ -74,10 +75,10 @@ export function CartDrawer() {
 
     // Evento para cerrar el desplegable al hacer clic fuera del componente
     useEffect(() => {
-        const displayName =
+        /* const displayName =
             `${user?.client?.firstName || ""} ${user?.client?.lastName || ""}`.trim() || user?.client?.email;
         setClientId(user?.client?.id || "");
-        setSelectedUserName(displayName || "");
+        setSelectedUserName(displayName || ""); */
 
         const handleClickOutside = (event: MouseEvent) => {
             if (userRef.current && !userRef.current.contains(event.target as Node)) {
@@ -291,7 +292,7 @@ export function CartDrawer() {
                     {/* Campo de Búsqueda de Cliente */}
                     <div className="relative" ref={userRef}>
                         {
-                            user?.isAdmin && (<><label className="block text-gray-600 font-bold mb-1 text-xs">
+                            user?.isAdmin ? (<><label className="block text-gray-600 font-bold mb-1 text-xs">
                                 Asignar Cliente *
                             </label>
 
@@ -361,11 +362,34 @@ export function CartDrawer() {
                                         )}
                                     </ul>
                                 )}
-                            </>)}
+                            </>) : (
+                                <SelectInput
+                                    label="Cliente"
+                                    name="clientId"
+                                    value={clientId || ''}
+                                    onChange={(e) => {
+                                        setClientId(e.target.value)
+                                        const client = user?.clients?.find(c => c.id === e.target.value) || null
+                                        if (client) {
+                                            const displayName =
+                                                `${client.firstName || ""} ${client.lastName || ""}`.trim() || client?.email;
+
+                                            setSelectedUserName(displayName || "");
+                                        }
+                                    }}
+                                    options={[
+                                        { label: "Selecciona la afiliación", value: "", disabled: true },
+                                        ...user?.clients?.map((c: Client) => ({
+                                            label: c.email || c.dni ? `${c.firstName} ${c.lastName} - (${c.email || c.dni})` : `${c.firstName} ${c.lastName}`,
+                                            value: `${c.id}`
+                                        })) || []
+                                    ]}
+                                />
+                            )}
 
 
                         {/* Badge de Selección */}
-                        {clientId && (
+                        {(clientId && selectedUserName) && (
                             <div className="mt-1.5 flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
                                 <UserCheck className="w-3.5 h-3.5 flex-shrink-0" />
                                 <span className="truncate">

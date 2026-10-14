@@ -9,6 +9,7 @@ export interface NotificationItem {
     message: string;
     status: string;
     createdAt: string;
+    link?: string;
 }
 
 export function useNotifications(userId?: string) {

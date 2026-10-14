@@ -13,6 +13,7 @@ interface User {
     profileOnboarding: boolean;
     phone: string;
     client?: Client;
+    clients?: Client[];
 }
 
 interface AuthState {
