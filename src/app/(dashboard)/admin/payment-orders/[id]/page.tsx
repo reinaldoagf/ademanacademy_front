@@ -44,7 +44,7 @@ export default function PaymentOrderDetailsPage() {
     };
 
     const totalPaid = paymentOrder?.transactions
-        ?.filter((t) => t.status === "approved")
+        ?.filter((t) => t.status === "Aprobado")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {

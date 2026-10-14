@@ -18,7 +18,16 @@ interface OnboardingWizardProps {
     stepType?: "PROFILE" | "CLASSROOM"; // 🎯 Nuevo parámetro discriminador
     onSuccess?: () => void;            // 🎯 Callback para destrabar el Layout
 }
-
+// Lista de códigos de ejemplo comunes (puedes ampliarla o moverla a un helper)
+const countries = [
+    { code: "+58", label: "VE" },
+    { code: "+57", label: "CO" },
+    { code: "+51", label: "PE" },
+    { code: "+56", label: "CL" },
+    { code: "+54", label: "AR" },
+    { code: "+34", label: "ES" },
+    { code: "+1", label: "US" },
+];
 export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }: OnboardingWizardProps) {
     const router = useRouter();
     const {
@@ -53,7 +62,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const [students, setStudents] = useState<any[]>([]);
     const [newStudent, setNewStudent] = useState({
         firstName: "", lastName: "", dni: "", birthDate: "",
-        kinship: "son", address: "", phone: "", shirtSize: "M",
+        kinship: "Hijo", address: "", countryCode: "+58", phone: "", shirtSize: "M",
         hasExperience: false, medicalObservations: ""
     });
 
@@ -62,8 +71,8 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         address: "",
         name: "",
         maxCapacity: 20,
-        type: "mirrors",
-        status: "active",
+        type: "Espejos",
+        status: "Activo",
         description: "",
     });
 
@@ -100,7 +109,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         setStudents([...students, { ...newStudent, id: crypto.randomUUID() }]);
         setNewStudent({
             firstName: "", lastName: "", dni: "", birthDate: "",
-            kinship: "son", address: "", phone: "", shirtSize: "M",
+            kinship: "Hijo", address: "", countryCode: "+58", phone: "", shirtSize: "M",
             hasExperience: false, medicalObservations: ""
         });
         setError(null);
@@ -416,231 +425,336 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     <h3 className="text-2xl font-anton tracking-wide text-white">Registro de Representados</h3>
                                     <p className="text-gray-300 font-questrial text-xs">Por normativas de la academia, debes vincular al menos un alumno a tu tutela.</p>
                                 </div>
+                                {/* 🎯 PASO OBLIGATORIO PREVIO: VERIFICACIÓN OTP GENERAL */}
+                                {!isEmailVerifiedOtp ? (
+                                    <div className="bg-black/40 border border-purple-500/30 p-5 space-y-4 font-questrial rounded-sm">
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wide">Paso de Seguridad: Verificación de Correo</h4>
+                                            <p className="text-[11px] text-gray-300">
+                                                Para garantizar la seguridad de tu cuenta ({user?.email}), enviaremos un código de verificación de 6 dígitos antes de continuar.
+                                            </p>
+                                        </div>
 
-                                {/* Listado de agregados */}
-                                <div className="space-y-2 font-questrial max-h-40 overflow-y-auto">
-                                    {students.map((student) => (
-                                        <div key={student.id} className="flex items-center justify-between bg-white/5 border border-white/10 p-3 text-xs">
-                                            <div>
-                                                <p className="font-bold text-purple-300">{student.firstName} {student.lastName}</p>
-                                                <p className="text-[10px] text-gray-400 font-mono">
-                                                    DNI: {student.dni || "N/A"} | {student.kinship}
-                                                </p>
-                                            </div>
-                                            <button onClick={() => handleRemoveStudent(student.id)} className="text-gray-400 hover:text-red-400 p-1">
-                                                <Trash2 className="w-4 h-4" />
+                                        {!otpSent ? (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (!user?.email) return;
+                                                    setIsSearchingDni(true);
+                                                    setDniCheckError(null);
+                                                    try {
+                                                        const res = await requestAccountLinkingAction(user.email);
+                                                        if (res.success) {
+                                                            setOtpSent(true);
+                                                        } else {
+                                                            setDniCheckError(res.error || "No se pudo enviar el código.");
+                                                        }
+                                                    } catch (err) {
+                                                        setDniCheckError("Error de conexión al solicitar el código.");
+                                                    } finally {
+                                                        setIsSearchingDni(false);
+                                                    }
+                                                }}
+                                                disabled={isSearchingDni}
+                                                className="cursor-pointer w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase transition disabled:opacity-40"
+                                            >
+                                                {isSearchingDni ? "Enviando código..." : "Enviar código de verificación"}
                                             </button>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Formulario de Adición inline */}
-                                <form onSubmit={handleAddStudent} className="bg-white/5 p-4 border border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3 font-questrial text-xs">
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Nombre del Alumno</label>
-                                        <input
-                                            type="text" required placeholder="Ej: Sofía"
-                                            value={newStudent.firstName}
-                                            onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Apellido</label>
-                                        <input
-                                            type="text" required placeholder="Ej: Pérez"
-                                            value={newStudent.lastName}
-                                            onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">DNI o Pasaporte (Opcional)</label>
-                                        <input
-                                            type="text" placeholder="Documento único (Si aplica)"
-                                            value={newStudent.dni}
-                                            onChange={(e) => setNewStudent({ ...newStudent, dni: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Fecha de Nacimiento</label>
-                                        <input
-                                            type="date" required
-                                            value={newStudent.birthDate}
-                                            onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-gray-300"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
-                                        <input
-                                            type="type" placeholder="Ej: 0414-1234567"
-                                            value={newStudent.phone || ""}
-                                            onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] text-gray-400">Talla de Franela</label>
-                                        <select
-                                            value={newStudent.shirtSize || "M"}
-                                            onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        >
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="2">Talla 2</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="2">Talla 2</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="4">Talla 4</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="6">Talla 6</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="8">Talla 8</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="10">Talla 10</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="12">Talla 12</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="S">S (Adulto)</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="M">M (Adulto)</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="L">L (Adulto)</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1 sm:col-span-2">
-                                        <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
-                                        <select
-                                            value={newStudent.kinship}
-                                            onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        >
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hijo">Hijo</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hija">Hija</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrino">Sobrino</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrina">Sobrina</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Tutorado">Tutorado</option>
-                                            <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1 sm:col-span-2">
-                                        <label className="text-[10px] text-gray-400">Dirección Completa de Habitación</label>
-                                        <input
-                                            type="text" required placeholder="Avenida, Urbanización, Nro de Casa/Apto"
-                                            value={newStudent.address || ""}
-                                            onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 sm:col-span-2">
-                                        <label className="text-[10px] text-gray-400">Patología o Condición Especial</label>
-                                        <input
-                                            type="text" placeholder="Ej: Asma leve, alergia al polvo (o indicar 'Ninguna')"
-                                            value={newStudent.medicalObservations || ""}
-                                            onChange={(e) => setNewStudent({ ...newStudent, medicalObservations: e.target.value })}
-                                            className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col gap-2 sm:col-span-2 bg-black/20 p-2.5 border border-white/5 mt-1">
-                                        <span className="text-[10px] text-gray-400 block">¿Ha tenido experiencia previa en el baile?</span>
-                                        <div className="flex gap-6">
-                                            <label className="flex items-center gap-2 text-white cursor-pointer">
-                                                <input
-                                                    type="radio" name="danceExperience" value="true"
-                                                    checked={newStudent.hasExperience === true}
-                                                    onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
-                                                    className="accent-pink-500 w-4 h-4"
-                                                />
-                                                Sí, posee experiencia
-                                            </label>
-                                            <label className="flex items-center gap-2 text-white cursor-pointer">
-                                                <input
-                                                    type="radio" name="danceExperience" value="false"
-                                                    checked={newStudent.hasExperience === false}
-                                                    onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
-                                                    className="accent-pink-500 w-4 h-4"
-                                                />
-                                                No, nivel principiante
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        className="sm:col-span-2 bg-purple-600/30 border border-purple-500/40 text-purple-200 py-2 mt-2 font-semibold hover:bg-purple-600 hover:text-white transition cursor-pointer flex items-center justify-center gap-1"
-                                    >
-                                        <Plus className="w-4 h-4" /> Añadir Alumno a la Lista
-                                    </button>
-                                </form>
-
-                                <div className="bg-black/30 border border-pink-500/20 p-4 space-y-3">
-                                    <h4 className="text-xs font-bold text-pink-400 uppercase tracking-wide">Datos del Representante Legal</h4>
-                                    <div className="flex flex-col gap-1.5 font-questrial text-xs">
-                                        <label className="text-[10px] text-gray-400">Ocupación / Profesión *</label>
-                                        <input
-                                            type="text" required placeholder="Ej: Ingeniero de Sistemas, Comerciante, Docente..."
-                                            value={representativeOccupation || ""}
-                                            onChange={(e) => setRepresentativeOccupation(e.target.value)}
-                                            className="p-2.5 bg-black/40 border border-white/10 focus:border-pink-400 outline-none text-white w-full"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* ========================================================================= */}
-                                {/* ✨ NUEVA SECCIÓN: CONTROL Y COBRO DE INSCRIPCIONES */}
-                                {/* ========================================================================= */}
-                                <div className="bg-gradient-to-b from-purple-950/20 to-black/50 border border-purple-500/30 p-4 space-y-4 font-questrial rounded-sm">
-                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                        <div>
-                                            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wide">Pago de Inscripción</h4>
-                                            <p className="text-[10px] text-gray-400">Costo: 10$ por alumno registrado.</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-[10px] text-gray-400 block">Total a Reportar:</span>
-                                            <span className="text-xl font-anton text-white tracking-wider">{calculatedTotal}$</span>
-                                        </div>
-                                    </div>
-
-                                    {calculatedTotal > 0 ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] text-gray-400">Banco/Plataforma de Origen *</label>
-
-                                                <select
-                                                    value={paymentInfo.bankName}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
-                                                    className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
-                                                >
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="" disabled>Selecciona una Plataforma</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco Mercantil">Banco Mercantil</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Zelle">Zelle</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Binance">Binance</option>
-                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] text-gray-400">Número de Referencia *</label>
-                                                <input
-                                                    type="text" required placeholder="Últimos 4 o 6 dígitos"
-                                                    value={paymentInfo.referenceNumber}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, referenceNumber: e.target.value })}
-                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1 sm:col-span-2">
-                                                <label className="text-[10px] text-gray-400">Adjuntar Comprobante (Capture / PDF) *</label>
-                                                <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/20 p-3 text-center cursor-pointer">
+                                        ) : (
+                                            <div className="space-y-3 pt-2">
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] text-gray-400">Ingresa el código OTP de 6 dígitos *</label>
                                                     <input
-                                                        type="file" required accept="image/*,application/pdf"
-                                                        onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
-                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        type="text"
+                                                        maxLength={6}
+                                                        placeholder="Ej: 482910"
+                                                        value={otpCodeInput}
+                                                        onChange={(e) => setOtpCodeInput(e.target.value)}
+                                                        className="p-2 bg-black/60 border border-white/10 focus:border-purple-400 outline-none text-white text-xs tracking-widest text-center font-bold"
                                                     />
-                                                    <p className="text-gray-400 text-[11px]">
-                                                        {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
-                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (!user?.email) return;
+                                                        setIsSearchingDni(true);
+                                                        setDniCheckError(null);
+                                                        try {
+                                                            // Validamos el código OTP
+                                                            const res = await confirmAccountLinkingAction(user.email, otpCodeInput);
+                                                            if (res.success && res.data) {
+                                                                // Marcamos como verificado con éxito
+                                                                setIsEmailVerifiedOtp(true);
+                                                                setEnrolledStudentData(res.data);
+                                                            } else {
+                                                                setDniCheckError(res.error || "Código inválido o expirado.");
+                                                            }
+                                                        } catch (err) {
+                                                            setDniCheckError("Error al validar el código.");
+                                                        } finally {
+                                                            setIsSearchingDni(false);
+                                                        }
+                                                    }}
+                                                    disabled={!otpCodeInput || otpCodeInput.length < 6 || isSearchingDni}
+                                                    className="cursor-pointer w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase transition disabled:opacity-40"
+                                                >
+                                                    {isSearchingDni ? "Validando..." : "Verificar Código"}
+                                                </button>
+                                                <div className="text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setOtpSent(false);
+                                                            setOtpCodeInput("");
+                                                            setDniCheckError(null);
+                                                        }}
+                                                        className="text-[10px] text-purple-400 hover:underline"
+                                                    >
+                                                        ¿No recibiste el código? Reintentar
+                                                    </button>
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {dniCheckError && <p className="text-xs text-red-400 text-center">{dniCheckError}</p>}
+                                    </div>
+                                ) : (<>
+                                    {/* Listado de agregados */}
+                                    <div className="space-y-2 font-questrial max-h-40 overflow-y-auto">
+                                        {students.map((student) => (
+                                            <div key={student.id} className="flex items-center justify-between bg-white/5 border border-white/10 p-3 text-xs">
+                                                <div>
+                                                    <p className="font-bold text-purple-300">{student.firstName} {student.lastName}</p>
+                                                    <p className="text-[10px] text-gray-400 font-mono">
+                                                        DNI: {student.dni || "N/A"} | {student.kinship}
+                                                    </p>
+                                                </div>
+                                                <button onClick={() => handleRemoveStudent(student.id)} className="text-gray-400 hover:text-red-400 p-1">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Formulario de Adición inline */}
+                                    <form onSubmit={handleAddStudent} className="bg-white/5 p-4 border border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3 font-questrial text-xs">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">Nombre del Alumno</label>
+                                            <input
+                                                type="text" required placeholder="Ej: Sofía"
+                                                value={newStudent.firstName}
+                                                onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            />
                                         </div>
-                                    ) : (
-                                        <p className="text-[11px] text-yellow-400/80 italic text-center">Agrega al menos un alumno para habilitar la pasarela de pago.</p>
-                                    )}
-                                </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">Apellido</label>
+                                            <input
+                                                type="text" required placeholder="Ej: Pérez"
+                                                value={newStudent.lastName}
+                                                onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">DNI o Pasaporte (Opcional)</label>
+                                            <input
+                                                type="text" placeholder="Documento único (Si aplica)"
+                                                value={newStudent.dni}
+                                                onChange={(e) => setNewStudent({ ...newStudent, dni: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">Fecha de Nacimiento</label>
+                                            <input
+                                                type="date" required
+                                                value={newStudent.birthDate}
+                                                onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-gray-300"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
+                                            <div className="flex relative group">
+                                                {/* Select de Código de País */}
+                                                <select
+                                                    value={newStudent.countryCode || ""}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, countryCode: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                >
+                                                    {countries.map((c) => (
+                                                        <option
+                                                            key={c.code}
+                                                            value={c.code}
+                                                            className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans"
+                                                        >
+                                                            {c.label} ({c.code})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    type="type" placeholder="Ej: 4141234567"
+                                                    value={newStudent.phone || ""}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                                                    className="w-full p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] text-gray-400">Talla de Franela</label>
+                                            <select
+                                                value={newStudent.shirtSize || "M"}
+                                                onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            >
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="S">S (Adulto)</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="M">M (Adulto)</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="L">L (Adulto)</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col gap-1 sm:col-span-2">
+                                            <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
+                                            <select
+                                                value={newStudent.kinship}
+                                                onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            >
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hijo">Hijo</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hija">Hija</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrino">Sobrino</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrina">Sobrina</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Tutorado">Tutorado</option>
+                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col gap-1 sm:col-span-2">
+                                            <label className="text-[10px] text-gray-400">Dirección Completa de Habitación</label>
+                                            <input
+                                                type="text" required placeholder="Avenida, Urbanización, Nro de Casa/Apto"
+                                                value={newStudent.address || ""}
+                                                onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 sm:col-span-2">
+                                            <label className="text-[10px] text-gray-400">Patología o Condición Especial</label>
+                                            <input
+                                                type="text" placeholder="Ej: Asma leve, alergia al polvo (o indicar 'Ninguna')"
+                                                value={newStudent.medicalObservations || ""}
+                                                onChange={(e) => setNewStudent({ ...newStudent, medicalObservations: e.target.value })}
+                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 sm:col-span-2 bg-black/20 p-2.5 border border-white/5 mt-1">
+                                            <span className="text-[10px] text-gray-400 block">¿Ha tenido experiencia previa en el baile?</span>
+                                            <div className="flex gap-6">
+                                                <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                    <input
+                                                        type="radio" name="danceExperience" value="true"
+                                                        checked={newStudent.hasExperience === true}
+                                                        onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
+                                                        className="accent-pink-500 w-4 h-4"
+                                                    />
+                                                    Sí, posee experiencia
+                                                </label>
+                                                <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                    <input
+                                                        type="radio" name="danceExperience" value="false"
+                                                        checked={newStudent.hasExperience === false}
+                                                        onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
+                                                        className="accent-pink-500 w-4 h-4"
+                                                    />
+                                                    No, nivel principiante
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            className="sm:col-span-2 bg-purple-600/30 border border-purple-500/40 text-purple-200 py-2 mt-2 font-semibold hover:bg-purple-600 hover:text-white transition cursor-pointer flex items-center justify-center gap-1"
+                                        >
+                                            <Plus className="w-4 h-4" /> Añadir Alumno a la Lista
+                                        </button>
+                                    </form>
+
+                                    <div className="bg-black/30 border border-pink-500/20 p-4 space-y-3">
+                                        <h4 className="text-xs font-bold text-pink-400 uppercase tracking-wide">Datos del Representante Legal</h4>
+                                        <div className="flex flex-col gap-1.5 font-questrial text-xs">
+                                            <label className="text-[10px] text-gray-400">Ocupación / Profesión *</label>
+                                            <input
+                                                type="text" required placeholder="Ej: Ingeniero de Sistemas, Comerciante, Docente..."
+                                                value={representativeOccupation || ""}
+                                                onChange={(e) => setRepresentativeOccupation(e.target.value)}
+                                                className="p-2.5 bg-black/40 border border-white/10 focus:border-pink-400 outline-none text-white w-full"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* ========================================================================= */}
+                                    {/* ✨ NUEVA SECCIÓN: CONTROL Y COBRO DE INSCRIPCIONES */}
+                                    {/* ========================================================================= */}
+                                    <div className="bg-gradient-to-b from-purple-950/20 to-black/50 border border-purple-500/30 p-4 space-y-4 font-questrial rounded-sm">
+                                        <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                            <div>
+                                                <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wide">Pago de Inscripción</h4>
+                                                <p className="text-[10px] text-gray-400">Costo: 10$ por alumno registrado.</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[10px] text-gray-400 block">Total a Reportar:</span>
+                                                <span className="text-xl font-anton text-white tracking-wider">{calculatedTotal}$</span>
+                                            </div>
+                                        </div>
+
+                                        {calculatedTotal > 0 ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] text-gray-400">Banco/Plataforma de Origen *</label>
+
+                                                    <select
+                                                        value={paymentInfo.bankName}
+                                                        onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
+                                                        className="w-full p-2 border border-white/10 bg-black/40 focus:outline-none focus:border-purple-400 transition-colors"
+                                                    >
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="" disabled>Selecciona una Plataforma</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banesco">Banesco</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco de Venezuela">Banco de Venezuela</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Bancaribe">Bancaribe</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Banco Mercantil">Banco Mercantil</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Zelle">Zelle</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Binance">Binance</option>
+                                                        <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
+                                                    </select>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] text-gray-400">Número de Referencia *</label>
+                                                    <input
+                                                        type="text" required placeholder="Últimos 4 o 6 dígitos"
+                                                        value={paymentInfo.referenceNumber}
+                                                        onChange={(e) => setPaymentInfo({ ...paymentInfo, referenceNumber: e.target.value })}
+                                                        className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col gap-1 sm:col-span-2">
+                                                    <label className="text-[10px] text-gray-400">Adjuntar Comprobante (Capture / PDF) *</label>
+                                                    <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/20 p-3 text-center cursor-pointer">
+                                                        <input
+                                                            type="file" required accept="image/*,application/pdf"
+                                                            onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
+                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        />
+                                                        <p className="text-gray-400 text-[11px]">
+                                                            {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[11px] text-yellow-400/80 italic text-center">Agrega al menos un alumno para habilitar la pasarela de pago.</p>
+                                        )}
+                                    </div>
+                                </>)}
 
                                 {error && <p className="text-xs text-center text-red-400 font-questrial font-semibold bg-red-500/10 py-2 border border-red-500/20">{error}</p>}
 

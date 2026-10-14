@@ -1,20 +1,16 @@
 // src/app/(dashboard)/client/my-affiliates/page.tsx
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, FormEvent } from "react";
 import {
     Search,
     Users,
     UserPlus,
-    Heart,
-    Calendar,
-    Sparkles,
+    DollarSign,
     Trash2,
     Pencil,
     Loader2,
-    MapPin,
-    Phone,
-    Shirt
+    Plus,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import HeroSection from "@/components/layout/HeroSection";
@@ -28,6 +24,9 @@ import {
     saveStudentAction,
     deleteStudentAction,
 } from "@/app/actions/student";
+import { completeRegistrationAction } from "@/app/actions/registration";
+import { uploadFileToS3 } from "@/helpers/s3"; // 👈 Importa tus helpers de S3
+import { deleteS3Image } from "@/app/actions/s3";
 import { useAuthStore } from "@/store/authStore";
 import { useModal } from "@/hooks/useModal";
 import { Client } from "@/types/client";
@@ -40,6 +39,7 @@ const initialFormState: RepresentedFormData = {
     email: "",
     lastName: "",
     birthDate: null,
+    representativeId: null,
     kinship: "Hijo",
     medicalObservations: "",
     address: "",
@@ -48,6 +48,14 @@ const initialFormState: RepresentedFormData = {
     shirtSize: "",
     hasExperience: false, // Operador de coalescencia nula para booleanos
 };
+
+const initialPaymentInfoState = {
+
+    referenceNumber: "",
+    bankName: "",
+    amount: 0,
+
+}
 
 const DNIPrefixs = [
     { code: "V", label: "V" },
@@ -68,11 +76,20 @@ const countries = [
     { code: "+1", label: "US" },
 ];
 export default function MyAffiliatesPage() {
-    const { isOpen, openModal, closeModal } = useModal();
+    const {
+        isOpen: isFormOpen,
+        openModal: openFormModal,
+        closeModal: closeFormModal
+    } = useModal();
+    const {
+        isOpen: isRegistrationOpen,
+        openModal: openRegistrationModal,
+        closeModal: closeRegistrationModal
+    } = useModal();
     const user = useAuthStore((state) => state.user);
     const [clients, setClients] = useState<Client[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [modalConfig, setModalConfig] = useState<{
         isOpen: boolean;
@@ -88,6 +105,15 @@ export default function MyAffiliatesPage() {
         title: "",
         description: "",
     });
+
+    // REGISTRATIN MODAL
+    // --- ESTADOS PARA COBRO DE INSCRIPCIÓN ---
+    const [paymentInfo, setPaymentInfo] = useState(initialPaymentInfoState);
+    const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+
+    // Constante del costo fijo
+    const REGISTRATION_FEE = 10;
+    const calculatedTotal = REGISTRATION_FEE
 
     const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
@@ -108,40 +134,99 @@ export default function MyAffiliatesPage() {
     const [isPending, startTransition] = useTransition();
 
     const [formData, setFormData] = useState(initialFormState);
-
+    const fetchData = () => {
+        startTransition(async () => {
+            const res = await getMyRepresentedAction(searchTerm);
+            if (res.success && res.data) setClients(res.data);
+        });
+    };
     // 🔄 Carga reactiva mediante Server Action
     useEffect(() => {
-        const load = () => {
-            startTransition(async () => {
-                const res = await getMyRepresentedAction(searchTerm);
-                if (res.success && res.data) setClients(res.data);
-            });
-        };
-
-        const debounce = setTimeout(load, 300);
+        const debounce = setTimeout(fetchData, 300);
         return () => clearTimeout(debounce);
     }, [searchTerm]);
 
+    const handleSubmit = async (
+        finalRole: "Representante",
+        finalStudents: any[],
+        paymentData?: { bankName: string; referenceNumber: string; amount?: number; clientId: string },
+        receiptFile?: File | null
+    ) => {
+        let uploadedFileKey: string | null = null;
+
+        try {
+            // 1. Validaciones previas
+            if (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile) {
+                setErrorMsg("Por favor, completa los datos de pago y adjunta el comprobante.");
+                return;
+            }
+
+            startTransition(async () => {
+                setErrorMsg(null);
+
+                // 🎯 2. SUBIR EL COMPROBANTE A S3 ANTES DE ENVIAR AL BACKEND
+                let receiptPath = "";
+                if (receiptFile) {
+                    const s3Result = await uploadFileToS3(receiptFile);
+                    receiptPath = s3Result.url; // O s3Result.key según maneje tu base de datos
+                    uploadedFileKey = s3Result.key; // Guardamos la key por si necesitamos hacer rollback
+                }
+
+                // 3. Preparamos los datos estructurados con la ruta de S3
+                const payload = {
+                    profileType: finalRole,
+                    representedStudents: finalStudents,
+                    payment: {
+                        ...paymentData,
+                        receiptPath, // 👈 Adjuntamos la URL/Key del comprobante en S3
+                        amount: calculatedTotal
+                    }
+                };
+
+                // 4. Llamada a tu Server Action o API backend
+                const res = await completeRegistrationAction(payload);
+                if (!res.success) {
+                    // Si falla el backend y ya se había subido a S3, limpiamos el archivo huérfano
+                    if (uploadedFileKey) {
+                        await deleteS3Image(uploadedFileKey);
+                    }
+                    setErrorMsg(res.error || "Ocurrió un error al procesar el registro.");
+                } else {
+                    toast.success("Operación exitosa");
+                    // Éxito: cerrar modal, limpiar estados, etc.
+                    closeRegistrationModal();
+                }
+            });
+
+        } catch (error: any) {
+            // Si falla la subida a S3, limpiamos si quedó algo pendiente y mostramos error
+            if (uploadedFileKey) {
+                await deleteS3Image(uploadedFileKey);
+            }
+            setErrorMsg(error.message || "Error al subir el comprobante de pago.");
+        }
+    };
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
         if (user) {
             startTransition(async () => {
-                const res = await saveStudentAction({
-                    ...formData
-                }, editingId);
+                const res = await saveStudentAction(
+                    {
+                        ...formData, representativeId: user.id
+                    }, selectedClient?.id);
                 if (!res.success) {
                     setErrorMsg(res.error || "Ocurrió un error.");
                     return;
                 }
                 toast.success("Operación exitosa");
                 // Sincronizar estado local
-                if (editingId) {
-                    setClients(clients.map((item) => (item.id === editingId ? res.data! : item)));
+                if (selectedClient?.id) {
+                    setClients(clients.map((item) => (item.id === selectedClient?.id ? res.data! : item)));
                 } else {
                     setClients([res.data!, ...clients]);
                 }
-                closeModal();
+                closeFormModal();
             });
         }
     };
@@ -156,7 +241,7 @@ export default function MyAffiliatesPage() {
             birthDate: formatDateForInput(client.birthDate),
             kinship: client.student?.kinship || "Hijo",
             medicalObservations: client.student?.medicalObservations || "",
-
+            representativeId: null,
             // 🎯 NUEVOS CAMPOS DEL ESTUDIANTE CARGADOS AL EDITAR
             address: client.address || "",
             countryCode: client.countryCode || "+58",
@@ -164,11 +249,18 @@ export default function MyAffiliatesPage() {
             shirtSize: client.student?.shirtSize || "",
             hasExperience: client.student?.hasExperience ?? false, // Operador de coalescencia nula para booleanos
         });
-        setEditingId(client.id);
+        setSelectedClient(client);
         setErrorMsg(null);
-        openModal();
+        openFormModal();
     };
 
+    const registrationModalHandler = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
+        setSelectedClient(client);
+        setPaymentInfo(initialPaymentInfoState);
+        setPaymentReceipt(null);
+        setErrorMsg(null);
+        openRegistrationModal();
+    };
     return (
         <>
             <HeroSection
@@ -179,9 +271,9 @@ export default function MyAffiliatesPage() {
                         label: "Registrar Alumno",
                         onClick: () => {
                             setFormData(initialFormState);
-                            setEditingId(null);
+                            setSelectedClient(null);
                             setErrorMsg(null);
-                            openModal();
+                            openFormModal();
                         },
                         icon: <UserPlus className="w-4 h-4" />,
                         variant: "primary",
@@ -236,8 +328,8 @@ export default function MyAffiliatesPage() {
 
                                     {/* Sub-métricas vectoriales del plano */}
                                     <div className="grid grid-cols-3 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
-                                        <div className="bg-slate-50 p-2">
-                                            <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                        <div className={`p-2 ${item.group ? "bg-slate-50" : "bg-red-100 animate-pulse"}`}>
+                                            <p className="text-[10px]  text-gray-400 font-questrial uppercase font-medium">
                                                 Grupo
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
@@ -309,7 +401,8 @@ export default function MyAffiliatesPage() {
                                     >
                                         Eliminar
                                     </ActionButton>
-                                    <div className="flex w-full justify-end gap-1.5">
+                                    <div className="flex w-full justify-end gap-2">
+
                                         <ActionButton
                                             variant="success"
                                             icon={Pencil}
@@ -318,6 +411,18 @@ export default function MyAffiliatesPage() {
                                         >
                                             Editar
                                         </ActionButton>
+                                        {
+                                            !item.group && (
+                                                <ActionButton
+                                                    variant="gradient_purple"
+                                                    icon={Plus}
+                                                    tooltip="Inscribir"
+                                                    onClick={() => registrationModalHandler(item)}
+                                                >
+                                                    Inscribir
+                                                </ActionButton>
+                                            )
+                                        }
                                     </div>
 
                                 </div>
@@ -334,11 +439,11 @@ export default function MyAffiliatesPage() {
                 )}
             </div>
 
-            {/* MODAL */}
+            {/* Form Modal */}
             <MacDockModal
-                isOpen={isOpen}
-                onClose={closeModal}
-                title={editingId ? "Actualizar información de Afiliado" : "Registrar información de Afiliado"}
+                isOpen={isFormOpen}
+                onClose={closeFormModal}
+                title={selectedClient?.id ? "Actualizar información de Afiliado" : "Registrar información de Afiliado"}
                 size={"2xl"}
             >
                 {/* Formulario */}
@@ -352,8 +457,7 @@ export default function MyAffiliatesPage() {
                     {/* Fila 1: DNI y Teléfono */}
                     <div className="grid grid-cols-3 gap-3">
                         <DNIInput
-                            label="DNI / Identificación *"
-                            required
+                            label="DNI / Identificación "
                             prefix={formData.IDNumberPrefix || "V"}
                             onPrefixChange={(code) => setFormData({ ...formData, IDNumberPrefix: code })}
                             prefixes={DNIPrefixs}
@@ -396,8 +500,9 @@ export default function MyAffiliatesPage() {
                             placeholder="Ej: González"
                         />
                         <EmailInput
-                            label="Correo Electrónico"
+                            label="Correo Electrónico *"
                             placeholder="ejemplo@correo.com"
+                            required
                             value={formData.email || ""}
                             onChange={(val) => setFormData({ ...formData, email: val })}
                         />
@@ -423,19 +528,12 @@ export default function MyAffiliatesPage() {
                             ]}
                         />
                         <SelectInput
-                            label="Talla de Franela"
+                            label="Talla de Franela *"
+                            required
                             value={formData.shirtSize}
                             onChange={(e) => setFormData({ ...formData, shirtSize: e.target.value as string })}
                             options={[
                                 { label: "Selecciona una talla", value: "", disabled: true },
-                                { label: "Talla 2", value: "2" },
-                                { label: "Talla 4", value: "4" },
-                                { label: "Talla 6", value: "6" },
-                                { label: "Talla 8", value: "8" },
-                                { label: "Talla 10", value: "10" },
-                                { label: "Talla 12", value: "12" },
-                                { label: "Talla 14", value: "14" },
-                                { label: "Talla 16", value: "16" },
                                 { label: "Talla S", value: "S" },
                                 { label: "Talla M", value: "M" },
                                 { label: "Talla L", value: "L" },
@@ -480,7 +578,7 @@ export default function MyAffiliatesPage() {
                     <div className="pt-2 flex justify-between">
                         <button
                             type="button"
-                            onClick={() => closeModal()}
+                            onClick={() => closeFormModal()}
                             className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
                         >
                             Cancelar
@@ -490,14 +588,120 @@ export default function MyAffiliatesPage() {
                             type="submit"
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            {editingId ? "Actualizar Afiliado" : "Registrar Afiliado"}
+                            {selectedClient?.id ? "Actualizar Afiliado →" : "Registrar Afiliado →"}
 
                         </button>
                     </div>
                 </form>
             </MacDockModal>
 
+            {/* Registration Modal */}
+            <MacDockModal
+                isOpen={isRegistrationOpen}
+                onClose={closeRegistrationModal}
+                title={"Registro de Pago de Inscripción"}
+                size={"2xl"}
+            ><form onSubmit={(e) => {
+                e.preventDefault();
+                if (!selectedClient) return;
 
+                handleSubmit(
+                    "Representante",
+                    [selectedClient], // Pasamos el estudiante seleccionado en el modal
+                    {
+                        bankName: paymentInfo.bankName,
+                        referenceNumber: paymentInfo.referenceNumber,
+                        amount: calculatedTotal,
+                        clientId: selectedClient.id // 👈 Clave para identificar al alumno a inscribir
+                    },
+                    paymentReceipt
+                );
+            }} className="space-y-4 font-questrial text-xs">
+                    {errorMsg && (
+                        <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4 border border-red-100">
+                            {errorMsg}
+                        </p>
+                    )}
+                    {/* ========================================================================= */
+                /* (SUBIR COMPROBANTE DE PAGO) */
+                /* =========================================================================  */}
+                    <div className="font-questrial space-y-4 text-xs">
+
+                        <SelectInput
+                            label="Banco/Plataforma de Origen *"
+                            required
+                            value={paymentInfo.bankName}
+                            onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value as string })}
+                            options={[
+                                { label: "Selecciona una Plataforma", value: "", disabled: true },
+                                { label: "Banesco", value: "Banesco" },
+                                { label: "Banco de Venezuela", value: "Banco de Venezuela" },
+                                { label: "Bancaribe", value: "Bancaribe" },
+                                { label: "Banco Mercantil", value: "Banco Mercantil" },
+                                { label: "Zelle", value: "Zelle" },
+                                { label: "Binance", value: "Binance" },
+                                { label: "Otro", value: "Otro" },
+                            ]}
+                        />
+                        <TextInput
+                            label="Referencia de la Transacción *"
+                            type="text"
+                            required
+                            value={paymentInfo.referenceNumber}
+                            onChange={(e) => setPaymentInfo({ ...paymentInfo, referenceNumber: e.target.value })}
+                            placeholder="Referencia"
+                        />
+                        <div className="flex flex-col gap-1 sm:col-span-2">
+                            <label className="block font-bold mb-1 text-gray-700">Adjuntar Comprobante (Capture / PDF) *</label>
+                            <div className="relative border border-dashed border-white/20 hover:border-purple-400 transition bg-black/10 p-3 text-center cursor-pointer">
+                                <input
+                                    type="file" accept="image/*,application/pdf"
+                                    onChange={(e) => setPaymentReceipt(e.target.files ? e.target.files[0] : null)}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <p className="text-gray-400 text-[11px]">
+                                    {paymentReceipt ? `✅ ${paymentReceipt.name}` : "Haga click para arrastrar o subir archivo"}
+                                </p>
+                            </div>
+                        </div>
+                        {/* TARJETA DE RESUMEN DE COMPRA / MONTO TOTAL */}
+                        <div className="bg-gradient-to-br from-purple-900 to-[#5e0472] text-white p-5 rounded-md shadow-lg relative overflow-hidden">
+                            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+                            <div className="flex items-center gap-2 text-purple-200 text-xs font-medium mb-1 uppercase tracking-wider">
+                                <DollarSign className="w-4 h-4 text-emerald-400" />
+                                <span>Monto a Liquidar</span>
+                            </div>
+
+                            <div className="flex items-baseline gap-1 my-1">
+                                <span className="text-3xl font-black tracking-tight">
+                                    ${calculatedTotal.toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                                </span>
+                                <span className="text-xs font-semibold text-purple-200">USD</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-between">
+                        <button
+                            type="button"
+                            onClick={closeRegistrationModal}
+                            className="cursor-pointer font-questrial px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 rounded-md"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
+                        >
+                            {isPending ? "Registrando..." : "Registrar Inscripción →"}
+                        </button>
+                    </div>
+                </form>
+            </MacDockModal>
             {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
             <ConfirmationModal
                 isOpen={modalConfig.isOpen}

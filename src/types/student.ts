@@ -28,6 +28,7 @@ export interface RepresentedFormData {
     firstName: string;
     lastName: string;
     birthDate: Date | string | null;
+    representativeId: string | null;
     kinship: Student["kinship"];
     countryCode: string;
     phone: string;

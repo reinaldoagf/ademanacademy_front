@@ -24,3 +24,17 @@ export interface FetchRegistrationsParams {
     status?: string;
     type?: string;
 }
+
+
+export interface RegistrationPayload {
+    profileType: string;
+    representedStudents?: any[];
+    payment?: {
+        bankName: string;
+        referenceNumber: string;
+        amount: number;
+        receiptPath: string; // 👈 URL de S3 generada previamente en el cliente
+        isEnrolled?: boolean;
+        studentId?: string;
+    };
+}
