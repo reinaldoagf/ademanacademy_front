@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Sparkles, Check, Link as LinkIcon } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useNotifications } from '@/hooks/useNotifications';
 
 interface NotificationBellProps {
@@ -20,7 +20,6 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
     const { notifications, unreadCount, setUnreadCount, setNotifications } = useNotifications(userId);
 
     const hasUnread = unreadCount > 0;
-    // 🎯 1. Identificar el panel actual a partir de la URL
     const getDashboardBaseRoute = () => {
         if (pathname.startsWith('/admin')) return '/admin';
         if (pathname.startsWith('/client')) return '/client';

@@ -38,6 +38,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   // Determinamos qué paneles mostrar basándonos en la ruta actual
+  const isNotificationView = pathname.startsWith('/notifications') && user?.isAdmin;
   const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
   const isClientView = pathname.startsWith('/client');
   const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
@@ -204,7 +205,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
       <div className="space-y-6">
 
         {/* 1️⃣ VISTA DE ADMINISTRADOR */}
-        {isAdminView && (
+        {(isAdminView || isNotificationView) && (
           <>
             {/* BLOQUE 1: ACADÉMICO */}
             <div className="space-y-1">
@@ -242,7 +243,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         )}
 
         {/* 2️⃣ VISTA DE CLIENTE / ALUMNO */}
-        {isClientView && (
+        {(isClientView || isNotificationView) && (
           <div className="space-y-1">
             <div className="px-4 pt-4">
               <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>

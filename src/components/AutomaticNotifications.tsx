@@ -1,14 +1,26 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import Link from "next/link";
+import { usePathname } from 'next/navigation';
 import {
+    Loader2,
     MonitorCheck
 } from "lucide-react";
 import { Notification } from '@/types/notification';
 import { getAllNotificationsAction } from "@/app/actions/notification";
 
 export function AutomaticNotifications() {
+    const pathname = usePathname();
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);// 🎯 1. Identificar el panel actual a partir de la URL
+    const getDashboardBaseRoute = () => {
+        if (pathname.startsWith('/admin')) return '/admin';
+        if (pathname.startsWith('/client')) return '/client';
+        if (pathname.startsWith('/collaborator')) return '/collaborator';
+        return ''; // Ruta por defecto si está en otra sección
+    };
+
+    const baseRoute = getDashboardBaseRoute();
     useEffect(() => {
         async function fetchNotificationsData() {
             setIsLoading(true);
@@ -19,7 +31,6 @@ export function AutomaticNotifications() {
                     search: undefined,
                     ownerFilter: false
                 });
-                console.log({ res })
                 if (res.success && res.data) {
                     setNotifications(res.data);
                 }
@@ -35,7 +46,12 @@ export function AutomaticNotifications() {
     return (
         <div className="glass-card p-6 shadow-sm">
             <h3 className="text-lg font-anton mb-4">Notificaciones Automáticas</h3>
-            <div className="space-y-3">
+            {isLoading && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
+                    <Loader2 className="w-5 h-5 animate-spin text-purple-700" />
+                </div>
+            )}
+            <div className="space-y-3 divide-y divide-purple-50">
                 {notifications.length > 0 ? (
                     notifications.map((notification) => (
                         <div
@@ -74,47 +90,53 @@ export function AutomaticNotifications() {
 
                                     {/* Metadatos adicionales de la notificación */}
                                     <div className="flex flex-wrap items-center gap-3 pt-1 text-[10px] text-gray-400 font-questrial">
-                                        <span>Canal: <strong className="text-gray-600">{notification.channel}</strong></span>
-                                        {notification.recipientPhone && (
-                                            <span>Destino: <strong className="text-gray-600">{notification.recipientPhone}</strong></span>
-                                        )}
-                                        {notification.user && (
-                                            <span>Usuario: <strong className="text-gray-600">{notification.user.firstName} {notification.user.lastName} ({notification.user.email})</strong></span>
-                                        )}
+                                        <div className="space-y-2">
+                                            <div>
+                                                <span>Canal: <strong className="text-gray-600">{notification.channel}</strong></span>
+                                            </div>
+                                            <div>{notification.recipientPhone && (<div>
+                                                <span>Destino: <strong className="text-gray-600">{notification.recipientPhone}</strong></span>
+                                            </div>)}
+                                                {notification.user && (<div>
+                                                    <span>Usuario: <strong className="text-gray-600">{notification.user.firstName} {notification.user.lastName} ({notification.user.email})</strong></span>
+                                                </div>)}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end w-full">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${notification.status === 'Leido' ? 'bg-emerald-100 text-emerald-700' :
+                                                notification.status === 'Enviado' ? 'bg-blue-100 text-blue-700' :
+                                                    notification.status === 'Fallido' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                }`}>
+                                                {notification.status}
+                                            </span>
+
+                                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                                                {new Date(notification.createdAt).toLocaleDateString('es-ES', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Estado y Fecha a la derecha */}
-                            <div className="block text-right shrink-0 space-y-1">
-
-
-                                <div>
-                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${notification.status === 'Leido' ? 'bg-emerald-100 text-emerald-700' :
-                                        notification.status === 'Enviado' ? 'bg-blue-100 text-blue-700' :
-                                            notification.status === 'Fallido' ? 'bg-red-100 text-red-700' :
-                                                'bg-amber-100 text-amber-700'
-                                        }`}>
-                                        {notification.status}
-                                    </span>
-                                </div>
-                                <div>
-
-                                    <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
-                                        {new Date(notification.createdAt).toLocaleDateString('es-ES', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
                         </div>
                     ))
                 ) : (
                     <p className="text-gray-500 italic text-xs">No hay notificaciones automáticas registradas.</p>
                 )}
+            </div>
+            <div className="p-2.5 mt-3 border-t border-purple-50 text-center bg-purple-50/20">
+                <Link
+                    href={`${baseRoute}/notifications`}
+                    className="text-xs font-bold text-purple-700 hover:text-purple-900 font-questrial uppercase tracking-wider block transition-colors"
+                >
+                    Ver todas las notificaciones →
+                </Link>
             </div>
         </div>
     )
