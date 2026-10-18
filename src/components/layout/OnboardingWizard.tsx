@@ -28,6 +28,13 @@ const countries = [
     { code: "+34", label: "ES" },
     { code: "+1", label: "US" },
 ];
+const initialNewStudentState = {
+    firstName: "", lastName: "", dni: "", birthDate: "",
+    kinship: "Hijo", address: "", countryCode: "+58", phone: "", shirtSize: "M",
+    hasExperience: false, medicalObservations: "",
+    activeInscription: false,
+    email: ""
+};
 export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }: OnboardingWizardProps) {
     const router = useRouter();
     const {
@@ -60,11 +67,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const [error, setError] = useState<string | null>(null);
 
     const [students, setStudents] = useState<any[]>([]);
-    const [newStudent, setNewStudent] = useState({
-        firstName: "", lastName: "", dni: "", birthDate: "",
-        kinship: "Hijo", address: "", countryCode: "+58", phone: "", shirtSize: "M",
-        hasExperience: false, medicalObservations: ""
-    });
+    const [newStudent, setNewStudent] = useState(initialNewStudentState);
 
     // 🎯 ESTADOS EXCLUSIVOS PARA EL FORMULARIO DE SALÓN (MODO INFRAESTRUCTURA)
     const [classroomData, setClassroomData] = useState({
@@ -90,7 +93,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     // Cálculo dinámico del total
     const calculatedTotal = profileType === "Estudiante"
         ? REGISTRATION_FEE
-        : students.length * REGISTRATION_FEE;
+        : (students.filter((s) => s.activeInscription === false)).length * REGISTRATION_FEE;
 
     const handleOkFeedbackMessage = () => {
         if (userResponse) {
@@ -107,11 +110,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             return;
         }
         setStudents([...students, { ...newStudent, id: crypto.randomUUID() }]);
-        setNewStudent({
-            firstName: "", lastName: "", dni: "", birthDate: "",
-            kinship: "Hijo", address: "", countryCode: "+58", phone: "", shirtSize: "M",
-            hasExperience: false, medicalObservations: ""
-        });
+        setNewStudent(initialNewStudentState);
         setError(null);
     };
 
@@ -145,7 +144,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 setError("Por favor, ingresa tu ocupación o profesión.");
                 return;
             }
-            if (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile) {
+            if ((students.filter(e => !e.activeInscription).length > 0 && (!paymentData?.referenceNumber || !paymentData?.bankName || !receiptFile))) {
                 setError("Por favor, completa los datos de pago y adjunta el comprobante.");
                 return;
             }
@@ -170,7 +169,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
 
         startTransition(async () => {
             setError(null);
-
             // Construimos el FormData para enviar archivos y datos estructurados
             const formData = new FormData();
             formData.append("profileType", finalRole);
@@ -203,15 +201,16 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             const res = await completeOnboardingAction(formData);
             if (res.success && res.data?.user) {
                 openFeedbackAlertModal();
+
                 setShowFeedbackAlert({
                     title: '¡Operación Completada!',
-                    description: paymentData?.isEnrolled
+                    description: (paymentData?.isEnrolled || (finalRole === "Representante" && !students.filter(e => !e.activeInscription).length))
                         ? 'Matrícula verificada y acceso concedido satisfactoriamente.'
                         : 'Nuestro equipo estará validando su pago dentro de las próximas <strong>24 horas</strong> para completar la afiliación.',
                     data: null
                 });
-                setUserResponse({ ...user, ...res.data.user });
-                setUser({
+                setUserResponse({
+                    ...user,
                     id: res.data.user.id,
                     firstName: res.data.user.firstName,
                     lastName: res.data.user.lastName,
@@ -223,6 +222,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                     dni: res.data.user.dni || '',
                     profileType: res.data.user.profileType || 'Estudiante',
                 });
+
             } else {
                 setError(typeof res.error === "string" ? res.error : "Error crítico al procesar la solicitud.");
             }
@@ -259,7 +259,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl"></div>
 
-            <div className="w-full max-w-2xl border border-white/10 bg-[#400252] p-8 md:p-12 shadow-2xl relative z-10">
+            <div className="w-full max-w-4xl border border-white/10 bg-[#400252] p-8 md:p-12 shadow-2xl relative z-10">
 
                 {/* 🎯 CONDICIONAL: FLUJO DE INFRAESTRUCTURA (CLASSROOM) */}
                 {stepType === "CLASSROOM" ? (
@@ -276,7 +276,9 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                             </p>
                         </div>
 
-                        <form onSubmit={handleClassroomSubmit} className="bg-white/5 p-6 border border-white/10 space-y-4">
+                        <form
+                            onSubmit={handleClassroomSubmit}
+                            className="bg-white/5 p-6 border border-white/10 space-y-4">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Nombre del Salón / Aula *</label>
                                 <input
@@ -537,146 +539,187 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     </div>
 
                                     {/* Formulario de Adición inline */}
-                                    <form onSubmit={handleAddStudent} className="bg-white/5 p-4 border border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3 font-questrial text-xs">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">Nombre del Alumno</label>
-                                            <input
-                                                type="text" required placeholder="Ej: Sofía"
-                                                value={newStudent.firstName}
-                                                onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">Apellido</label>
-                                            <input
-                                                type="text" required placeholder="Ej: Pérez"
-                                                value={newStudent.lastName}
-                                                onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">DNI o Pasaporte (Opcional)</label>
-                                            <input
-                                                type="text" placeholder="Documento único (Si aplica)"
-                                                value={newStudent.dni}
-                                                onChange={(e) => setNewStudent({ ...newStudent, dni: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">Fecha de Nacimiento</label>
-                                            <input
-                                                type="date" required
-                                                value={newStudent.birthDate}
-                                                onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-gray-300"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
-                                            <div className="flex relative group">
-                                                {/* Select de Código de País */}
-                                                <select
-                                                    value={newStudent.countryCode || ""}
-                                                    onChange={(e) => setNewStudent({ ...newStudent, countryCode: e.target.value })}
-                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                                >
-                                                    {countries.map((c) => (
-                                                        <option
-                                                            key={c.code}
-                                                            value={c.code}
-                                                            className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans"
-                                                        >
-                                                            {c.label} ({c.code})
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                    <form onSubmit={handleAddStudent} className="bg-white/5 p-4 border border-white/10 space-y-3 font-questrial text-xs">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Nombre del Alumno</label>
                                                 <input
-                                                    type="type" placeholder="Ej: 4141234567"
-                                                    value={newStudent.phone || ""}
-                                                    onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
-                                                    className="w-full p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                    type="text" required placeholder="Ej: Sofía"
+                                                    value={newStudent.firstName}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Apellido</label>
+                                                <input
+                                                    type="text" required placeholder="Ej: Pérez"
+                                                    value={newStudent.lastName}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">DNI o Pasaporte (Opcional)</label>
+                                                <input
+                                                    type="text" placeholder="Documento único (Si aplica)"
+                                                    value={newStudent.dni}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, dni: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Fecha de Nacimiento</label>
+                                                <input
+                                                    type="date" required
+                                                    value={newStudent.birthDate}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-gray-300"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Teléfono (Opcional)</label>
+                                                <div className="flex relative group">
+                                                    {/* Select de Código de País */}
+                                                    <select
+                                                        value={newStudent.countryCode || ""}
+                                                        onChange={(e) => setNewStudent({ ...newStudent, countryCode: e.target.value })}
+                                                        className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                    >
+                                                        {countries.map((c) => (
+                                                            <option
+                                                                key={c.code}
+                                                                value={c.code}
+                                                                className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans"
+                                                            >
+                                                                {c.label} ({c.code})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="type" placeholder="Ej: 4141234567"
+                                                        value={newStudent.phone || ""}
+                                                        onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                                                        className="w-full p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Correo Electrónico (Opcional)</label>
+                                                <input
+                                                    type="email"
+                                                    id="email-address"
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                    autoComplete="email"
+                                                    placeholder="nombre@ejemplo.com"
+                                                    value={newStudent.email || ""}
+                                                    onChange={(e) => {
+                                                        setNewStudent(prev => ({ ...prev, email: e.target.value }))
+                                                    }
+                                                    }
                                                 />
                                             </div>
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[10px] text-gray-400">Talla de Franela</label>
-                                            <select
-                                                value={newStudent.shirtSize || "M"}
-                                                onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            >
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="S">S (Adulto)</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="M">M (Adulto)</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="L">L (Adulto)</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1 sm:col-span-2">
-                                            <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
-                                            <select
-                                                value={newStudent.kinship}
-                                                onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            >
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hijo">Hijo</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hija">Hija</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrino">Sobrino</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrina">Sobrina</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Tutorado">Tutorado</option>
-                                                <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1 sm:col-span-2">
-                                            <label className="text-[10px] text-gray-400">Dirección Completa de Habitación</label>
-                                            <input
-                                                type="text" required placeholder="Avenida, Urbanización, Nro de Casa/Apto"
-                                                value={newStudent.address || ""}
-                                                onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1 sm:col-span-2">
-                                            <label className="text-[10px] text-gray-400">Patología o Condición Especial</label>
-                                            <input
-                                                type="text" placeholder="Ej: Asma leve, alergia al polvo (o indicar 'Ninguna')"
-                                                value={newStudent.medicalObservations || ""}
-                                                onChange={(e) => setNewStudent({ ...newStudent, medicalObservations: e.target.value })}
-                                                className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col gap-2 sm:col-span-2 bg-black/20 p-2.5 border border-white/5 mt-1">
-                                            <span className="text-[10px] text-gray-400 block">¿Ha tenido experiencia previa en el baile?</span>
-                                            <div className="flex gap-6">
-                                                <label className="flex items-center gap-2 text-white cursor-pointer">
-                                                    <input
-                                                        type="radio" name="danceExperience" value="true"
-                                                        checked={newStudent.hasExperience === true}
-                                                        onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
-                                                        className="accent-pink-500 w-4 h-4"
-                                                    />
-                                                    Sí, posee experiencia
-                                                </label>
-                                                <label className="flex items-center gap-2 text-white cursor-pointer">
-                                                    <input
-                                                        type="radio" name="danceExperience" value="false"
-                                                        checked={newStudent.hasExperience === false}
-                                                        onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
-                                                        className="accent-pink-500 w-4 h-4"
-                                                    />
-                                                    No, nivel principiante
-                                                </label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Talla de Franela</label>
+                                                <select
+                                                    value={newStudent.shirtSize || "M"}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, shirtSize: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="S">S (Adulto)</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="M">M (Adulto)</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="L">L (Adulto)</option>
+                                                </select>
                                             </div>
-                                        </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Parentesco / Vínculo</label>
+                                                <select
+                                                    value={newStudent.kinship}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, kinship: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                >
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hijo">Hijo</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Hija">Hija</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrino">Sobrino</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Sobrina">Sobrina</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Tutorado">Tutorado</option>
+                                                    <option className="font-questrial font-bold cursor-pointer text-white bg-[#190121]" value="Otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Dirección Completa de Habitación</label>
+                                                <input
+                                                    type="text" required placeholder="Avenida, Urbanización, Nro de Casa/Apto"
+                                                    value={newStudent.address || ""}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] text-gray-400">Patología o Condición Especial</label>
+                                                <input
+                                                    type="text" placeholder="Ej: Asma leve, alergia al polvo (o indicar 'Ninguna')"
+                                                    value={newStudent.medicalObservations || ""}
+                                                    onChange={(e) => setNewStudent({ ...newStudent, medicalObservations: e.target.value })}
+                                                    className="p-2 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white"
+                                                />
+                                            </div>
 
-                                        <button
-                                            type="submit"
-                                            className="sm:col-span-2 bg-purple-600/30 border border-purple-500/40 text-purple-200 py-2 mt-2 font-semibold hover:bg-purple-600 hover:text-white transition cursor-pointer flex items-center justify-center gap-1"
-                                        >
-                                            <Plus className="w-4 h-4" /> Añadir Alumno a la Lista
-                                        </button>
+                                            <div className="flex flex-col gap-2 bg-black/20 p-2.5 border border-white/5 mt-1">
+                                                <span className="text-[10px] text-gray-400 block">¿Ha tenido experiencia previa en el baile?</span>
+                                                <div className="flex gap-6">
+                                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                        <input
+                                                            type="radio" name="danceExperience" value="true"
+                                                            checked={newStudent.hasExperience === true}
+                                                            onChange={() => setNewStudent({ ...newStudent, hasExperience: true })}
+                                                            className="accent-pink-500 w-4 h-4"
+                                                        />
+                                                        Sí, posee experiencia
+                                                    </label>
+                                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                        <input
+                                                            type="radio" name="danceExperience" value="false"
+                                                            checked={newStudent.hasExperience === false}
+                                                            onChange={() => setNewStudent({ ...newStudent, hasExperience: false })}
+                                                            className="accent-pink-500 w-4 h-4"
+                                                        />
+                                                        No, nivel principiante
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-2 bg-black/20 p-2.5 border border-white/5 mt-1">
+                                                <span className="text-[10px] text-gray-400 block">¿El estudiante tiene una inscripción activa en la academia?</span>
+                                                <div className="flex gap-6">
+                                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                        <input
+                                                            type="radio" name="activeInscription" value="true"
+                                                            checked={newStudent.activeInscription === true}
+                                                            onChange={() => setNewStudent({ ...newStudent, activeInscription: true })}
+                                                            className="accent-pink-500 w-4 h-4"
+                                                        />
+                                                        Sí, posee inscripción activa
+                                                    </label>
+                                                    <label className="flex items-center gap-2 text-white cursor-pointer">
+                                                        <input
+                                                            type="radio" name="activeInscription" value="false"
+                                                            checked={newStudent.activeInscription === false}
+                                                            onChange={() => setNewStudent({ ...newStudent, activeInscription: false })}
+                                                            className="accent-pink-500 w-4 h-4"
+                                                        />
+                                                        No, no posee inscripción activa
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="sm:col-span-2 bg-purple-600/30 border border-purple-500/40 text-purple-200 py-2 mt-2 font-semibold hover:bg-purple-600 hover:text-white transition cursor-pointer flex items-center justify-center gap-1"
+                                            >
+                                                <Plus className="w-4 h-4" /> Añadir Alumno a la Lista
+                                            </button>
+                                        </div>
                                     </form>
 
                                     <div className="bg-black/30 border border-pink-500/20 p-4 space-y-3">
@@ -707,7 +750,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                             </div>
                                         </div>
 
-                                        {calculatedTotal > 0 ? (
+                                        {students.length > 0 ? (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[10px] text-gray-400">Banco/Plataforma de Origen *</label>
@@ -768,7 +811,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={students.length === 0 || !representativeOccupation || !paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt || isPending}
+                                        disabled={(students.filter(e => !e.activeInscription).length > 0 && (!paymentInfo.referenceNumber || !paymentInfo.bankName || !paymentReceipt)) || !representativeOccupation || isPending || students.length === 0}
                                         onClick={() => {
                                             handleSubmit(
                                                 "Representante",

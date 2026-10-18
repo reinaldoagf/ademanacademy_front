@@ -280,7 +280,7 @@ export default function PaymentDetailsPage() {
                                                             isOpen: true,
                                                             type: "word",
                                                             title: "Confirmar operación",
-                                                            description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber}"?`,
+                                                            description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber ?? '"Sin referencia"'}"?`,
                                                             id: transaction.id,
                                                         });
                                                     }}
@@ -394,7 +394,7 @@ export default function PaymentDetailsPage() {
                                                     isOpen: true,
                                                     type: "word",
                                                     title: "Confirmar operación",
-                                                    description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber}"?`,
+                                                    description: `¿Quieres aprobar el pago por concepto de "${transaction.concept}" por un valor de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(transaction.amount)} con referencia "${transaction.referenceNumber ?? '"Sin referencia"'}"?`,
                                                     id: transaction.id,
                                                 });
                                             }}

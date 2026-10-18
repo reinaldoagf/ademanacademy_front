@@ -11,11 +11,12 @@ export interface User {
     password?: string;
     isAdmin: boolean;
     profileType: "Representante" | "Estudiante";
-    students: Student[]
+    students?: Student[]
     client: Client;
     profileOnboarding: boolean;
-    createdAt: string;
-    updatedAt: string;
+    clients?: Client[];
+    createdAt?: string;
+    updatedAt?: string;
 }
 export interface FetchUsersParams {
     page?: number;

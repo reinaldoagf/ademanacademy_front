@@ -41,13 +41,13 @@ export default function NotificationsPage() {
                 try {
                     const res = await getAllNotificationsAction({
                         page: pageToFetch,
-                        limit: limitToFetch, // 🎯 Enviamos el límite dinámico
+                        limit: limitToFetch,
                         search: searchTerm || undefined,
                         ownerFilter: true
                     });
                     if (res.success && res.data) {
                         setNotifications(res.data);
-                        setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
+                        setMeta(res.meta);
                     }
                 } catch (error) {
                     console.error('Error al actualizar métricas de balance:', error);
