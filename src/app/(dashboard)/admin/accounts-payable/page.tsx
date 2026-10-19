@@ -40,7 +40,14 @@ const initialFormState: PayableFormData = {
     dueDate: "",
     notes: "",
 };
+const initialPaymentForm = {
+    amount: "",
+    method: "Transferencia" as PaymentMethod,
+    referenceNumber: "",
+    notes: "",
+};
 export default function AccountsPayablePage() {
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [payables, setPayables] = useState<AccountPayable[]>([]);
     const [meta, setMeta] = useState({
         currentPage: 1,
@@ -78,12 +85,7 @@ export default function AccountsPayablePage() {
     const [formData, setFormData] = useState(initialFormState);
 
     // Formulario Nuevo Abono/Pago
-    const [paymentForm, setPaymentForm] = useState({
-        amount: "",
-        method: "mobile_payment" as PaymentMethod,
-        referenceNumber: "",
-        notes: "",
-    });
+    const [paymentForm, setPaymentForm] = useState(initialPaymentForm);
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
         // Actualizamos el estado local. Al cambiar, disparará el useEffect superior de forma reactiva
@@ -138,7 +140,7 @@ export default function AccountsPayablePage() {
             setFormData(initialFormState);
             fetchData(currentPage, itemsPerPage);
         } else {
-            alert(result.error || "Ocurrió un error al guardar.");
+            setErrorMsg(result.error || "Ocurrió un error al guardar.");
         }
     };
 
@@ -162,19 +164,14 @@ export default function AccountsPayablePage() {
             if (result.success) {
                 // 3. Reseteamos el modal y el formulario tras la respuesta exitosa
                 closePaymentModal();
-                setPaymentForm({
-                    amount: "",
-                    method: "mobile_payment",
-                    referenceNumber: "",
-                    notes: "",
-                });
+                setPaymentForm(initialPaymentForm);
                 setSelectedPayable(null);
 
                 // 4. Recargamos la tabla de datos
                 fetchData(currentPage, itemsPerPage);
             } else {
                 console.error("Error al registrar el abono:", result.error);
-                alert(result.error || "No se pudo procesar el pago.");
+                setErrorMsg(result.error || "No se pudo procesar el pago.");
             }
         } catch (error) {
             console.error("Error al registrar el pago:", error);
@@ -187,7 +184,7 @@ export default function AccountsPayablePage() {
             setSelectedPayable(result.data);
             openHistoryModal();
         } else {
-            alert(result.error || "No se pudo obtener el historial.");
+            setErrorMsg(result.error || "No se pudo obtener el historial.");
         }
     };
 
@@ -360,6 +357,12 @@ export default function AccountsPayablePage() {
                     ref={createFormReference}
                     id="create-form" onSubmit={handleCreateSubmit}
                     className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin pr-1">
+                    {errorMsg && (
+                        <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4 border border-red-100">
+                            {errorMsg}
+                        </p>
+                    )}
+
                     <TextInput
                         label="Nombre del Proveedor *"
                         required
@@ -442,7 +445,13 @@ export default function AccountsPayablePage() {
                 title={`Registrar Pago / Abono de ${selectedPayable?.supplierName} - ${selectedPayable?.concept}`}
                 size={"lg"}
             >
+
                 {selectedPayable && (<form onSubmit={handlePaymentSubmit} className="flex-1 overflow-y-auto space-y-4 font-questrial text-xs scrollbar-thin pr-1">
+                    {errorMsg && (
+                        <p className="text-red-500 bg-red-50 p-2 text-sm text-center mb-4 border border-red-100">
+                            {errorMsg}
+                        </p>
+                    )}
                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between text-sm">
                         <span className="text-slate-500">Saldo Pendiente:</span>
                         <span className="font-bold text-slate-900">
@@ -465,19 +474,19 @@ export default function AccountsPayablePage() {
                         onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value as PaymentMethod })}
                         options={[
                             { label: "Selecciona un método de pago", value: "", disabled: true },
-                            { label: "Transferencia Bancaria", value: "bank_transfer" },
-                            { label: "Efectivo", value: "cash" },
-                            { label: "Tarjeta de Débito o Crédito", value: "credit_or_debit_card" },
-                            { label: "Pago Móvil", value: "mobile_payment" },
-                            { label: "Cheque", value: "check" },
-                            { label: "Otro", value: "other" },
+                            { label: "Transferencia Bancaria", value: "Transferencia" },
+                            { label: "Efectivo", value: "Efectivo" },
+                            { label: "Tarjeta de Débito o Crédito", value: "Tarjeta" },
+                            { label: "Pago Móvil", value: "Pago_Movil" },
+                            { label: "Cheque", value: "Cheque" },
+                            { label: "Otro", value: "Otro" },
                         ]}
                     />
 
 
                     <TextInput
                         label="Nº Referencia / Transferencia"
-                        required
+                        required={paymentForm.method !== "Efectivo"}
                         type="text"
                         value={paymentForm.referenceNumber}
                         onChange={(e) => setPaymentForm({ ...paymentForm, referenceNumber: e.target.value })}

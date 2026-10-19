@@ -93,10 +93,20 @@ export default function AdminFixedExpensesPage() {
         }, {
             header: "Título",
             render: (item) => (
-                <div className="text-slate-900">{item.title}</div>
+                <div className="font-semibold text-slate-900">{item.title}</div>
             ),
         }, {
-            header: "Fecha de Vencimiento",
+            header: "Descripción",
+            render: (item) => (
+                <div className="font-semibold text-slate-900">{item.description ?? 'Sin descripción'}</div>
+            ),
+        }, {
+            header: "Frecuencia",
+            render: (item) => (
+                <div className="font-semibold text-slate-900">{item.frequency}</div>
+            ),
+        }, {
+            header: "Próximo pago",
             render: (item) => (
                 <DatePipe value={item.nextDueDate} format="short" />
             ),

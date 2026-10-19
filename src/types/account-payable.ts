@@ -29,13 +29,12 @@ export interface AccountPayable {
 
 // Enums del sistema
 
-export type PaymentMethod =
-    | "cash"
-    | "bank_transfer"
-    | "credit_or_debit_card"
-    | "mobile_payment"
-    | "check"
-    | "other";
+export type PaymentMethod = | "Transferencia"
+    | "Tarjeta"
+    | "Efectivo"
+    | "Pago_Movil"
+    | "Cheque"
+    | "Otro";
 
 // Entidad Historial de Pago / Abono
 export interface PayablePayment {
