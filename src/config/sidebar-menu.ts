@@ -1,7 +1,8 @@
 import {
     UsersIcon, ChartPie, Calendar, PersonStanding, HeartPulse, House,
     CalendarDays, UserPlus2, ReceiptText, Package, Wallet, Banknote,
-    Contact, Shirt, ShoppingBag, Armchair, Star, Users2
+    Contact, Shirt, ShoppingBag, Armchair, Star, Users2,
+    BanIcon
 } from 'lucide-react';
 import { APP_KEYS } from './app-keys'; // Ajusta tu ruta
 
@@ -38,6 +39,7 @@ export const ADMIN_OPERATIONAL_MENU: MenuItem[] = [
     { key: APP_KEYS.PAYMENT_ORDERS, name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package },
     { key: APP_KEYS.PAYMENTS, name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet },
     { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
+    { key: APP_KEYS.FIXED_EXPENSES, name: 'Gastos Fijos', href: '/admin/fixed-expenses', icon: BanIcon },
     { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact },
     {
         key: APP_KEYS.WARDROBE, name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,

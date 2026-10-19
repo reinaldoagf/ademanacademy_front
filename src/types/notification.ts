@@ -9,7 +9,7 @@ export interface Notification {
     recipientPhone?: string;
     metadata?: any;
     // Relación opcional con el Usuario destinatario
-    userId: String; // Opcional, pero para el FK debe existir
+    userId: string; // Opcional, pero para el FK debe existir
     user?: User; // Opcional
     createdAt: string;
     updatedAt: string;
