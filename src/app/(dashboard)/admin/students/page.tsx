@@ -629,8 +629,8 @@ export default function StudentsPage() {
 
             <SelectInput
               label="Parentesco"
-              value={formData.kinship}
-              onChange={(e) => setFormData({ ...formData, kinship: e.target.value as Student["kinship"] })}
+              value={formData.kinship || ""}
+              onChange={(value) => setFormData({ ...formData, kinship: value as Student["kinship"] })}
               options={[
                 { label: "Selecciona un parentesco", value: "", disabled: true },
                 { label: "Hijo", value: "Hijo" },
@@ -737,8 +737,8 @@ export default function StudentsPage() {
               {isPending
                 ? "Guardando..."
                 : editingId
-                  ? "Actualizar Alumno"
-                  : "Registrar Alumno"}
+                  ? "Actualizar Alumno →"
+                  : "Registrar Alumno →"}
             </button>
           </div>
         </form>

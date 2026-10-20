@@ -365,8 +365,8 @@ export default function GroupsCategroiesPage() {
                             {isPending
                                 ? "Guardando..."
                                 : editingId
-                                    ? "Actualizar Categoría"
-                                    : "Registrar Categoría"}
+                                    ? "Actualizar Categoría →"
+                                    : "Registrar Categoría →"}
                         </button>
                     </div>
                 </form>

@@ -6,9 +6,9 @@ import { Client } from "./client";
 import { S3Image } from "./s3-image";
 // Enums del esquema (puedes importarlos de @prisma/client si los usas en Node.js,
 // o mantenerlos aquí si es para el Frontend)
-export type UniformCategory = 'baby' | string; // Ajusta con tus valores del Enum real
-export type UniformStatus = 'payment_pending' | string; // Ajusta con tus valores del Enum real
-export type AssignmentStatus = 'assigned' | 'returned' | 'damaged' | 'lost' | string;
+export type UniformCategory = 'Bebé' | string; // Ajusta con tus valores del Enum real
+export type UniformStatus = 'Pendiente_por_Pago' | string; // Ajusta con tus valores del Enum real
+export type AssignmentStatus = 'Asignado' | 'Devuelto_En_Buen_Estado' | 'Devuelto_Con_Daños' | 'Extraviado' | string;
 
 // Interface para el modelo StudentUniform
 export interface StudentUniform {

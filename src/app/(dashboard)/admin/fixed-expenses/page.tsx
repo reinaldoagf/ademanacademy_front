@@ -347,7 +347,7 @@ export default function AdminFixedExpensesPage() {
                     <SelectInput
                         label="Frecuencia *"
                         value={formData.frequency}
-                        onChange={(e) => setFormData({ ...formData, frequency: e.target.value as ExpenseFrequency })}
+                        onChange={(value) => setFormData({ ...formData, frequency: value as ExpenseFrequency })}
                         options={[
                             { label: "Selecciona la frecuencia", value: "", disabled: true },
                             { label: "Semanal", value: "Semanal" },

@@ -8,7 +8,7 @@ import FormDataNode from "form-data";
 export interface ReserveSeatsPayload {
     eventId: string;
     seatingMapElementIds: string[];
-    status: "reserved" | "sold";
+    status: "Reservado" | "Pagado";
     clientId: string;
     totalAmount: number;
     reservationDurationMinutes?: number;

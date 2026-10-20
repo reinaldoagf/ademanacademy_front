@@ -647,7 +647,7 @@ export default function GroupsListPage() {
             <SelectInput
               label="Categoría (Rango de Edad) *"
               value={formData.categoryId as string}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value as string })}
+              onChange={(value) => setFormData({ ...formData, categoryId: value as string })}
               options={[
                 { label: "Selecciona la categoría", value: "", disabled: true },
                 ...groupCategories.map((c: GroupCategory) => ({
@@ -736,8 +736,8 @@ export default function GroupsListPage() {
               {isPending
                 ? "Guardando..."
                 : editingId
-                  ? "Actualizar Grupo"
-                  : "Registrar Grupo"}
+                  ? "Actualizar Grupo →"
+                  : "Registrar Grupo →"}
             </button>
           </div>
         </form>

@@ -550,8 +550,8 @@ export default function ClientEventsPage() {
                     </div>
                     <SelectInput
                       label="Banco/Plataforma de Origen *"
-                      value={formData.bankName}
-                      onChange={(e) => setFormData({ ...formData, bankName: e.target.value as string })}
+                      value={formData.bankName || ""}
+                      onChange={(value) => setFormData({ ...formData, bankName: value as string })}
                       options={[
                         { label: "Selecciona una Plataforma", value: "", disabled: true },
                         { label: "Banesco", value: "Banesco" },

@@ -440,7 +440,7 @@ export default function PaymentOrderDetailsPage() {
                             <SelectInput
                                 label="Banco/Plataforma de Origen *"
                                 value={formData.bankName}
-                                onChange={(e) => setFormData({ ...formData, bankName: e.target.value as string })}
+                                onChange={(value) => setFormData({ ...formData, bankName: value as string })}
                                 options={[
                                     { label: "Selecciona una Plataforma", value: "", disabled: true },
                                     { label: "Banesco", value: "Banesco" },

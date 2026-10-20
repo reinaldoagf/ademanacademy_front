@@ -813,17 +813,9 @@ export default function ClientsPage() {
                                     <SelectInput
                                         label="Talla de Franela"
                                         value={formData.shirtSize}
-                                        onChange={(e) => setFormData({ ...formData, shirtSize: e.target.value as string })}
+                                        onChange={(value) => setFormData({ ...formData, shirtSize: value as string })}
                                         options={[
                                             { label: "Selecciona una talla", value: "", disabled: true },
-                                            { label: "Talla 2", value: "2" },
-                                            { label: "Talla 4", value: "4" },
-                                            { label: "Talla 6", value: "6" },
-                                            { label: "Talla 8", value: "8" },
-                                            { label: "Talla 10", value: "10" },
-                                            { label: "Talla 12", value: "12" },
-                                            { label: "Talla 14", value: "14" },
-                                            { label: "Talla 16", value: "16" },
                                             { label: "Talla S", value: "S" },
                                             { label: "Talla M", value: "M" },
                                             { label: "Talla L", value: "L" },

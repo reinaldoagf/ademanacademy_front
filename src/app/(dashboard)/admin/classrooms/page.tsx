@@ -434,24 +434,24 @@ export default function ClassroomsPage() {
                         <SelectInput
                             label="Especialidad de Área"
                             value={formData.type}
-                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            onChange={(value) => setFormData({ ...formData, type: value })}
                             options={[
                                 { label: "Selecciona una especialidad", value: "", disabled: true },
-                                { label: "Mirrors", value: "mirrors" },
-                                { label: "Urbano", value: "urban" },
-                                { label: "Estudio Libre", value: "free" },
-                                { label: "Aula de Teorías", value: "theories" },
+                                { label: "Espejos", value: "Espejos" },
+                                { label: "Urbano", value: "Urbano" },
+                                { label: "Estudio Libre", value: "Libre" },
+                                { label: "Aula de Teorías", value: "Teorias" },
                             ]}
                         />
 
                         <SelectInput
                             label="Estado Operativo"
                             value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value as Classroom["status"] })}
+                            onChange={(value) => setFormData({ ...formData, status: value as Classroom["status"] })}
                             options={[
                                 { label: "Selecciona un estado", value: "", disabled: true },
-                                { label: "Activo", value: "active" },
-                                { label: "Mantenimiento", value: "maintenance" },
+                                { label: "Activo", value: "Activo" },
+                                { label: "Mantenimiento", value: "Mantenimiento" },
                             ]}
                         />
                         {/* min={1}

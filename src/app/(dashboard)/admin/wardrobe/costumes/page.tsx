@@ -768,26 +768,26 @@ export default function CostumesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SelectInput
               label="Categoría *"
-              value={costumeFormData.category}
-              onChange={(e) => setCostumeFormData({ ...costumeFormData, category: e.target.value as CostumeCategory })}
+              value={costumeFormData.category || ""}
+              onChange={(value) => setCostumeFormData({ ...costumeFormData, category: value as CostumeCategory })}
               options={[
                 { label: "Selecciona una categoría", value: "", disabled: true },
-                { label: "Baby", value: "baby" },
-                { label: "Infantil", value: "childrens" },
-                { label: "Juvenil", value: "youth" },
-                { label: "Adulto", value: "adult" },
+                { label: "Baby", value: "Bebé" },
+                { label: "Infantil", value: "Infantil" },
+                { label: "Juvenil", value: "Juvenil" },
+                { label: "Adulto", value: "Adulto" },
               ]}
             />
             <SelectInput
               label="Estado Inicial *"
-              value={costumeFormData.status}
-              onChange={(e) => setCostumeFormData({ ...costumeFormData, status: e.target.value as CostumeStatus })}
+              value={costumeFormData.status || ""}
+              onChange={(value) => setCostumeFormData({ ...costumeFormData, status: value as CostumeStatus })}
               options={[
                 { label: "Selecciona el status", value: "", disabled: true },
-                { label: "Pendiente por pago", value: "payment_pending" },
-                { label: "Confeccionando", value: "making" },
-                { label: "Disponible", value: "available" },
-                { label: "Retirado", value: "retired" },
+                { label: "Pendiente por pago", value: "Pendiente_por_Pago" },
+                { label: "Confeccionando", value: "Confeccionando" },
+                { label: "Disponible", value: "Disponible" },
+                { label: "Retirado", value: "Retirado" },
               ]}
             />
           </div>

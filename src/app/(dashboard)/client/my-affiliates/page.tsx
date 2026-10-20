@@ -515,8 +515,8 @@ export default function MyAffiliatesPage() {
                     <div className="grid grid-cols-3 gap-3">
                         <SelectInput
                             label="Parentesco"
-                            value={formData.kinship}
-                            onChange={(e) => setFormData({ ...formData, kinship: e.target.value as any, })}
+                            value={formData.kinship || ""}
+                            onChange={(value) => setFormData({ ...formData, kinship: value as any, })}
                             options={[
                                 { label: "Selecciona un parentesco", value: "", disabled: true },
                                 { label: "Hijo", value: "Hijo" },
@@ -530,8 +530,8 @@ export default function MyAffiliatesPage() {
                         <SelectInput
                             label="Talla de Franela *"
                             required
-                            value={formData.shirtSize}
-                            onChange={(e) => setFormData({ ...formData, shirtSize: e.target.value as string })}
+                            value={formData.shirtSize || ""}
+                            onChange={(value) => setFormData({ ...formData, shirtSize: value as string })}
                             options={[
                                 { label: "Selecciona una talla", value: "", disabled: true },
                                 { label: "Talla S", value: "S" },
@@ -630,8 +630,8 @@ export default function MyAffiliatesPage() {
                         <SelectInput
                             label="Banco/Plataforma de Origen *"
                             required
-                            value={paymentInfo.bankName}
-                            onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value as string })}
+                            value={paymentInfo.bankName || ""}
+                            onChange={(value) => setPaymentInfo({ ...paymentInfo, bankName: value as string })}
                             options={[
                                 { label: "Selecciona una Plataforma", value: "", disabled: true },
                                 { label: "Banesco", value: "Banesco" },

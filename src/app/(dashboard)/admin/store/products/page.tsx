@@ -655,8 +655,8 @@ export default function ProductsPage() {
             {/* Categoría */}
             <SelectInput
               label="Categoría"
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value as string })}
+              value={formData.categoryId || ""}
+              onChange={(value) => setFormData({ ...formData, categoryId: value as string })}
               options={[
                 { label: "Selecciona una Categoría", value: "", disabled: true },
                 ...categories.map((c: ProductCategory) => ({
@@ -775,8 +775,8 @@ export default function ProductsPage() {
             {isPending
               ? "Guardando..."
               : editingId
-                ? "Actualizar Producto"
-                : "Registrar Producto"}
+                ? "Actualizar Producto →"
+                : "Registrar Producto →"}
           </button>
         </div>
       </MacDockModal >

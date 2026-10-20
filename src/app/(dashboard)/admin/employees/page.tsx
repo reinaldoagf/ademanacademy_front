@@ -608,24 +608,25 @@ export default function EmployeesPage() {
             <SelectInput
               label="Tipo de Empleado *"
               value={formData.typeOfEmployee}
-              onChange={(e) => setFormData({ ...formData, typeOfEmployee: e.target.value as EmployeeFormData["typeOfEmployee"] })}
+              onChange={(value) => setFormData({ ...formData, typeOfEmployee: value as EmployeeFormData["typeOfEmployee"] })}
               options={[
                 { label: "Selecciona un tipo de empleado", value: "", disabled: true },
-                { label: "Personal Administrativo y de Gestión", value: "administrative" },
-                { label: "Personal Docente y Artístico", value: "teaching" },
-                { label: "Personal de Soporte y Operaciones", value: "support" },
+                { label: "Personal Administrativo y de Gestión", value: "Administrativo" },
+                { label: "Personal Docente y Artístico", value: "Profesor" },
+                { label: "Personal de Soporte y Operaciones", value: "Operaciones" },
+                { label: "Otro", value: "Otro" },
               ]}
             />
 
             <SelectInput
               label="Tipo de Contrato *"
               value={formData.typeOfEmployee}
-              onChange={(e) => setFormData({ ...formData, typeOfEmployee: e.target.value as EmployeeFormData["typeOfContract"] })}
+              onChange={(value) => setFormData({ ...formData, typeOfEmployee: value as EmployeeFormData["typeOfContract"] })}
               options={[
                 { label: "Selecciona un tipo de contrato", value: "", disabled: true },
-                { label: "Fijo", value: "fixed" },
-                { label: "Por Hora", value: "per_hour" },
-                { label: "Por proyecto", value: "by_project" },
+                { label: "Fijo", value: "Fijo" },
+                { label: "Por Hora", value: "Por_Hora" },
+                { label: "Por proyecto", value: "Por_Proyecto" },
               ]}
             />
           </div>

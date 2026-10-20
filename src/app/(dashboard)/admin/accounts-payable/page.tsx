@@ -472,7 +472,7 @@ export default function AccountsPayablePage() {
                     <SelectInput
                         label="Método de Pago *"
                         value={paymentForm.method}
-                        onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value as PaymentMethod })}
+                        onChange={(value) => setPaymentForm({ ...paymentForm, method: value as PaymentMethod })}
                         options={[
                             { label: "Selecciona un método de pago", value: "", disabled: true },
                             { label: "Transferencia Bancaria", value: "Transferencia" },

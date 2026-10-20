@@ -61,7 +61,7 @@ export default function PaymentOrderDetailsPage() {
     };
 
     const totalPaid = paymentOrder?.transactions
-        ?.filter((t) => t.status === "approved")
+        ?.filter((t) => t.status === "Aprobado")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
@@ -302,8 +302,12 @@ export default function PaymentOrderDetailsPage() {
                                                     <p className="text-xs font-questrial font-bold text-gray-700">{seat.seatingMapElement?.itemType || ""}</p>
                                                 </div>
                                                 <div className="bg-slate-50 p-2">
-                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Precio de Silla</p>
-                                                    <p className="text-xs font-questrial font-bold text-gray-700">${seat.seatingMapElement?.price || ""}</p>
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Precio de preventa de la Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">${seat.seatingMapElement?.presalePrice || ""}</p>
+                                                </div>
+                                                <div className="bg-slate-50 p-2">
+                                                    <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">Precio de venta de la Silla</p>
+                                                    <p className="text-xs font-questrial font-bold text-gray-700">${seat.seatingMapElement?.salePrice || ""}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -425,8 +429,8 @@ export default function PaymentOrderDetailsPage() {
 
                             <SelectInput
                                 label="Banco/Plataforma de Origen *"
-                                value={formData.bankName}
-                                onChange={(e) => setFormData({ ...formData, bankName: e.target.value as string })}
+                                value={formData.bankName || ""}
+                                onChange={(value) => setFormData({ ...formData, bankName: value as string })}
                                 options={[
                                     { label: "Selecciona una Plataforma", value: "", disabled: true },
                                     { label: "Banesco", value: "Banesco" },

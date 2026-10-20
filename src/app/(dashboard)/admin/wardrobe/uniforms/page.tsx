@@ -745,27 +745,27 @@ export default function UniformsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <SelectInput
                             label="Categoría *"
-                            value={uniformFormData.category}
-                            onChange={(e) => setUniformFormData({ ...uniformFormData, category: e.target.value as UniformCategory })}
+                            value={uniformFormData.category || ""}
+                            onChange={(value) => setUniformFormData({ ...uniformFormData, category: value as UniformCategory })}
                             options={[
                                 { label: "Selecciona una categoría", value: "", disabled: true },
-                                { label: "Baby", value: "baby" },
-                                { label: "Infantil", value: "childrens" },
-                                { label: "Juvenil", value: "youth" },
-                                { label: "Adulto", value: "adult" },
+                                { label: "Baby", value: "Bebé" },
+                                { label: "Infantil", value: "Infantil" },
+                                { label: "Juvenil", value: "Juvenil" },
+                                { label: "Adulto", value: "Adulto" },
                             ]}
                         />
 
                         <SelectInput
                             label="Estado Inicial *"
-                            value={uniformFormData.status}
-                            onChange={(e) => setUniformFormData({ ...uniformFormData, status: e.target.value as UniformStatus })}
+                            value={uniformFormData.status || ""}
+                            onChange={(value) => setUniformFormData({ ...uniformFormData, status: value as UniformStatus })}
                             options={[
                                 { label: "Selecciona una categoría", value: "", disabled: true },
-                                { label: "Pendiente por pago", value: "payment_pending" },
-                                { label: "Confeccionando", value: "making" },
-                                { label: "Disponible", value: "available" },
-                                { label: "Retirado", value: "retired" },
+                                { label: "Pendiente por pago", value: "Pendiente_por_Pago" },
+                                { label: "Confeccionando", value: "Confeccionando" },
+                                { label: "Disponible", value: "Disponible" },
+                                { label: "Retirado", value: "Retirado" },
                             ]}
                         />
 
@@ -982,9 +982,9 @@ export default function UniformsPage() {
                                                 <td className="p-2.5">
                                                     <SelectInput
                                                         label=""
-                                                        value={item.assignedSize}
-                                                        onChange={(e) =>
-                                                            handleUpdateStudentInList(item.studentId, 'assignedSize', e.target.value)
+                                                        value={item.assignedSize || ""}
+                                                        onChange={(value) =>
+                                                            handleUpdateStudentInList(item.studentId, 'assignedSize', value)
                                                         }
                                                         options={[
                                                             { label: "Selecciona una talla", value: "", disabled: true },

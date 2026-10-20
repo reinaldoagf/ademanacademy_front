@@ -100,7 +100,7 @@ export default function AdminEventsPage() {
   // ESTADOS PARA LA TAQUILLA MAPA INTERACTIVO
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [clientSelected, setClientSelected] = useState<Client | null>(null);
-  const [statusSelected, setStatusSelected] = useState<"reserved" | "sold">("reserved");
+  const [statusSelected, setStatusSelected] = useState<"Reservado" | "Pagado">("Reservado");
   const [reservationMinutes, setReservationMinutes] = useState<number>(10);
   const [showFeedbackAlert, setShowFeedbackAlert] = useState<{
     title: string;
@@ -162,7 +162,7 @@ export default function AdminEventsPage() {
     setSelectedChairs([]);
     setClientSearch("");
     setClientSelected(null);
-    setStatusSelected("reserved");
+    setStatusSelected("Reservado");
     openModalSeatingMap();
   };
   // Configuración de acciones del HeroSection
@@ -448,10 +448,10 @@ export default function AdminEventsPage() {
         const res = await reserveOrBuySeatsAction({
           eventId: selectedEvent.id,
           seatingMapElementIds: elementIds,
-          status: statusSelected, // Usar "SOLD" si es una asignación/venta directa del admin
+          status: statusSelected, // Usar "Pagado" si es una asignación/venta directa del admin
           clientId: clientSelected.id,
           totalAmount: (totalCashAmount || 0),
-          ...(statusSelected === "reserved" && {
+          ...(statusSelected === "Reservado" && {
             reservationDurationMinutes: reservationMinutes,
           }),
         });
@@ -920,7 +920,7 @@ export default function AdminEventsPage() {
                 <CanvasSeatingMap
                   eventData={selectedEvent}
                   seatingMap={selectedEvent.seatingMap}
-                  seatsOccupied={selectedEvent.eventSeats?.filter(e => e.status == "reserved" || e.status == "sold").map(e => e.seatingMapElementId) || []}
+                  seatsOccupied={selectedEvent.eventSeats?.filter(e => e.status == "Reservado" || e.status == "Pagado").map(e => e.seatingMapElementId) || []}
                   onSeleccionChange={(chairs) => {
                     setSelectedChairs(chairs);
                   }}
@@ -971,16 +971,16 @@ export default function AdminEventsPage() {
                     <SelectInput
                       label=""
                       value={statusSelected}
-                      onChange={(e) => setStatusSelected(e.target.value as ("reserved" | "sold"))}
+                      onChange={(value) => setStatusSelected(value as ("Reservado" | "Pagado"))}
                       options={[
                         { label: "Selecciona un status", value: "", disabled: true },
-                        { label: "Reservado", value: "reserved" },
-                        { label: "Pagado", value: "sold" },
+                        { label: "Reservado", value: "Reservado" },
+                        { label: "Pagado", value: "Pagado" },
                       ]}
                     />
 
-                    {/* ⏱️ CONDICIONAL: Mostrar tiempo de reserva solo si el status es "reserved" */}
-                    {statusSelected === "reserved" && (
+                    {/* ⏱️ CONDICIONAL: Mostrar tiempo de reserva solo si el status es "Reservado" */}
+                    {statusSelected === "Reservado" && (
                       <div className="pt-2 space-y-1.5 border-t border-gray-100 animate-fadeIn">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700">
                           <Clock className="w-3.5 h-3.5 text-purple-600" />
@@ -990,7 +990,7 @@ export default function AdminEventsPage() {
                         <SelectInput
                           label=""
                           value={reservationMinutes.toString()}
-                          onChange={(e) => setReservationMinutes(Number(e.target.value))}
+                          onChange={(value) => setReservationMinutes(Number(value))}
                           options={[
                             { label: "5 minutos", value: "5" },
                             { label: "10 minutos", value: "10" },
@@ -1096,9 +1096,8 @@ export default function AdminEventsPage() {
 
             <SelectInput
               label="Mapa de Asiento"
-              name="seatingMapId"
               value={formData.seatingMapId}
-              onChange={handleInputChange}
+              onChange={(value) => setFormData({ ...formData, seatingMapId: value })}
               options={[
                 { label: "Selecciona el Mapa de asiento", value: "", disabled: true },
                 ...seatingMaps.map((c: SeatingMap) => ({
@@ -1112,30 +1111,28 @@ export default function AdminEventsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SelectInput
                 label="Tipo de Evento"
-                name="type"
                 value={formData.type || "sample"}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData({ ...formData, type: value })}
                 options={[
                   { label: "Selecciona el Tipo de Evento", value: "", disabled: true },
-                  { label: "Gala Anual", value: "annual_gala", },
-                  { label: "Masterclass", value: "masterclass", },
-                  { label: "Competencia", value: "competence", },
-                  { label: "Muestra", value: "sample", },
-                  { label: "Otro", value: "other", },
+                  { label: "Gala Anual", value: "Gala_Anual", },
+                  { label: "Masterclass", value: "Masterclass", },
+                  { label: "Competencia", value: "Competencia", },
+                  { label: "Muestra", value: "Muestra", },
+                  { label: "Otro", value: "Otro", },
                 ]}
               />
               <SelectInput
                 label="Estado de Producción"
-                name="productionStatus"
                 value={formData.productionStatus || "planning"}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData({ ...formData, productionStatus: value })}
                 options={[
                   { label: "Selecciona el Estado de Producción", value: "", disabled: true },
-                  { label: "Planificación", value: "planning", },
-                  { label: "Ensayos Generales", value: "essays", },
-                  { label: "Agotado", value: "sold_out", },
-                  { label: "Completado", value: "completed", },
-                  { label: "Cancelado", value: "cancelled", },
+                  { label: "Planificación", value: "Planificación", },
+                  { label: "Ensayos Generales", value: "Ensayos_Generales", },
+                  { label: "Agotado", value: "Agotado", },
+                  { label: "Completado", value: "Completado", },
+                  { label: "Cancelado", value: "Cancelado", },
                 ]}
               />
             </div>
@@ -1242,12 +1239,12 @@ export default function AdminEventsPage() {
                     <SelectInput
                       label="Nivel (Tier)"
                       value={sponsor.tier}
-                      onChange={(e) => updateSponsor(index, "tier", e.target.value)}
+                      onChange={(value) => updateSponsor(index, "tier", value)}
                       options={[
-                        { label: "Principal (Main)", value: "main" },
-                        { label: "Oro (Gold)", value: "gold" },
-                        { label: "Plata (Silver)", value: "silver" },
-                        { label: "Bronce (Bronze)", value: "bronze" },
+                        { label: "Patrocinador Oficial", value: "Patrocinador_Oficial" },
+                        { label: "Oro", value: "Oro" },
+                        { label: "Plata", value: "Plata" },
+                        { label: "Bronce", value: "Bronce" },
                       ]}
                     />
                   </div>
