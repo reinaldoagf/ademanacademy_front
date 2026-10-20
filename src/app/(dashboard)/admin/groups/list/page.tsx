@@ -173,14 +173,13 @@ export default function GroupsListPage() {
           : { search: classroomSearch.trim() };
 
         // Llamada directa al Server Action
-        const result = await getAllClassroomsAction(params);
-
-        if (result.success && result.data) {
+        const res = await getAllClassroomsAction(params);
+        if (res.success && res.data) {
           // Axios mapea la respuesta en result.data. data.data suele ser el array
           // Si tu backend anida los salones en 'classrooms', úsalo; de lo contrario asigna result.data
-          setFilteredClassrooms(result.data.classrooms || result.data);
+          setFilteredClassrooms(res.data.classrooms || res.data);
         } else {
-          console.error("Error en Server Action (Salones):", result.error);
+          console.error("Error en Server Action (Salones):", res.error);
           setFilteredClassrooms([]);
         }
       } catch (error) {
