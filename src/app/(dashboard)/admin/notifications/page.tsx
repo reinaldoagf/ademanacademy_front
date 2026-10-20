@@ -125,7 +125,7 @@ export default function NotificationsPage() {
                                     </div>
                                     {
                                         notification.user && (
-                                            <div className="border-l border-gray-300 flex items-center gap-2 p-1 transition-all">
+                                            <div className="border-gray-300 flex items-center gap-2 p-1 transition-all">
                                                 <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
 
                                                     <UserIcon className="w-3.5 h-3.5 shrink-0" />

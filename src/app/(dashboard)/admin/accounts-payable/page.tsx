@@ -5,17 +5,12 @@ import { useEffect, useState, useTransition, useRef } from "react";
 import {
     Plus,
     Search,
-    DollarSign,
-    Calendar,
-    FileText,
-    User,
     CreditCard,
     History,
-    AlertCircle,
-    X,
-    Check,
+    ChevronRight,
 } from "lucide-react";
-import { AccountPayable, PaymentMethod, PayableStatus, CreateAccountPayableDto, PayablePayment, PayableFormData, CreatePayablePaymentDto } from "@/types/account-payable";
+import Link from "next/link";
+import { AccountPayable, PaymentMethod, PayableStatus, CreateAccountPayableDto, PayableFormData, CreatePayablePaymentDto } from "@/types/account-payable";
 import { useModal } from "@/hooks/useModal";
 import HeroSection from "@/components/layout/HeroSection";
 import { MacDockModal } from "@/components/ui/MacDockModal";
@@ -250,6 +245,12 @@ export default function AccountsPayablePage() {
             header: "Acciones",
             className: "text-right", // Alinea el encabezado a la derecha
             render: (element) => (<div className="flex gap-2 justify-end">
+                <Link
+                    href={`/admin/accounts-payable/${element.id}`}
+                    className="font-bold font-questrial px-4 py-2 flex items-center justify-center gap-2 transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
+                >
+                    Ver detalles <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
                 <ActionButton
                     variant="success"
                     icon={CreditCard}
@@ -267,7 +268,7 @@ export default function AccountsPayablePage() {
                     Abonar
                 </ActionButton>
                 <ActionButton
-                    variant="purple"
+                    variant="primary"
                     icon={History}
                     tooltip="Historial"
                     onClick={() => handleOpenHistory(element)}

@@ -189,14 +189,14 @@ export default function PaymentOrderDetailsPage() {
                                             <span className="text-sm font-anton text-gray-800"><DatePipe value={paymentOrder.createdAt} format="short" /></span>
                                         </div>
                                         {paymentOrder.dueDate && (
-                                            <div className="flex justify-between items-center text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-3.5 h-3.5 text-gray-400" /> Vencimiento:
+
+                                            <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                                <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                    <Clock className="w-4 h-4 text-pink-500" /> Vencimiento
                                                 </span>
-                                                <span className="font-medium text-amber-700">
-                                                    <DatePipe value={paymentOrder.dueDate} format="short" />
-                                                </span>
+                                                <DatePipe value={paymentOrder.dueDate} format="short" />
                                             </div>
+
                                         )}
                                     </div>
 

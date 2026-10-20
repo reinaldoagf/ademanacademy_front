@@ -1,7 +1,7 @@
 
 
 // Enums y Tipos
-export type PayableStatus = "pending" | "partial" | "paid" | "cancelled";
+export type PayableStatus = "Pagado" | "Pagado_Parcialmente" | "Pendiente" | "Cancelada";
 export interface PayablePayment {
     id: string;
     amount: number;
