@@ -248,15 +248,9 @@ export default function GroupsListPage() {
       return;
     }
 
-    if (!formData.instructorId) {
-      setErrorMsg("Debes asignar un instructor responsable.");
-      return;
-    }
-
     try {
       startTransition(async () => {
         const res = await saveGroupAction(formData, editingId);
-
         if (!res.success) {
           setErrorMsg(res.error || "Ocurrió un error.");
           return;
@@ -690,7 +684,7 @@ export default function GroupsListPage() {
 
           {/* Fila 5: Instructor */}
           <SearchInput
-            label="Instructor / Coreógrafo Responsable *"
+            label="Instructor / Coreógrafo Responsable"
             placeholder="Escribe para buscar o selecciona de la lista..."
             value={instructorSearch}
             isLoading={isLoadingInstructors}
