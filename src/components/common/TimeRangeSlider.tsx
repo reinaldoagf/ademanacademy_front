@@ -1,3 +1,4 @@
+// src/components/common/TimeRangeSlider.tsx
 "use client";
 
 import React, { useMemo } from "react";
@@ -45,7 +46,7 @@ export default function TimeRangeSlider({
 
     const [currentStart, currentEnd] = sliderValue;
 
-    // 2️⃣ Formateador de minutos a texto legible
+    // 2️⃣ Formateador de minutos a texto legible (HH:mm en formato 24h para el input time)
     const formatMinutes = (totalMinutes: number, is12h = false) => {
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
@@ -59,13 +60,20 @@ export default function TimeRangeSlider({
         return `${String(hours).padStart(2, "0")}:${formattedMin}`;
     };
 
+    // Helper para convertir "HH:mm" a minutos totales
+    const timeStringToMinutes = (timeStr: string) => {
+        if (!timeStr) return MIN_MINUTES;
+        const [h, m] = timeStr.split(":").map(Number);
+        return h * 60 + m;
+    };
+
     // 3️⃣ Actualizador centralizado con validaciones de límites
     const updateRange = (newStart: number, newEnd: number) => {
         // Asegurar que se respeten los límites absolutos
         let start = Math.max(MIN_MINUTES, Math.min(newStart, MAX_MINUTES - STEP));
         let end = Math.max(MIN_MINUTES + STEP, Math.min(newEnd, MAX_MINUTES));
 
-        // Evitar colisiones (manteninedo separación de al menos 5 min)
+        // Evitar colisiones (manteniendo separación de al menos 5 min)
         if (end - start < STEP) {
             if (start !== currentStart) {
                 end = start + STEP;
@@ -96,6 +104,18 @@ export default function TimeRangeSlider({
         }
     };
 
+    // Manejadores para la entrada manual en los inputs tipo tiempo
+    const handleManualChange = (type: "start" | "end", timeValue: string) => {
+        if (disabled || !timeValue) return;
+        const minutes = timeStringToMinutes(timeValue);
+
+        if (type === "start") {
+            updateRange(minutes, currentEnd);
+        } else {
+            updateRange(currentStart, minutes);
+        }
+    };
+
     const marks = [
         { value: 8 * 60, label: "8:00 AM" },
         { value: 12 * 60, label: "12:00 PM" },
@@ -110,8 +130,8 @@ export default function TimeRangeSlider({
         <ThemeProvider theme={purpleTheme}>
             <div className="w-full bg-white border border-purple-100 p-4 shadow-sm">
 
-                {/* Cabecera con Controles Incrementales */}
-                <div className="flex justify-between items-center mb-5">
+                {/* Cabecera con Controles Incrementales y Manuales */}
+                <div className="flex justify-between items-center mb-5 gap-2">
 
                     {/* Control Hora Inicio */}
                     <div className="flex flex-col gap-0.5">
@@ -125,9 +145,18 @@ export default function TimeRangeSlider({
                             >
                                 -
                             </button>
-                            <span className="text-xs font-bold text-gray-800 bg-gray-50 px-2.5 py-1 border border-gray-100 min-w-[76px] text-center">
-                                {formatMinutes(currentStart, true)}
-                            </span>
+                            {/* Input manual para la hora de inicio */}
+                            <div className="relative">
+                                <input
+                                    type="time"
+                                    disabled={disabled}
+                                    value={formatMinutes(currentStart)}
+                                    min="08:00"
+                                    max="21:55"
+                                    onChange={(e) => handleManualChange("start", e.target.value)}
+                                    className="text-xs font-questrial font-bold text-gray-800 bg-gray-50 px-2 py-1 border border-purple-100 rounded-md w-[100px] text-center outline-none cursor-pointer focus:border-purple-400 focus:ring-1 focus:ring-purple-400 [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
+                                />
+                            </div>
                             <button
                                 type="button"
                                 disabled={disabled || currentStart >= currentEnd - STEP}
@@ -139,7 +168,7 @@ export default function TimeRangeSlider({
                         </div>
                     </div>
 
-                    <div className="h-[2px] w-6 bg-purple-200 mt-4 hidden sm:block" />
+                    <div className="h-[2px] w-4 bg-purple-200 mt-4 hidden sm:block" />
 
                     {/* Control Hora Fin */}
                     <div className="flex flex-col items-end gap-0.5">
@@ -153,9 +182,18 @@ export default function TimeRangeSlider({
                             >
                                 -
                             </button>
-                            <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 border border-purple-100 min-w-[76px] text-center">
-                                {formatMinutes(currentEnd, true)}
-                            </span>
+                            {/* Input manual para la hora de fin */}
+                            <div className="relative">
+                                <input
+                                    type="time"
+                                    disabled={disabled}
+                                    value={formatMinutes(currentEnd)}
+                                    min="08:05"
+                                    max="22:00"
+                                    onChange={(e) => handleManualChange("end", e.target.value)}
+                                    className="text-xs font-questrial font-bold text-gray-800 bg-gray-50 px-2 py-1 border border-purple-100 rounded-md w-[100px] text-center outline-none cursor-pointer focus:border-purple-400 focus:ring-1 focus:ring-purple-400 [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
+                                />
+                            </div>
                             <button
                                 type="button"
                                 disabled={disabled || currentEnd >= MAX_MINUTES}

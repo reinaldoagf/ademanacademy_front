@@ -43,14 +43,14 @@ const COLOR_PALETTE = [
 type GroupFormData = {
     id: string,
     groupId: string,
-    day: WeekDay,
+    days: WeekDay[],
     startTime: string,
     endTime: string,
     label: string
 };
 // 2. Estado inicial limpio del formulario
 const initialFormState: GroupFormData = {
-    id: "", groupId: "", day: "lunes" as WeekDay, startTime: "8:00", endTime: "8:30", label: ""
+    id: "", groupId: "", days: [], startTime: "8:00", endTime: "8:30", label: ""
 };
 export default function SchedulePage() {
     const [activeClassroom, setActiveClassroom] = useState<Classroom | null>(null);
@@ -252,8 +252,15 @@ export default function SchedulePage() {
         e.preventDefault();
         setErrorMsg(null);
 
-        const { id, groupId, day, startTime, endTime, label } = formData;
-        if (!groupId || !startTime || !endTime || !activeClassroom) return;
+        const { id, groupId, days, startTime, endTime, label } = formData;
+
+        // Convertimos a array por seguridad si por alguna razón viniera como string único
+        const targetDays: string[] = Array.isArray(days) ? days : (days ? [days] : []);
+
+        if (!groupId || !startTime || !endTime || !activeClassroom || targetDays.length === 0) {
+            setErrorMsg("Por favor completa todos los campos requeridos y selecciona al menos un día.");
+            return;
+        }
 
         const startMin = timeToMinutes(startTime);
         const endMin = timeToMinutes(endTime);
@@ -263,39 +270,33 @@ export default function SchedulePage() {
             return;
         }
 
-        // Obtener el grupo y día de ORIGEN reales desde el elemento seleccionado
+        // Obtener el grupo y día de ORIGEN reales desde el elemento seleccionado (si se está editando)
         const originGroupId = selectedElement?.group?.id || groupId;
-        const originDay = selectedElement?.day || day;
+        const originDay = selectedElement?.day;
 
-        // 1. Validar colisiones contra TODOS los bloques (Excluyendo el bloque que estamos editando)
-        const hasACollision = activeClassroom.groups.some((g: any) => {
-            const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
-            const blocksForDay = grupoSchedule?.schedule?.[day] || [];
+        // 1. Validar colisiones contra TODOS los bloques en CADA uno de los días seleccionados
+        for (const d of targetDays) {
+            const hasACollision = activeClassroom.groups.some((g: any) => {
+                const grupoSchedule = g.schedules?.find((s: any) => s.classroomId === activeClassroom.id);
+                const blocksForDay = grupoSchedule?.schedule?.[d] || [];
 
-            return blocksForDay.some((b: any) => {
-                // EXCLUSIÓN PRECISA
-                if (((id && b.id === id) || !id) && g.id === originGroupId && day === originDay) return false;
+                return blocksForDay.some((b: any) => {
+                    // EXCLUSIÓN PRECISA si estamos editando el mismo bloque exacto en su día original
+                    if (id && b.id === id && g.id === originGroupId && d === originDay) return false;
 
-                const exStart = timeToMinutes(b.startTime);
-                const exEnd = timeToMinutes(b.endTime);
-                return (startMin < exEnd && endMin > exStart);
+                    const exStart = timeToMinutes(b.startTime);
+                    const exEnd = timeToMinutes(b.endTime);
+                    return (startMin < exEnd && endMin > exStart);
+                });
             });
-        });
 
-        if (hasACollision) {
-            setErrorMsg(`No se pudo guardar: El horario seleccionado colisiona con otra clase en este salón.`);
-            return;
+            if (hasACollision) {
+                setErrorMsg(`No se pudo guardar: El horario seleccionado colisiona con otra clase en el día ${d}.`);
+                return;
+            }
         }
 
-        // 2. Definir las propiedades del bloque actualizado
-        const updatedBlock = {
-            id: id || crypto.randomUUID(),
-            startTime,
-            endTime,
-            label: label.trim() || undefined,
-        };
-
-        // 3. Calcular de forma pura el nuevo array de grupos manteniendo consistencia interna
+        // 2. Calcular de forma pura el nuevo array de grupos manteniendo consistencia interna
         const updatedGroups = activeClassroom.groups.map((g: any) => {
             // Si este grupo no se ve afectado, se retorna idéntico
             if (g.id !== originGroupId && g.id !== groupId) return g;
@@ -305,30 +306,31 @@ export default function SchedulePage() {
 
                 let newScheduleStructure = { ...s.schedule };
 
-                // CASO A: El bloque se mueve DENTRO del mismo grupo
-                if (originGroupId === groupId) {
-                    const filteredOrigin = (newScheduleStructure[originDay] || []).filter((b: any) => b.id !== id);
-                    newScheduleStructure[originDay] = filteredOrigin;
+                // Si estamos editando y el día original ya no está incluido en los nuevos días seleccionados, lo purgamos de ahí
+                if (id && originDay && !targetDays.includes(originDay)) {
+                    newScheduleStructure[originDay] = (newScheduleStructure[originDay] || []).filter((b: any) => b.id !== id);
+                }
 
-                    const baseTarget = newScheduleStructure[day] || [];
-                    newScheduleStructure[day] = [...baseTarget, updatedBlock].sort((a, b) =>
+                // Insertar o actualizar el bloque en cada uno de los días seleccionados
+                targetDays.forEach((d, index) => {
+                    // Filtrar bloques previos del mismo ID si ya existían en este día
+                    const filteredDayBlocks = (newScheduleStructure[d] || []).filter((b: any) => !id || b.id !== id);
+
+                    // Si es el primer elemento y estábamos editando el bloque con el ID original, conservamos el ID. 
+                    // Si se propaga a días adicionales, generamos IDs únicos para cada nuevo día.
+                    const blockId = (index === 0 && id && d === originDay) ? id : crypto.randomUUID();
+
+                    const currentBlock = {
+                        id: blockId,
+                        startTime,
+                        endTime,
+                        label: label.trim() || undefined,
+                    };
+
+                    newScheduleStructure[d] = [...filteredDayBlocks, currentBlock].sort((a, b) =>
                         a.startTime.localeCompare(b.startTime)
                     );
-                }
-                // CASO B: El bloque CAMBIA de grupo
-                else {
-                    // Si es el grupo de origen => Eliminar el bloque de su día de origen
-                    if (g.id === originGroupId) {
-                        newScheduleStructure[originDay] = (newScheduleStructure[originDay] || []).filter((b: any) => b.id !== id);
-                    }
-                    // Si es el grupo de destino => Añadir el bloque al nuevo día
-                    if (g.id === groupId) {
-                        const baseTarget = newScheduleStructure[day] || [];
-                        newScheduleStructure[day] = [...baseTarget, updatedBlock].sort((a, b) =>
-                            a.startTime.localeCompare(b.startTime)
-                        );
-                    }
-                }
+                });
 
                 return {
                     ...s,
@@ -339,8 +341,7 @@ export default function SchedulePage() {
             return { ...g, schedules: updatedSchedules };
         });
 
-        // 4. 🌟 CORRECCIÓN CRÍTICA: Extraer de manera directa todos los schedules limpios de cada grupo
-        // Esto garantiza que la raíz de activeClassroom.schedules sea un fiel reflejo de lo que hay en los grupos
+        // 3. 🌟 Extraer de manera directa todos los schedules limpios de cada grupo
         const allSchedulesFromGroups = updatedGroups.reduce((acc: any[], currentGroup: any) => {
             if (currentGroup.schedules && Array.isArray(currentGroup.schedules)) {
                 return [...acc, ...currentGroup.schedules];
@@ -351,27 +352,27 @@ export default function SchedulePage() {
         const updatedClassroomData = {
             ...activeClassroom,
             groups: updatedGroups,
-            schedules: allSchedulesFromGroups // 🌟 Sincronización masiva instantánea sin pérdidas de mutación externa
+            schedules: allSchedulesFromGroups // 🌟 Sincronización masiva instantánea
         };
 
-        // 5. Actualizar estados locales de React de forma inmutable
+        // 4. Actualizar estados locales de React de forma inmutable
         setActiveClassroom(updatedClassroomData);
         setClassrooms(prev => {
             if (!prev) return prev;
             return prev.map(e => e.id === updatedClassroomData.id ? updatedClassroomData : e);
         });
 
-        // 6. Enviar los datos mutados de forma segura hacia el backend
+        // 5. Enviar los datos mutados de forma segura hacia el backend
         startTransition(async () => {
             const res = await updateClassroomAction(updatedClassroomData, updatedClassroomData.id);
             if (!res.success) {
-                setErrorMsg(res.error || "Ocurrió un error al actualizar el bloque.");
+                setErrorMsg(res.error || "Ocurrió un error al actualizar los bloques.");
                 return;
             }
-            toast.success(`✨ Cambios guardados exitosamente en la agenda.`);
+            toast.success(`✨ Bloques guardados exitosamente para los días seleccionados.`);
         });
 
-        // 7. Limpieza y cierre del modal
+        // 6. Limpieza y cierre del modal
         closeModal();
         setFormData(initialFormState);
     };
@@ -769,7 +770,9 @@ export default function SchedulePage() {
                         label="Seleccionar Grupo Asignado *"
                         value={formData.groupId}
                         required
-                        onChange={(e) => setFormData({ ...formData, groupId: e.target.value as string })}
+                        onChange={(value) => {
+                            setFormData({ ...formData, groupId: value as string })
+                        }}
                         options={[
                             { label: "Selecciona un grupo", value: "", disabled: true },
                             ...activeClassroom?.groups.map((g: Group) => ({
@@ -780,13 +783,14 @@ export default function SchedulePage() {
                     />
 
                     <SelectInput
-                        label="Día de la Semana *"
-                        value={formData.day}
-                        onChange={(e) => setFormData({ ...formData, day: e.target.value as WeekDay })}
+                        label="Días de la Semana (Selección múltiple) *"
+                        multiple={true}
+                        value={formData.days || []}
+                        onChange={(selectedDays) => setFormData({ ...formData, days: selectedDays })}
                         options={[
                             { label: "Selecciona un día", value: "", disabled: true },
                             ...DAYS.map((d) => ({
-                                label: `${d}`,
+                                label: `${d.charAt(0).toUpperCase() + d.slice(1)}`,
                                 value: `${d}`
                             }))
                         ]}
@@ -896,7 +900,7 @@ export default function SchedulePage() {
                                         setFormData({
                                             id: selectedElement.id,
                                             groupId: selectedElement.group.id,
-                                            day: selectedElement.day as WeekDay,
+                                            days: [selectedElement.day as WeekDay],
                                             startTime: selectedElement.block.startTime,
                                             endTime: selectedElement.block.endTime,
                                             label: selectedElement.block.label?.trim() || ''

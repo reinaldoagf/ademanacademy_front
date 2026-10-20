@@ -1,3 +1,4 @@
+// src/components/common/TimeRangePicker.tsx
 "use client";
 
 import React, { ChangeEvent } from "react";
@@ -24,9 +25,9 @@ export default function TimeRangePicker({
         const newStart = e.target.value;
         let newEnd = endTime;
 
-        // Si la nueva hora de inicio supera o iguala a la hora de fin actual,
-        // reiniciamos o empujamos la hora de fin para mantener coherencia
-        if (endTime && endTime <= newStart) {
+        // Si el usuario escribe manualmente una hora de inicio 
+        // y esta supera o es igual a la hora de fin actual, limpiamos el fin
+        if (newEnd && newEnd <= newStart) {
             newEnd = "";
         }
 
@@ -35,6 +36,12 @@ export default function TimeRangePicker({
 
     const handleEndChange = (e: ChangeEvent<HTMLInputElement>) => {
         const newEnd = e.target.value;
+
+        // Validamos que la hora fin manual no sea menor a la de inicio
+        if (startTime && newEnd < startTime) {
+            return; // Opcional: ignorar si intenta ingresar un valor menor inválido
+        }
+
         onChange({ startTime, endTime: newEnd });
     };
 
