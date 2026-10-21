@@ -263,7 +263,7 @@ export default function AccountsPayablePage() {
                         });
                         openPaymentModal();
                     }}
-                    disabled={element.status == "paid" || element.status == "cancelled"}
+                    disabled={element.status == "Pagado" || element.status == "Cancelada"}
                 >
                     Abonar
                 </ActionButton>

@@ -49,4 +49,6 @@ export const APP_KEYS: Record<string, string> = {
     EXPENSES: 'expenses',
     FIXED_EXPENSES: 'fixedExpenses',
     REFRESH_FIXED_EXPENSES_COUNT: 'refresh-fixed-expenses-count',
+    SPECIAL_REHEARSALS: 'specialRehearsals',
+    REFRESH_SPECIAL_REHEARSALS_COUNT: 'refresh-special-rehearsals-count',
 };

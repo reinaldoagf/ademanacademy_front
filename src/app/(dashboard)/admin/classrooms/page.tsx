@@ -51,8 +51,8 @@ export default function ClassroomsPage() {
         itemCount: 6,
     });
     const [isPending, startTransition] = useTransition();
-    const [activeTab, setActiveTab] = useState<"all" | "active" | "maintenance">("all");
-    const [typeOfRoom, setTypeOfRoom] = useState<"all" | "mirrors" | "urban" | "free" | "theories">("all");
+    const [activeTab, setActiveTab] = useState<"all" | "Activo" | "Mantenimiento">("all");
+    const [typeOfRoom, setTypeOfRoom] = useState<"all" | "Espejos" | "Urbano" | "Libre" | "Teorias">("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(6);
@@ -62,7 +62,7 @@ export default function ClassroomsPage() {
         name: "",
         address: "",
         maxCapacity: 20,
-        type: "mirrors" as Classroom["type"],
+        type: "" as Classroom["type"],
         status: "active" as Classroom["status"],
         description: ""
     });
@@ -161,8 +161,8 @@ export default function ClassroomsPage() {
                                 name: "",
                                 address: "",
                                 maxCapacity: 20,
-                                type: "mirrors" as Classroom["type"],
-                                status: "active" as Classroom["status"],
+                                type: "Espejos" as Classroom["type"],
+                                status: "Activo" as Classroom["status"],
                                 description: ""
                             });
                             setEditingId(null);
@@ -196,10 +196,10 @@ export default function ClassroomsPage() {
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
                             <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los salones</option>
-                            <option value="mirrors" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Espejos</option>
-                            <option value="urban" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Urbano</option>
-                            <option value="free" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Libre</option>
-                            <option value="theories" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Teorias</option>
+                            <option value="Espejos" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Espejos</option>
+                            <option value="Urbano" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Urbano</option>
+                            <option value="Libre" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Libre</option>
+                            <option value="Teorias" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Salones Teorias</option>
                         </select>
                     </div>
                     {/* Pestañas de Tipo */}
@@ -222,30 +222,30 @@ export default function ClassroomsPage() {
                             Todos
                         </label>
 
-                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "active"
+                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "Activo"
                             ? "gradient-purple text-white font-medium shadow-xs"
                             : "text-gray-600 hover:text-purple-700"
                             }`}>
                             <input
                                 type="radio"
                                 name="activeTab"
-                                value="active"
-                                checked={activeTab === "active"}
+                                value="Activo"
+                                checked={activeTab === "Activo"}
                                 onChange={(e) => setActiveTab(e.target.value as any)}
                                 className="sr-only"
                             />
                             Activo
                         </label>
 
-                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "maintenance"
+                        <label className={`cursor-pointer px-2.5 py-1 rounded transition-colors select-none ${activeTab === "Mantenimiento"
                             ? "gradient-purple text-white font-medium shadow-xs"
                             : "text-gray-600 hover:text-purple-700"
                             }`}>
                             <input
                                 type="radio"
                                 name="activeTab"
-                                value="maintenance"
-                                checked={activeTab === "maintenance"}
+                                value="Mantenimiento"
+                                checked={activeTab === "Mantenimiento"}
                                 onChange={(e) => setActiveTab(e.target.value as any)}
                                 className="sr-only"
                             />

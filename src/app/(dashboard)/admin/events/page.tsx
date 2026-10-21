@@ -1304,7 +1304,7 @@ export default function AdminEventsPage() {
         </>
       </MacDockModal >
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
-      < ConfirmationModal
+      <ConfirmationModal
         isOpen={modalConfig.isOpen}
         onClose={closeConfirmModal}
         onConfirm={handleConfirmAction}
@@ -1317,7 +1317,7 @@ export default function AdminEventsPage() {
         confirmButtonText={modalConfig.type === "word" ? "Eliminar de Por Vida" : "Confirmar Acción"}
       />
       {/* MODAL DETALLE DE SILLAS CON CANVAS */}
-      < MacDockModal
+      <MacDockModal
         isOpen={isFeedbackAlertOpen}
         onClose={closeFeedbackAlertModal}
         title={"¡Operación Completada!"}

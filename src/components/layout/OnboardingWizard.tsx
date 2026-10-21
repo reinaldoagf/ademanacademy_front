@@ -309,10 +309,10 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                                         onChange={(e) => setClassroomData({ ...classroomData, type: e.target.value })}
                                         className="p-2.5 bg-black/40 border border-white/10 focus:border-purple-400 outline-none text-white w-full"
                                     >
-                                        <option value="mirrors" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Espejos</option>
-                                        <option value="urban" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Urbano</option>
-                                        <option value="free" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Estudio Libre</option>
-                                        <option value="teorias" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Aula de Teorías</option>
+                                        <option value="Espejos" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Espejos</option>
+                                        <option value="Urbano" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Área Urbano</option>
+                                        <option value="Libre" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Estudio Libre</option>
+                                        <option value="Teorias" className="cursor-pointer border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Aula de Teorías</option>
                                     </select>
                                 </div>
 

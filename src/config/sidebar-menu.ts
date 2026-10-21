@@ -2,7 +2,9 @@ import {
     UsersIcon, ChartPie, Calendar, PersonStanding, HeartPulse, House,
     CalendarDays, UserPlus2, ReceiptText, Package, Wallet, Banknote,
     Contact, Shirt, ShoppingBag, Armchair, Star, Users2,
-    BanIcon
+    BanIcon,
+    CalendarArrowUp,
+    AlertCircle
 } from 'lucide-react';
 import { APP_KEYS } from './app-keys'; // Ajusta tu ruta
 
@@ -31,6 +33,7 @@ export const ADMIN_ACADEMIC_MENU: MenuItem[] = [
             { key: APP_KEYS.GROUPS_LIST, name: 'Lista de Grupos', href: '/admin/groups/list' },
         ]
     },
+    { key: APP_KEYS.SPECIAL_REHEARSALS, name: 'Ensayos de Presentación', href: '/admin/special-rehearsals', icon: CalendarArrowUp },
     { key: APP_KEYS.REGISTRATIONS, name: 'Inscripciones', href: '/admin/registrations', icon: UserPlus2 },
 ];
 
@@ -39,7 +42,7 @@ export const ADMIN_OPERATIONAL_MENU: MenuItem[] = [
     { key: APP_KEYS.PAYMENT_ORDERS, name: 'Órdenes de Pago', href: '/admin/payment-orders', icon: Package },
     { key: APP_KEYS.PAYMENTS, name: 'Caja y Pagos', href: '/admin/payments', icon: Wallet },
     { key: APP_KEYS.ACCOUNTS_PAYABLE, name: 'Cuentas por Pagar', href: '/admin/accounts-payable', icon: Banknote },
-    { key: APP_KEYS.FIXED_EXPENSES, name: 'Gastos Fijos', href: '/admin/fixed-expenses', icon: BanIcon },
+    { key: APP_KEYS.FIXED_EXPENSES, name: 'Gastos Fijos', href: '/admin/fixed-expenses', icon: AlertCircle },
     { key: APP_KEYS.EMPLOYEES, name: 'Empleados y Nómina', href: '/admin/employees', icon: Contact },
     {
         key: APP_KEYS.WARDROBE, name: 'Vestuarios y Uniformes', href: '/admin/costumes', icon: Shirt,
