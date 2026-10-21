@@ -8,7 +8,7 @@ export interface SpecialRehearsalFormData {
     endTime: string;     // "09:30"
     classroomId?: string | null; // Puede ser null si es externo
     location?: string;   // "Teatro Municipal"
-    studentIds: string[] | undefined; // IDs de los estudiantes
+    studentIds: string[]; // IDs de los estudiantes
 }
 
 export interface SpecialRehearsal {

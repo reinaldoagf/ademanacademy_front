@@ -23,7 +23,9 @@ import { TextInput, DateInput, SearchInput, SelectInput } from "@/components/ui/
 import TimeRangeSlider from "@/components/common/TimeRangeSlider";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { SpecialRehearsal, SpecialRehearsalFormData } from "@/types/special-rehearsal";
+import { Client } from "@/types/client";
 import { getAllClassroomsAction, } from "@/app/actions/classroom";
+import { getAllStudentsAction } from "@/app/actions/student";
 import { saveSpecialRehearsalAction, getAllSpecialRehearsalAction, deleteSpecialRehearsalAction } from "@/app/actions/special-rehearsal";
 import { useModal } from "@/hooks/useModal";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -82,6 +84,11 @@ export default function SpecialRehearsalsPage() {
     const [filteredClassrooms, setFilteredClassrooms] = useState<any[]>([]);
     const [showClassroomDropdown, setShowClassroomDropdown] = useState(false);
     const [isLoadingClassrooms, setIsLoadingClassrooms] = useState(false);
+    // --- ESTADOS PARA BÚSQUEDA DE ESTUDIANTES ---
+    const [studentSearch, setStudentSearch] = useState("");
+    const [filteredStudents, setFilteredStudents] = useState<Client[]>([]);
+    const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+    const [isLoadingStudents, setIsLoadingStudents] = useState(false);
     const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
     // Acción definitiva que se ejecuta al pasar el filtro del Modal
     const handleConfirmAction = async () => {
@@ -97,7 +104,8 @@ export default function SpecialRehearsalsPage() {
             });
         }
     };
-    const handleEditModal = (rehearsal: SpecialRehearsal) => { // Puedes usar la interfaz de tu Student de Prisma
+    const handleEdit = (rehearsal: SpecialRehearsal) => { // Puedes usar la interfaz de tu Student de Prisma
+
         setFormData({
             title: rehearsal.title || "",
             description: rehearsal.description || "",
@@ -126,7 +134,7 @@ export default function SpecialRehearsalsPage() {
                 endTime: formData.endTime,
                 classroomId: formData.classroomId || undefined,
                 location: formData.location || undefined,
-                studentIds: formData.studentIds && formData.studentIds.length > 0 ? formData.studentIds : undefined,
+                studentIds: formData.studentIds && formData.studentIds.length > 0 ? formData.studentIds : [],
             };
 
             startTransition(async () => {
@@ -183,7 +191,42 @@ export default function SpecialRehearsalsPage() {
         }, delay);
 
         return () => clearTimeout(delayDebounce);
-    }, [classroomSearch]);
+    }, [isFormOpen, classroomSearch]);
+    // --- EFFECT PARA estudiantes (Vía Server Action) ---
+    useEffect(() => {
+        setIsLoadingStudents(true);
+
+        const isSearchEmpty = !studentSearch.trim();
+        const delay = isSearchEmpty ? 0 : 400;
+
+        const delayDebounce = setTimeout(async () => {
+            try {
+                // Construimos los parámetros requeridos por FetchGroupsParams
+                const params = isSearchEmpty
+                    ? { limit: 5 }
+                    : { search: studentSearch.trim() };
+
+                // Llamada directa al Server Action
+                const res = await getAllStudentsAction(params);
+
+                if (res.success && res.data) {
+                    // Axios mapea la respuesta en result.data. data.data suele ser el array
+                    // Si tu backend anida los estudiantes en 'estudiantes', úsalo; de lo contrario asigna result.data
+                    setFilteredStudents(res.data.students || res.data);
+                } else {
+                    console.error("Error en Server Action (estudiantes):", res.error);
+                    setFilteredStudents([]);
+                }
+            } catch (error) {
+                console.error("Error crítico buscando estudiantes:", error);
+                setFilteredStudents([]);
+            } finally {
+                setIsLoadingStudents(false);
+            }
+        }, delay);
+
+        return () => clearTimeout(delayDebounce);
+    }, [isFormOpen, studentSearch]);
     const fetchData = (pageToFetch: number, limitToFetch: number) => {
         startTransition(async () => {
             const res = await getAllSpecialRehearsalAction({
@@ -307,7 +350,7 @@ export default function SpecialRehearsalsPage() {
                                     variant="success"
                                     icon={Pencil}
                                     tooltip="Editar"
-                                    onClick={() => handleEditModal(rehearsal)}
+                                    onClick={() => handleEdit(rehearsal)}
                                 >
                                     Editar
                                 </ActionButton>
@@ -462,9 +505,59 @@ export default function SpecialRehearsalsPage() {
                         }}
                     />
 
-                    {/* 6. Selector de Rango Horario (Valida automáticamente solapamientos con clases regulares en backend) */}
-                    <div className="space-y-1">
-                        <label className="text-gray-700 font-bold text-xs">Horario del Ensayo *</label>
+                    {/* 6. Selector Múltiple de Estudiantes */}
+                    <SearchInput
+                        label="Estudiantes Participantes (Selección Múltiple)"
+                        placeholder="Escribe el nombre o DNI para filtrar..."
+                        multiple={true}
+                        selectedIds={formData.studentIds}
+                        // 🌟 Mapeamos siempre sobre la lista completa 'students' (no sobre filteredStudents)
+                        // así no se perderán los datos de las etiquetas seleccionadas previamente al filtrar
+                        selectedOptions={selectedElement ? selectedElement.students.map((student: any) => ({
+                            id: student.id,
+                            label: `${student.firstName || student.clients[0]?.firstName} ${student.lastName || student.clients[0]?.lastName}`,
+                        })) : filteredStudents
+                            .filter((client: Client) => client.student?.id && formData.studentIds.includes(client.student.id)) // 🌟 Agregamos check 's.id &&'
+                            .map((client: Client) => ({
+                                id: client.student?.id!, // 🌟 El '!' le asegura a TypeScript que id ya no es undefined
+                                label: `${client.firstName} ${client.lastName}`,
+                            }))}
+
+                        value={studentSearch}
+                        isLoading={isLoadingStudents}
+                        options={filteredStudents.map((client: Client) => ({
+                            id: client.student?.id as any,
+                            label: `${client.firstName} ${client.lastName}`,
+                            subLabel: `Email: ${client.email || 'N/A'}`,
+                            data: client,
+                        }))}
+                        emptyMessage="No se encontraron estudiantes"
+                        onChangeText={(text) => setStudentSearch(text)}
+                        onSelectOption={(option) => {
+                            const studentIdStr = String(option.id);
+                            const exists = formData.studentIds.includes(studentIdStr);
+
+                            const updatedStudentIds = exists
+                                ? formData.studentIds.filter((id) => id !== studentIdStr)
+                                : [...formData.studentIds, studentIdStr];
+
+                            setFormData({
+                                ...formData,
+                                studentIds: updatedStudentIds,
+                            });
+                        }}
+                        onRemoveOption={(optionId) => {
+                            setFormData({
+                                ...formData,
+                                studentIds: formData.studentIds.filter((id) => id !== String(optionId)),
+                            });
+                        }}
+                    />
+                    {/* 7. Selector de Rango Horario (Valida automáticamente solapamientos con clases regulares en backend) */}
+                    <div className="space-y-2">
+                        <div className="mb-1">
+                            <label className="text-gray-700 font-bold text-xs">Horario del Ensayo *</label>
+                        </div>
                         <TimeRangeSlider
                             startTime={formData.startTime}
                             endTime={formData.endTime}
@@ -474,18 +567,6 @@ export default function SpecialRehearsalsPage() {
                         />
                     </div>
 
-                    {/* 7. Selector Múltiple de Estudiantes (Usando el checklist que configuramos) */}
-                    {/* <SelectInput
-                        label="Estudiantes Participantes (Selección Múltiple)"
-                        multiple={true}
-                        value={formData.studentIds}
-                        onChange={(selectedIds) => setFormData({ ...formData, studentIds: selectedIds })}
-                        placeholder="Selecciona los estudiantes..."
-                        options={(students || []).map((s) => ({
-                            label: `${s.clients?.[0]?.firstName || ''} ${s.clients?.[0]?.lastName || 'Estudiante'} (DNI: ${s.clients?.[0]?.dni || 'N/A'})`,
-                            value: s.id,
-                        }))}
-                    /> */}
 
                     {/* Botonera de Acción */}
                     <div className="pt-4 border-t border-purple-100 bg-purple-50/25 flex justify-between shrink-0 px-2 pb-2">
