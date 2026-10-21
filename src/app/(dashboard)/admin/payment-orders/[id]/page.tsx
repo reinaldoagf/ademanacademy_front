@@ -20,7 +20,10 @@ import DatePipe from "@/components/pipes/DatePipe";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput } from "@/components/ui/forms";
 import { getPaymentOrderByIdAction, recordPaymentOrderAction } from "@/app/actions/payment-order";
-import { PaymentOrder } from "@/types/payment-order";
+import { PaymentOrder, RecordPaymentOrderPayload } from "@/types/payment-order";
+import { uploadFileToS3 } from "@/helpers/s3";
+import { S3Image } from "@/types/s3-image";
+
 const initialFormState = {
     referenceNumber: "",
     bankName: "",
@@ -56,20 +59,21 @@ export default function PaymentOrderDetailsPage() {
             setErrorMsg("Por favor, completa los datos de pago.");
             return;
         }
-
-        // ✨ Construimos un FormData para adjuntar el archivo binario
-        const newFormData = new FormData();
-        newFormData.append("referenceNumber", formData.referenceNumber);
-        newFormData.append("bankName", formData.bankName);
-        newFormData.append("amount", formData.amount.toString());
-
+        let newlyUploadedImage: S3Image | null = null
+        // 1. Subir archivos nuevos a S3
         if (paymentReceipt) {
-            newFormData.append("receiptFile", paymentReceipt); // 📂 Adjunto del archivo original
+            newlyUploadedImage = await uploadFileToS3(paymentReceipt)
         }
         try {
             startTransition(async () => {
                 // 🎯 Acción de servidor / API para guardar el cliente
-                const res = await recordPaymentOrderAction(newFormData, id);
+                const payload: RecordPaymentOrderPayload = {
+                    referenceNumber: formData.referenceNumber,
+                    bankName: formData.bankName,
+                    amount: formData.amount,
+                    imageOfPaymentReceipt: newlyUploadedImage
+                }
+                const res = await recordPaymentOrderAction(payload, id);
 
                 if (!res.success) {
                     setErrorMsg(res.error || "Ocurrió un error al guardar el cliente.");

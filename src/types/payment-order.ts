@@ -4,6 +4,7 @@ import { SeatingMapElement } from "@/types/seating-map";
 import { User } from "@/types/user";
 import { EventData } from "@/types/event";
 import { Transaction } from "@/types/transaction";
+import { S3Image } from "./s3-image";
 export interface PaymentOrder {
     id: string;
     concept: string;
@@ -25,6 +26,13 @@ export interface PaymentOrder {
         event?: EventData;
         seatingMapElement?: SeatingMapElement;
     }>;
+}
+
+export interface RecordPaymentOrderPayload {
+    referenceNumber: string;
+    bankName: string;
+    amount: number;
+    imageOfPaymentReceipt: S3Image | null;
 }
 export interface FetchPaymentOrdersParams {
     page?: number;

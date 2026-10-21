@@ -173,7 +173,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         if (receiptFile) {
             newlyUploadedImage = await uploadFileToS3(receiptFile)
         }
-        console.log({ newlyUploadedImage })
         startTransition(async () => {
             setError(null);
             const payload: CompleteOnboardingPayload = {
@@ -185,7 +184,6 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 payment: paymentData || null,
                 imageOfPaymentReceipt: newlyUploadedImage
             }
-            console.log(payload)
             const res = await completeOnboardingAction(payload);
             if (res.success && res.data?.user) {
                 openFeedbackAlertModal();

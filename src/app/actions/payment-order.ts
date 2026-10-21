@@ -1,9 +1,8 @@
 "use server";
 
 import axios from "axios";
-import { FetchPaymentOrdersParams } from "@/types/payment-order";
+import { FetchPaymentOrdersParams, RecordPaymentOrderPayload } from "@/types/payment-order";
 import { getAuthHeaders } from "@/helpers/auth-headers";
-import FormDataNode from "form-data";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
@@ -75,32 +74,19 @@ export async function getAllPaymentOrdersAction(params: FetchPaymentOrdersParams
     }
 }
 
-export async function recordPaymentOrderAction(formData: FormData, orderId: string) {
+export async function recordPaymentOrderAction(payload: RecordPaymentOrderPayload, orderId: string) {
     try {
         const headers = await getAuthHeaders();
-        // 🚀 Creamos una instancia de FormData limpia del lado del servidor de Node.js
-        const backendForm = new FormDataNode();
-
-        backendForm.append("referenceNumber", formData.get("referenceNumber"));
-        backendForm.append("bankName", formData.get("bankName"));
-        backendForm.append("amount", formData.get("amount"));
-        const file = formData.get("receiptFile") as File | null;
-        if (file && file.size > 0) {
-            const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos el archivo a un Buffer binario de Node
-            backendForm.append("receiptFile", buffer, {
-                filename: file.name,
-                contentType: file.type,
-            });
+        const requestHeaders = { ...headers };
+        if (requestHeaders['Content-Type']) {
+            delete requestHeaders['Content-Type'];
         }
         // 3. Enviamos a NestJS combinando los headers dinámicos del Multipart
         const response = await axios.post(
             `${BACKEND_URL}/payment-orders/${orderId}/record`,
-            backendForm,
+            payload,
             {
-                headers: {
-                    ...headers,
-                    ...backendForm.getHeaders() // 🔥 Esto inyecta el multipart/form-data con su boundary correcto
-                }
+                headers: requestHeaders
             }
         );
         return { success: true, data: response.data };
