@@ -1,6 +1,7 @@
 import { User } from "@/types/user";
 import { Client } from "@/types/client";
 import { PaymentOrder } from "@/types/payment-order";
+import { S3Image } from "./s3-image";
 export interface Transaction {
     id: string;
     concept: "Clase" | "Mensualidad" | "Inscripción" | "Vestuario" | "Entradas_Gala" | "Producto" | "Otro";
@@ -9,7 +10,7 @@ export interface Transaction {
     bankName: string;
     referenceNumber: string;
     amount: number;
-    receiptPath?: string;
+    imageOfPaymentReceipt?: S3Image;
     registeringUserId?: string;
     registeringUser?: User;
     clientId?: string;

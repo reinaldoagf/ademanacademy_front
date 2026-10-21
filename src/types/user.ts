@@ -1,6 +1,7 @@
 
 import { Student } from "@/types/student";
 import { Client } from "./client";
+import { S3Image } from "./s3-image";
 export interface User {
     id: string;
     dni: string;
@@ -18,6 +19,17 @@ export interface User {
     createdAt?: string;
     updatedAt?: string;
 }
+
+export interface CompleteOnboardingPayload {
+    profileType: string;
+    isEnrolled: boolean;
+    studentId: string;
+    representativeOccupation: string;
+    representedStudents: Student[];
+    payment: { bankName?: string; referenceNumber?: string; amount?: number; isEnrolled?: boolean; studentId?: string } | null;
+    imageOfPaymentReceipt: S3Image | null;
+}
+
 export interface FetchUsersParams {
     page?: number;
     limit?: number;

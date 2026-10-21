@@ -2,74 +2,73 @@
 "use server";
 
 import axios from "axios";
-import { FetchUsersParams } from "@/types/user";
+import { FetchUsersParams, CompleteOnboardingPayload } from "@/types/user";
 import { getAuthHeaders, getAuthHeadersForMultipart } from "@/helpers/auth-headers";
-import FormDataNode from "form-data";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
-export async function completeOnboardingAction(formData: FormData) {
+export async function completeOnboardingAction(payload: CompleteOnboardingPayload) {
     try {
         const headers = await getAuthHeadersForMultipart();
-
-        // 🚀 Creamos una instancia de FormData limpia del lado del servidor de Node.js
-        const backendForm = new FormDataNode();
-
-        const profileType = formData.get("profileType") as string;
-        const isEnrolled = formData.get("isEnrolled") === "true";
-        const studentId = formData.get("studentId") as string;
-
-        // Añadimos campos básicos de forma segura
-        backendForm.append("profileType", profileType);
-        backendForm.append("isEnrolled", String(isEnrolled));
-
-        if (studentId) {
-            backendForm.append("studentId", studentId);
+        const requestHeaders = { ...headers };
+        if (requestHeaders['Content-Type']) {
+            delete requestHeaders['Content-Type'];
         }
-
-        if (profileType === "Representante") {
-            const occupation = formData.get("representativeOccupation");
-            const students = formData.get("representedStudents");
-            const payment = formData.get("payment");
-
-            if (occupation) backendForm.append("representativeOccupation", occupation);
-            if (students) backendForm.append("representedStudents", students);
-            if (payment) backendForm.append("payment", payment);
-
-            const file = formData.get("receiptFile") as File | null;
-            if (file && file.size > 0) {
-                const buffer = Buffer.from(await file.arrayBuffer());
-                backendForm.append("receiptFile", buffer, {
-                    filename: file.name,
-                    contentType: file.type,
-                });
-            }
-        } else {
-            // Si es student y NO está matriculado, procesamos pago y archivo
-            if (!isEnrolled) {
-                const payment = formData.get("payment");
-                if (payment) backendForm.append("payment", payment);
-
-                const file = formData.get("receiptFile") as File | null;
-                if (file && file.size > 0) {
-                    const buffer = Buffer.from(await file.arrayBuffer());
-                    backendForm.append("receiptFile", buffer, {
-                        filename: file.name,
-                        contentType: file.type,
-                    });
-                }
-            }
-        }
+        /*  // 🚀 Creamos una instancia de FormData limpia del lado del servidor de Node.js
+         const backendForm = new FormDataNode();
+ 
+         const profileType = formData.get("profileType") as string;
+         const isEnrolled = formData.get("isEnrolled") === "true";
+         const studentId = formData.get("studentId") as string;
+ 
+         // Añadimos campos básicos de forma segura
+         backendForm.append("profileType", profileType);
+         backendForm.append("isEnrolled", String(isEnrolled));
+ 
+         if (studentId) {
+             backendForm.append("studentId", studentId);
+         }
+ 
+         if (profileType === "Representante") {
+             const occupation = formData.get("representativeOccupation");
+             const students = formData.get("representedStudents");
+             const payment = formData.get("payment");
+ 
+             if (occupation) backendForm.append("representativeOccupation", occupation);
+             if (students) backendForm.append("representedStudents", students);
+             if (payment) backendForm.append("payment", payment);
+ 
+             const file = formData.get("receiptFile") as File | null;
+             if (file && file.size > 0) {
+                 const buffer = Buffer.from(await file.arrayBuffer());
+                 backendForm.append("receiptFile", buffer, {
+                     filename: file.name,
+                     contentType: file.type,
+                 });
+             }
+         } else {
+             // Si es student y NO está matriculado, procesamos pago y archivo
+             if (!isEnrolled) {
+                 const payment = formData.get("payment");
+                 if (payment) backendForm.append("payment", payment);
+ 
+                 const file = formData.get("receiptFile") as File | null;
+                 if (file && file.size > 0) {
+                     const buffer = Buffer.from(await file.arrayBuffer());
+                     backendForm.append("receiptFile", buffer, {
+                         filename: file.name,
+                         contentType: file.type,
+                     });
+                 }
+             }
+         } */
 
         // 3. Enviamos a NestJS combinando los headers dinámicos del Multipart
         const response = await axios.post(
             `${BACKEND_URL}/users/complete-onboarding`,
-            backendForm,
+            payload,
             {
-                headers: {
-                    ...headers,
-                    ...backendForm.getHeaders() // Inyecta el multipart/form-data con su boundary correcto
-                }
+                headers: requestHeaders
             }
         );
 

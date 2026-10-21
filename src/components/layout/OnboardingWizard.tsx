@@ -10,8 +10,10 @@ import { useAuthStore } from "@/store/authStore";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { FeedbackAlert } from "@/components/ui/FeedbackAlert";
 import { useModal } from "@/hooks/useModal";
-import { User } from "@/types/user";
+import { CompleteOnboardingPayload, User } from "@/types/user";
 import { Client } from "@/types/client";
+import { uploadFileToS3 } from "@/helpers/s3";
+import { S3Image } from "@/types/s3-image";
 
 interface OnboardingWizardProps {
     userEmail: string;
@@ -127,7 +129,7 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
         setStep(2);
     };
 
-    const handleSubmit = (
+    const handleSubmit = async (
         finalRole: "Estudiante" | "Representante",
         finalStudents: any[],
         occupation?: string,
@@ -166,39 +168,25 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                 }
             }
         }
-
+        let newlyUploadedImage: S3Image | null = null
+        // 1. Subir archivos nuevos a S3
+        if (receiptFile) {
+            newlyUploadedImage = await uploadFileToS3(receiptFile)
+        }
+        console.log({ newlyUploadedImage })
         startTransition(async () => {
             setError(null);
-            // Construimos el FormData para enviar archivos y datos estructurados
-            const formData = new FormData();
-            formData.append("profileType", finalRole);
-
-            if (finalRole === "Representante") {
-                formData.append("representativeOccupation", occupation?.trim() || "");
-                formData.append("representedStudents", JSON.stringify(finalStudents));
-
-                if (paymentData) {
-                    formData.append("payment", JSON.stringify(paymentData));
-                }
-                if (receiptFile) {
-                    formData.append("receiptFile", receiptFile);
-                }
-            } else {
-                // Verificamos si es un estudiante ya inscrito o el flujo estándar con pago
-                if (paymentData?.isEnrolled) {
-                    formData.append("isEnrolled", "true");
-                    formData.append("studentId", paymentData.studentId || "");
-                } else {
-                    if (paymentData) {
-                        formData.append("payment", JSON.stringify({ ...paymentData, amount: REGISTRATION_FEE }));
-                    }
-                    if (receiptFile) {
-                        formData.append("receiptFile", receiptFile);
-                    }
-                }
+            const payload: CompleteOnboardingPayload = {
+                profileType: finalRole,
+                isEnrolled: paymentData?.isEnrolled || false,
+                studentId: paymentData?.studentId || "",
+                representativeOccupation: occupation?.trim() || "",
+                representedStudents: finalStudents,
+                payment: paymentData || null,
+                imageOfPaymentReceipt: newlyUploadedImage
             }
-
-            const res = await completeOnboardingAction(formData);
+            console.log(payload)
+            const res = await completeOnboardingAction(payload);
             if (res.success && res.data?.user) {
                 openFeedbackAlertModal();
 

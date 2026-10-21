@@ -39,8 +39,6 @@ export default function PaymentDetailsPage() {
     const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
     const [isLoadingGroups, setIsLoadingGroups] = useState(false);
 
-    const backendUrl = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3000";
-    const receiptUrl = transaction ? `${backendUrl}/uploads/receipts/${transaction.receiptPath}` : "";
     const [modalConfig, setModalConfig] = useState<{
         isOpen: boolean;
         type: "simple" | "word" | "email";
@@ -63,6 +61,7 @@ export default function PaymentDetailsPage() {
             startTransition(async () => {
                 try {
                     const res = await getTransactionByIdAction(id);
+                    console.log({ res })
                     if (res.success && res.data) {
                         setTransaction(res.data);
                         setError(null);
@@ -146,7 +145,7 @@ export default function PaymentDetailsPage() {
         }, delay);
 
         return () => clearTimeout(delayDebounce);
-    }, [transaction, backendUrl, groupSearch]);
+    }, [transaction, groupSearch]);
     return (
         <>
             {/* HERO SECTION */}
@@ -234,16 +233,16 @@ export default function PaymentDetailsPage() {
                                     <h3 className="text-lg font-anton mb-4">
                                         Comprobante Digital
                                     </h3><div className="flex-1 bg-gray-50 border border-dashed border-gray-200 p-2 flex flex-col justify-center items-center min-h-[240px] relative group overflow-hidden">
-                                        {transaction.receiptPath ? (
+                                        {transaction.imageOfPaymentReceipt?.url ? (
                                             <>
                                                 <img
-                                                    src={receiptUrl}
+                                                    src={transaction.imageOfPaymentReceipt.url}
                                                     alt="Comprobante de pago"
                                                     className="max-h-56 w-full object-contain transition-all duration-300 group-hover:blur-[2px]"
                                                 />
                                                 {/* Overlay al hacer Hover */}
                                                 <a
-                                                    href={receiptUrl}
+                                                    href={transaction.imageOfPaymentReceipt.url}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="absolute inset-0 bg-gray-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white gap-1 transition-all duration-200 cursor-pointer text-center"
