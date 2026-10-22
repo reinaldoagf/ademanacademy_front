@@ -316,15 +316,15 @@ export default function EmployeesPage() {
       header: "Estado de Nómina",
       render: (employee) => (
         <span
-          className={`text-[10px] font-questrial font-bold px-2.5 py-0.5 inline-flex items-center gap-1 ${employee.payrollStatus === "paid"
+          className={`text-[10px] font-questrial font-bold px-2.5 py-0.5 inline-flex items-center gap-1 ${employee.payrollStatus === "Pagada"
             ? "bg-emerald-100 text-emerald-800"
             : "bg-amber-100 text-amber-800"
             }`}
         >
-          {employee.payrollStatus === "paid" && (
+          {employee.payrollStatus === "Pagada" && (
             <CircleCheck className="w-3 h-3" />
           )}
-          {employee.payrollStatus === "paid" ? "Pagado" : "Pendiente"}
+          {employee.payrollStatus === "Pagada" ? "Pagado" : "Pendiente"}
         </span>
       ),
     },

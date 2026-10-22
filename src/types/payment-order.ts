@@ -10,7 +10,7 @@ export interface PaymentOrder {
     concept: string;
     amount: number;
     dueDate: string | Date;
-    status: string;
+    status: "Pendiente" | "Pagada" | "Vencida" | "Anulada";
     createdAt: string | Date;
     updatedAt: string | Date;
     registeringUser?: User | null;

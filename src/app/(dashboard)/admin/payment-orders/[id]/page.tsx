@@ -21,8 +21,8 @@ import { MacDockModal } from "@/components/ui/MacDockModal";
 import { TextInput, SelectInput } from "@/components/ui/forms";
 import { getPaymentOrderByIdAction, recordPaymentOrderAction } from "@/app/actions/payment-order";
 import { PaymentOrder, RecordPaymentOrderPayload } from "@/types/payment-order";
-import { uploadFileToS3 } from "@/helpers/s3";
 import { S3Image } from "@/types/s3-image";
+import { uploadFileToS3 } from "@/helpers/s3";
 
 const initialFormState = {
     referenceNumber: "",
@@ -336,7 +336,7 @@ export default function PaymentOrderDetailsPage() {
                                         <h3 className="text-lg font-anton mb-1">Transacciones / Intentos de Pago</h3>
                                     </div>
                                     {
-                                        paymentOrder?.status !== 'paid' && (
+                                        paymentOrder?.status !== 'Pagada' && (
                                             <div>
                                                 <button onClick={() => {
                                                     setFormData({ ...initialFormState, amount: paymentOrder.amount - totalPaid });
