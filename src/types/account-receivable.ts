@@ -1,22 +1,18 @@
 // /src/types/account-receivable.ts
 
-export type PaymentOrderStatus = "pending" | "paid" | "defeated" | "annulled";
+export type PaymentOrderStatus = "Pendiente" | "Pagada" | "Vencida" | "Anulada";
 
-export type TransactionStatus = "approved" | "pending" | "refused";
+export type TransactionStatus = "Aprobado" | "Pendiente" | "Rechazado";
 
-export type ConceptType =
-    | "monthly_payment"
-    | "Inscripción"
-    | "locker_room"
-    | "Entradas_Gala";
+export type ConceptType = "Clase" | "Mensualidad" | "Inscripción" | "Vestuario" | "Entradas_Gala" | "Producto" | "Otro";
 
 export type PaymentMethod =
-    | "cash"
-    | "mobile_payment"
-    | "bank_transfer"
-    | "pos"
-    | "zelle"
-    | "other";
+    | "Transferencia"
+    | "Tarjeta"
+    | "Efectivo"
+    | "Pago_Movil"
+    | "Cheque"
+    | "Otro";
 
 // Interface para el listado de transacciones / abonos
 export interface ReceivableTransaction {

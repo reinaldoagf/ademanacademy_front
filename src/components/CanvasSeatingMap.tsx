@@ -87,8 +87,8 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     // Recorrer los elementos del mapa
     for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
       const el = seatingMap.elements[i];
-      if (el.type === "platform") continue;
-      if (!user?.isAdmin && el.itemType === "sponsor_chair") continue;
+      if (el.type === "Tarima") continue;
+      if (!user?.isAdmin && el.itemType === "Silla_de_Patrocinante") continue;
 
       if (checkIntersection(mouseX, mouseY, el)) {
         foundElement = el;
@@ -155,7 +155,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     let tX = unscaledMX;
     let tY = unscaledMY;
 
-    const fAumento = obj.type !== "platform" ? CHAIR_INCREASE_FACTOR : 1.0;
+    const fAumento = obj.type !== "Tarima" ? CHAIR_INCREASE_FACTOR : 1.0;
 
     // Usamos dimensiones uniformes
     const w = (obj.widthMeters || 0.8) * SCALE * fAumento;
@@ -202,8 +202,8 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     let elementClicked: SeatingMapElement | undefined = undefined;
     for (let i = seatingMap.elements.length - 1; i >= 0; i--) {
       const el = seatingMap.elements[i];
-      if (el.type === "platform") continue;
-      if (!user?.isAdmin && el.itemType === "sponsor_chair") continue;
+      if (el.type === "Tarima") continue;
+      if (!user?.isAdmin && el.itemType === "Silla_de_Patrocinante") continue;
       if (el.id && occupiedSeatsState.includes(el.id)) continue;
 
       if (checkIntersection(clickX, clickY, el)) {
@@ -303,7 +303,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
     ctx.fillRect(0, 0, baseWidth, baseHeight);
 
     seatingMap.elements.forEach((el) => {
-      const fAumento = el.type !== "platform" ? CHAIR_INCREASE_FACTOR : 1.0;
+      const fAumento = el.type !== "Tarima" ? CHAIR_INCREASE_FACTOR : 1.0;
 
       // Dimensiones cuadradas/proporcionales exactas (1:1 en metros)
       const w = (el.widthMeters || 0.8) * SCALE * fAumento;
@@ -338,7 +338,7 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
       const localX = -w / 2;
       const localY = -h / 2;
 
-      if (el.type === "platform") {
+      if (el.type === "Tarima") {
         ctx.fillStyle = "#334155";
         ctx.strokeStyle = "#1e293b";
         ctx.lineWidth = 1;
@@ -366,13 +366,13 @@ export const CanvasSeatingMap: React.FC<SeatingMapProps> = ({
           colorCushion = "#10b981";
           colorStructure = "#047857";
         } else {
-          if (el.itemType === "general_chair") {
+          if (el.itemType === "Silla_General") {
             colorCushion = "#64748b";
             colorStructure = "#334155";
-          } else if (el.itemType === "preferred_seating") {
+          } else if (el.itemType === "Silla_Preferencial") {
             colorCushion = "#bf72f6";
             colorStructure = "#9810fa";
-          } else if (el.itemType === "sponsor_chair") {
+          } else if (el.itemType === "Silla_de_Patrocinante") {
             colorCushion = "#eab308";
             colorStructure = "#ca8a04";
           }

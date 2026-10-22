@@ -218,7 +218,7 @@ export default function SeatingMapListPage() {
                           Asientos
                         </p>
                         <p className="text-xs font-questrial font-bold text-gray-700">
-                          {seatingMap.elements.filter(e => (e.type == "chair")).length || 0}
+                          {seatingMap.elements.filter(e => (e.type == "Silla")).length || 0}
                         </p>
                       </div>
                       <div className="bg-slate-50 p-2">
@@ -226,7 +226,7 @@ export default function SeatingMapListPage() {
                           Tarimas
                         </p>
                         <p className="text-xs font-questrial font-bold text-gray-700">
-                          {seatingMap.elements.filter(e => (e.type == "platform")).length || 0}
+                          {seatingMap.elements.filter(e => (e.type == "Tarima")).length || 0}
                         </p>
                       </div>
                     </div>

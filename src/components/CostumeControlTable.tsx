@@ -8,7 +8,7 @@ export interface CostumeInventoryItem {
     costumeName: string;
     responsible: string;
     status: string; // AssignmentStatus: assigned, returned, etc.
-    costumeStatus?: string; // LockerRoomStatus: payment_pending, in_use, etc.
+    costumeStatus?: string; // CostumeStatus: payment_pending, in_use, etc.
     pendingFee: number;
 }
 

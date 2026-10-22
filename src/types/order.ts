@@ -32,7 +32,7 @@ export interface Order {
     clientId: string;
     client: Client;
     totalAmount: number;
-    status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
+    status: OrderStatus;
     items?: OrderItem[];
     paymentOrder?: PaymentOrder;
     createdAt: string,
@@ -40,7 +40,7 @@ export interface Order {
 }
 
 // Tipos requeridos según el schema y backend
-export type OrderStatus = "pending_preparation" | "processing" | "completed" | "cancelled";
+export type OrderStatus = "Pendiente" | "Por_Entregar" | "Entregado" | "Cancelado";
 export type ConceptType = "VESTUARIO" | "ENTRADAS" | string;
 
 export interface FormOrderItem {
@@ -80,7 +80,7 @@ export interface OrderDetails {
     clientId: string;
     client: Client;
     totalAmount: string | number;
-    status: "pending_preparation" | "ready_for_delivery" | "delivered" | "canceled";
+    status: "Pendiente" | "Por_Entregar" | "Entregado" | "Cancelado";
     user?: {
         id: string;
         dni?: string;

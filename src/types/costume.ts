@@ -5,11 +5,11 @@ import {
 import { S3Image } from "./s3-image";
 
 // 🎯 Enums del ciclo de vida de la asignación
-export type AssignmentStatus = "assigned" | "returned" | "damaged" | "lost";
+export type AssignmentStatus = "Asignado" | "Devuelto_En_Buen_Estado" | "Devuelto_Con_Daños" | "Extraviado";
 
-export type CostumeCategory = "baby" | "childrens" | "youth" | "adult";
+export type CostumeCategory = "Bebé" | "Infantil" | "Juvenil" | "Adulto";
 
-export type CostumeStatus = "pending_preparation" | "available" | "maintenance" | "retired";
+export type CostumeStatus = "Pendiente_por_Pago" | "Confeccionando" | "Disponible" | "Retirado";
 
 export interface SizeStock {
     size: string;
@@ -82,7 +82,7 @@ export interface StatusCardConfig {
     iconTextClass: string;
     unitLabel: string;
 }
-export type LockerRoomStatus = "payment_pending" | "making" | "available" | "retired";
+
 
 export interface ElementToBeAssigned {
     studentId: string;

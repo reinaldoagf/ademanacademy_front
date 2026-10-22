@@ -23,7 +23,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch, SearchInput } from '@/components/ui/forms';
-import { CostumeCategory, CostumeStatus, Costume, StatusCardConfig, LockerRoomStatus, CostumeFormData, SaveCostumePayload, ElementToBeAssigned } from "@/types/costume";
+import { CostumeCategory, Costume, StatusCardConfig, CostumeStatus, CostumeFormData, SaveCostumePayload, ElementToBeAssigned } from "@/types/costume";
 import {
   getAllCostumesAction,
   getCostumeCountByStatus,
@@ -42,8 +42,8 @@ import { Student } from "@/types/student";
 import { Client } from "@/types/client";
 
 // 2. Configuración visual estática fuera del componente
-const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
-  making: {
+const STATUS_CONFIG: Record<CostumeStatus, StatusCardConfig> = {
+  Confeccionando: {
     title: "Confeccionando",
     subtitle: "Listos para asignación e inventario activo.",
     icon: CheckCircle2,
@@ -51,7 +51,7 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     iconTextClass: "text-emerald-600",
     unitLabel: "Piezas",
   },
-  payment_pending: {
+  Pendiente_por_Pago: {
     title: "Pendiente por pago",
     subtitle: "Prendas en etapa de preparación o taller.",
     icon: Shirt,
@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     iconTextClass: "text-[#5e0472]",
     unitLabel: "Modelos",
   },
-  available: {
+  Disponible: {
     title: "Disponibles / En Stock",
     subtitle: "Retenidos para mantenimiento y ajustes.",
     icon: Wrench,
@@ -67,7 +67,7 @@ const STATUS_CONFIG: Record<LockerRoomStatus, StatusCardConfig> = {
     iconTextClass: "text-amber-600",
     unitLabel: "Prendas",
   },
-  retired: {
+  Retirado: {
     title: "Retirado",
     subtitle: "Inactivos, dados de baja o en desecho.",
     icon: ArchiveX,
@@ -81,7 +81,7 @@ const initialCostumeFormState: CostumeFormData = {
   price: 0, // 👈 Nuevo campo de precio
   beat: '',
   category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
-  status: 'payment_pending' as CostumeStatus,
+  status: 'Pendiente_por_Pago' as CostumeStatus,
   images: [],
   existingImages: [],
 };
@@ -99,11 +99,11 @@ export default function CostumesPage() {
   const policyFormReference = useRef<HTMLFormElement>(null);
   const assignmentFormReference = useRef<HTMLFormElement>(null);
   // 3. Estado enfocado puramente en los totales numéricos
-  const [statusCounts, setStatusCounts] = useState<Record<LockerRoomStatus, number>>({
-    payment_pending: 0,
-    making: 0,
-    available: 0,
-    retired: 0,
+  const [statusCounts, setStatusCounts] = useState<Record<CostumeStatus, number>>({
+    Pendiente_por_Pago: 0,
+    Confeccionando: 0,
+    Disponible: 0,
+    Retirado: 0,
   });
   const [costumes, setCostumes] = useState<Costume[]>([]);
   const {
@@ -564,7 +564,7 @@ export default function CostumesPage() {
         <div className="p-4 md:p-8 w-full overflow-y-auto space-y-6">
           {/* TARJETAS DE INDICADORES RÁPIDOS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {(Object.keys(STATUS_CONFIG) as LockerRoomStatus[]).map((statusKey) => {
+            {(Object.keys(STATUS_CONFIG) as CostumeStatus[]).map((statusKey) => {
               const config = STATUS_CONFIG[statusKey];
               const count = statusCounts[statusKey] || 0;
               const Icon = config.icon;
@@ -625,10 +625,10 @@ export default function CostumesPage() {
                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
               >
                 <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los estados</option>
-                <option value="payment_pending" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendiente por pago</option>
-                <option value="making" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Confeccionando</option>
-                <option value="available" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Disponible</option>
-                <option value="retired" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Retirado</option>
+                <option value="Pendiente_por_Pago" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendiente por pago</option>
+                <option value="Confeccionando" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Confeccionando</option>
+                <option value="Disponible" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Disponible</option>
+                <option value="Retirado" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Retirado</option>
               </select>
             </div>
 

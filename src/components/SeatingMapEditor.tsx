@@ -39,10 +39,10 @@ type DragMode = "single" | "group" | "macroGroup";
 type ToolMode = "select" | "pan";
 
 const CHAIR_TYPES = [
-    { id: "general_chair", name: "Silla General", color: "#64748b", border: "#334155" },
-    { id: "vip_chair", name: "Silla VIP", color: "#6e0372", border: "#4a024d" },
-    { id: "preferred_seating", name: "Silla Preferencial", color: "#bf72f6", border: "#9810fa" },
-    { id: "sponsor_chair", name: "Silla Patrocinador", color: "#eab308", border: "#ca8a04" },
+    { id: "Silla_General", name: "Silla General", color: "#64748b", border: "#334155" },
+    { id: "Silla_VIP", name: "Silla VIP", color: "#6e0372", border: "#4a024d" },
+    { id: "Silla_Preferencial", name: "Silla Preferencial", color: "#bf72f6", border: "#9810fa" },
+    { id: "Silla_de_Patrocinante", name: "Silla Patrocinador", color: "#eab308", border: "#ca8a04" },
 ];
 // 1. Definimos la interfaz con la función que se expondrá al padre
 
@@ -66,8 +66,8 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
     const [objects, setObjects] = useState<SeatingMapElement[]>(seatingMap?.elements || [
         {
             itemID: "stage-1",
-            type: "platform",
-            itemType: "stage_floor",
+            type: "Tarima",
+            itemType: "Tarima_Pista",
             name: "Pista Principal",
             x: 150,
             y: 35,
@@ -112,7 +112,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
     const [lotColumns, setLotColumns] = useState(20);
     const [unitPresalePricePerLot, setUnitPresalePricePerLot] = useState(5);
     const [unitSalePricePerLot, setUnitSalePricePerLot] = useState(10);
-    const [chairTypeLot, setChairTypeLot] = useState("general_chair");
+    const [chairTypeLot, setChairTypeLot] = useState("Silla_General");
     const [groupNameLot, setGroupNameLot] = useState("Zona A1");
     const [macroGroupNameLot, setMacroGroupNameLot] = useState("");
 
@@ -286,7 +286,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
             ctx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
             ctx.rotate(((obj.rotation || 0) * Math.PI) / 180);
 
-            if (obj.type === "platform") {
+            if (obj.type === "Tarima") {
                 ctx.fillStyle = "#334155";
                 ctx.strokeStyle = "#1e293b";
                 ctx.fillRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
@@ -453,7 +453,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
 
                 newChairs.push({
                     itemID: `c_${Date.now()}_${count}`,
-                    type: "chair",
+                    type: "Silla",
                     itemType: chairTypeLot,
                     name: `Asiento ${chairNum}`,
                     chairNumber: chairNum,
@@ -506,7 +506,7 @@ const SeatingMapEditor = forwardRef<SeatingMapEditorRef, EditorProps>(({
                 }
             });
             setMacroGroupNameLot("");
-            setChairTypeLot("general_chair");
+            setChairTypeLot("Silla_General");
             setUnitPresalePricePerLot(5);
             setUnitSalePricePerLot(10);
             setLotRows(10);

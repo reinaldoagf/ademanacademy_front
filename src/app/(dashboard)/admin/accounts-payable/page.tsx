@@ -324,10 +324,10 @@ export default function AccountsPayablePage() {
                             className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
                         >
                             <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos</option>
-                            <option value="pending" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendientes</option>
-                            <option value="partial" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Parcial</option>
-                            <option value="paid" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagado</option>
-                            <option value="cancelled" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cancelado</option>
+                            <option value="Pendiente" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pendientes</option>
+                            <option value="Pagado_Parcialmente" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Parcial</option>
+                            <option value="Pagado" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagado</option>
+                            <option value="Cancelada" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cancelado</option>
                         </select>
 
 

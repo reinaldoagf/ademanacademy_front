@@ -2,7 +2,6 @@
 
 import axios from "axios";
 import {
-    AccountPayable,
     CreateAccountPayableDto,
     CreatePayablePaymentDto,
     FetchAccountPayablesParams,

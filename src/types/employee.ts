@@ -1,9 +1,9 @@
 // employee.ts
 
 // 🏷️ Enums según schema.prisma
-export type TypeOfContract = 'fixed' | 'temporary' | 'indefinite' | string; // Ajusta los valores a tu enum de Prisma
-export type TypeOfEmployee = 'administrative' | 'teaching' | 'support' | string; // Ajusta los valores a tu enum de Prisma
-export type PayrollStatus = 'pending' | 'paid' | string; // Ajusta los valores a tu enum de Prisma
+export type TypeOfContract = 'Fijo' | 'Por_Hora' | 'Por_Proyecto' | string; // Ajusta los valores a tu enum de Prisma
+export type TypeOfEmployee = 'Administrativo' | 'Profesor' | 'Soporte' | 'Otro' | string; // Ajusta los valores a tu enum de Prisma
+export type PayrollStatus = 'Pendiente' | 'Pagado' | string; // Ajusta los valores a tu enum de Prisma
 
 // 👔 Interfaz Principal del Empleado (Employee)
 export interface Employee {

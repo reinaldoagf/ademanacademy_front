@@ -9,8 +9,8 @@ export interface SeatingMapElement {
     itemID: string;
     x: number;
     y: number;
-    type: "chair" | "platform" | string; // expandible a otros tipos
-    itemType: "stage_floor" | "vip_chair" | "general_chair" | "sponsor_chair" | "preferred_seating" | string; // expandible a otros tipos
+    type: "Silla" | "Tarima" | string; // expandible a otros tipos
+    itemType: "Tarima_Pista" | "Silla_VIP" | "Silla_General" | "Silla_de_Patrocinante" | "Silla_Preferencial" | string; // expandible a otros tipos
     name: string;
     chairNumber?: string | null | undefined;
     groupId?: string;
