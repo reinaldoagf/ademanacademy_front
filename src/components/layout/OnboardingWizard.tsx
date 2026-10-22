@@ -37,6 +37,19 @@ const initialNewStudentState = {
     activeInscription: false,
     email: ""
 };
+const initialClassroomDataState = {
+    address: "",
+    name: "",
+    maxCapacity: 20,
+    type: "Espejos",
+    status: "Activo",
+    description: "",
+};
+const initialPaymentInfoState = {
+    referenceNumber: "",
+    bankName: "",
+    amount: 0,
+}
 export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }: OnboardingWizardProps) {
     const router = useRouter();
     const {
@@ -72,21 +85,10 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
     const [newStudent, setNewStudent] = useState(initialNewStudentState);
 
     // 🎯 ESTADOS EXCLUSIVOS PARA EL FORMULARIO DE SALÓN (MODO INFRAESTRUCTURA)
-    const [classroomData, setClassroomData] = useState({
-        address: "",
-        name: "",
-        maxCapacity: 20,
-        type: "Espejos",
-        status: "Activo",
-        description: "",
-    });
+    const [classroomData, setClassroomData] = useState(initialClassroomDataState);
 
     // --- ESTADOS PARA COBRO DE INSCRIPCIÓN ---
-    const [paymentInfo, setPaymentInfo] = useState({
-        referenceNumber: "",
-        bankName: "",
-        amount: 0,
-    });
+    const [paymentInfo, setPaymentInfo] = useState(initialPaymentInfoState);
     const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
 
     // Constante del costo fijo
