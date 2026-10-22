@@ -55,7 +55,7 @@ import { APP_KEYS } from "@/config/app-keys";
 // 2. Valores por defecto para crear un evento nuevo
 const initialFormState: EventFormData = {
   name: "",
-  type: "sample",
+  type: "Muestra",
   productionStatus: "planning",
   startDate: "",
   endDate: "",
@@ -321,7 +321,7 @@ export default function AdminEventsPage() {
 
     setFormData({
       name: eventToEdit.name || "",
-      type: eventToEdit.type || "sample",
+      type: eventToEdit.type || "Muestra",
       startDate: eventToEdit.startDate
         ? new Date(eventToEdit.startDate).toISOString().split("T")[0]
         : "",
@@ -644,12 +644,11 @@ export default function AdminEventsPage() {
               className="p-2 w-full sm:w-auto font-questrial border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
               <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los formatos</option>
-              <option value="annual_gala" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Galas Anuales</option>
-              <option value="competence" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Competencias</option>
-              <option value="masterclass" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Masterclasses / Talleres</option>
-              <option value="sample" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Muestras de Aula</option>
-              <option value="other" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Otro</option>
-
+              <option value="Gala_Anual" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Galas Anuales</option>
+              <option value="Competencia" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Competencias</option>
+              <option value="Masterclass" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Masterclasses / Talleres</option>
+              <option value="Muestra" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Muestras de Aula</option>
+              <option value="Otro" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Otro</option>
             </select>
           </div>
 
@@ -1111,7 +1110,7 @@ export default function AdminEventsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SelectInput
                 label="Tipo de Evento"
-                value={formData.type || "sample"}
+                value={formData.type || "Muestra"}
                 onChange={(value) => setFormData({ ...formData, type: value })}
                 options={[
                   { label: "Selecciona el Tipo de Evento", value: "", disabled: true },

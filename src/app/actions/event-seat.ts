@@ -2,8 +2,8 @@
 "use server";
 
 import axios from "axios";
+import { ClientPurchaseSeatsPayload } from "@/types/event-seat";
 import { getAuthHeaders, getAuthHeadersForMultipart } from "@/helpers/auth-headers";
-import FormDataNode from "form-data";
 
 export interface ReserveSeatsPayload {
     eventId: string;
@@ -17,39 +17,20 @@ export interface ReserveSeatsPayload {
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
 
 
-export async function clientPurchaseSeatsAction(formData: FormData) {
+export async function clientPurchaseSeatsAction(payload: ClientPurchaseSeatsPayload) {
     try {
         const headers = await getAuthHeadersForMultipart();
-
-        // 🚀 Creamos la instancia de FormData de Node.js para reconstruir la petición multipart
-        const backendForm = new FormDataNode();
-
-        // 1. Traspasamos los campos de texto
-        backendForm.append("eventId", formData.get("eventId"));
-        backendForm.append("seatingMapElementIds", formData.get("seatingMapElementIds"));
-        backendForm.append("totalAmount", formData.get("totalAmount"));
-        backendForm.append("bankName", formData.get("bankName"));
-        backendForm.append("referenceNumber", formData.get("referenceNumber"));
-
-        // 2. Extraemos y procesamos el archivo de imagen o PDF
-        const file = formData.get("receiptFile") as File | null;
-        if (file && file.size > 0) {
-            const buffer = Buffer.from(await file.arrayBuffer()); // Convertimos a Buffer binario de Node
-            backendForm.append("receiptFile", buffer, {
-                filename: file.name,
-                contentType: file.type,
-            });
+        const requestHeaders = { ...headers };
+        if (requestHeaders['Content-Type']) {
+            delete requestHeaders['Content-Type'];
         }
 
         // 3. Enviamos a NestJS combinando los headers de autorización con los boundaries del Multipart
         const response = await axios.post(
             `${BACKEND_URL}/event-seats/client-purchase`,
-            backendForm,
+            payload,
             {
-                headers: {
-                    ...headers,
-                    ...backendForm.getHeaders(), // 🔥 Inyecta multipart/form-data con el boundary de form-data
-                },
+                headers: requestHeaders
             }
         );
 

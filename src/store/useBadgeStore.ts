@@ -39,7 +39,6 @@ export const useBadgeStore = create<BadgeState>()(
 
                     const data = await res.json();
 
-                    console.log({ data })
                     set({ badges: data });
                 } catch (error) {
                     console.error("Error al cargar los badges en Zustand:", error);

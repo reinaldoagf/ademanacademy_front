@@ -33,6 +33,9 @@ import { SeatingMapElement } from "@/types/seating-map";
 import { useModal } from "@/hooks/useModal";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { APP_KEYS } from "@/config/app-keys";
+import { uploadFileToS3 } from "@/helpers/s3";
+import { ClientPurchaseSeatsPayload } from "@/types/event-seat";
+import { S3Image } from "@/types/s3-image";
 
 // Importar el mapa asegurando que solo se cargue en el cliente para evitar problemas de hidratación
 const CanvasSeatingMap = dynamic(
@@ -120,18 +123,21 @@ export default function ClientEventsPage() {
         const elementIds = selectedChairs
           .map((s) => s.id)
           .filter((id): id is string => typeof id === "string");
-
-        // Creamos la estructura multipart/form-data
-        const bodyFormData = new FormData();
-        bodyFormData.append("eventId", selectedEvent.id);
-        bodyFormData.append("seatingMapElementIds", JSON.stringify(elementIds));
-        bodyFormData.append("totalAmount", (totalCashAmount || 0).toString());
-        bodyFormData.append("bankName", formData.bankName);
-        bodyFormData.append("referenceNumber", formData.referenceNumber);
-        bodyFormData.append("receiptFile", paymentReceipt); // 👈 Nombre coincidente con FileInterceptor('receiptFile')
-
+        let newlyUploadedImage: S3Image | null = null
+        // 1. Subir archivos nuevos a S3
+        if (paymentReceipt) {
+          newlyUploadedImage = await uploadFileToS3(paymentReceipt)
+        }
+        const payload: ClientPurchaseSeatsPayload = {
+          eventId: selectedEvent.id,
+          seatingMapElementIds: elementIds,
+          totalAmount: (totalCashAmount || 0),
+          bankName: formData.bankName,
+          referenceNumber: formData.referenceNumber,
+          imageOfPaymentReceipt: newlyUploadedImage
+        }
         // Consumo de tu Server Action o API client
-        const res = await clientPurchaseSeatsAction(bodyFormData);
+        const res = await clientPurchaseSeatsAction(payload);
 
         if (res.success) {
           openFeedbackAlertModal();
@@ -270,11 +276,11 @@ export default function ClientEventsPage() {
               className="p-2 w-full sm:w-auto font-questrial border border-purple-100 text-xs bg-white/50 text-gray-700 focus:outline-none"
             >
               <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todos los formatos</option>
-              <option value="annual_gala" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Galas Anuales</option>
-              <option value="competence" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Competencias</option>
-              <option value="masterclass" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Masterclasses / Talleres</option>
-              <option value="sample" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Muestras de Aula</option>
-              <option value="other" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Otro</option>
+              <option value="Gala_Anual" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Galas Anuales</option>
+              <option value="Competencia" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Competencias</option>
+              <option value="Masterclass" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Masterclasses / Talleres</option>
+              <option value="Muestra" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Muestras de Aula</option>
+              <option value="Otro" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Otro</option>
 
             </select>
           </div>

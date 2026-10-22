@@ -61,7 +61,6 @@ export default function PaymentDetailsPage() {
             startTransition(async () => {
                 try {
                     const res = await getTransactionByIdAction(id);
-                    console.log({ res })
                     if (res.success && res.data) {
                         setTransaction(res.data);
                         setError(null);
