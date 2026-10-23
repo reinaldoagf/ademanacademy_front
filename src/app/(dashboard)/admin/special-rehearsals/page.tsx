@@ -591,7 +591,7 @@ export default function SpecialRehearsalsPage() {
                             disabled={isPending}
                             className="font-questrial px-5 py-2 flex items-center justify-center gap-2 font-medium transition text-xs cursor-pointer gradient-purple text-white shadow-md shadow-purple-200 hover:opacity-90 disabled:opacity-50 rounded-md"
                         >
-                            {isPending ? "Guardando..." : "Registrar Ensayo Especial →"}
+                            {isPending ? "Guardando..." : selectedElement ? "Actualizar Ensayo Especial →" : "Registrar Ensayo Especial →"}
                         </button>
                     </div>
                 </form>

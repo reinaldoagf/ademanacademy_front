@@ -73,13 +73,14 @@ export async function getBalanceMetrics(params?: { startDate?: string; endDate?:
     }
 }
 
-export async function getAcademicCalendarEvents(yearParam?: number, monthParam?: number) {
+export async function getAcademicCalendarEvents(myCalendar: boolean = false, yearParam?: number, monthParam?: number) {
     try {
         const headers = await getAuthHeaders();
         // Axios limpiará automáticamente las propiedades undefined
         const response = await axios.get(`${BACKEND_URL}/metrics/academic-calendar-events`, {
             headers: headers,
             params: {
+                myCalendar: myCalendar,
                 yearParam: yearParam,
                 monthParam: monthParam,
             },

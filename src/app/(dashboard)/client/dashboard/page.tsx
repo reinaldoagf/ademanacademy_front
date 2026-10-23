@@ -192,10 +192,8 @@ export default function ClientDashboardPage() {
             </div>
 
             {/* Agenda del Alumno (Calendario de Ensayos / Exámenes) */}
-            <div className="glass-card p-6 shadow-sm">
-              <h3 className="text-lg font-anton mb-2 text-left">Calendario de Ensayos</h3>
-              <AcademicCalendar />
-            </div>
+
+            <AcademicCalendar myCalendar={true} />
 
             {/* Buzón de Comunicados de la Dirección / Profesores */}
             <div className="glass-card p-6 shadow-sm">

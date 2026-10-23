@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
           <div className="space-y-6">
             <GroupCapacityModule />
             {/* Agenda de Ensayos + Calendario */}
-            <AcademicCalendar />
+            <AcademicCalendar myCalendar={false} />
             {/* Alertas de WhatsApp */}
             <AutomaticNotifications />
           </div>

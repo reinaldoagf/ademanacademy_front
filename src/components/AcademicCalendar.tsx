@@ -1,3 +1,4 @@
+// src/components/AcademicCalendar.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,10 +21,13 @@ const MONTHS = [
 
 const DAYS_OF_WEEK = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
-// Reemplaza con la ruta de tu Server Action o API client
 import { getAcademicCalendarEvents } from '@/app/actions/metric';
 
-export function AcademicCalendar() {
+interface AcademicCalendarProps {
+  myCalendar?: boolean; // 🌟 Prop opcional para cumplir con las condiciones de filtrado
+}
+
+export function AcademicCalendar({ myCalendar }: AcademicCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -34,12 +38,12 @@ export function AcademicCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // Cargar eventos del mes seleccionado
+  // Cargar eventos del mes seleccionado enviando el flag myCalendar
   useEffect(() => {
     async function fetchCalendarData() {
       setIsLoading(true);
       try {
-        const res = await getAcademicCalendarEvents(year, month + 1);
+        const res = await getAcademicCalendarEvents(myCalendar, year, month + 1);
         if (res.success && res.data) {
           setEvents(res.data);
         }
@@ -51,7 +55,7 @@ export function AcademicCalendar() {
     }
 
     fetchCalendarData();
-  }, [year, month]);
+  }, [year, month, myCalendar]);
 
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -70,7 +74,9 @@ export function AcademicCalendar() {
       <div className="space-y-4">
         {/* HEADER DEL CALENDARIO */}
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-anton mb-4">Cronograma de Actividades</h3>
+          <h3 className="text-lg font-anton mb-4">
+            {myCalendar ? 'Mi Cronograma Personal' : 'Cronograma de Actividades'}
+          </h3>
           <div className="flex items-center gap-1 bg-[#5e0472] p-1 rounded-md">
             <button onClick={prevMonth} className="p-1 hover:bg-[#6e0372] transition text-white cursor-pointer">
               <ChevronLeft className="w-4 h-4" />
