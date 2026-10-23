@@ -1,3 +1,4 @@
+import { Classroom } from "./classroom";
 import { Student } from "./student";
 
 export interface SpecialRehearsalFormData {
@@ -19,6 +20,7 @@ export interface SpecialRehearsal {
     startTime: string;   // "08:00"
     endTime: string;     // "09:30"
     classroomId?: string | null; // Puede ser null si es externo
+    classroom?: Classroom | null; // Puede ser null si es externo
     location?: string;   // "Teatro Municipal"
     students: Student[]; // IDs de los estudiantes
 }

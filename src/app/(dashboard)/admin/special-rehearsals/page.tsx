@@ -291,7 +291,7 @@ export default function SpecialRehearsalsPage() {
                 {/* LISTADO DE TARJETAS DE SALONES */}
 
                 {specialRehearsals.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {specialRehearsals.map((rehearsal) => (
+                    {specialRehearsals.map((rehearsal: SpecialRehearsal) => (
                         <div
                             key={rehearsal.id}
                             className="glass-card bg-white border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 flex flex-col justify-between"
@@ -324,7 +324,16 @@ export default function SpecialRehearsalsPage() {
                                         </p>
                                     </div>
                                 </div>
-
+                                <div className="grid grid-cols-1 gap-2 pt-3 text-center border-t border-dashed border-gray-100">
+                                    <div className="bg-slate-50 p-2">
+                                        <p className="text-[10px] text-gray-400 font-questrial uppercase font-medium">
+                                            Salón de Clase
+                                        </p>
+                                        <p className="text-xs font-questrial font-bold text-gray-700">
+                                            {rehearsal.classroom?.name || 'No registrado'}
+                                        </p>
+                                    </div>
+                                </div>
 
                             </div>
 
