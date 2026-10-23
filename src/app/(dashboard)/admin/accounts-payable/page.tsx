@@ -25,6 +25,7 @@ import {
     saveAccountPayableAction,
     addPayablePaymentAction,
 } from "@/app/actions/account-payable";
+import toast from "react-hot-toast";
 // Estado inicial limpio del formulario para Empleados
 const initialFormState: PayableFormData = {
     supplierName: "",
@@ -166,7 +167,7 @@ export default function AccountsPayablePage() {
                 closePaymentModal();
                 setPaymentForm(initialPaymentForm);
                 setSelectedPayable(null);
-
+                toast.success("Abono registrado exitosamente.");
                 // 4. Recargamos la tabla de datos
                 fetchData(currentPage, itemsPerPage);
             } else {
