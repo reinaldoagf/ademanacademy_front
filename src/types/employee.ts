@@ -19,9 +19,9 @@ export interface Employee {
     address: string;
     countryCode?: string | null;
     phone?: string | null;
+    baseSalary?: number | null;
     hoursTaughtMonth: number;
-    hourlyRate: number; // En TypeScript / Frontend suele manejar los campos Decimal de Prisma como number o string
-    bonus: number;
+    hourlyRate: number;
     payrollStatus: PayrollStatus;
     userId?: string | null;
 
@@ -49,7 +49,7 @@ export interface EmployeeFormData {
     typeOfEmployee: TypeOfEmployee;
     hourlyRate: number;
     hoursTaughtMonth: number;
-    bonus: number;
+    baseSalary: number;
     birthDate: Date | string | null,
     address: string;
     userId?: string | null;

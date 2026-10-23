@@ -56,6 +56,9 @@ export default function AccountsPayablePage() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [selectedStatus, setSelectedStatus] = useState<PayableStatus | "all">("all");
     const [isPending, startTransition] = useTransition();
+    // 🌟 Nuevos estados para el ordenamiento
+    const [sortBy, setSortBy] = useState<"createdAt" | "dueDate">("createdAt");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
     // Estados para Modales
     const {
@@ -104,6 +107,8 @@ export default function AccountsPayablePage() {
                 limit: limitToFetch,
                 search: searchTerm || undefined,
                 status: selectedStatus == 'all' ? undefined : selectedStatus,
+                sortBy,
+                sortOrder,
             });
 
             if (res.success && res.data) {
@@ -184,100 +189,105 @@ export default function AccountsPayablePage() {
     };
 
     // 🎯 Configuración declarativa de las columnas
-    const columns: Column<AccountPayable>[] = [
-        {
-            header: "Proveedor / Factura",
-            render: (item) => (<>
-                <div className="font-semibold text-slate-900">{item.supplierName}</div>
-                <div className="text-xs text-slate-400">
-                    {item.invoiceNumber ? `Fact: #${item.invoiceNumber}` : "Sin factura"} |{" "}
-                    {item.supplierDni || "Sin DNI"}
-                </div></>
-            ),
-        }, {
-            header: "Concepto",
-            render: (item) => (
-                <div className="font-semibold text-slate-900">{item.concept}</div>
-            ),
-        }, {
-            header: "Vencimiento",
-            render: (item) => (
-                <DatePipe value={item.dueDate} format="short" />
-            ),
-        }, {
-            header: "Monto Total",
-            render: (item) => (
-                <div className="font-semibold text-slate-900">
-                    ${item.amountTotal.toFixed(2)}
-                </div>
-            ),
-        },
-        {
-            header: "Saldo Pendiente",
-            render: (item) => {
-                // Evitamos división por cero si amountTotal fuera 0
-                const percentageRemaining = item.amountTotal > 0
-                    ? (item.amountRemaining / item.amountTotal) * 100
-                    : 0;
-
-                // Definimos el color de la fuente según el porcentaje pendiente
-                let colorClass = "text-emerald-600"; // Verde (<= 20% pendiente)
-
-                if (percentageRemaining > 70) {
-                    colorClass = "text-red-600"; // Rojo (> 70% pendiente)
-                } else if (percentageRemaining > 20) {
-                    colorClass = "text-amber-600"; // Naranja (entre 20% y 70%)
-                }
-
-                return (
-                    <div className={`font-semibold ${colorClass}`}>
-                        ${item.amountRemaining.toFixed(2)}
-                    </div>
-                );
-            },
-        }, {
-            header: "Estado",
-            render: (item) => (
-                <Badge variant={item.status} />
-            ),
-        },
-        {
-            header: "Acciones",
-            className: "text-right", // Alinea el encabezado a la derecha
-            render: (element) => (<div className="flex gap-2 justify-end">
-                <Link
-                    href={`/admin/accounts-payable/${element.id}`}
-                    className="font-bold font-questrial px-4 py-2 flex items-center justify-center gap-2 transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
-                >
-                    Ver detalles <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-                <ActionButton
-                    variant="success"
-                    icon={CreditCard}
-                    tooltip="Abonar"
-                    onClick={() => {
-                        setSelectedPayable(element);
-                        setPaymentForm({
-                            ...paymentForm,
-                            amount: element.amountRemaining.toString(),
-                        });
-                        openPaymentModal();
-                    }}
-                    disabled={element.status == "Pagado" || element.status == "Cancelada"}
-                >
-                    Abonar
-                </ActionButton>
-                <ActionButton
-                    variant="primary"
-                    icon={History}
-                    tooltip="Historial"
-                    onClick={() => handleOpenHistory(element)}
-                >
-                    Historial
-                </ActionButton>
+    const columns: Column<AccountPayable>[] = [{
+        header: "Fecha de Registro",
+        render: (item) => (
+            <>{item.createdAt ? <DatePipe value={item.createdAt} format="short" /> : <span className="text-slate-400">-</span>}</>
+        ),
+    }, {
+        header: "Fecha de Vencimiento",
+        render: (item) => (
+            <DatePipe value={item.dueDate} format="short" />
+        ),
+    },
+    {
+        header: "Proveedor / Factura",
+        render: (item) => (<>
+            <div className="font-semibold text-slate-900">{item.supplierName}</div>
+            <div className="text-xs text-slate-400">
+                {item.invoiceNumber ? `Fact: #${item.invoiceNumber}` : "Sin factura"} |{" "}
+                {item.supplierDni || "Sin DNI"}
+            </div></>
+        ),
+    }, {
+        header: "Concepto",
+        render: (item) => (
+            <div className="font-semibold text-slate-900">{item.concept}</div>
+        ),
+    }, {
+        header: "Monto Total",
+        render: (item) => (
+            <div className="font-semibold text-slate-900">
+                ${item.amountTotal.toFixed(2)}
             </div>
-            ),
+        ),
+    },
+    {
+        header: "Saldo Pendiente",
+        render: (item) => {
+            // Evitamos división por cero si amountTotal fuera 0
+            const percentageRemaining = item.amountTotal > 0
+                ? (item.amountRemaining / item.amountTotal) * 100
+                : 0;
+
+            // Definimos el color de la fuente según el porcentaje pendiente
+            let colorClass = "text-emerald-600"; // Verde (<= 20% pendiente)
+
+            if (percentageRemaining > 70) {
+                colorClass = "text-red-600"; // Rojo (> 70% pendiente)
+            } else if (percentageRemaining > 20) {
+                colorClass = "text-amber-600"; // Naranja (entre 20% y 70%)
+            }
+
+            return (
+                <div className={`font-semibold ${colorClass}`}>
+                    ${item.amountRemaining.toFixed(2)}
+                </div>
+            );
         },
+    }, {
+        header: "Estado",
+        render: (item) => (
+            <Badge variant={item.status} />
+        ),
+    },
+    {
+        header: "Acciones",
+        className: "text-right", // Alinea el encabezado a la derecha
+        render: (element) => (<div className="flex gap-2 justify-end">
+            <Link
+                href={`/admin/accounts-payable/${element.id}`}
+                className="font-bold font-questrial px-4 py-2 flex items-center justify-center gap-2 transition text-xs bg-purple-100 hover:bg-purple-200 border border-purple-100 text-purple-700 cursor-pointer rounded-xl"
+            >
+                Ver detalles <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+            <ActionButton
+                variant="success"
+                icon={CreditCard}
+                tooltip="Abonar"
+                onClick={() => {
+                    setSelectedPayable(element);
+                    setPaymentForm({
+                        ...paymentForm,
+                        amount: element.amountRemaining.toString(),
+                    });
+                    openPaymentModal();
+                }}
+                disabled={element.status == "Pagado" || element.status == "Cancelada"}
+            >
+                Abonar
+            </ActionButton>
+            <ActionButton
+                variant="primary"
+                icon={History}
+                tooltip="Historial"
+                onClick={() => handleOpenHistory(element)}
+            >
+                Historial
+            </ActionButton>
+        </div>
+        ),
+    },
     ];
 
     useEffect(() => {
@@ -286,7 +296,7 @@ export default function AccountsPayablePage() {
         }, 300);
 
         return () => clearTimeout(handler);
-    }, [searchTerm, selectedStatus, currentPage, itemsPerPage]);
+    }, [searchTerm, sortBy, sortOrder, selectedStatus, currentPage, itemsPerPage]);
     return (
         <>
             {/* TOPBAR / HERO */}
@@ -318,6 +328,22 @@ export default function AccountsPayablePage() {
 
                     {/* Filtro Estado */}
                     <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+                        {/* 🌟 Selector Dinámico de Ordenamiento */}
+                        <select
+                            value={`${sortBy}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-") as ["createdAt" | "dueDate", "asc" | "desc"];
+                                setSortBy(field);
+                                setSortOrder(order);
+                            }}
+                            className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
+                        >
+                            <option value="dueDate-asc" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Vencimiento: Próximos a vencer</option>
+                            <option value="dueDate-desc" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Vencimiento: Más lejanos</option>
+                            <option value="createdAt-desc" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Registro: Más recientes primero</option>
+                            <option value="createdAt-asc" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Registro: Más antiguos primero</option>
+                        </select>
+
                         <select
                             value={selectedStatus}
                             onChange={(e) => setSelectedStatus(e.target.value as PayableStatus | "all")}
@@ -329,8 +355,6 @@ export default function AccountsPayablePage() {
                             <option value="Pagado" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Pagado</option>
                             <option value="Cancelada" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Cancelado</option>
                         </select>
-
-
 
                     </div>
                 </div>

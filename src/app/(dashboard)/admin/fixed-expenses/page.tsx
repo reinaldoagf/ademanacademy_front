@@ -73,24 +73,6 @@ export default function AdminFixedExpensesPage() {
     // 🎯 Configuración declarativa de las columnas
     const columns: Column<FixedExpense>[] = [
         {
-            header: "Proveedor",
-            render: (item) => {
-                if (!item.supplier) {
-                    return <p className="text-[11px] text-gray-400 mt-0.5">Sin proveedor</p>;
-                }
-                return (
-                    <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
-                        <div className="w-8 h-8 rounded-full bg-[#5e0472] flex items-center justify-center text-white text-xs font-anton tracking-wider shrink-0">
-                            <UserIcon className="w-3.5 h-3.5 shrink-0" />
-                        </div>
-                        <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{item.supplier.firstName} {item.supplier.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{item.supplier.email}</span>
-                        </div>
-                    </div>
-                );
-            },
-        }, {
             header: "Título",
             render: (item) => (
                 <div className="font-semibold text-slate-900">{item.title}</div>

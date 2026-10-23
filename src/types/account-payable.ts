@@ -25,6 +25,8 @@ export interface AccountPayable {
     status: PayableStatus;
     notes?: string;
     payments?: PayablePayment[];
+    createdAt?: string,
+    updatedAt?: string,
 }
 
 // Enums del sistema
@@ -95,6 +97,8 @@ export interface FetchAccountPayablesParams {
     limit?: number;
     startDate?: string;
     endDate?: string;
+    sortBy?: "createdAt" | "dueDate";
+    sortOrder?: "asc" | "desc";
 }
 
 export interface PayableFormData {

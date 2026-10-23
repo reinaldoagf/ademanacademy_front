@@ -35,11 +35,11 @@ const initialFormState: EmployeeFormData = {
   dni: "",
   countryCode: "+58",
   phone: "",
-  typeOfContract: "fixed",
-  typeOfEmployee: "administrative",
+  typeOfContract: "Fijo",
+  typeOfEmployee: "Administrativo",
   hourlyRate: 0,
+  baseSalary: 0,
   hoursTaughtMonth: 0,
-  bonus: 0,
   birthDate: null,
   address: "",
   userId: "",
@@ -119,6 +119,15 @@ export default function EmployeesPage() {
       setErrorMsg("El DNI / documento de identidad es obligatorio.");
       return;
     }
+    if (formData.typeOfContract === "Fijo" && (!formData.baseSalary || formData.baseSalary <= 0)) {
+      setErrorMsg("El salario base es obligatorio.");
+      return;
+    }
+    if (formData.typeOfContract === "Por Horas" && (!formData.hoursTaughtMonth || !formData.hourlyRate || formData.hourlyRate <= 0 || formData.hoursTaughtMonth <= 0)) {
+      setErrorMsg("Las horas dictadas y la tarifa por hora son obligatorias.");
+      return;
+    }
+
 
     try {
       startTransition(async () => {
@@ -170,11 +179,11 @@ export default function EmployeesPage() {
       dni: employee.dni || "",
       countryCode: employee.countryCode || "+58",
       phone: employee.phone || "",
-      typeOfContract: employee.typeOfContract || "fixed",
-      typeOfEmployee: employee.typeOfEmployee || "administrative",
+      typeOfContract: employee.typeOfContract || "Fijo",
+      typeOfEmployee: employee.typeOfEmployee || "Administrativo",
+      baseSalary: employee.baseSalary || 0,
       hourlyRate: employee.hourlyRate || 0,
       hoursTaughtMonth: employee.hoursTaughtMonth || 0,
-      bonus: employee.bonus || 0,
       birthDate: formatDateForInput(employee.birthDate),
       address: employee.address || "",
     })
@@ -284,30 +293,18 @@ export default function EmployeesPage() {
         );
       },
     },
-    {
-      header: "Bono Extra",
-      render: (employee) => {
-        const bonus = Number(employee.bonus || 0);
-        return bonus > 0 ? (
-          <span className="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-0.5 font-questrial rounded">
-            +${bonus.toFixed(2)}
-          </span>
-        ) : (
-          <span className="text-xs text-gray-300 font-questrial">—</span>
-        );
-      },
-    },
+
     {
       header: "Monto Neto",
       render: (employee) => {
         const hourlyRate = Number(employee.hourlyRate || 0);
         const hoursTaught = Number(employee.hoursTaughtMonth || 0);
-        const bonus = Number(employee.bonus || 0);
-        const sueldoTotal = hoursTaught * hourlyRate + bonus;
+        const baseSalary = Number(employee.baseSalary || 0);
+        const totalSalary = employee.typeOfContract === "Fijo" ? baseSalary : employee.typeOfContract === "Por_Hora" ? hoursTaught * hourlyRate : employee.typeOfContract === "Por_Proyecto" ? baseSalary : 0;
 
         return (
           <span className="font-extrabold text-gray-900 text-sm font-questrial">
-            ${sueldoTotal.toLocaleString("es-CO", { minimumFractionDigits: 2 })}
+            ${totalSalary.toLocaleString("es-CO", { minimumFractionDigits: 2 })}
           </span>
         );
       },
@@ -620,8 +617,15 @@ export default function EmployeesPage() {
 
             <SelectInput
               label="Tipo de Contrato *"
-              value={formData.typeOfEmployee}
-              onChange={(value) => setFormData({ ...formData, typeOfEmployee: value as EmployeeFormData["typeOfContract"] })}
+              value={formData.typeOfContract}
+              onChange={(value) => {
+                setFormData({
+                  ...formData,
+                  hourlyRate: 0,
+                  baseSalary: 0,
+                  typeOfContract: value as EmployeeFormData["typeOfContract"]
+                })
+              }}
               options={[
                 { label: "Selecciona un tipo de contrato", value: "", disabled: true },
                 { label: "Fijo", value: "Fijo" },
@@ -654,33 +658,32 @@ export default function EmployeesPage() {
 
           {/* Fila 4: Tarifa por Hora, Horas Dictadas y Bono Extra */}
           <div className="grid grid-cols-3 gap-3">
-            <TextInput
-              label="Tarifa / Hora ($)"
-              type="number"
-              step="0.01"
-              required
-              value={formData.hourlyRate}
-              onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0, })}
-              placeholder="0.00"
-            />
+            {
+              formData.typeOfContract === "Por_Hora" && (<><TextInput
+                label="Tarifa / Hora ($)"
+                type="number"
+                step="0.01"
+                required
+                value={formData.hourlyRate}
+                onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0, })}
+                placeholder="0.00"
+              />
+              </>)
+            }
 
-            <TextInput
-              label="Horas del Mes"
-              type="number"
-              required
-              value={formData.hoursTaughtMonth}
-              onChange={(e) => setFormData({ ...formData, hoursTaughtMonth: parseInt(e.target.value) || 0, })}
-              placeholder="0"
-            />
+            {
+              formData.typeOfContract === "Fijo" && (
+                <TextInput
+                  label="Salario base ($)"
+                  type="number"
+                  required
+                  value={formData.baseSalary}
+                  onChange={(e) => setFormData({ ...formData, baseSalary: parseInt(e.target.value) || 0, })}
+                  placeholder="0"
+                />
+              )
+            }
 
-            <TextInput
-              label="Bono Extra ($)"
-              type="number"
-              required
-              value={formData.bonus}
-              onChange={(e) => setFormData({ ...formData, bonus: parseInt(e.target.value) || 0, })}
-              placeholder="0"
-            />
 
           </div>
 
