@@ -3,9 +3,10 @@ import {
     LucideIcon
 } from "lucide-react";
 import { S3Image } from "./s3-image";
+import { Client } from "./client";
 
 // 🎯 Enums del ciclo de vida de la asignación
-export type AssignmentStatus = "Asignado" | "Devuelto_En_Buen_Estado" | "Devuelto_Con_Daños" | "Extraviado";
+export type AssignmentStatus = "Asignado" | "Listo_Para_Entregar" | "Devuelto_En_Buen_Estado" | "Devuelto_Con_Daños" | "Extraviado";
 
 export type CostumeCategory = "Bebé" | "Infantil" | "Juvenil" | "Adulto";
 
@@ -19,15 +20,18 @@ export interface SizeStock {
 // 🤝 Interfaz para la relación intermedia de asignaciones
 export interface StudentCostume {
     id: string;
+    clientId: string;
     studentId: string;
     costumeId: string;
     assignedSize: string;
     status: AssignmentStatus;
     observations: string | null;
-    assignedAt: string;
-    returnedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
+    assignedAt: string | Date;
+    returnDate: string | Date | null;
+    returnedAt: string | Date | null;
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    client?: Client; // Incluido cuando haces el fetch con relaciones
     student?: Student; // Incluido cuando haces el fetch con relaciones
     costume?: Costume;
 }
@@ -41,7 +45,7 @@ export interface Costume {
     category: CostumeCategory;
     images: string[]; // Representación del campo Json ("[]") en la app
     status: CostumeStatus;
-    assignments?: StudentCostume[]; // Historial o alumnos asignados actualmente
+    costumeAssignments?: StudentCostume[]; // Historial o alumnos asignados actualmente
     createdAt?: string;
     updatedAt?: string;
 }
@@ -89,4 +93,5 @@ export interface ElementToBeAssigned {
     fullName: string;
     email: string;
     observations?: string;
+    returnDate?: Date | null;
 }

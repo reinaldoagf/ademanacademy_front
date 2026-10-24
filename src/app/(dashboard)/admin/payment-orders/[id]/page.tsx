@@ -198,7 +198,7 @@ export default function PaymentOrderDetailsPage() {
                                                 <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                     <Clock className="w-4 h-4 text-pink-500" /> Vencimiento
                                                 </span>
-                                                <DatePipe value={paymentOrder.dueDate} format="short" />
+                                                <span className="text-sm font-anton text-gray-800"><DatePipe value={paymentOrder.dueDate} format="short" /></span>
                                             </div>
 
                                         )}

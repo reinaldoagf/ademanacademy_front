@@ -123,6 +123,7 @@ export default function ClientsPage() {
         }
     };
     const handleEditModal = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
+        setRepresentativeSearch(`${client.representative?.firstName || ""} ${client.representative?.lastName || ""}`);
         setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""}`);
         setFormData({
             firstName: client.firstName || "",

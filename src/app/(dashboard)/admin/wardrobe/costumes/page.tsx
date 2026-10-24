@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Info,
   Trash2,
-  UserPlus
+  UserPlus,
+  User as UserIcon
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/hooks/useModal";
@@ -22,7 +23,7 @@ import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch, SearchInput } from '@/components/ui/forms';
+import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch, SearchInput, DateInput } from '@/components/ui/forms';
 import { CostumeCategory, Costume, StatusCardConfig, CostumeStatus, CostumeFormData, SaveCostumePayload, ElementToBeAssigned } from "@/types/costume";
 import {
   getAllCostumesAction,
@@ -80,7 +81,7 @@ const initialCostumeFormState: CostumeFormData = {
   name: '',
   price: 0, // 👈 Nuevo campo de precio
   beat: '',
-  category: 'childrens' as CostumeCategory, // O el valor que prefieras por defecto
+  category: 'Infantil' as CostumeCategory, // O el valor que prefieras por defecto
   status: 'Pendiente_por_Pago' as CostumeStatus,
   images: [],
   existingImages: [],
@@ -120,6 +121,11 @@ export default function CostumesPage() {
     isOpen: isAssignmentModalOpen,
     openModal: openAssignmentModal,
     closeModal: closeAssignmentModal,
+  } = useModal();
+  const {
+    isOpen: isTheAssignmentsModalOpen,
+    openModal: openTheAssignmentsModal,
+    closeModal: closeTheAssignmentsModal
   } = useModal();
   const [selectedCostume, setSelectedCostume] = useState<Costume | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -171,13 +177,7 @@ export default function CostumesPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
-  const [costumeAssignmentForm, setCostumeAssignmentForm] = useState({
-    costumeId: '',
-    studentId: '',
-    observations: '',
-  });
   const [selectedStudentsList, setSelectedStudentsList] = useState<ElementToBeAssigned[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [policyFormData, setPolicyFormData] = useState(initialPolicyFormState);
   // 1. Estado del formulario interno del modal
   const [costumeFormData, setCostumeFormData] = useState(initialCostumeFormState);
@@ -281,14 +281,14 @@ export default function CostumesPage() {
   const handleAssign = (costume: Costume) => {
     setSelectedCostume(costume)
     setStudentSearch('')
-    setCostumeAssignmentForm({
-      costumeId: costume.id,
-      studentId: '',
-      observations: '',
-    })
     setErrorMsg('')
     setSelectedStudentsList([])
     openAssignmentModal()
+  };
+  const handleLookingAtTheAssignments = (costume: Costume) => {
+    console.log(costume)
+    setSelectedCostume(costume)
+    openTheAssignmentsModal()
   };
 
   // Eliminar estudiante de la lista
@@ -298,8 +298,8 @@ export default function CostumesPage() {
   // Modificar campo de un estudiante de la lista (ej. Talla u Observación)
   const handleUpdateStudentInList = (
     studentId: string,
-    field: 'observations',
-    value: string
+    field: 'observations' | 'returnDate',
+    value: string | Date
   ) => {
     setSelectedStudentsList((prev) =>
       prev.map((item) =>
@@ -324,6 +324,7 @@ export default function CostumesPage() {
       fullName: `${client.firstName} ${client.lastName}`,
       email: client.email || 'Sin correo',
       observations: '',
+      returnDate: null,
     };
 
     setSelectedStudentsList((prev) => [...prev, newItem]);
@@ -342,25 +343,24 @@ export default function CostumesPage() {
     }
 
     setErrorMsg(null);
-    setIsSubmitting(true);
 
     const res = await assignCostumeAction({
       costumeId: selectedCostume.id,
       assignments: selectedStudentsList.map((item) => ({
         studentId: item.studentId,
         observations: item.observations,
+        returnDate: item.returnDate,
       })),
     });
 
-    setIsSubmitting(false);
 
     if (res.success) {
-      toast.success('Uniformes asignados satisfactoriamente.');
+      toast.success('Vestuarios asignados satisfactoriamente.');
       setSelectedStudentsList([]);
       closeAssignmentModal();
       fetchData(currentPage, itemsPerPage);
     } else {
-      setErrorMsg(res.error || 'Ocurrió un error al asignar los uniformes.');
+      setErrorMsg(res.error || 'Ocurrió un error al asignar los vestuarios.');
     }
   };
   const savePolicies = async (e: React.FormEvent) => {
@@ -614,10 +614,10 @@ export default function CostumesPage() {
                 className="p-2 w-full sm:w-auto border border-purple-100 font-questrial text-xs bg-white text-gray-700 focus:outline-none"
               >
                 <option value="all" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Todas las categorías</option>
-                <option value="baby" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
-                <option value="childrens" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
-                <option value="youth" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
-                <option value="adult" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
+                <option value="Bebé" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Baby</option>
+                <option value="Infantil" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Infantil</option>
+                <option value="Juvenil" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Juvenil</option>
+                <option value="Adulto" className="border border-purple-100 bg-purple-100 text-purple-700 px-1.5 py-0.5 font-sans">Adulto</option>
               </select>
               <select
                 value={statusFilter}
@@ -644,6 +644,7 @@ export default function CostumesPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onAssign={handleAssign}
+                whenLookingAtTheAssignments={handleLookingAtTheAssignments}
               />
             })}
           </div>) : (
@@ -922,7 +923,7 @@ export default function CostumesPage() {
             </p>
           )}
 
-          {/* Info General del Uniforme */}
+          {/* Info General del Vestuario */}
           {selectedCostume && (
             <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100 flex justify-between items-center text-xs">
               <div>
@@ -975,6 +976,7 @@ export default function CostumesPage() {
                   <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0">
                     <tr>
                       <th className="p-2.5">Estudiante</th>
+                      <th className="p-2.5">Fecha de Devolución</th>
                       <th className="p-2.5">Observación</th>
                       <th className="p-2.5 w-10 text-center"></th>
                     </tr>
@@ -985,6 +987,13 @@ export default function CostumesPage() {
                         <td className="p-2.5">
                           <p className="font-semibold text-gray-800">{item.fullName}</p>
                           <p className="text-[10px] text-gray-400">{item.email}</p>
+                        </td>
+                        <td className="p-2.5">
+                          <DateInput
+                            label=""
+                            value={item.returnDate || ""}
+                            onChange={(val) => handleUpdateStudentInList(item.studentId, 'returnDate', val)}
+                          />
                         </td>
                         <td className="p-2.5">
                           <TextArea
@@ -999,7 +1008,6 @@ export default function CostumesPage() {
                           />
 
                         </td>
-
                         <td className="p-2.5 text-center">
                           <ActionButton
                             variant="danger"
@@ -1044,11 +1052,117 @@ export default function CostumesPage() {
             <UserPlus className="w-4 h-4" />
             {isPending
               ? 'Procesando...'
-              : `Confirmar Asignación${selectedStudentsList.length > 1 ? 'es' : ''} →`}
+              : `Confirmar ${selectedStudentsList.length > 1 ? 'Asignaciones' : 'Asignación'} →`}
           </button>
         </div>
       </MacDockModal>
+      <MacDockModal
+        isOpen={isTheAssignmentsModalOpen}
+        onClose={closeTheAssignmentsModal}
+        title={`Asignaciones de Vestuario: ${selectedCostume?.name || ''}`}
+        size={"4xl"}
+      >
+        <div className="space-y-4 font-questrial">
+          {/* Contenedor tipo tabla con bordes estéticos */}
+          <div className="border border-purple-100 rounded-lg overflow-hidden bg-white/50">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-gray-400 border-b border-purple-50 font-questrial bg-purple-50/20 text-xs">
+                  <th className="p-3">Cliente</th>
+                  <th className="p-3">Estudiante / Kinship</th>
+                  <th className="p-3">Talla Asignada</th>
+                  <th className="p-3">Fecha Devolución</th>
+                  <th className="p-3">Estado</th>
+                  <th className="p-3">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-gray-700 text-xs">
+                {selectedCostume?.costumeAssignments && selectedCostume.costumeAssignments.length > 0 ? (
+                  selectedCostume.costumeAssignments.map((assignment) => {
+                    const studentName = assignment.student
+                      ? `${assignment.student.firstName || ''} ${assignment.student.lastName || ''}`.trim()
+                      : 'Estudiante Desconocido';
 
+                    const kinship = assignment.student?.kinship || 'N/A';
+                    const size = assignment.assignedSize || assignment.student?.shirtSize || 'N/A';
+
+                    return (
+                      <tr key={assignment.id} className="hover:bg-purple-50/20 transition font-questrial">
+                        <td className="p-3">
+                          <div className="flex items-center gap-2 p-1 hover:bg-purple-50/80 transition-all cursor-pointer rounded-sm">
+                            <div className={`w-8 h-8 rounded-full  flex items-center justify-center  text-xs font-anton tracking-wider shrink-0 ${assignment.client
+                              ? "text-white bg-[#5e0472]"
+                              : "bg-slate-50"
+                              }`}
+
+                            >
+                              <UserIcon className="w-3.5 h-3.5 shrink-0" />
+                            </div>
+                            {assignment.client ? (
+                              <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">{assignment.client.firstName} {assignment.client.lastName}</span>
+                                <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{assignment.client.email || 'No registrado'}</span>
+                              </div>) : (
+                              <div className="hidden md:flex flex-col text-left font-questrial">
+                                <span className="text-xs font-bold text-gray-700 leading-tight">Sin cliente</span>
+                              </div>)}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-gray-800">{studentName}</div>
+                          <div className="text-[10px] text-gray-400">Parentesco: {kinship}</div>
+                        </td>
+                        <td className="p-3 font-medium">
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-[11px]">
+                            {size}
+                          </span>
+                        </td>
+                        <td className="p-3 text-gray-600">
+                          {assignment.returnDate ? (
+                            new Date(assignment.returnDate).toLocaleDateString('es-ES')
+                          ) : (
+                            <span className="text-slate-400 italic">Sin definir</span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${assignment.status === 'Asignado' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                            assignment.status === 'Devuelto_En_Buen_Estado' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                            {assignment.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-gray-500 max-w-[200px] truncate" title={assignment.observations || ''}>
+                          {assignment.observations || <span className="text-slate-300 italic">Sin observaciones</span>}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-gray-400 italic">
+                      No hay estudiantes asignados a este vestuario todavía.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Botonera inferior */}
+        <div className="pt-4 border-t border-purple-100 bg-purple-50/20 flex justify-between items-center shrink-0 mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              closeTheAssignmentsModal();
+            }}
+            className="cursor-pointer font-questrial px-4 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition rounded-md"
+          >
+            Cerrar
+          </button>
+        </div>
+      </MacDockModal>
       {/* INSTANCIA ÚNICA DEL MODAL DINÁMICO */}
       <ConfirmationModal
         isOpen={modalConfig.isOpen}

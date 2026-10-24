@@ -1056,7 +1056,7 @@ export default function UniformsPage() {
                         <UserPlus className="w-4 h-4" />
                         {isSubmitting
                             ? 'Procesando...'
-                            : `Confirmar Asignación${selectedStudentsList.length > 1 ? 'es' : ''} →`}
+                            : `Confirmar ${selectedStudentsList.length > 1 ? 'Asignaciones' : 'Asignación'} →`}
                     </button>
                 </div>
             </MacDockModal>

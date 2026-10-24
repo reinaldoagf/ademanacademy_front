@@ -30,7 +30,7 @@ export default function PaymentOrderDetailsPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [isPending, startTransition] = useTransition();
     const totalPaid = order?.paymentOrder?.transactions
-        ?.filter((t) => t.status === "approved")
+        ?.filter((t) => t.status === "Aprobado")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
     const handleBack = () => {
         router.back();
@@ -137,16 +137,12 @@ export default function PaymentOrderDetailsPage() {
                                             </span>
                                             <span className="text-sm font-anton text-gray-800"><DatePipe value={order.paymentOrder?.createdAt} format="short" /></span>
                                         </div>)}
-                                        {order.paymentOrder?.dueDate && (
-                                            <div className="flex justify-between items-center text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-3.5 h-3.5 text-gray-400" /> Vencimiento:
-                                                </span>
-                                                <span className="font-medium text-amber-700">
-                                                    <DatePipe value={order.paymentOrder?.dueDate} format="short" />
-                                                </span>
-                                            </div>
-                                        )}
+                                        {order.paymentOrder?.dueDate && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                            <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
+                                                <Clock className="w-4 h-4 text-indigo-500" /> Vencimiento
+                                            </span>
+                                            <span className="text-sm font-anton text-gray-800"><DatePipe value={order.paymentOrder?.dueDate} format="short" /></span>
+                                        </div>)}
                                     </div>
 
                                 </div>

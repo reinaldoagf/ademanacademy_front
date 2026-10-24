@@ -205,25 +205,25 @@ export default function PaymentDetailsPage() {
                                 </div>
                                 {/* Tarjeta Usuario */}
                                 <div className="glass-card p-6 shadow-sm">
-                                    <h3 className="text-lg font-anton mb-4">Información del Usuario</h3>
+                                    <h3 className="text-lg font-anton mb-4">Información del Usuario Emisor de la Transacción</h3>
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
                                                 <User className="w-4 h-4 text-purple-500" /> Nombre completo
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.firstName} {transaction.client?.user?.lastName}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.registeringUser?.firstName} {transaction.registeringUser?.lastName}</span>
                                         </div>
-                                        {(transaction.client?.user?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(transaction.registeringUser?.dni) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
-                                                <User className="w-4 h-4 text-pink-500" /> DNI / Cédula
+                                                <Ticket className="w-4 h-4 text-indigo-500" /> DNI / Cédula
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.dni}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.registeringUser?.dni}</span>
                                         </div>)}
-                                        {(transaction.client?.user?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
+                                        {(transaction.registeringUser?.email) && (<div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/50">
                                             <span className="text-sm font-questrial font-medium flex items-center gap-2 text-gray-700">
-                                                <Ticket className="w-4 h-4 text-indigo-500" /> Email
+                                                <User className="w-4 h-4 text-pink-500" /> Correo Electrónico
                                             </span>
-                                            <span className="text-sm font-anton text-gray-800">{transaction.client?.user?.email}</span>
+                                            <span className="text-sm font-anton text-gray-800">{transaction.registeringUser?.email}</span>
                                         </div>)}
                                     </div>
                                 </div>
@@ -267,7 +267,7 @@ export default function PaymentDetailsPage() {
                                         <h3 className="text-lg font-anton mb-1">Auditoría de Pago</h3>
                                     </div>
                                     {
-                                        (transaction.concept === "Entradas_Gala" || transaction.concept === "Producto") && transaction.status === "Pendiente" && (
+                                        (transaction.concept === "Entradas_Gala" || transaction.concept === "Producto" || transaction.concept === "Vestuario") && transaction.status === "Pendiente" && (
                                             <div>
                                                 <button
                                                     type="button"

@@ -8,7 +8,7 @@ import { S3Image } from "./s3-image";
 // o mantenerlos aquí si es para el Frontend)
 export type UniformCategory = 'Bebé' | string; // Ajusta con tus valores del Enum real
 export type UniformStatus = 'Pendiente_por_Pago' | string; // Ajusta con tus valores del Enum real
-export type AssignmentStatus = 'Asignado' | 'Devuelto_En_Buen_Estado' | 'Devuelto_Con_Daños' | 'Extraviado' | string;
+export type AssignmentStatus = 'Asignado' | 'Listo_Para_Entregar' | 'Devuelto_En_Buen_Estado' | 'Devuelto_Con_Daños' | 'Extraviado' | string;
 
 // Interface para el modelo StudentUniform
 export interface StudentUniform {

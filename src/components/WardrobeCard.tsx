@@ -6,7 +6,8 @@ import {
     ChevronRight,
     Trash2,
     Pencil,
-    UserPlus
+    UserPlus,
+    Eye
 } from "lucide-react";
 import { ActionButton } from "@/components/ui/ActionButton";
 // Props tipadas (puedes cambiar 'any' por tu interfaz si lo prefieres)
@@ -15,8 +16,9 @@ interface WardrobeCardProps {
     onEdit?: (element: any) => void;
     onDelete?: (element: any) => void;
     onAssign?: (element: any) => void;
+    whenLookingAtTheAssignments?: (element: any) => void;
 }
-export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCardProps) {
+export function WardrobeCard({ element, onEdit, onDelete, onAssign, whenLookingAtTheAssignments }: WardrobeCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const images = element.images;
 
@@ -54,6 +56,11 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
         e.stopPropagation();
         e.preventDefault();
         if (onAssign) onAssign(element);
+    };
+    const handleLookingAtTheAssignments = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (whenLookingAtTheAssignments) whenLookingAtTheAssignments(element);
     };
 
     const handleDelete = (e: React.MouseEvent) => {
@@ -178,44 +185,50 @@ export function WardrobeCard({ element, onEdit, onDelete, onAssign }: WardrobeCa
             {/* Status de Almacén e Indicador */}
             <div className="p-4 space-y-3 border-t border-purple-50/50 pt-3">
                 {/* Botones de acción */}
-                <div className="w-full grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-2 pt-1 overflow-x-auto">
+                <div className="w-full grid grid-cols-2  items-center justify-between gap-2 pt-1 overflow-x-auto">
 
                     {/* Botón secundario/peligro (Eliminar) - Ocupa 1 columna en móvil */}
-                    <div className="col-span-1 sm:w-auto">
-                        <ActionButton
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={handleDelete}
-                            containerClassName="w-full"
-                            className="w-full"
-                        >
-                            Eliminar
-                        </ActionButton>
-                    </div>
+                    <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        onClick={handleDelete}
+                        containerClassName="w-full"
+                        className="w-full"
+                    >
+                        Eliminar
+                    </ActionButton>
+                    <ActionButton
+                        variant="success"
+                        icon={Pencil}
+                        onClick={handleEdit}
+                        containerClassName="w-full sm:w-auto"
+                        className="w-full"
+                    >
+                        Editar
+                    </ActionButton>
 
                     {/* Acciones principales (Editar y Asignar) */}
-                    <div className="col-span-1 sm:w-auto flex flex-col sm:flex-row items-center gap-2 w-full">
-                        <ActionButton
-                            variant="success"
-                            icon={Pencil}
-                            onClick={handleEdit}
-                            containerClassName="w-full sm:w-auto"
-                            className="w-full"
-                        >
-                            Editar
-                        </ActionButton>
 
-                        {/* Asignar pasa a ocupar ancho completo en pantallas móviles si es necesario */}
-                        <ActionButton
-                            variant="gradient_purple"
-                            icon={UserPlus}
-                            onClick={handleAssign}
-                            containerClassName="col-span-2 sm:col-span-1 w-full sm:w-auto"
-                            className="w-full"
-                        >
-                            Asignar
-                        </ActionButton>
-                    </div>
+                    <ActionButton
+                        variant="primary"
+                        icon={Eye}
+                        onClick={handleLookingAtTheAssignments}
+                        containerClassName="col-span-2 sm:col-span-1 w-full sm:w-auto"
+                        className="w-full"
+                    >
+                        Ver Asignaciones
+                    </ActionButton>
+
+                    {/* Asignar pasa a ocupar ancho completo en pantallas móviles si es necesario */}
+                    <ActionButton
+                        variant="gradient_purple"
+                        icon={UserPlus}
+                        onClick={handleAssign}
+                        containerClassName="col-span-2 sm:col-span-1 w-full sm:w-auto"
+                        className="w-full"
+                    >
+                        Asignar
+                    </ActionButton>
 
                 </div>
             </div>
