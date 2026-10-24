@@ -1,14 +1,15 @@
+// src/components/NotificationBell.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Sparkles, Check, Link as LinkIcon } from 'lucide-react';
+import { Bell, Sparkles, Check, Link as LinkIcon, CheckCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from "next/link";
 import { useNotifications } from '@/hooks/useNotifications';
 
 interface NotificationBellProps {
     userId?: string;
-    onOpenUserMenuClose?: () => void; // Para cerrar otros dropdowns abiertos
+    onOpenUserMenuClose?: () => void;
 }
 
 export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBellProps) {
@@ -16,19 +17,19 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
     const [isOpen, setIsOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
 
-    // Hook de tiempo real con WebSockets
-    const { notifications, unreadCount, setUnreadCount, setNotifications } = useNotifications(userId);
+    // Consumimos el hook con las funciones reales de BDD
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userId);
 
     const hasUnread = unreadCount > 0;
     const getDashboardBaseRoute = () => {
         if (pathname.startsWith('/admin')) return '/admin';
         if (pathname.startsWith('/client')) return '/client';
         if (pathname.startsWith('/collaborator')) return '/collaborator';
-        return ''; // Ruta por defecto si está en otra sección
+        return '';
     };
 
     const baseRoute = getDashboardBaseRoute();
-    // Cerrar el popover al hacer clic fuera del componente
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -41,17 +42,8 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
         };
     }, []);
 
-    // Marcar todas como leídas
-    const markAllAsRead = () => {
-        setUnreadCount(0);
-        setNotifications((prev) =>
-            prev.map((n) => ({ ...n, status: 'READ' }))
-        );
-    };
-
     return (
         <div className="relative" ref={notifRef}>
-            {/* Botón de la Campana con Tooltip */}
             <div className="group relative flex justify-center">
                 <button
                     onClick={() => {
@@ -70,10 +62,8 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                 </span>
             </div>
 
-            {/* Menú Desplegable de Notificaciones */}
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-72 md:w-80 bg-white border border-purple-100 shadow-xl rounded-none py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    {/* Header del Menú */}
                     <div className="p-3 border-b border-purple-50 flex items-center justify-between">
                         <span className="text-xs font-anton text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
                             <Sparkles className="w-3.5 h-3.5 text-purple-500" /> Notificaciones
@@ -88,19 +78,17 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                         )}
                     </div>
 
-                    {/* Lista de Notificaciones */}
                     <div className="max-h-64 overflow-y-auto divide-y divide-purple-50">
                         {notifications.length > 0 ? (
                             notifications.map((notification) => {
-                                const isRead = notification.status === 'READ';
+                                const isRead = notification.status === 'Leido';
                                 return (
                                     <div
                                         key={notification.id}
-                                        className={`p-3 text-left transition-colors ${isRead ? 'bg-white' : 'bg-purple-50/40 font-medium'
+                                        className={`p-3 text-left transition-colors flex justify-between items-start gap-2 ${isRead ? 'bg-white opacity-70' : 'bg-purple-50/40 font-medium'
                                             }`}
                                     >
-                                        {/* 🛠️ Corrección Semántica: Usamos div en lugar de p para contener enlaces */}
-                                        <div className="text-xs text-gray-700 font-questrial leading-normal space-y-1">
+                                        <div className="text-xs text-gray-700 font-questrial leading-normal space-y-1 flex-1">
                                             <strong className="block font-bold text-gray-800">{notification.title}</strong>
                                             <p className="text-gray-600">{notification.message}</p>
 
@@ -108,20 +96,32 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                                                 <div className="pt-1">
                                                     <Link
                                                         href={notification.link}
+                                                        onClick={() => setIsOpen(false)}
                                                         className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 font-questrial font-bold text-[11px]"
                                                     >
-                                                        <LinkIcon className="w-3 h-3" /> Ver orden de pago
+                                                        <LinkIcon className="w-3 h-3" /> Ver detalles
                                                     </Link>
                                                 </div>
                                             )}
+
+                                            <span className="text-[9px] text-gray-400 font-questrial block mt-1">
+                                                {new Date(notification.createdAt).toLocaleTimeString('es-ES', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
                                         </div>
 
-                                        <span className="text-[9px] text-gray-400 font-questrial block mt-1">
-                                            {new Date(notification.createdAt).toLocaleTimeString('es-ES', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </span>
+                                        {/* Botón Individual para Marcar como Leído */}
+                                        {!isRead && (
+                                            <button
+                                                onClick={() => markAsRead(notification.id)}
+                                                title="Marcar como leído"
+                                                className="text-purple-400 hover:text-purple-700 p-1 transition-colors cursor-pointer shrink-0"
+                                            >
+                                                <CheckCheck className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })
@@ -132,7 +132,6 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
                         )}
                     </div>
 
-                    {/* 🎯 NUEVO: Pie del menú con enlace "Ver todas" */}
                     <div className="p-2.5 border-t border-purple-50 text-center bg-purple-50/20">
                         <Link
                             href={`${baseRoute}/notifications`}

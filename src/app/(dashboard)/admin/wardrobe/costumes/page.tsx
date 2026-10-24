@@ -286,7 +286,6 @@ export default function CostumesPage() {
     openAssignmentModal()
   };
   const handleLookingAtTheAssignments = (costume: Costume) => {
-    console.log(costume)
     setSelectedCostume(costume)
     openTheAssignmentsModal()
   };
@@ -301,7 +300,6 @@ export default function CostumesPage() {
     field: 'observations' | 'returnDate' | 'issuePaymentOrder',
     value: string | Date | boolean
   ) => {
-    console.log({ studentId, field, value })
     setSelectedStudentsList((prev) =>
       prev.map((item) =>
         item.studentId === studentId ? { ...item, [field]: value } : item
@@ -997,7 +995,6 @@ export default function CostumesPage() {
                             label=""
                             value={item.returnDate || ""}
                             onChange={(val) => {
-                              console.log({ val })
                               handleUpdateStudentInList(item.studentId, 'returnDate', val)
                             }}
                           />
