@@ -4,7 +4,7 @@ export interface Notification {
     title: string;
     message: string;
     link?: string;
-    channel: "En_la_App" | "Whatsapp" | "Ambos";
+    channel: "Aplicación" | "Whatsapp" | "Ambos";
     status: "Pendiente" | "Enviado" | "Leido" | "Fallido";
     recipientPhone?: string;
     metadata?: any;

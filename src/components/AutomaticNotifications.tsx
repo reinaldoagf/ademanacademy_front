@@ -71,7 +71,7 @@ export function AutomaticNotifications() {
                                         )
                                     }
                                     {
-                                        (notification.channel === "Ambos" || notification.channel === "En_la_App") && (
+                                        (notification.channel === "Ambos" || notification.channel === "Aplicación") && (
                                             <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
                                                 <MonitorCheck className="w-4 h-4" />
                                             </div>
