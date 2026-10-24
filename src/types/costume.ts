@@ -94,4 +94,5 @@ export interface ElementToBeAssigned {
     email: string;
     observations?: string;
     returnDate?: Date | null;
+    issuePaymentOrder: boolean;
 }

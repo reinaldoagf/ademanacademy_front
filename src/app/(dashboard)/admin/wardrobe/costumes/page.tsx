@@ -298,9 +298,10 @@ export default function CostumesPage() {
   // Modificar campo de un estudiante de la lista (ej. Talla u Observación)
   const handleUpdateStudentInList = (
     studentId: string,
-    field: 'observations' | 'returnDate',
-    value: string | Date
+    field: 'observations' | 'returnDate' | 'issuePaymentOrder',
+    value: string | Date | boolean
   ) => {
+    console.log({ studentId, field, value })
     setSelectedStudentsList((prev) =>
       prev.map((item) =>
         item.studentId === studentId ? { ...item, [field]: value } : item
@@ -325,6 +326,7 @@ export default function CostumesPage() {
       email: client.email || 'Sin correo',
       observations: '',
       returnDate: null,
+      issuePaymentOrder: true
     };
 
     setSelectedStudentsList((prev) => [...prev, newItem]);
@@ -350,6 +352,7 @@ export default function CostumesPage() {
         studentId: item.studentId,
         observations: item.observations,
         returnDate: item.returnDate,
+        issuePaymentOrder: item.issuePaymentOrder,
       })),
     });
 
@@ -908,7 +911,7 @@ export default function CostumesPage() {
         isOpen={isAssignmentModalOpen}
         onClose={closeAssignmentModal}
         title={"Asignar Vestuario"}
-        size={"4xl"}
+        size={"3xl"}
       >
         {/* Formulario (Con scroll interno independiente si el contenido excede el espacio de pantalla) */}
         <form
@@ -978,7 +981,8 @@ export default function CostumesPage() {
                       <th className="p-2.5">Estudiante</th>
                       <th className="p-2.5">Fecha de Devolución</th>
                       <th className="p-2.5">Observación</th>
-                      <th className="p-2.5 w-10 text-center"></th>
+                      <th className="p-2.5">Orden de Pago</th>
+                      <th className="p-2.5 w-10 text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -992,7 +996,10 @@ export default function CostumesPage() {
                           <DateInput
                             label=""
                             value={item.returnDate || ""}
-                            onChange={(val) => handleUpdateStudentInList(item.studentId, 'returnDate', val)}
+                            onChange={(val) => {
+                              console.log({ val })
+                              handleUpdateStudentInList(item.studentId, 'returnDate', val)
+                            }}
                           />
                         </td>
                         <td className="p-2.5">
@@ -1008,6 +1015,19 @@ export default function CostumesPage() {
                           />
 
                         </td>
+                        <td className="p-2.5">
+                          <ToggleSwitch
+                            label=""
+                            description={
+                              item.issuePaymentOrder
+                                ? "Generar orden de pago"
+                                : "No generar orden de pago"}
+                            checked={item.issuePaymentOrder}
+                            onChange={(active) => handleUpdateStudentInList(item.studentId, 'issuePaymentOrder', active)}
+                          />
+
+                        </td>
+
                         <td className="p-2.5 text-center">
                           <ActionButton
                             variant="danger"
