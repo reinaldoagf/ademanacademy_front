@@ -373,15 +373,6 @@ export default function ClientsPage() {
 
                 {clients.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {clients.map((client: Client) => {
-                        // Formatear la fecha de nacimiento de forma legible
-                        const formattedBirthDate = client.birthDate
-                            ? new Date(client.birthDate).toLocaleDateString('es-ES', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                            })
-                            : 'N/A';
-
                         return (
                             <div
                                 key={client.id}
@@ -428,7 +419,7 @@ export default function ClientsPage() {
                                                 Nacimiento
                                             </p>
                                             <p className="text-xs font-questrial font-bold text-gray-700">
-                                                {formattedBirthDate}
+                                                {formatDateForInput(client.birthDate)}
                                             </p>
                                         </div>
                                     </div><div className="grid grid-cols-2 gap-2 pt-3 border-t border-dashed border-gray-100">
@@ -718,6 +709,7 @@ export default function ClientsPage() {
                             label="Fecha de Nacimiento"
                             value={formData.birthDate}
                             onChange={(val) => setFormData({ ...formData, birthDate: val })}
+                            maxDate={new Date()} // Opcional: evita fechas futuras
                         />
                     </div>
 

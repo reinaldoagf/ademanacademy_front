@@ -1,25 +1,40 @@
-import React, { InputHTMLAttributes } from 'react';
+// src/components/ui/forms/DateInput.tsx
+import React from 'react';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import { FieldLayout, FieldLayoutProps } from './FieldLayout';
 import { BASE_INPUT_STYLES } from '@/consts/formStyles';
 
-// Helper interno para formatear instancias de Date a formato YYYY-MM-DD
-const formatDateValue = (val?: string | Date | null): string => {
-    if (!val) return '';
+// Helper corregido para interpretar strings sin desfase UTC
+const parseDateValue = (val?: string | Date | null): Date | null => {
+    if (!val) return null;
     if (val instanceof Date) {
-        if (isNaN(val.getTime())) return '';
-        return val.toISOString().split('T')[0];
+        return isNaN(val.getTime()) ? null : val;
     }
-    return val;
+    // Si viene en formato "YYYY-MM-DD", evitamos el desfase UTC dividiendo la cadena
+    if (typeof val === 'string' && val.includes('-')) {
+        const parts = val.split('T')[0].split('-');
+        if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Los meses en JS van de 0 a 11
+            const day = parseInt(parts[2], 10);
+            return new Date(year, month, day);
+        }
+    }
+    const parsed = new Date(val);
+    return isNaN(parsed.getTime()) ? null : parsed;
 };
 
 export interface DateInputProps
-    extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'type'>,
-    Omit<FieldLayoutProps, 'children'> {
+    extends Omit<FieldLayoutProps, 'children'> {
     value: string | Date | null;
     onChange: (value: string) => void;
     showIcon?: boolean;
-    min?: string;
-    max?: string;
+    minDate?: Date;
+    maxDate?: Date;
+    placeholder?: string;
+    disabled?: boolean;
+    className?: string;
 }
 
 export const DateInput: React.FC<DateInputProps> = ({
@@ -31,11 +46,26 @@ export const DateInput: React.FC<DateInputProps> = ({
     showIcon = true,
     disabled = false,
     className = "",
-    min,
-    max,
-    ...props
+    minDate,
+    maxDate,
+    placeholder = "YYYY-MM-DD",
 }) => {
-    const formattedValue = formatDateValue(value);
+    const selectedDate = parseDateValue(value);
+
+    const handleChange = (date: Date | null) => {
+        if (!date || isNaN(date.getTime())) {
+            onChange('');
+            return;
+        }
+
+        // 🌟 Usamos los métodos locales (getFullYear, getMonth, getDate) 
+        // en lugar de toISOString() para evitar que el cambio de zona horaria reste un día.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        onChange(`${year}-${month}-${day}`);
+    };
 
     return (
         <FieldLayout
@@ -43,10 +73,9 @@ export const DateInput: React.FC<DateInputProps> = ({
             labelColor={labelColor}
             containerClassName={containerClassName}
         >
-            <div className="relative flex items-center">
-                {/* Icono de Calendario */}
+            <div className="relative flex items-center w-full">
                 {showIcon && (
-                    <div className="absolute left-2.5 text-purple-400 pointer-events-none select-none">
+                    <div className="absolute left-3 text-purple-400 pointer-events-none select-none z-10">
                         <svg
                             className="w-4 h-4"
                             fill="none"
@@ -64,25 +93,24 @@ export const DateInput: React.FC<DateInputProps> = ({
                     </div>
                 )}
 
-                {/* Input de Fecha */}
-                <input
-                    {...props}
-                    type="date"
-                    min={min}
-                    max={max}
+                <DatePicker
+                    selected={selectedDate}
+                    onChange={handleChange}
+                    dateFormat="yyyy-MM-dd"
+                    placeholderText={placeholder || 'YYYY-MM-DD'}
+                    minDate={minDate}
+                    maxDate={maxDate}
                     disabled={disabled}
-                    value={formattedValue}
-                    onChange={(e) => onChange(e.target.value)}
+                    showYearDropdown
+                    scrollableYearDropdown
+                    yearDropdownItemNumber={100}
                     className={`
-            ${BASE_INPUT_STYLES}
-            ${showIcon ? 'pl-9' : ''}
-            text-gray-700
-            scheme-light
-            [&::-webkit-calendar-picker-indicator]:cursor-pointer
-            [&::-webkit-calendar-picker-indicator]:opacity-60
-            [&::-webkit-calendar-picker-indicator]:hover:opacity-100
-            ${className}
-          `.trim()}
+                        ${BASE_INPUT_STYLES}
+                        ${showIcon ? 'pl-9' : ''}
+                        text-gray-700
+                        ${className}
+                    `.trim()}
+                    wrapperClassName="w-full"
                 />
             </div>
         </FieldLayout>
