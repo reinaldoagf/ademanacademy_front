@@ -8,6 +8,8 @@ export interface User {
     firstName: string;
     lastName: string;
     email: string;
+    birthDate: string | Date;
+    countryCode: string;
     phone: string;
     password?: string;
     isAdmin: boolean;

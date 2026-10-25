@@ -124,7 +124,7 @@ export default function ClientsPage() {
     };
     const handleEditModal = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
         setRepresentativeSearch(`${client.representative?.firstName || ""} ${client.representative?.lastName || ""}`);
-        setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""}`);
+        setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""} (${client.user?.email || 'Usuario'})`);
         setFormData({
             firstName: client.firstName || "",
             lastName: client.lastName || "",
@@ -665,6 +665,14 @@ export default function ClientsPage() {
                             setFormData({
                                 ...formData,
                                 userId: option.id as any,
+                                firstName: option.data?.firstName as string || formData.firstName,
+                                lastName: option.data?.lastName as string || formData.lastName,
+                                dni: option.data?.dni as string || formData.dni,
+                                IDNumberPrefix: option.data?.IDNumberPrefix as string || formData.IDNumberPrefix,
+                                email: option.data?.email as string || formData.email,
+                                phone: option.data?.phone as string || formData.phone,
+                                address: option.data?.address as string || formData.address,
+                                birthDate: option.data?.birthDate as Date || formData.birthDate,
                             });
                             setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
                         }}
@@ -743,32 +751,44 @@ export default function ClientsPage() {
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
                     {/* Opciones de Rol */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto font-questrial ">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto font-questrial">
+                        {/* Opción Estudiante */}
                         <button
                             type="button"
                             onClick={() => { setFormData({ ...formData, type: "Estudiante" }) }}
-                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "Estudiante"
+                            className={`rounded-lg cursor-pointer p-4 border text-left flex items-center gap-4 transition-all duration-200 ${formData.type === "Estudiante"
                                 ? "border-purple-500 bg-purple-950/40 shadow-[0_0_15px_rgba(147,51,234,0.3)] text-white"
-                                : "border-purple-100 bg-purple-50/40 hover:border-purple-400"
+                                : "border-purple-100 bg-purple-50/40 hover:border-purple-400 text-gray-700 hover:bg-purple-50/60"
                                 }`}
                         >
-                            <UserLucide className={`w-6 h-6 ${formData.type === "Estudiante" ? "text-white" : "text-gray-400"}`} />
+                            <div className={`p-2 rounded-md ${formData.type === "Estudiante" ? "bg-purple-800/50 text-white" : "bg-purple-100/50 text-purple-600"}`}>
+                                <UserLucide className="w-5 h-5" />
+                            </div>
                             <div>
                                 <h4 className="font-bold text-sm">Estudiante</h4>
+                                <p className={`text-[11px] ${formData.type === "Estudiante" ? "text-purple-200" : "text-gray-400"}`}>
+                                    Registrar cuenta como alumno
+                                </p>
                             </div>
                         </button>
 
+                        {/* Opción Representante */}
                         <button
                             type="button"
                             onClick={() => { setFormData({ ...formData, type: "Representante" }) }}
-                            className={`rounded cursor-pointer p-4 border text-left flex flex-row justify-between transition group relative ${formData.type === "Representante"
+                            className={`rounded-lg cursor-pointer p-4 border text-left flex items-center gap-4 transition-all duration-200 ${formData.type === "Representante"
                                 ? "border-pink-500 bg-pink-950/40 shadow-[0_0_15px_rgba(219,39,119,0.3)] text-white"
-                                : "border-purple-100 bg-purple-50/40 hover:border-pink-400"
+                                : "border-purple-100 bg-purple-50/40 hover:border-pink-400 text-gray-700 hover:bg-purple-50/60"
                                 }`}
-                        > <div>
-                                <Users2 className={`w-6 h-6 ${formData.type === "Representante" ? "text-white" : "text-gray-400"}`} />
-                            </div> <div>
+                        >
+                            <div className={`p-2 rounded-md ${formData.type === "Representante" ? "bg-pink-800/50 text-white" : "bg-purple-100/50 text-pink-600"}`}>
+                                <Users2 className="w-5 h-5" />
+                            </div>
+                            <div>
                                 <h4 className="font-bold text-sm">Representante</h4>
+                                <p className={`text-[11px] ${formData.type === "Representante" ? "text-pink-200" : "text-gray-400"}`}>
+                                    Registrar como tutor o familiar
+                                </p>
                             </div>
                         </button>
                     </div>

@@ -13,10 +13,14 @@ import {
     Camera,
     Eye,
     EyeOff,
-    Phone
+    Phone,
+    Calendar
 } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-day-picker/style.css"; // Estilos base limpios de la librería
 import { handleRegister } from "@/app/actions/auth";
 import { useAuthStore } from "@/store/authStore";
+import "react-datepicker/dist/react-datepicker.css"; // 🌟 ESTILOS AGREGADOS
 
 export default function RegisterPage() {
     const setUser = useAuthStore((state) => state.setUser); // 💡 Obtenemos la acción
@@ -39,6 +43,11 @@ export default function RegisterPage() {
     const [dniPrefix, setDniPrefix] = useState("V");
     const [countryCode, setCountryCode] = useState("+58"); // Código por defecto (ej: Venezuela)
     const [phone, setPhone] = useState("");
+    const [birthDate, setBirthDate] = useState<Date | null>(null);
+
+    const handleDateChange = (date: Date | null) => {
+        setBirthDate(date);
+    };
 
     // Lista de códigos de ejemplo comunes (puedes ampliarla o moverla a un helper)
     const countries = [
@@ -59,7 +68,7 @@ export default function RegisterPage() {
         { code: "G", label: "G" },
     ];
     // Estados de Validaciones y Visibilidad
-    const [error, setError] = useState<string | null>(null);
+    const [errorMsj, setErrorMsj] = useState<string | null>(null);
     const [errorEmail, setErrorEmail] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -99,13 +108,9 @@ export default function RegisterPage() {
     const prevStep = () => {
         if (step === 2) setStep(1);
     };
-
     const onSubmit = async () => {
-        setError(null);
+        setErrorMsj(null);
         setIsLoading(true);
-        // Unificamos el código de país con el número (Eliminando espacios si los hay)
-        const fullPhone = `${countryCode}${phone.replace(/\s+/g, "")}`;
-
         const payload = new FormData();
         payload.append("IDNumberPrefix", dniPrefix);
         payload.append("dni", dni);
@@ -113,7 +118,10 @@ export default function RegisterPage() {
         payload.append("lastName", lastName);
         payload.append("email", email);
         payload.append("password", password);
-        payload.append("phone", fullPhone); // 🎯 NUEVO CAMPO EN PAYLOAD
+        payload.append("countryCode", countryCode); // 🎯 NUEVO CAMPO EN PAYLOAD
+        payload.append("phone", phone.replace(/\s+/g, "")); // 🎯 NUEVO CAMPO EN PAYLOAD
+        // 🌟 Formateo seguro de la fecha de nacimiento a YYYY-MM-DD
+        if (birthDate) payload.append("birthDate", birthDate.toISOString());
         if (avatar) payload.append("avatar", avatar);
 
         // Ejecutamos la Server Action y esperamos la respuesta de la API
@@ -121,7 +129,7 @@ export default function RegisterPage() {
 
         // 1. Manejo de respuesta errónea
         if (res?.error || !res?.success) {
-            setError(res?.error || "Ocurrió un error inesperado");
+            setErrorMsj(res?.error || "Ocurrió un errorMsj inesperado");
             setIsLoading(false);
             return;
         }
@@ -140,8 +148,11 @@ export default function RegisterPage() {
                 email: res.user.email,
                 isAdmin: res.user.isAdmin,
                 profileOnboarding: res.user.profileOnboarding,
+                countryCode: res.user.countryCode,
                 phone: res.user.phone,
+                IDNumberPrefix: res.user.IDNumberPrefix,
                 dni: res.user.dni,
+                birthDate: res.user.birthDate,
                 profileType: res.user.profileType || 'Estudiante',
             });
             // En este punto las cookies ya se guardaron en el navegador automáticamente.
@@ -201,9 +212,9 @@ export default function RegisterPage() {
                     />
                 </div>
 
-                {error && (
+                {errorMsj && (
                     <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">
-                        {error}
+                        {errorMsj}
                     </p>
                 )}
 
@@ -336,7 +347,28 @@ export default function RegisterPage() {
                                     </div>
                                 </div>
                             </div>
+                            {/* 🌟 CAMPO: Fecha de Nacimiento con Estilo Personalizado y Amigable */}
+                            <div className="space-y-2">
+                                <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="birthDate">
+                                    Fecha de Nacimiento
+                                </label>
+                                <div className="relative group">
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
+                                    <DatePicker
+                                        selected={birthDate}
+                                        onChange={handleDateChange}
+                                        dateFormat="yyyy-MM-dd"
+                                        placeholderText="YYYY-MM-DD"
+                                        maxDate={new Date()} // Evita fechas futuras para fecha de nacimiento
+                                        showYearDropdown
+                                        scrollableYearDropdown
+                                        yearDropdownItemNumber={100}
+                                        // 🌟 Estilos aplicados directamente sin usar librerías de máscaras obsoletas
+                                        className="py-4 pl-12 pr-4 w-full border border-purple-200 bg-purple-50/30 focus:outline-none focus:border-purple-400 rounded transition-colors text-sm text-gray-800 font-questrial"
+                                        wrapperClassName="w-full"
+                                    /></div>
+                            </div>
                             {/* 🎯 NUEVO INPUT: WHATSAPP CON CÓDIGO DE PAÍS */}
                             <div className="space-y-2">
                                 <label className="font-questrial text-[10px] uppercase tracking-wider text-tx-muted" htmlFor="phone">Número de WhatsApp</label>
@@ -564,7 +596,7 @@ export default function RegisterPage() {
 
                 {/* SEPARATOR & SOCIAL LOGIN */}
 
-                <div className="mt-8 space-y-6 relative z-10">
+                <div className="mt-8 space-y-6 relative">
                     <div className="relative flex items-center justify-center">
                         <div className="absolute w-full border-t border-white/5"></div>
 

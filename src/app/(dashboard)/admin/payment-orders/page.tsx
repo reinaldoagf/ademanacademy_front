@@ -82,7 +82,7 @@ export default function PaymentOrdersPage() {
                         </div>
                         {order.client ? (
                             <div className="hidden md:flex flex-col text-left font-questrial">
-                                <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName}</span>
+                                <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName} {order.client.lastName}</span>
                                 <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client.email || 'No registrado'}</span>
                             </div>) : (
                             <div className="hidden md:flex flex-col text-left font-questrial">

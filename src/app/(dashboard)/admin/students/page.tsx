@@ -36,6 +36,7 @@ import { User } from "@/types/user";
 import { Client } from "@/types/client";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { APP_KEYS } from "@/config/app-keys";
+import { formatDateForInput } from "@/helpers/dates";
 
 type StudentFormData = {
   IDNumberPrefix: string,
@@ -53,6 +54,7 @@ type StudentFormData = {
   hasExperience: boolean,
   groupId: string | null,
   userId: string | null,
+  representativeId: string | null,
 };
 const initialFormState: StudentFormData = {
   IDNumberPrefix: "V",
@@ -70,6 +72,7 @@ const initialFormState: StudentFormData = {
   hasExperience: true,
   groupId: "",
   userId: null,
+  representativeId: null,
 };
 const countries = [
   { code: "+58", label: "VE" },
@@ -120,7 +123,7 @@ export default function StudentsPage() {
 
 
   const [formData, setFormData] = useState<StudentFormData>(initialFormState);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedElement, setSelectedElement] = useState<Client | null>(null);
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -286,7 +289,7 @@ export default function StudentsPage() {
     e.preventDefault();
     setErrorMsg(null);
     startTransition(async () => {
-      const res = await saveStudentAction(formData.userId ? formData : { ...formData, userId: null }, editingId);
+      const res = await saveStudentAction(formData.userId ? formData : { ...formData, userId: null }, selectedElement?.id);
       if (!res.success) {
         setErrorMsg(res.error || "Ocurrió un error.");
         return;
@@ -392,30 +395,13 @@ export default function StudentsPage() {
             icon={Pencil}
             tooltip="Editar"
             onClick={() => {
-              setEditingId(client.id);
-
-              // 🎯 CORRECCIÓN: Manejo robusto de fechas (sea Date o string ISO de la API)
-              let formattedBirthDate = "";
-              if (client.birthDate) {
-                const dateObj = client.birthDate instanceof Date
-                  ? client.birthDate
-                  : new Date(client.birthDate);
-
-                if (!isNaN(dateObj.getTime())) {
-                  // Extrae YYYY-MM-DD considerando la zona horaria local
-                  const year = dateObj.getFullYear();
-                  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                  const day = String(dateObj.getDate()).padStart(2, '0');
-                  formattedBirthDate = `${year}-${month}-${day}`;
-                }
-              }
-
+              setSelectedElement(client);
               setFormData({
                 IDNumberPrefix: client.IDNumberPrefix,
                 dni: client.dni,
                 firstName: client.firstName,
                 lastName: client.lastName,
-                birthDate: formattedBirthDate, // 👈 Ahora sí recibe "YYYY-MM-DD"
+                birthDate: formatDateForInput(client.birthDate),
                 email: client.user?.email || '',
                 kinship: client.student?.kinship,
                 medicalObservations: client.student?.medicalObservations || "",
@@ -424,12 +410,13 @@ export default function StudentsPage() {
                 countryCode: client.countryCode || "+58",
                 phone: client.phone,
                 hasExperience: client.student?.hasExperience || false,
-                groupId: client.groupId || "",
-                userId: client.userId || "",
+                groupId: client.groupId || null,
+                userId: client.userId || null,
+                representativeId: client.representativeId || null,
               });
 
               setGroupSearch(client.group?.name || "");
-              setUserSearch(client.user?.firstName + " " + client.user?.lastName || "");
+              setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""} (${client.user?.email || 'Usuario'})`);
               openModal();
             }}
           >
@@ -467,7 +454,7 @@ export default function StudentsPage() {
         actions={[{
           label: "Registrar Nuevo Alumno →",
           onClick: () => {
-            setEditingId(null);
+            setSelectedElement(null);
             setFormData(initialFormState);
             setGroupSearch("")
             setErrorMsg(null);
@@ -568,7 +555,7 @@ export default function StudentsPage() {
       <MacDockModal
         isOpen={isOpen}
         onClose={closeModal}
-        title={editingId ? "Actualizar Estudiante" : "Registrar Nuevo Estudiante"}
+        title={selectedElement ? "Actualizar Estudiante" : "Registrar Nuevo Estudiante"}
         size={"lg"}
       >
         {/* Formulario */}
@@ -578,7 +565,42 @@ export default function StudentsPage() {
           className="space-y-4 font-questrial text-xs"
         >
           {errorMsg && <p className="text-red-500 bg-red-50 p-2 rounded text-sm text-center mb-4">{errorMsg}</p>}
-
+          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
+          <SearchInput
+            label="Asignación de usuario"
+            placeholder="Escribe para buscar o selecciona de la lista..."
+            value={userSearch}
+            isLoading={isLoadingUsers}
+            options={filteredUsers.map((user: any) => ({
+              id: user.id,
+              label: `${user.firstName} ${user.lastName}`,
+              subLabel: `Email: ${user.email}`,
+              data: user, // Guardamos el objeto completo si hace falta
+            }))}
+            emptyMessage="No se encontraron usuarios coincidentes"
+            onChangeText={(text) => {
+              setUserSearch(text);
+              setFormData({
+                ...formData,
+                userId: text as any,
+              });
+            }}
+            onSelectOption={(option) => {
+              setFormData({
+                ...formData,
+                userId: option.id as any,
+                firstName: option.data?.firstName as string || formData.firstName,
+                lastName: option.data?.lastName as string || formData.lastName,
+                dni: option.data?.dni as string || formData.dni,
+                IDNumberPrefix: option.data?.IDNumberPrefix as string || formData.IDNumberPrefix,
+                email: option.data?.email as string || formData.email,
+                phone: option.data?.phone as string || formData.phone,
+                address: option.data?.address as string || formData.address,
+                birthDate: option.data?.birthDate ? formatDateForInput(option.data?.birthDate) : formData.birthDate,
+              });
+              setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
+            }}
+          />
           <div className="grid grid-cols-2 gap-3">
             <DNIInput
               label="DNI / Identificación *"
@@ -684,38 +706,11 @@ export default function StudentsPage() {
                 ...formData,
                 groupId: option.id as any,
               });
-              setGroupSearch(`${option.label} (${option.data?.level} - ${option.data?.section})`);
+              setGroupSearch(`${option.label}`);
             }}
           />
 
-          {/* ✨ SECCIÓN SELECTOR DE GRUPO (Aparece sólo si es Matrícula Pendiente) */}
-          <SearchInput
-            label="Asignación de usuario"
-            placeholder="Escribe para buscar o selecciona de la lista..."
-            value={userSearch}
-            isLoading={isLoadingUsers}
-            options={filteredUsers.map((user: any) => ({
-              id: user.id,
-              label: `${user.firstName} ${user.lastName}`,
-              subLabel: `Email: ${user.email}`,
-              data: user, // Guardamos el objeto completo si hace falta
-            }))}
-            emptyMessage="No se encontraron usuarios coincidentes"
-            onChangeText={(text) => {
-              setUserSearch(text);
-              setFormData({
-                ...formData,
-                userId: text as any,
-              });
-            }}
-            onSelectOption={(option) => {
-              setFormData({
-                ...formData,
-                userId: option.id as any,
-              });
-              setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
-            }}
-          />
+
 
 
           {/* Botonera */}
@@ -736,7 +731,7 @@ export default function StudentsPage() {
             >
               {isPending
                 ? "Guardando..."
-                : editingId
+                : selectedElement
                   ? "Actualizar Alumno →"
                   : "Registrar Alumno →"}
             </button>

@@ -148,3 +148,30 @@ body {
 .date-range-picker-container .flex.items-center.justify-center.w-12.h-12.lg\:w-10.lg\:h-10.bg-purple-500.text-white.font-medium.rounded-r-full {
   @apply !bg-[#5e0472] !text-white !w-full !h-full !text-[13px] !font-semibold !py-1 !px-2
 }
+
+.react-datepicker-popper {
+  @apply !z-[1000]
+}
+
+.react-datepicker-popper .react-datepicker__month-container {
+  @apply !font-questrial
+}
+
+.react-datepicker .react-datepicker__month-container .react-datepicker__header {
+  @apply !bg-purple-100 !text-[#5e0472] !font-questrial
+}
+
+.react-datepicker .react-datepicker__month-container .react-datepicker__day--selected,
+.react-datepicker .react-datepicker__month-container .react-datepicker__day--in-selecting-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__day--in-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__month-text--selected,
+.react-datepicker .react-datepicker__month-container .react-datepicker__month-text--in-selecting-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__month-text--in-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__quarter-text--selected,
+.react-datepicker .react-datepicker__month-container .react-datepicker__quarter-text--in-selecting-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__quarter-text--in-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__year-text--selected,
+.react-datepicker .react-datepicker__month-container .react-datepicker__year-text--in-selecting-range,
+.react-datepicker .react-datepicker__month-container .react-datepicker__year-text--in-range {
+  @apply !bg-[#5e0472] !text-white
+}

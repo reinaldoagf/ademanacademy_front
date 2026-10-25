@@ -6,12 +6,15 @@ interface User {
     id: string;
     firstName: string;
     lastName: string;
+    countryCode: string;
+    phone: string;
+    IDNumberPrefix: string;
     dni: string;
+    birthDate: string;
     email: string;
     isAdmin: boolean;
     profileType: "Representante" | "Estudiante";
     profileOnboarding: boolean;
-    phone: string;
     client?: Client;
     clients?: Client[];
 }
