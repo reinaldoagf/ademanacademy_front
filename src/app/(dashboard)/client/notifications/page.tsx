@@ -21,6 +21,7 @@ export default function NotificationsPage() {
     const pathname = usePathname();
     const user = useAuthStore((state) => state.user);
     const isAdmin = pathname.startsWith('/admin') && user?.isAdmin
+    const isEmployee = pathname.startsWith('/collaborator') && user?.isEmployee
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(12);
     const [isPending, startTransition] = useTransition();

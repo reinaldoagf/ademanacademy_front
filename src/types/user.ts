@@ -9,11 +9,12 @@ export interface User {
     firstName: string;
     lastName: string;
     email: string;
-    birthDate: string | Date;
+    birthDate: string;
     countryCode: string;
     phone: string;
     password?: string;
     isAdmin: boolean;
+    isEmployee: boolean;
     profileType: "Representante" | "Estudiante";
     students?: Student[]
     client: Client;

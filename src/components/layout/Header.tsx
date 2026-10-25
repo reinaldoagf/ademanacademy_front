@@ -16,6 +16,8 @@ import {
   SlidersHorizontal,
   GraduationCap,
   User as UserIcon,
+  Shield,
+  Briefcase,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { handleLogout } from "@/app/actions/auth";
@@ -35,9 +37,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
 
   // Estados locales
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-
-  ]);
 
   // 💡 NUEVOS ESTADOS PARA EL BUSCADOR AVANZADO
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -51,7 +50,6 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   const startLoading = useLoadingStore((state) => state.startLoading);
   const stopLoading = useLoadingStore((state) => state.stopLoading);
 
-  // const hasUnread = notifications.some(n => !n.read);
 
   const handleRoleTransition = (targetPath: string) => {
     setIsUserMenuOpen(false);
@@ -76,7 +74,10 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
       setTimeout(() => stopLoading(), 200);
     }
   };
-
+  // 🌟 Estado para controlar el panel activo actual. Por defecto es 'client'
+  const [activePanel, setActivePanel] = useState<'admin' | 'collaborator' | 'client'>('client');
+  // Verificar si el usuario tiene privilegios para alternar vistas
+  const canSwitchRoles = user?.isAdmin || user?.isEmployee;
   /* const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }; */
@@ -114,7 +115,11 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     }
     return () => { document.body.style.overflow = "unset"; };
   }, [isSearchModalOpen]);
-
+  useEffect(() => {
+    if (user) {
+      setActivePanel(user?.isAdmin && pathname.startsWith("/admin") ? 'admin' : user?.isEmployee && pathname.startsWith("/collaborator") ? 'collaborator' : 'client');
+    }
+  }, [pathname, user]);
   return (
     <>
       <header className="w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
@@ -157,34 +162,61 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
             userId={user?.id}
           />
           {/* Botón rápido de Cambio de Rol */}
-          {user?.isAdmin && (
-            <>
-              {pathname.startsWith("/admin") ? (
-                <div className="group relative flex justify-center">
-                  <button
-                    onClick={() => handleRoleTransition("/client/dashboard")}
-                    className="w-9 h-9 bg-blue-50 flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
-                  >
-                    <User className="w-4 h-4" />
-                  </button>
-                  <span className="absolute top-full mt-2 hidden group-hover:block w-auto rounded bg-gray-800 px-2.5 py-1.5 text-[10px] font-questrial text-white shadow-lg whitespace-nowrap z-50">
-                    Cambiar a Vista Cliente
-                  </span>
-                </div>
-              ) : (
-                <div className="group relative flex justify-center">
-                  <button
-                    onClick={() => handleRoleTransition("/admin/dashboard")}
-                    className="w-9 h-9 bg-purple-50 flex items-center justify-center text-purple-600 hover:bg-purple-100 transition-colors cursor-pointer"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                  </button>
-                  <span className="absolute top-full mt-2 hidden group-hover:block w-auto rounded bg-gray-800 px-2.5 py-1.5 text-[10px] font-questrial text-white shadow-lg whitespace-nowrap z-50">
-                    Cambiar a Vista Admin
-                  </span>
-                </div>
+          {/* 🌟 1. CONMUTADOR DE PANELES (Solo visible para Admin o Collaborator/Employee) */}
+          {canSwitchRoles && (
+            <div className="flex items-center bg-purple-50/80 p-0.5 rounded-lg border border-purple-100 text-[11px] font-questrial font-medium">
+              {/* Opción Admin (Visible solo si user.isAdmin es true) */}
+              {user?.isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePanel('admin');
+                    handleRoleTransition('/admin/dashboard')
+                  }}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${activePanel === 'admin'
+                    ? 'bg-white text-[#5e0472] shadow-sm font-bold'
+                    : 'cursor-pointer text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                  <Shield className="w-3 h-3 text-purple-600" />
+                  Admin
+                </button>
               )}
-            </>
+
+              {/* Opción Collaborator (Visible si user.isEmployee es true o si es admin y quiere ver su vista de colaborador) */}
+              {user?.isEmployee && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePanel('collaborator');
+                    handleRoleTransition('/collaborator/dashboard')
+                  }}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${activePanel === 'collaborator'
+                    ? 'bg-white text-[#5e0472] shadow-sm font-bold'
+                    : 'cursor-pointer text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                  <Briefcase className="w-3 h-3 text-blue-500" />
+                  Colaborador
+                </button>
+              )}
+
+              {/* Opción Client (Por defecto para todos, incluidos admin y employees) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActivePanel('client');
+                  handleRoleTransition('/client/dashboard')
+                }}
+                className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${activePanel === 'client'
+                  ? 'bg-white text-[#5e0472] shadow-sm font-bold'
+                  : 'cursor-pointer text-gray-500 hover:text-gray-800'
+                  }`}
+              >
+                <User className="w-3 h-3 text-emerald-500" />
+                Cliente
+              </button>
+            </div>
           )}
 
           {/* DIVISOR VISUAL */}

@@ -13,6 +13,7 @@ interface User {
     birthDate: string;
     email: string;
     isAdmin: boolean;
+    isEmployee: boolean;
     profileType: "Representante" | "Estudiante";
     profileOnboarding: boolean;
     client?: Client;

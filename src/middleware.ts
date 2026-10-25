@@ -4,7 +4,8 @@ import type { NextRequest } from 'next/server';
 interface JwtPayload {
   sub: string;
   email: string;
-  isAdmin: string;
+  isAdmin: boolean;
+  isEmployee: boolean;
   profileType?: string; // 👈 Añadimos profileType para identificar el rol
   exp: number;
 }

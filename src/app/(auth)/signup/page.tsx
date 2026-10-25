@@ -147,6 +147,7 @@ export default function RegisterPage() {
                 lastName: res.user.lastName,
                 email: res.user.email,
                 isAdmin: res.user.isAdmin,
+                isEmployee: res.user.isEmployee,
                 profileOnboarding: res.user.profileOnboarding,
                 countryCode: res.user.countryCode,
                 phone: res.user.phone,

@@ -365,7 +365,6 @@ export function CartDrawer() {
                             </>) : (
                                 <SelectInput
                                     label="Cliente"
-                                    name="clientId"
                                     value={clientId || ''}
                                     onChange={(e) => {
                                         setClientId(e.target.value)

@@ -205,10 +205,14 @@ export function OnboardingWizard({ userEmail, stepType = "PROFILE", onSuccess }:
                     phone: res.data.user.phone,
                     email: res.data.user.email,
                     isAdmin: res.data.user.isAdmin,
+                    isEmployee: res.data.user.isEmployee,
                     profileOnboarding: res.data.user.profileOnboarding,
                     client: res.data.user.ownedClients.find((e: Client) => e.userId == res.data.user.id) || null,
+                    IDNumberPrefix: res.data.user.IDNumberPrefix || '',
                     dni: res.data.user.dni || '',
                     profileType: res.data.user.profileType || 'Estudiante',
+                    birthDate: res.data.user.birthDate || '',
+                    countryCode: res.data.user.countryCode || '',
                 });
 
             } else {
