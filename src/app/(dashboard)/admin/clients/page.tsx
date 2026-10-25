@@ -74,7 +74,7 @@ export default function ClientsPage() {
     const [representativeSearch, setRepresentativeSearch] = useState("");
     const [filteredRepresentatives, setFilteredRepresentatives] = useState<User[]>([]);
     const [isLoadingRepresentatives, setIsLoadingRepresentatives] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [selectedElement, setSelectedElement] = useState<Client | null>(null);
     const [formData, setFormData] = useState<CustomerFormData>(initialFormState);
     const [clients, setClients] = useState<Client[]>([]);
     const { isOpen, openModal, closeModal } = useModal();
@@ -123,8 +123,8 @@ export default function ClientsPage() {
         }
     };
     const handleEditModal = (client: Client) => { // Puedes usar la interfaz de tu Student de Prisma
-        setRepresentativeSearch(`${client.representative?.firstName || ""} ${client.representative?.lastName || ""}`);
-        setUserSearch(`${client.user?.firstName || ""} ${client.user?.lastName || ""} (${client.user?.email || 'Usuario'})`);
+        setRepresentativeSearch(client.representative ? `${client.representative?.firstName || ""} ${client.representative?.lastName || ""} (${client.representative?.email || 'Usuario'})` : "");
+        setUserSearch(client.user ? `${client.user?.firstName || ""} ${client.user?.lastName || ""} (${client.user?.email || 'Usuario'})` : "");
         setFormData({
             firstName: client.firstName || "",
             lastName: client.lastName || "",
@@ -136,13 +136,14 @@ export default function ClientsPage() {
             address: client.address || "",
             birthDate: formatDateForInput(client.birthDate),
             userId: client.userId || null,
+            representativeId: client.representativeId || null,
             type: client.type || "Estudiante",
             kinship: client.student?.kinship || "Hijo",
             medicalObservations: client.student?.medicalObservations || "",
             shirtSize: client.student?.shirtSize || "",
             hasExperience: client.student?.hasExperience || false,
         });
-        setEditingId(client.id);
+        setSelectedElement(client);
         setErrorMsg(null);
         openModal();
     };
@@ -167,7 +168,7 @@ export default function ClientsPage() {
             return;
         }
 
-        if (formData.userId?.trim() == formData.representativeId?.trim()) {
+        if (formData.userId && formData.representativeId && formData.userId?.trim() == formData.representativeId?.trim()) {
             setErrorMsg("El usuario de representante seleccionado no puede ser igual al usuario vinculado al cliente.");
             return;
         }
@@ -180,7 +181,7 @@ export default function ClientsPage() {
                     // Si no se seleccionó un usuario válido de la lista, envía null
                     userId: formData.userId?.trim() ? formData.userId : null,
                     representativeId: formData.representativeId?.trim() ? formData.representativeId : null,
-                }, editingId);
+                }, selectedElement?.id);
 
                 if (!res.success) {
                     setErrorMsg(res.error || "Ocurrió un error al guardar el cliente.");
@@ -188,7 +189,7 @@ export default function ClientsPage() {
                 }
 
                 toast.success(
-                    editingId
+                    selectedElement
                         ? "Cliente actualizado correctamente"
                         : "Cliente registrado con éxito"
                 );
@@ -340,7 +341,7 @@ export default function ClientsPage() {
                         onClick: () => {
                             setFormData(initialFormState);
                             setErrorMsg(null);
-                            setEditingId(null);
+                            setSelectedElement(null);
                             setUserSearch(``);
                             openModal();
                         },
@@ -621,7 +622,7 @@ export default function ClientsPage() {
             <MacDockModal
                 isOpen={isOpen}
                 onClose={closeModal}
-                title={editingId ? "Actualizar Cliente" : "Registrar Nuevo Cliente"}
+                title={selectedElement ? "Actualizar Cliente" : "Registrar Nuevo Cliente"}
                 size={"2xl"}
             >
                 {/* --- FORMULARIO DE REGISTRO DE CLIENTES --- */}
@@ -880,7 +881,7 @@ export default function ClientsPage() {
                         >
                             {isPending
                                 ? "Guardando..."
-                                : editingId
+                                : selectedElement
                                     ? "Actualizar Cliente →"
                                     : "Registrar Cliente →"}
                         </button>
