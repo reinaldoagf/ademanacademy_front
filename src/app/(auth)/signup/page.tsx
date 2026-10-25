@@ -358,8 +358,8 @@ export default function RegisterPage() {
                                     <DatePicker
                                         selected={birthDate}
                                         onChange={handleDateChange}
-                                        dateFormat="yyyy-MM-dd"
-                                        placeholderText="YYYY-MM-DD"
+                                        dateFormat="yyyy/MM/dd"
+                                        placeholderText="YYYY/MM/DD"
                                         maxDate={new Date()} // Evita fechas futuras para fecha de nacimiento
                                         showYearDropdown
                                         scrollableYearDropdown

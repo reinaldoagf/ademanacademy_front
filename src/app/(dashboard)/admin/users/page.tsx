@@ -1,6 +1,6 @@
 // src/app/(dashboard)/admin/users/page.tsx
 "use client";
-import React, { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import {
     Search,
     User as UserIcon
@@ -36,7 +36,6 @@ export default function UsersPage() {
                 limit: limitToFetch, // 🎯 Enviamos el límite dinámico
                 search: searchTerm || undefined,
             });
-
             if (res.success && res.data) {
                 setUsers(res.data);
                 setMeta(res.meta); // NestJS ya devuelve el "itemsPerPage" en su meta
@@ -55,11 +54,7 @@ export default function UsersPage() {
 
     // 3️⃣ 🎯 MANEJADOR DE CAMBIO DE PÁGINA
     const handlePageChange = (newPage: number) => {
-        // Actualizamos el estado local. Al cambiar, disparará el useEffect superior de forma reactiva
         setCurrentPage(newPage);
-
-        // 💡 Opcional y Recomendado: Scroll suave hacia arriba de la tabla para mejorar la UX al cambiar de página
-        //window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     // 🎯 MANEJADOR DE CAMBIO DE LÍMITE (Filas por página)
@@ -72,8 +67,14 @@ export default function UsersPage() {
         {
             header: "Fecha de Registro",
             render: (user) => (
+                <p className="text-[11px] text-gray-400 mt-0.5"> {user.createdAt ? (<DatePipe value={user.createdAt} format="short" />) : ("Sin fecha")}</p>
+            ),
+        },
+        {
+            header: "Fecha de Nacimiento",
+            render: (user) => (
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                    <DatePipe value={user.createdAt} format="short" />
+                    <DatePipe value={user.birthDate} format="short" />
                 </p>
             ),
         },
@@ -99,7 +100,7 @@ export default function UsersPage() {
             header: "DNI",
             render: (user) => (
                 <span className="font-bold text-gray-800">
-                    {user.dni}
+                    {user.IDNumberPrefix}{user.dni}
                 </span>
             ),
         },
@@ -107,7 +108,7 @@ export default function UsersPage() {
             header: "Télefono",
             render: (user) => (
                 <span className="font-bold text-gray-800">
-                    {user.phone}
+                    {user.countryCode}{user.phone}
                 </span>
             ),
         },
@@ -144,7 +145,7 @@ export default function UsersPage() {
                     isLoading={isPending}
                     onPageChange={handlePageChange}
                     onLimitChange={handleLimitChange} // 👈 Pasamos el manejador del límite
-                    rowKey={(transaction) => transaction.id}
+                    rowKey={(user) => user.id}
                     emptyMessage="No se encontraron usuarios registradas."
                 />
             </div>

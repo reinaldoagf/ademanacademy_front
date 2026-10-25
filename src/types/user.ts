@@ -4,6 +4,7 @@ import { Client } from "./client";
 import { S3Image } from "./s3-image";
 export interface User {
     id: string;
+    IDNumberPrefix: string;
     dni: string;
     firstName: string;
     lastName: string;
