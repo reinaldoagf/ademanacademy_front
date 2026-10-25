@@ -23,6 +23,7 @@ import { WardrobeCard } from "@/components/WardrobeCard";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
+import DatePipe from "@/components/pipes/DatePipe";
 import { TextInput, SelectInput, TextArea, ImageGalleryPicker, ToggleSwitch, SearchInput, DateInput } from '@/components/ui/forms';
 import { CostumeCategory, Costume, StatusCardConfig, CostumeStatus, CostumeFormData, SaveCostumePayload, ElementToBeAssigned } from "@/types/costume";
 import {
@@ -99,6 +100,7 @@ export default function CostumesPage() {
   const clothingFormReference = useRef<HTMLFormElement>(null);
   const policyFormReference = useRef<HTMLFormElement>(null);
   const assignmentFormReference = useRef<HTMLFormElement>(null);
+  const [dateInputFocus, setDateInputFocus] = useState<boolean>(false);
   // 3. Estado enfocado puramente en los totales numéricos
   const [statusCounts, setStatusCounts] = useState<Record<CostumeStatus, number>>({
     Pendiente_por_Pago: 0,
@@ -972,7 +974,7 @@ export default function CostumesPage() {
                 <p className="text-[11px]">Usa el buscador superior para agregar alumnos a la lista.</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+              <div className={`divide-y divide-gray-100 ${dateInputFocus ? '' : 'max-h-60'} overflow-y-auto`}>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0">
                     <tr>
@@ -994,6 +996,9 @@ export default function CostumesPage() {
                           <DateInput
                             label=""
                             value={item.returnDate || ""}
+                            popperPlacement="right"
+                            onFocus={() => { setDateInputFocus(true) }}
+                            onBlur={() => { setDateInputFocus(false) }}
                             onChange={(val) => {
                               handleUpdateStudentInList(item.studentId, 'returnDate', val)
                             }}
@@ -1003,7 +1008,6 @@ export default function CostumesPage() {
                           <TextArea
                             label=""
                             placeholder="Opcional..."
-
                             rows={1}
                             value={item.observations || ''}
                             onChange={(e) =>
@@ -1136,7 +1140,7 @@ export default function CostumesPage() {
                         </td>
                         <td className="p-3 text-gray-600">
                           {assignment.returnDate ? (
-                            new Date(assignment.returnDate).toLocaleDateString('es-ES')
+                            <DatePipe value={assignment.returnDate} format="short" />
                           ) : (
                             <span className="text-slate-400 italic">Sin definir</span>
                           )}

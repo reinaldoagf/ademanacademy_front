@@ -153,6 +153,10 @@ body {
   @apply !z-[1000]
 }
 
+table .react-datepicker-popper {
+  @apply !relative
+}
+
 .react-datepicker-popper .react-datepicker__month-container {
   @apply !font-questrial
 }

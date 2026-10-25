@@ -114,7 +114,7 @@ export default function PaymentOrdersPage() {
         {
             header: "Alumno",
             render: (order) => {
-                if (!order.client?.student) {
+                if (!order?.student?.clients) {
                     return <p className="text-[11px] text-gray-400 mt-0.5">Sin alumno</p>;
                 }
                 return (
@@ -123,8 +123,8 @@ export default function PaymentOrdersPage() {
                             <User className="w-3.5 h-3.5 shrink-0" />
                         </div>
                         <div className="hidden md:flex flex-col text-left font-questrial">
-                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.client.firstName} {order.client.lastName}</span>
-                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.client?.dni}</span>
+                            <span className="text-xs font-bold text-gray-700 leading-tight">{order.student.clients[0].firstName} {order.student.clients[0].lastName}</span>
+                            <span className="text-[10px] text-gray-400 max-w-[120px] truncate">{order.student?.clients[0]?.dni}</span>
                         </div>
                     </div>
                 );

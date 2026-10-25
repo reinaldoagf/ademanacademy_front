@@ -28,11 +28,14 @@ const parseDateValue = (val?: string | Date | null): Date | null => {
 export interface DateInputProps
     extends Omit<FieldLayoutProps, 'children'> {
     value: string | Date | null;
+    onFocus?: () => void;
+    onBlur?: () => void;
     onChange: (value: string) => void;
     showIcon?: boolean;
     minDate?: Date;
     maxDate?: Date;
     placeholder?: string;
+    popperPlacement?: "bottom" | "top" | "left" | "right";
     disabled?: boolean;
     className?: string;
 }
@@ -42,6 +45,8 @@ export const DateInput: React.FC<DateInputProps> = ({
     labelColor,
     containerClassName,
     value,
+    onFocus,
+    onBlur,
     onChange,
     showIcon = true,
     disabled = false,
@@ -49,6 +54,7 @@ export const DateInput: React.FC<DateInputProps> = ({
     minDate,
     maxDate,
     placeholder = "YYYY-MM-DD",
+    popperPlacement = "bottom"
 }) => {
     const selectedDate = parseDateValue(value);
 
@@ -104,6 +110,14 @@ export const DateInput: React.FC<DateInputProps> = ({
                     showYearDropdown
                     scrollableYearDropdown
                     yearDropdownItemNumber={100}
+                    popperPlacement={popperPlacement}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    popperContainer={({ children }) => (
+                        <div style={{ position: 'relative', zIndex: 99999 }}>
+                            {children}
+                        </div>
+                    )}
                     className={`
                         ${BASE_INPUT_STYLES}
                         ${showIcon ? 'pl-9' : ''}

@@ -5,6 +5,7 @@ import { User } from "@/types/user";
 import { EventData } from "@/types/event";
 import { Transaction } from "@/types/transaction";
 import { S3Image } from "./s3-image";
+import { Student } from "./student";
 export interface PaymentOrder {
     id: string;
     concept: string;
@@ -15,6 +16,8 @@ export interface PaymentOrder {
     updatedAt: string | Date;
     registeringUser?: User | null;
     registeringUserId?: string;
+    student?: Student | null;
+    studentId?: string;
     client?: Client | null;
     clientId?: string;
     order?: Order | null;
