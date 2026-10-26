@@ -39,7 +39,6 @@ export function CostumeControlTable() {
     }, []);
     // Helper para renderizar badges de estado según la asignación / vestuario
     const renderStatusBadge = (status: string, pendingFee: number) => {
-        console.log({ status })
         return (<Badge variant={status} />
         );
     };

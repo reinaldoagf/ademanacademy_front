@@ -10,6 +10,7 @@ export interface Employee {
     id: string;
     IDNumberPrefix?: string | null;
     dni?: string | null;
+    email?: string | null;
     firstName: string;
     lastName: string;
     birthDate: Date | string | null,
@@ -43,6 +44,7 @@ export interface EmployeeFormData {
     lastName: string;
     IDNumberPrefix: string;
     dni: string;
+    email?: string | null;
     countryCode: string;
     phone: string;
     typeOfContract: TypeOfContract;

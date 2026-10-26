@@ -17,7 +17,7 @@ import HeroSection from "@/components/layout/HeroSection";
 import DataTable, { Column } from "@/components/common/DataTable";
 import { MacDockModal } from "@/components/ui/MacDockModal";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { TextInput, TextArea, SelectInput, SearchInput, PhoneInput, DNIInput, DateInput } from '@/components/ui/forms';
+import { TextInput, TextArea, SelectInput, SearchInput, PhoneInput, DNIInput, DateInput, EmailInput } from '@/components/ui/forms';
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import { getAllUsersAction } from "@/app/actions/user";
 import { saveEmployeeAction, getAllEmployeesAction, deleteEmployeeAction } from "@/app/actions/employee";
@@ -33,6 +33,7 @@ const initialFormState: EmployeeFormData = {
   lastName: "",
   IDNumberPrefix: "V",
   dni: "",
+  email: "",
   countryCode: "+58",
   phone: "",
   typeOfContract: "Fijo",
@@ -69,7 +70,7 @@ export default function EmployeesPage() {
   const [userSearch, setUserSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedElement, setSelectedElement] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<EmployeeFormData>(initialFormState);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const { isOpen, openModal, closeModal } = useModal();
@@ -123,7 +124,7 @@ export default function EmployeesPage() {
       setErrorMsg("El salario base es obligatorio.");
       return;
     }
-    if (formData.typeOfContract === "Por Horas" && (!formData.hoursTaughtMonth || !formData.hourlyRate || formData.hourlyRate <= 0 || formData.hoursTaughtMonth <= 0)) {
+    if (formData.typeOfContract === "Por_Hora" && (!formData.hoursTaughtMonth || !formData.hourlyRate || formData.hourlyRate <= 0 || formData.hoursTaughtMonth <= 0)) {
       setErrorMsg("Las horas dictadas y la tarifa por hora son obligatorias.");
       return;
     }
@@ -132,7 +133,7 @@ export default function EmployeesPage() {
     try {
       startTransition(async () => {
         // 🎯 Acción de servidor / API para guardar el empleado
-        const res = await saveEmployeeAction(formData, editingId);
+        const res = await saveEmployeeAction(formData, selectedElement?.id);
 
         if (!res.success) {
           setErrorMsg(res.error || "Ocurrió un error al guardar el empleado.");
@@ -140,7 +141,7 @@ export default function EmployeesPage() {
         }
 
         toast.success(
-          editingId
+          selectedElement
             ? "Empleado actualizado correctamente"
             : "Empleado registrado con éxito"
         );
@@ -177,6 +178,7 @@ export default function EmployeesPage() {
       lastName: employee.lastName || "",
       IDNumberPrefix: employee.IDNumberPrefix || "V",
       dni: employee.dni || "",
+      email: employee.email || "",
       countryCode: employee.countryCode || "+58",
       phone: employee.phone || "",
       typeOfContract: employee.typeOfContract || "Fijo",
@@ -187,9 +189,9 @@ export default function EmployeesPage() {
       birthDate: formatDateForInput(employee.birthDate),
       address: employee.address || "",
     })
-    setEditingId(employee.id);
+    setSelectedElement(employee);
     setErrorMsg(null);
-    setUserSearch(employee.user ? `${employee.user.firstName} ${employee.user.lastNames} (${employee.user.email || 'Usuario'})` : '');
+    setUserSearch(employee.user ? `${employee.user.firstName} ${employee.user.lastName} (${employee.user.email || 'Usuario'})` : '');
     openModal();
   };
   const closeConfirmModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -450,7 +452,7 @@ export default function EmployeesPage() {
             onClick: () => {
               setFormData(initialFormState);
               setErrorMsg(null);
-              setEditingId(null);
+              setSelectedElement(null);
               setUserSearch(``);
               openModal();
             },
@@ -493,7 +495,7 @@ export default function EmployeesPage() {
       <MacDockModal
         isOpen={isOpen}
         onClose={closeModal}
-        title={editingId ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
+        title={selectedElement ? "Actualizar Empleado" : "Registrar Nuevo Empleado"}
         size={"lg"}
       >
         {/* Formulario */}
@@ -525,28 +527,18 @@ export default function EmployeesPage() {
               });
             }}
             onSelectOption={(option) => {
-              if (option.data?.dni) {
-                setFormData({
-                  ...formData,
-                  dni: option.data.dni,
-                })
-              }
-              if (option.data?.firstName) {
-                setFormData({
-                  ...formData,
-                  firstName: option.data.firstName,
-                })
-              }
-              if (option.data?.lastName) {
-                setFormData({
-                  ...formData,
-                  lastName: option.data.lastName,
-                })
-              }
               setFormData({
                 ...formData,
                 userId: option.id as any,
-              });
+                firstName: option.data?.firstName as string || formData.firstName,
+                lastName: option.data?.lastName as string || formData.lastName,
+                dni: option.data?.dni as string || formData.dni,
+                IDNumberPrefix: option.data?.IDNumberPrefix as string || formData.IDNumberPrefix,
+                email: option.data?.email as string || formData.email,
+                phone: option.data?.phone as string || formData.phone,
+                address: option.data?.address as string || formData.address,
+                birthDate: option.data?.birthDate as Date || formData.birthDate,
+              })
               setUserSearch(`${option.label} (${option.data?.email || 'Usuario'})`);
             }}
           />
@@ -634,16 +626,23 @@ export default function EmployeesPage() {
               ]}
             />
           </div>
-
-          <PhoneInput
-            label="Teléfono de Contacto"
-            countryCode={formData.countryCode || "+58"}
-            onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
-            countries={countries}
-            phoneNumber={formData.phone || ""}
-            onPhoneNumberChange={(phone) => setFormData({ ...formData, phone })}
-            phonePlaceholder="Ej: 412 123 4567"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <EmailInput
+              label="Correo Electrónico"
+              placeholder="ejemplo@correo.com"
+              value={formData.email || ""}
+              onChange={(val) => setFormData({ ...formData, email: val })}
+            />
+            <PhoneInput
+              label="Teléfono de Contacto"
+              countryCode={formData.countryCode || "+58"}
+              onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+              countries={countries}
+              phoneNumber={formData.phone || ""}
+              onPhoneNumberChange={(phone) => setFormData({ ...formData, phone })}
+              phonePlaceholder="Ej: 412 123 4567"
+            />
+          </div>
 
           <TextArea
             label="Dirección"
@@ -704,7 +703,7 @@ export default function EmployeesPage() {
             >
               {isPending
                 ? "Guardando..."
-                : editingId
+                : selectedElement
                   ? "Actualizar Empleado →"
                   : "Registrar Empleado →"}
             </button>
