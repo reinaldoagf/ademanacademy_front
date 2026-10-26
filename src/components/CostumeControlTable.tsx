@@ -2,7 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCostumeInventoryMetrics } from '@/app/actions/metric';
+import { getCostumeInventoryMetrics } from "@/app/actions/metric";
+import Badge from "@/components/common/Badge";
+
 export interface CostumeInventoryItem {
     id: string;
     costumeName: string;
@@ -37,26 +39,8 @@ export function CostumeControlTable() {
     }, []);
     // Helper para renderizar badges de estado según la asignación / vestuario
     const renderStatusBadge = (status: string, pendingFee: number) => {
-        if (pendingFee > 0 || status === "delayed" || status === "damaged") {
-            return (
-                <span className="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-600 rounded-md">
-                    {status === "damaged" ? "Dañado" : "Pendiente / Retrasado"}
-                </span>
-            );
-        }
-
-        if (status === "returned") {
-            return (
-                <span className="px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-600 rounded-md">
-                    Devuelto
-                </span>
-            );
-        }
-
-        return (
-            <span className="px-2.5 py-1 text-xs font-semibold bg-amber-100 text-amber-600 rounded-md">
-                En uso
-            </span>
+        console.log({ status })
+        return (<Badge variant={status} />
         );
     };
 
