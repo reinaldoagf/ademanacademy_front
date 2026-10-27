@@ -17,6 +17,7 @@ import {
   ADMIN_OPERATIONAL_MENU,
   ADMIN_MARKETING_MENU,
   CLIENT_PERSONAL_MENU,
+  EMPLOYEE_PERSONAL_MENU,
   MenuItem
 } from "@/config/sidebar-menu";
 import { APP_KEYS } from "@/config/app-keys";
@@ -40,6 +41,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   // Determinamos qué paneles mostrar basándonos en la ruta actual
   const isNotificationView = pathname.startsWith('/notifications') && user?.isAdmin;
   const isAdminView = pathname.startsWith('/admin') && user?.isAdmin;
+  const isEmployeeView = pathname.startsWith('/employee') && user?.isEmployee;
   const isClientView = pathname.startsWith('/client');
   const orderCreatedFlag = useCartStore((state) => state.orderCreatedFlag);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
@@ -251,6 +253,16 @@ export function Sidebar({ isOpen }: SidebarProps) {
               </p>
             </div>
             {CLIENT_PERSONAL_MENU.map(renderMenuItem)}
+          </div>
+        )}
+        {(isEmployeeView || isNotificationView) && (
+          <div className="space-y-1">
+            <div className="px-4 pt-4">
+              <p className={`text-[9px] font-questrial font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${!isOpen && 'md:opacity-0 md:h-0 md:overflow-hidden'}`}>
+                Mi Cuenta
+              </p>
+            </div>
+            {EMPLOYEE_PERSONAL_MENU.map(renderMenuItem)}
           </div>
         )}
 

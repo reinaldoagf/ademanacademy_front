@@ -75,7 +75,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
     }
   };
   // 🌟 Estado para controlar el panel activo actual. Por defecto es 'client'
-  const [activePanel, setActivePanel] = useState<'admin' | 'collaborator' | 'client'>('client');
+  const [activePanel, setActivePanel] = useState<'admin' | 'employee' | 'client'>('client');
   // Verificar si el usuario tiene privilegios para alternar vistas
   const canSwitchRoles = user?.isAdmin || user?.isEmployee;
   /* const markAllAsRead = () => {
@@ -117,7 +117,7 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
   }, [isSearchModalOpen]);
   useEffect(() => {
     if (user) {
-      setActivePanel(user?.isAdmin && pathname.startsWith("/admin") ? 'admin' : user?.isEmployee && pathname.startsWith("/collaborator") ? 'collaborator' : 'client');
+      setActivePanel(user?.isAdmin && pathname.startsWith("/admin") ? 'admin' : user?.isEmployee && pathname.startsWith("/employee") ? 'employee' : 'client');
     }
   }, [pathname, user]);
   return (
@@ -183,21 +183,21 @@ export function Header({ isSidebarOpen, toggleSidebar }: HeaderProps) {
                 </button>
               )}
 
-              {/* Opción Collaborator (Visible si user.isEmployee es true o si es admin y quiere ver su vista de colaborador) */}
+              {/* Opción Collaborator (Visible si user.isEmployee es true o si es admin y quiere ver su vista de empleado) */}
               {user?.isEmployee && (
                 <button
                   type="button"
                   onClick={() => {
-                    setActivePanel('collaborator');
-                    handleRoleTransition('/collaborator/dashboard')
+                    setActivePanel('employee');
+                    handleRoleTransition('/employee/dashboard')
                   }}
-                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${activePanel === 'collaborator'
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${activePanel === 'employee'
                     ? 'bg-white text-[#5e0472] shadow-sm font-bold'
                     : 'cursor-pointer text-gray-500 hover:text-gray-800'
                     }`}
                 >
                   <Briefcase className="w-3 h-3 text-blue-500" />
-                  Colaborador
+                  Empleado
                 </button>
               )}
 

@@ -16,7 +16,7 @@ export function AutomaticNotifications() {
     const getDashboardBaseRoute = () => {
         if (pathname.startsWith('/admin')) return '/admin';
         if (pathname.startsWith('/client')) return '/client';
-        if (pathname.startsWith('/collaborator')) return '/collaborator';
+        if (pathname.startsWith('/employee')) return '/employee';
         return ''; // Ruta por defecto si está en otra sección
     };
 

@@ -75,3 +75,8 @@ export const CLIENT_PERSONAL_MENU: MenuItem[] = [
     { key: APP_KEYS.EVENTS, name: 'Eventos', href: '/client/events', icon: Star },
     { key: APP_KEYS.STORE_PRODUCTS, name: 'Tienda', href: '/client/store', icon: ShoppingBag },
 ];
+
+export const EMPLOYEE_PERSONAL_MENU: MenuItem[] = [
+    { key: APP_KEYS.DASHBOARD, name: 'Dashboard', href: '/employee/dashboard', icon: ChartPie },
+    { key: APP_KEYS.CLASSES, name: 'Mis Clases', href: '/employee/classes', icon: CalendarDays },
+];

@@ -24,7 +24,7 @@ export function NotificationBell({ userId, onOpenUserMenuClose }: NotificationBe
     const getDashboardBaseRoute = () => {
         if (pathname.startsWith('/admin')) return '/admin';
         if (pathname.startsWith('/client')) return '/client';
-        if (pathname.startsWith('/collaborator')) return '/collaborator';
+        if (pathname.startsWith('/employee')) return '/employee';
         return '';
     };
 
