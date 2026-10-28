@@ -14,6 +14,9 @@ export interface Group {
     classroomId: string | null;  // Guardamos la referencia por ID para los selects
     classroom?: Classroom;
     schedules?: Schedule[];
+    _count?: {
+        students: number;
+    };
     students?: Student[];
     totalNumberOfSlots: number;
 }

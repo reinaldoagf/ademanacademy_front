@@ -213,10 +213,7 @@ export default function GroupsListPage() {
 
         // Llamada directa al Server Action
         const res = await getAllInstructorsAction(params);
-
         if (res.success && res.data) {
-          // Axios mapea la respuesta en result.data. data.data suele ser el array
-          // Si tu backend anida los instructor en 'instructors', úsalo; de lo contrario asigna result.data
           setFilteredInstructors(res.data.instructors || res.data);
         } else {
           console.log("Error en Server Action (Instructores):", res.error);

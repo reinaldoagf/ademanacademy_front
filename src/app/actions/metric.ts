@@ -1,6 +1,7 @@
 "use server";
 
 import axios from "axios";
+import { Group } from "@/types/group";
 import { getAuthHeaders } from "@/helpers/auth-headers";
 
 const BACKEND_URL = process.env.NEST_BACKEND_URL || "http://localhost:3000";
@@ -125,5 +126,24 @@ export async function getCostumeInventoryMetrics() {
             success: false,
             error: error.response?.data?.message || "Error al conectar con la academia."
         };
+    }
+}
+
+export async function getGroupsByInstructor(): Promise<{ success: boolean; data?: Group[]; error?: string }> {
+    try {
+        const headers = await getAuthHeaders(); // Inyectamos cabeceras para validar permisos en el backend si es necesario
+
+        const response = await axios.get(`${BACKEND_URL}/metrics/groups-by-instructor`, { headers });
+
+        return { success: true, data: response.data.data };
+
+    } catch (error: any) {
+        if (error.response) {
+            return {
+                success: false,
+                error: error.response.data?.message || "No se pudo eliminar el grupo."
+            };
+        }
+        return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }

@@ -85,3 +85,4 @@ export async function deleteGroupAction(id: string): Promise<{ success: boolean;
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+
