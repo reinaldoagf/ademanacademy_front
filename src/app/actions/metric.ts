@@ -147,3 +147,20 @@ export async function getGroupsByInstructor(): Promise<{ success: boolean; data?
         return { success: false, error: "Error al comunicar la baja al servidor." };
     }
 }
+
+export async function getEmployeeDashboardMetrics() {
+    try {
+        const headers = await getAuthHeaders();
+        // Axios limpiará automáticamente las propiedades undefined
+        const response = await axios.get(`${BACKEND_URL}/metrics/employee-dashboard`, {
+            headers: headers,
+        });
+
+        return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || "Error al conectar con la academia."
+        };
+    }
+}

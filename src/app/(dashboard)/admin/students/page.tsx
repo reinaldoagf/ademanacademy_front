@@ -74,15 +74,6 @@ const initialFormState: StudentFormData = {
   userId: null,
   representativeId: null,
 };
-const countries = [
-  { code: "+58", label: "VE" },
-  { code: "+57", label: "CO" },
-  { code: "+51", label: "PE" },
-  { code: "+56", label: "CL" },
-  { code: "+54", label: "AR" },
-  { code: "+34", label: "ES" },
-  { code: "+1", label: "US" },
-];
 const DNIPrefixs = [
   { code: "V", label: "V" },
   { code: "E", label: "E" },
